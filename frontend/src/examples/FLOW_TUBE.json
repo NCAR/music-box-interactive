@@ -1,0 +1,116 @@
+{
+  "conditions": {
+    "box model options": {
+      "grid": "box",
+      "chemistry time step [sec]": 1,
+      "output time step [sec]": 1,
+      "simulation length [hr]": 1
+    },
+    "chemical species": {
+      "a-pinene": {
+        "initial value [mol m-3]": 8e-8
+      },
+      "O3": {
+        "initial value [mol m-3]": 0.00002
+      }
+    },
+    "environmental conditions": {
+      "temperature": {
+        "initial value [K]": 298.15
+      },
+      "pressure": {
+        "initial value [Pa]": 101325
+      }
+    },
+    "evolving conditions": {},
+    "initial conditions": {
+      "LOSS.SOA1 wall loss.s-1": {
+        "0": 0.01
+      },
+      "LOSS.SOA2 wall loss.s-1": {
+        "0": 0.05
+      }
+    },
+    "model components": [
+      {
+        "type": "CAMP",
+        "configuration file": "camp_data/config.json",
+        "override species": {
+          "M": {
+            "mixing ratio mol mol-1": 1
+          }
+        },
+        "suppress output": {
+          "M": {}
+        }
+      }
+    ]
+  },
+  "mechanism": {
+    "reactions": {
+      "camp-data": [
+        {
+          "name": "Flow Tube",
+          "type": "MECHANISM",
+          "reactions": [
+            {
+              "type": "ARRHENIUS",
+              "reactants": {
+                "O3": {},
+                "a-pinene": {}
+              },
+              "products": {
+                "SOA1": {
+                  "yield": 0.18
+                },
+                "SOA2": {
+                  "yield": 0.09
+                }
+              },
+              "A": 8.8e-17
+            },
+            {
+              "type": "FIRST_ORDER_LOSS",
+              "species": "SOA1",
+              "MUSICA name": "SOA1 wall loss"
+            },
+            {
+              "type": "FIRST_ORDER_LOSS",
+              "species": "SOA2",
+              "MUSICA name": "SOA2 wall loss"
+            }
+          ]
+        }
+      ]
+    },
+    "species": {
+      "camp-data": [
+        {
+          "name": "M",
+          "type": "CHEM_SPEC",
+          "tracer type": "CONSTANT",
+          "description": "Third-body molecule. This is any molecule present in the system."
+        },
+        {
+          "type": "CHEM_SPEC",
+          "name": "a-pinene"
+        },
+        {
+          "type": "CHEM_SPEC",
+          "name": "O3",
+          "description": "ozone"
+        },
+        {
+          "type": "CHEM_SPEC",
+          "name": "SOA1",
+          "description": "moderate volatility SOA precursor from a-pinene oxidation"
+        },
+        {
+          "type": "CHEM_SPEC",
+          "name": "SOA2",
+          "description": "low volatility SOA precursor from a-pinene oxidation"
+        }
+      ]
+    }
+  }
+}

@@ -3,7 +3,7 @@ services:
     container_name: 'api-server'
     build: 
       context: .
-      dockerfile: ./backend/docker/Dockerfile.api
+      dockerfile: ./docker/Dockerfile.api
       args:
         - INSTALL_PyPartMC=false
     ports:
@@ -18,7 +18,7 @@ services:
   model-runner:
     build: 
       context: .
-      dockerfile: ./backend/docker/Dockerfile.model_runner
+      dockerfile: ./docker/Dockerfile.model_runner
       args:
         - INSTALL_PyPartMC=false
     env_file:
@@ -48,16 +48,6 @@ services:
       interval: 5s
       timeout: 15s
       retries: 1
-
-  frontend:
-    container_name: frontend
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
-    ports:
-      - "5173:5173"
-    working_dir: /MusicBoxInteractiveFrontend
-    command: ["vite", "--host"]
 volumes:
   db-data:
   partmc-data:
