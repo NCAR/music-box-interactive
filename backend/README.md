@@ -1,6 +1,4 @@
-# MusicBox Interactive API Server
-
-[![Tests](https://github.com/NCAR/music-box-interactive-api/actions/workflows/pytest.yml/badge.svg)](https://github.com/NCAR/music-box-interactive-api/actions/workflows/pyteset.yml)
+# MusicBox Interactive API Backend
 
 ## User interface for the MusicBox box/column model
 

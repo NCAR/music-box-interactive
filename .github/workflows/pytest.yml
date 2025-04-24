@@ -8,7 +8,7 @@ on:
   pull_request:
   
 jobs:
-  test:
+  test-backend:
     runs-on: ubuntu-latest
 
     services:
@@ -26,6 +26,7 @@ jobs:
           compose-file: "./docker-compose.yml"
       
       - name: Run migrations
+        working-directory: ./backend
         run: |
           docker exec api-server bash -c "
           cd interactive &&
@@ -34,10 +35,12 @@ jobs:
 
 
       - name: Run pytest
+        working-directory: ./backend
         run: |
           docker compose exec -T api-server sh -c "poetry run pytest"
 
       - name: Shut down Docker Compose
         if: always()
+        working-directory: ./backend
         run: |
           docker compose down
