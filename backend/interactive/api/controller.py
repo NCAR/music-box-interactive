@@ -144,8 +144,8 @@ def safely_save_data(data):
             with transaction.atomic():
                 data.save()
                 break
-        except DatabaseError:
-            logger.error(f"Database error: retrying in {RETRY_DELAY} seconds")
+        except DatabaseError as e:
+            logger.error(f"Database error on attempt {i + 1}: {str(e)}. Retrying in {RETRY_DELAY} seconds.")
             time.sleep(RETRY_DELAY)
     else:
         logger.error(f"Failed to save model after {RETRY_LIMIT} retries")
