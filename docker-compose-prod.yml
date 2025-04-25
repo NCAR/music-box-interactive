@@ -40,6 +40,15 @@ services:
       options:
         max-size: "10m"    # Maximum size of each log file, e.g., 10 megabytes
         max-file: "5"      # Maximum number of log files to retain
+  frontend:
+    container_name: frontend
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "5173:5173"
+    working_dir: /MusicBoxInteractiveFrontend
+    command: ["vite", "--host"]
 volumes:
   db-data:
   # partmc-data:

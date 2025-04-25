@@ -1,131 +1,65 @@
-# MusicBox Interactive API Server
+# Music Box Interactive
 
+[![GitHub Releases](https://img.shields.io/github/release/NCAR/music-box-interactive-api.svg)](https://github.com/NCAR/music-box-interactive-api/releases)
+[![License](https://img.shields.io/github/license/NCAR/music-box-interactive-api.svg)](https://github.com/NCAR/music-box-interactive-api/blob/master/LICENSE)
+[![Tests](https://github.com/NCAR/music-box-interactive-api/actions/workflows/test.yml/badge.svg)](https://github.com/NCAR/music-box-interactive-api/actions/workflows/test.yml)
 [![Tests](https://github.com/NCAR/music-box-interactive-api/actions/workflows/pytest.yml/badge.svg)](https://github.com/NCAR/music-box-interactive-api/actions/workflows/pyteset.yml)
 
-## User interface for the MusicBox box/column model
+**Music Box Interactive** is a full-stack application for interactive visualization and execution of chemical mechanisms. The project includes a Django backend and a modern React + Vite frontend. It is containerized using Docker and designed for flexibility in both local development and production environments.
 
-**Configure, run, and plot results for the MusicBox model, and edit chemical mechanisms.**
+## Getting Started
 
-## Build and run
+### Environment Setup
 
-### Local development
+Create a `.env` file inside the `backend/` folder for development,if it doesn't exist. Example:
 
-Install poetry. It may be preferrable to install into a conda or virtual environment, but poetry installs package dependencies
-into its own virutal environment so this isn't necessary.
-```
-pip install poetry
-```
-
-Now install the package dependencies.
-```
-poetry install
-```
-
-If you need to use a specific git branch of a package, open up [`pyrpoject.toml`](/pyproject.toml)
-and add a line like this
-
-```
-acom_music_box = { git = "https://github.com/NCAR/music-box.git", branch = "my_branch" }
+```env
+BASE_API_URL="http://localhost:8000"
+IsDebug=True
+LOG_LEVEL=DEBUG
+MUSIC_BOX_BUILD_DIR=/music-box/build
+MUSIC_BOX_CONFIG_DIR=/config-files
+MUSIC_BOX_ZIP_DIR=/config-archives
+PARTMC_ZIP_DIR=/partmc-archives
+RABBIT_MQ_HOST=rabbitmq
+RABBIT_MQ_PASSWORD=guest
+RABBIT_MQ_PORT=5672
+RABBIT_MQ_USER=guest
+SWAGGER_BASE_PATH=''
+SECRET_KEY=
 ```
 
-If you want to include pypartmc
+## Running with Docker 
 
+1. Make sure Docker is installed and running.
+2. From the project root, run:
+
+```bash
+docker compose up --build
 ```
-poetry install --extras "pypartmc"
-```
-
-
-To run the api server, you'll need to set environment variables
-
-```
-set -a && source .env && set +a  
-```
-
-and then you can run the server locally after making and running the migrations
-
-
-```
-poetry run python interactive/manage.py makemigrations
-poetry run python interactive/manage.py migrate
-poetry run python interactive/manage.py runserver_plus 0.0.0.0:8000
-```
-
-#### Model runners
-
-These instructions still need to be written. If you need the model runners, it's best to use the docker option
-
-### Docker
-
-All configuration is handled by docker files and docker compose. First navigate to the project directory.
-
-To build
-```
-docker compose build
-```
-
-To run
-```
-docker compose up
-```
-
 You can press CTRL-C to quite docker compose.
 
-Docker-compose will cache file builds and volumes. If you make a change and you want to see 
-it reflected, run the below command and it should rebuild the server code.
+To run docker in a deteched state, add the -d flag like this:
 
-```
-docker compose down -v \
-    && docker compose build \
-    && docker compose up --force-recreate
-```
-
-If you need to remove absolutely everything
-
-```
-docker compose down -v --rmi all \
-    && docker system prune \
-    && docker compose build --no-cache \
-    && docker compose up --force-recreate -d
-```
-
-If you would like to run docker in a deteched state, add the `-d` flag like this
-
-```
+```bash
 docker compose up -d
 ```
 
-If you would like to view the logs after starting docker in a detach state, you can do so like this
+To stop and remove containers:
 
+```bash
+docker compose down
 ```
+
+View logs:
+
+```bash
 docker compose logs -f
 ```
 
-```
-docker compose stop model-runner && docker compose build --no-cache model-runner && docker compose up --force-recreate --renew-anon-volumes -d model-runner
-```
+## Production Deployment
 
+Use the `docker-compose.prod.yml` for production builds.
 
-### One at a time
-
-You can also bring down only one of the docker images and rebuild from scratch if you wish
-
-```
-docker compose stop model-runner && docker compose build --no-cache model-runner && docker compose up --force-recreate -d model-runner
-```
-
-```
-docker compose stop status-listener && docker compose build --no-cache status-listener && docker compose up --force-recreate -d status-listener
-```
-
-```
-docker compose stop api-server && docker compose build --no-cache api-server && docker compose up --force-recreate -d api-server
-```
-
-## Web Files
-
-This repository is only the API server for MusicBox Interactive. If you wish to run the web files, head over to [music-box-interactive-client](https://github.com/NCAR/music-box-interactive-client)
-
-## RabbitMQ Admin
-
-After running `docker compose up -d` you can navigate to the RabbitMQ [http://localhost:15672](http://localhost:15672) admin interface to monitor the queues.
-The username is `guest` and the password is `guest`.
+## License
+Copyright (C) 2018-2025 National Center for Atmospheric Research
