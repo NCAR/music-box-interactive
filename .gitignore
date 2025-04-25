@@ -1,0 +1,8 @@
+**/__pycache__/
+**/*.pyc
+**/*.DS_Store
+.vscode
+backend/interactive/db.sqlite3
+backend/interactive/api/migrations/*
+!backend/interactive/api/migrations/__init__.py
+!backend/interactive/api/migrations/.gitkeep
