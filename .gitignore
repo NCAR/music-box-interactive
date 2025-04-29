@@ -7,3 +7,5 @@ backend/interactive/api/migrations/*
 !backend/interactive/api/migrations/__init__.py
 !backend/interactive/api/migrations/.gitkeep
 node_modules
+frontend/dist/*
+frontend/package-lock.json
