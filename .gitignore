@@ -6,3 +6,4 @@ backend/interactive/db.sqlite3
 backend/interactive/api/migrations/*
 !backend/interactive/api/migrations/__init__.py
 !backend/interactive/api/migrations/.gitkeep
+node_modules
