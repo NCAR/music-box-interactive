@@ -20,14 +20,14 @@ export default function Collaborators() {
                     <img
                       src={acom_small}
                       className="logo-small img-fluid"
-                      alt="National Center for Atmospheric Research"
+                      alt="National Science Foundation-National Center for Atmospheric Research"
                     />
                   </a>
                 </div>
                 <div className="col-lg-8">
                   <p>
                     MusicBox is a component of the MUSICA project of the
-                    National Center for Atmospheric Research's Atmospheric
+                    National Science Foundation-National Center for Atmospheric Research's Atmospheric
                     Chemistry Observations and Modeling Laboratory. MUSICA – the
                     Multi-Scale Infrastructure for Chemistry and Aerosols – will
                     become a computationally feasible global modeling framework
@@ -35,7 +35,7 @@ export default function Collaborators() {
                     phenomena, while still resolving chemistry at emission and
                     exposure relevant scales (down to ~4 km within the next 5
                     years). The Model-Independent Chemistry Module (MICM) is
-                    also developed at NCAR-ACOM and can bring MusicBox
+                    also developed at NSF NCAR-ACOM and can bring MusicBox
                     mechanisms you develop here to high-performance weather and
                     climate models.
                   </p>
@@ -158,7 +158,7 @@ export default function Collaborators() {
                   <p>
                     MusicBox Interactive Desktop was developed at Texas A&M
                     University by a group of seniors for their capstone project.
-                    The project was sponsored by the National Center for
+                    The project was sponsored by the National Science Foundation-National Center for
                     Atmospheric Research. The goal of the project was to create
                     a desktop version of the MusicBox web application and
                     transition the Fortran box model to use Python and MICM.

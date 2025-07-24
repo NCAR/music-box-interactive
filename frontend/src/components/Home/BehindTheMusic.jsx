@@ -44,8 +44,8 @@ export default function BehindTheMusic() {
                     The Model-Independent Chemistry Module (MICM) is a chemical
                     system solver designed to bring flexibility for chemical
                     systems to high-performance weather and climate models. MICM
-                    is developed at the National Center for Atmospheric Research
-                    (NCAR).
+                    is developed at the National Science Foundation-National Center for Atmospheric Research
+                    (NSF NCAR).
                   </p>
                 </div>
               </div>
