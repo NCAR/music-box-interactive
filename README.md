@@ -62,4 +62,4 @@ docker compose logs -f
 Use the `docker-compose.prod.yml` for production builds.
 
 ## License
-Copyright (C) 2018-2025 National Science Foundation-National Center for Atmospheric Research
+Copyright (C) 2018-2025 University Corporation for Atmospheric Research
