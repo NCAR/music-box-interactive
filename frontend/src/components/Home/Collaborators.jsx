@@ -27,17 +27,17 @@ export default function Collaborators() {
                 <div className="col-lg-8">
                   <p>
                     MusicBox is a component of the MUSICA project of the
-                    National Science Foundation-National Center for Atmospheric Research's Atmospheric
-                    Chemistry Observations and Modeling Laboratory. MUSICA – the
-                    Multi-Scale Infrastructure for Chemistry and Aerosols – will
-                    become a computationally feasible global modeling framework
-                    that allows for the simulation of large-scale atmospheric
-                    phenomena, while still resolving chemistry at emission and
-                    exposure relevant scales (down to ~4 km within the next 5
-                    years). The Model-Independent Chemistry Module (MICM) is
-                    also developed at NSF NCAR-ACOM and can bring MusicBox
-                    mechanisms you develop here to high-performance weather and
-                    climate models.
+                    National Science Foundation-National Center for Atmospheric
+                    Research's Atmospheric Chemistry Observations and Modeling
+                    Laboratory. MUSICA – the Multi-Scale Infrastructure for
+                    Chemistry and Aerosols – will become a computationally
+                    feasible global modeling framework that allows for the
+                    simulation of large-scale atmospheric phenomena, while still
+                    resolving chemistry at emission and exposure relevant scales
+                    (down to ~4 km within the next 5 years). The
+                    Model-Independent Chemistry Module (MICM) is also developed
+                    at NSF NCAR-ACOM and can bring MusicBox mechanisms you
+                    develop here to high-performance weather and climate models.
                   </p>
                 </div>
               </div>
@@ -158,10 +158,11 @@ export default function Collaborators() {
                   <p>
                     MusicBox Interactive Desktop was developed at Texas A&M
                     University by a group of seniors for their capstone project.
-                    The project was sponsored by the National Science Foundation-National Center for
-                    Atmospheric Research. The goal of the project was to create
-                    a desktop version of the MusicBox web application and
-                    transition the Fortran box model to use Python and MICM.
+                    The project was sponsored by the National Science
+                    Foundation-National Center for Atmospheric Research. The
+                    goal of the project was to create a desktop version of the
+                    MusicBox web application and transition the Fortran box
+                    model to use Python and MICM.
                   </p>
                 </div>
               </div>
