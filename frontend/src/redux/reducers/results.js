@@ -52,7 +52,7 @@ export const resultsReducer = (state = initialState, action) => {
       const concentrations = [];
       concentration_keys.forEach((key) => {
         concentrations.push({
-          name: key.substring(5),
+          name: key.substring(5).replace(/\.mol m-3$/, ""),
           concentration: data[key],
         });
       });
@@ -60,7 +60,7 @@ export const resultsReducer = (state = initialState, action) => {
       return {
         ...state,
         data: {
-          times: data.time,
+          times: data["time.s"],
           pressure: data["ENV.pressure"],
           temperature: data["ENV.temperature"],
           air_density: data["ENV.number_density_air"],

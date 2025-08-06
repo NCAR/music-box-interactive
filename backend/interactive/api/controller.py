@@ -19,7 +19,7 @@ from shared.configuration_utils import compress_configuration, \
     get_zip_file_path
 from partmc_model.partmc_utils import compress_partmc, get_partmc_zip_file_path
 from shared.rabbit_mq import publish_message
-from acom_music_box import Examples
+from acom_music_box import Examples, MusicBox
 from api.request_models import Example
 
 logger = logging.getLogger(__name__)
@@ -64,6 +64,9 @@ def get_configuration_as_json(file_path):
     if not files:
         logging.error("No files in example foler")
         raise Http404("No files in example folder")
+
+    music_box = MusicBox()
+    music_box.loadJson(file_path)
 
     for file in files:
         if 'species.json' in file:

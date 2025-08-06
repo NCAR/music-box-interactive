@@ -162,6 +162,8 @@ def run_music_box(session_id):
     df = music_box.solve()
     df.to_csv(output_file, index=False)
 
+    logging.info(f"Result: {df}")
+
     music_box_exited_handler(session_id, working_directory)
 
 

@@ -354,6 +354,7 @@ function extract_conditions_from_example(config, mechanism) {
   let initial_conditions = config.conditions["initial conditions"];
   let reactions = mechanism.reactions || [];
   let reaction_conditions = [];
+  let initial_species_concentrations = [];
   if (initial_conditions) {
     reaction_conditions = Object.keys(initial_conditions).map((key) => {
       let [type, identifier, units] = key.split(".");
