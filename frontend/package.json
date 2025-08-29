@@ -1,7 +1,7 @@
 {
   "name": "music-box-interactive",
   "private": true,
-  "version": "2.5.3",
+  "version": "2.9.1",
   "main": "app/dist/main/main.js",
   "type": "module",
   "scripts": {

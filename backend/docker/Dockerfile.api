@@ -4,24 +4,27 @@ ARG INSTALL_PyPartMC=false
 
 RUN dnf -y update \
     && dnf -y install \
-        gcc14 \
-        gcc14-c++ \
-        git \
-        python3 \
-        python3-devel \
-        python3-pip \
-        sqlite \
-        sqlite-devel \
+    gcc \
+    gcc-c++ \
+    git \
+    python3 \
+    python3-devel \
+    python3-pip \
+    sqlite \
+    sqlite-devel \
+    curl \
     && if [ "$INSTALL_PyPartMC" = "true" ]; \
-        then dnf -y install \
-                cmake \
-                gcc-gfortran \
-                m4 \
-            ; \
-            fi \
+    then dnf -y install \
+    cmake \
+    gcc-gfortran \
+    m4 \
+    ; \
+    fi \
     && dnf clean all
 
-RUN pip3 install poetry
+RUN pip install --upgrade pip setuptools wheel pkginfo --break-system-packages
+RUN POETRY_VERSION=1.7.1 curl -sSL https://install.python-poetry.org | python3 -
+ENV PATH="/root/.local/bin:$PATH"
 
 # COPY . /music-box-interactive/
 COPY backend/ /music-box-interactive/
@@ -30,8 +33,8 @@ WORKDIR /music-box-interactive
 # Configure Poetry to create virtual environments in the project directory
 RUN poetry config virtualenvs.in-project true
 
-ENV CXX=g++-14
-ENV CC=gcc-14
+ENV CXX=g++
+ENV CC=gcc
 
 ENV CXXFLAGS="-Wno-error=redundant-move"
 RUN if [ "$INSTALL_PyPartMC" = "true" ]; then poetry install --all-extras; else poetry install; fi

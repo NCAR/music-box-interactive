@@ -1,5 +1,5 @@
 # Use Node.js base image
-FROM node:19-bullseye AS base
+FROM node:20-bullseye AS base
 
 # Install Vite globally
 RUN npm install -g vite
