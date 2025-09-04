@@ -93,10 +93,23 @@ def get_configuration_as_json(file_path):
                                 "initial value [mol m-3]": value
                             }
                     conditions["chemical species"] = chemical_species
-                    del conditions["initial conditions"]
                 else:
                     logger.warning(
                         "Could not find initial rates condition file")
+                if "data" in conditions["initial conditions"]:
+                    data = conditions["initial conditions"]["data"]
+                    if len(data) != 2:
+                        logger.warning("Initial conditions data is not in the expected format")
+                    else:
+                        for species, value in zip(data[0], data[1]):
+                            match = re.match(r"CONC\.(.*?) \[mol m-3\]", species)
+                            if match:
+                                conditions["chemical species"][match.group(1)] = {
+                                    "initial value [mol m-3]": value
+                                }
+                # since the conditions object gets sent to the server, delete irrelevant information
+                del conditions["initial conditions"]
+
             if "evolving conditions" in conditions:
                 evolving_conditions = conditions["evolving conditions"]
                 if evolving_conditions:
@@ -109,6 +122,8 @@ def get_configuration_as_json(file_path):
                         del df
                     else:
                         logger.warning("Could not find evolving conditions file")
+                    if "data" in conditions["evolving conditions"]:
+                        logger.warning("Ignoring evolving conditions set with data")
 
     return conditions, filter_diagnostics(mechanism)
 
