@@ -23,7 +23,7 @@ python = "^3.9"
 scipy = "^1.7"
 setuptools = "^70.0"
 Werkzeug = "^2.0"
-acom_music_box = { git = "https://github.com/NCAR/music-box.git", tag="v.2.9.1" }
+acom_music_box = { git = "https://github.com/NCAR/music-box.git", branch="update_files"}#, tag="v.2.9.1" }
 
 pypartmc = { version = "^1.3.3", optional = true }
 

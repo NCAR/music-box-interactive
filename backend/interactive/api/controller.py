@@ -21,6 +21,7 @@ from partmc_model.partmc_utils import compress_partmc, get_partmc_zip_file_path
 from shared.rabbit_mq import publish_message
 from acom_music_box import Examples
 from api.request_models import Example
+from acom_music_box import MusicBox
 
 logger = logging.getLogger(__name__)
 
@@ -64,6 +65,7 @@ def get_configuration_as_json(file_path):
     if not files:
         logging.error("No files in example foler")
         raise Http404("No files in example folder")
+    
 
     for file in files:
         if 'species.json' in file:
@@ -73,57 +75,45 @@ def get_configuration_as_json(file_path):
             with open(file, 'r') as contents:
                 mechanism['reactions'] = json.load(contents)
         if 'my_config.json' in file:
+            music_box = MusicBox()
+            music_box.loadJson(file)
+
             with open(file, 'r') as contents:
                 conditions = json.load(contents)
-            if "initial conditions" in conditions and \
-               len(list(conditions["initial conditions"].keys())) > 0:
-                rates_file = conditions["initial conditions"]["filepaths"][0]
-                logger.info(f"Found rates file: {rates_file}")
-                path = [f for f in files if rates_file in f]
-                if len(path) > 0:
-                    rates_file = path[0]
-                    df = pd.read_csv(rates_file)
-                    chemical_species = {}
-                    for col in df.columns:
-                        match = re.match(r"CONC\.(.*?) \[mol m-3\]", col)
-                        if match:
-                            species_name = match.group(1)
-                            value = df[col].iloc[0]
-                            chemical_species[species_name] = {
-                                "initial value [mol m-3]": value
-                            }
-                    conditions["chemical species"] = chemical_species
-                else:
-                    logger.warning(
-                        "Could not find initial rates condition file")
-                if "data" in conditions["initial conditions"]:
-                    data = conditions["initial conditions"]["data"]
-                    if len(data) != 2:
-                        logger.warning("Initial conditions data is not in the expected format")
-                    else:
-                        for species, value in zip(data[0], data[1]):
-                            match = re.match(r"CONC\.(.*?) \[mol m-3\]", species)
-                            if match:
-                                conditions["chemical species"][match.group(1)] = {
-                                    "initial value [mol m-3]": value
-                                }
-                # since the conditions object gets sent to the server, delete irrelevant information
-                del conditions["initial conditions"]
 
-            if "evolving conditions" in conditions:
-                evolving_conditions = conditions["evolving conditions"]
-                if evolving_conditions:
-                    evolving_conditions = conditions["evolving conditions"]["filepaths"][0]
-                    path = [f for f in files if evolving_conditions in f]
-                    if path:
-                        evolving_conditions = path[0]
-                        df = pd.read_csv(evolving_conditions)
-                        conditions["evolving conditions"] = df.to_dict()
-                        del df
-                    else:
-                        logger.warning("Could not find evolving conditions file")
-                    if "data" in conditions["evolving conditions"]:
-                        logger.warning("Ignoring evolving conditions set with data")
+            # since the conditions object gets sent to the server, delete irrelevant information
+            del conditions["initial conditions"]
+
+            conditions["chemical species"] = {
+                f"{species}": {
+                    "initial value [mol m-3]": float(val)
+                }
+                for species, val in music_box.initial_conditions.species_concentrations.items()
+            }
+
+            conditions["initial conditions"] = {
+                f"{param}.s-1": float(val)
+                for param, val in music_box.initial_conditions.rate_parameters.items()
+            }
+
+            if music_box.evolving_conditions and len(music_box.evolving_conditions.conditions) > 0:
+                headers = ['time.s']
+                if music_box.evolving_conditions.conditions[0].pressure is not None:
+                    headers.append('ENV.pressure.Pa')
+                if music_box.evolving_conditions.conditions[0].temperature is not None:
+                    headers.append('ENV.temperature.K')
+                headers.extend([f"{param}.s-1" for param in music_box.evolving_conditions.conditions[0].rate_parameters.keys()])
+                rows = []
+                for time, condition in zip(music_box.evolving_conditions.times, music_box.evolving_conditions.conditions):
+                    row = [time]
+                    if condition.pressure is not None:
+                        row.append(condition.pressure)
+                    if condition.temperature is not None:
+                        row.append(condition.temperature)
+                    row.extend([val for val in condition.rate_parameters.values()])
+                    rows.append(row)
+                df = pd.DataFrame(rows, columns=headers)
+                conditions["evolving conditions"] = df.to_dict()
 
     return conditions, filter_diagnostics(mechanism)
 

@@ -403,7 +403,7 @@ function extract_conditions_from_example(config, mechanism) {
       return {
         id: uuidv4(),
         reactionId: reaction.id,
-        value: initial_conditions[key]["0"],
+        value: initial_conditions[key],
         type: type,
         units: units || default_units,
         suffix: "",
