@@ -774,7 +774,6 @@ function translate_to_camp_config(config) {
 }
 
 function translate_to_musicbox_conditions(conditions, mechanism) {
-  console.log(conditions)
   let initial_conditions = {
     ...conditions.initial_species_concentrations.reduce(
       (acc, curr) => {
@@ -814,9 +813,6 @@ function translate_to_musicbox_conditions(conditions, mechanism) {
     }
     return acc;
   }, {});
-
-  console.log(initial_conditions)
-  console.log(environmental_conditions)
 
   let musicbox_conditions = {
     "box model options": {
