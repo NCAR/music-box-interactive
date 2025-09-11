@@ -470,32 +470,32 @@ function translate_reactions_to_camp_config(config, species) {
     return reactants === undefined
       ? {}
       : reactants.reduce((acc, reactant) => {
-        const existingReactant = acc[reactant.name];
-        const incomingQty = reactant.qty || 1;
-        const qty = existingReactant
-          ? existingReactant.qty + incomingQty
-          : incomingQty;
-        acc[reactant.name] = {
-          qty: qty,
-        };
-        return acc;
-      }, {});
+          const existingReactant = acc[reactant.name];
+          const incomingQty = reactant.qty || 1;
+          const qty = existingReactant
+            ? existingReactant.qty + incomingQty
+            : incomingQty;
+          acc[reactant.name] = {
+            qty: qty,
+          };
+          return acc;
+        }, {});
   };
   const reduxProductsToCamp = (products) => {
     return products === undefined
       ? {}
       : products.reduce((acc, product) => {
-        const existingProduct = acc[product.name];
-        const incomingYield =
-          product.yield === undefined ? 1.0 : product.yield;
-        const product_yield = existingProduct
-          ? existingProduct.yield + incomingYield
-          : incomingYield;
-        acc[product.name] = {
-          yield: product_yield,
-        };
-        return acc;
-      }, {});
+          const existingProduct = acc[product.name];
+          const incomingYield =
+            product.yield === undefined ? 1.0 : product.yield;
+          const product_yield = existingProduct
+            ? existingProduct.yield + incomingYield
+            : incomingYield;
+          acc[product.name] = {
+            yield: product_yield,
+          };
+          return acc;
+        }, {});
   };
 
   let reactions = config.reactions.map((reaction) => {
@@ -775,14 +775,11 @@ function translate_to_camp_config(config) {
 
 function translate_to_musicbox_conditions(conditions, mechanism) {
   let initial_conditions = {
-    ...conditions.initial_species_concentrations.reduce(
-      (acc, curr) => {
-        acc[`CONC.${curr.name} [${curr.units}]`] = parseFloat(curr.value)
-        return acc;
-      },
-      {},
-    ),
-  }
+    ...conditions.initial_species_concentrations.reduce((acc, curr) => {
+      acc[`CONC.${curr.name} [${curr.units}]`] = parseFloat(curr.value);
+      return acc;
+    }, {}),
+  };
   conditions.initial_reactions.reduce((acc, curr) => {
     let reaction = mechanism.reactions.find((r) => r.id == curr.reactionId);
     let type = curr.type;
@@ -805,14 +802,17 @@ function translate_to_musicbox_conditions(conditions, mechanism) {
     let key = `${type}.${musica_name}.${units}`;
     acc[key] = curr.value;
     return acc;
-  }, initial_conditions)
+  }, initial_conditions);
 
-  let environmental_conditions = conditions.initial_environmental.reduce((acc, curr) => {
-    acc[`${curr.name}`] = {
-      [`initial value [${curr.units}]`]: parseFloat(curr.value)
-    }
-    return acc;
-  }, {});
+  let environmental_conditions = conditions.initial_environmental.reduce(
+    (acc, curr) => {
+      acc[`${curr.name}`] = {
+        [`initial value [${curr.units}]`]: parseFloat(curr.value),
+      };
+      return acc;
+    },
+    {},
+  );
 
   let musicbox_conditions = {
     "box model options": {
