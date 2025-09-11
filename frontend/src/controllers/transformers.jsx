@@ -403,7 +403,7 @@ function extract_conditions_from_example(config, mechanism) {
       return {
         id: uuidv4(),
         reactionId: reaction.id,
-        value: initial_conditions[key]["0"],
+        value: initial_conditions[key],
         type: type,
         units: units || default_units,
         suffix: "",
@@ -470,32 +470,32 @@ function translate_reactions_to_camp_config(config, species) {
     return reactants === undefined
       ? {}
       : reactants.reduce((acc, reactant) => {
-          const existingReactant = acc[reactant.name];
-          const incomingQty = reactant.qty || 1;
-          const qty = existingReactant
-            ? existingReactant.qty + incomingQty
-            : incomingQty;
-          acc[reactant.name] = {
-            qty: qty,
-          };
-          return acc;
-        }, {});
+        const existingReactant = acc[reactant.name];
+        const incomingQty = reactant.qty || 1;
+        const qty = existingReactant
+          ? existingReactant.qty + incomingQty
+          : incomingQty;
+        acc[reactant.name] = {
+          qty: qty,
+        };
+        return acc;
+      }, {});
   };
   const reduxProductsToCamp = (products) => {
     return products === undefined
       ? {}
       : products.reduce((acc, product) => {
-          const existingProduct = acc[product.name];
-          const incomingYield =
-            product.yield === undefined ? 1.0 : product.yield;
-          const product_yield = existingProduct
-            ? existingProduct.yield + incomingYield
-            : incomingYield;
-          acc[product.name] = {
-            yield: product_yield,
-          };
-          return acc;
-        }, {});
+        const existingProduct = acc[product.name];
+        const incomingYield =
+          product.yield === undefined ? 1.0 : product.yield;
+        const product_yield = existingProduct
+          ? existingProduct.yield + incomingYield
+          : incomingYield;
+        acc[product.name] = {
+          yield: product_yield,
+        };
+        return acc;
+      }, {});
   };
 
   let reactions = config.reactions.map((reaction) => {
@@ -774,12 +774,45 @@ function translate_to_camp_config(config) {
 }
 
 function translate_to_musicbox_conditions(conditions, mechanism) {
-  let intial_value_reducer = (acc, curr) => {
-    acc[curr.name] = {
-      [`initial value [${curr.units}]`]: parseFloat(curr.value),
-    };
+  let initial_conditions = {
+    ...conditions.initial_species_concentrations.reduce(
+      (acc, curr) => {
+        acc[`CONC.${curr.name} [${curr.units}]`] = parseFloat(curr.value)
+        return acc;
+      },
+      {},
+    ),
+  }
+  conditions.initial_reactions.reduce((acc, curr) => {
+    let reaction = mechanism.reactions.find((r) => r.id == curr.reactionId);
+    let type = curr.type;
+    let musica_name =
+      reaction.data.musica_name || ReactionTypes.shortName(reaction);
+    let units = curr.units;
+    // use the photolysis type to handle these conditions for both loss and emission
+    if (curr.type == "LOSS") {
+      type = "PHOTO";
+      musica_name = "LOSS_" + musica_name;
+      units = curr.units;
+    } else if (curr.type == "EMIS") {
+      type = "PHOTO";
+      musica_name = "EMIS_" + musica_name;
+      units = "s-1";
+    } else if (curr.type == "PHOT") {
+      type = "PHOTO";
+      units = "s-1";
+    }
+    let key = `${type}.${musica_name}.${units}`;
+    acc[key] = curr.value;
     return acc;
-  };
+  }, initial_conditions)
+
+  let environmental_conditions = conditions.initial_environmental.reduce((acc, curr) => {
+    acc[`${curr.name}`] = {
+      [`initial value [${curr.units}]`]: parseFloat(curr.value)
+    }
+    return acc;
+  }, {});
 
   let musicbox_conditions = {
     "box model options": {
@@ -791,42 +824,9 @@ function translate_to_musicbox_conditions(conditions, mechanism) {
       [`simulation length [${conditions.basic.simulation_time_units}]`]:
         conditions.basic.simulation_time,
     },
-    "chemical species": {
-      ...conditions.initial_species_concentrations.reduce(
-        intial_value_reducer,
-        {},
-      ),
-    },
-    "environmental conditions": {
-      ...conditions.initial_environmental.reduce(intial_value_reducer, {}),
-    },
+    "environmental conditions": environmental_conditions,
     "evolving conditions": conditions.evolving,
-    "initial conditions": {
-      ...conditions.initial_reactions.reduce((acc, curr) => {
-        let reaction = mechanism.reactions.find((r) => r.id == curr.reactionId);
-        let type = curr.type;
-        let musica_name =
-          reaction.data.musica_name || ReactionTypes.shortName(reaction);
-        let units = curr.units;
-        console.log(curr.type);
-        // use the photolysis type to handle these conditions for both loss and emission
-        if (curr.type == "LOSS") {
-          type = "PHOTO";
-          musica_name = "LOSS_" + musica_name;
-          units = curr.units;
-        } else if (curr.type == "EMIS") {
-          type = "PHOTO";
-          musica_name = "EMIS_" + musica_name;
-          units = "s-1";
-        } else if (curr.type == "PHOT") {
-          type = "PHOTO";
-          units = "s-1";
-        }
-        let key = `${type}.${musica_name}.${units}`;
-        acc[key] = curr.value;
-        return acc;
-      }, {}),
-    },
+    "initial conditions": initial_conditions,
     "model components": conditions.model_components,
   };
 

@@ -146,11 +146,11 @@ def load_configuration(
             pd.DataFrame(data).to_csv(csv_path, index=False)
             if keep_relative_paths:
                 config["conditions"]["evolving conditions"] = {
-                    "evolving_conditions.csv": {}
+                    "filepaths": ["evolving_conditions.csv"]
                 }
             else:
                 config["conditions"]["evolving conditions"] = {
-                    csv_path: {}
+                    "filepaths": [csv_path]
                 }
         else:
             del config["conditions"]["evolving conditions"]
@@ -167,11 +167,11 @@ def load_configuration(
         df.to_csv(csv_path, index=False)
         if keep_relative_paths:
             config["conditions"]["initial conditions"] = {
-                "initial_conditions.csv": {}
+                "filepaths": ["initial_conditions.csv"]
             }
         else:
             config["conditions"]["initial conditions"] = {
-                csv_path: {}
+                "filepaths": [csv_path]
             }
 
     # write the box model configuration

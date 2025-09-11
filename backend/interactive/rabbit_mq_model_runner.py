@@ -116,6 +116,7 @@ def run_request_callback(ch, method, properties, body):
     acknowledge_and_pause_consumer(ch, method)
     try:
         config = data["config"]
+        logging.info(f"configuration: {config}")
         load_configuration(session_id, config, keep_relative_paths=True)
         logging.info(f"Adding runner for session {session_id} to pool")
 
