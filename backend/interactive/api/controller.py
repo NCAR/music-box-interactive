@@ -65,7 +65,6 @@ def get_configuration_as_json(file_path):
     if not files:
         logging.error("No files in example foler")
         raise Http404("No files in example folder")
-    
 
     for file in files:
         if 'species.json' in file:
@@ -109,9 +108,11 @@ def get_configuration_as_json(file_path):
                     headers.append('ENV.pressure.Pa')
                 if music_box.evolving_conditions.conditions[0].temperature is not None:
                     headers.append('ENV.temperature.K')
-                headers.extend([f"{param}.s-1" for param in music_box.evolving_conditions.conditions[0].rate_parameters.keys()])
+                headers.extend(
+                    [f"{param}.s-1" for param in music_box.evolving_conditions.conditions[0].rate_parameters.keys()])
                 rows = []
-                for time, condition in zip(music_box.evolving_conditions.times, music_box.evolving_conditions.conditions):
+                for time, condition in zip(music_box.evolving_conditions.times,
+                                           music_box.evolving_conditions.conditions):
                     row = [time]
                     if condition.pressure is not None:
                         row.append(condition.pressure)
