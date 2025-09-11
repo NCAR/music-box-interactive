@@ -75,8 +75,15 @@ def get_configuration_as_json(file_path):
             with open(file, 'r') as contents:
                 mechanism['reactions'] = json.load(contents)
         if 'my_config.json' in file:
-            music_box = MusicBox()
-            music_box.loadJson(file)
+            try:
+                music_box = MusicBox()
+                music_box.loadJson(file)
+            except (FileNotFoundError, json.JSONDecodeError) as e:
+                logging.error(f"Error loading configuration file {file}: {e}")
+                raise Http404(f"Configuration file {file} is invalid or corrupted.")
+            except Exception as e:
+                logging.error(f"Unexpected error loading configuration file {file}: {e}")
+                raise Http404(f"Unexpected error loading configuration file {file}.")
 
             with open(file, 'r') as contents:
                 conditions = json.load(contents)
