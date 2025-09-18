@@ -69,6 +69,7 @@ function extract_mechanism_from_example(config) {
     return acc;
   }, []);
 
+  console.log(camp_reactions);
   const reactions = camp_reactions.map((reaction) => {
     let key =
       reaction.__music_box_type || reaction.music_box_type || reaction.type;
@@ -222,7 +223,7 @@ function extract_mechanism_from_example(config) {
               products: reaction["gas-phase products"],
             }),
             reaction_probability: reaction["reaction probability"] || 1.0,
-            musica_name: reaction["musica name"],
+            musica_name: reaction["MUSICA name"],
           },
         };
       }
@@ -643,13 +644,14 @@ function translate_reactions_to_camp_config(config, species) {
         break;
       }
       case ReactionTypes.SURFACE_REACTION: {
-        let { type, products, gas_phase_reactant, ...data } = reaction.data;
+        let { type, products, gas_phase_reactant, reaction_probability, musica_name, ...data } = reaction.data;
+        musica_name = musica_name || ReactionTypes.shortName(reaction);
         camp_reaction = {
           ...camp_reaction,
           ...data,
-          "gas-phase reactant": {
-            ...reduxReactantsToCamp([{ name: gas_phase_reactant, qty: 1 }]),
-          },
+          "reaction probability": reaction_probability,
+          "MUSICA name": musica_name,
+          "gas-phase reactant": gas_phase_reactant,
           "gas-phase products": {
             ...reduxProductsToCamp([...products, { name: irrSpecies }]),
           },
@@ -799,6 +801,10 @@ function translate_to_musicbox_conditions(conditions, mechanism) {
       type = "PHOTO";
       units = "s-1";
     }
+    else if (curr.type == "SURF") {
+      musica_name = musica_name + curr.suffix;
+    }
+
     let key = `${type}.${musica_name}.${units}`;
     acc[key] = curr.value;
     return acc;

@@ -4,9 +4,13 @@ ARG INSTALL_PyPartMC=false
 
 RUN dnf -y update \
     && dnf -y install \
-        gcc14 \
-        gcc14-c++ \
+        gcc \
+        gcc-c++ \
+        gfortran \
         git \
+        lapack-devel \
+        make \
+        netcdf-fortran-devel \
         python3 \
         python3-devel \
         python3-pip \
@@ -29,9 +33,6 @@ WORKDIR /music-box-interactive
 
 # Configure Poetry to create virtual environments in the project directory
 RUN poetry config virtualenvs.in-project true
-
-ENV CXX=g++-14
-ENV CC=gcc-14
 
 ENV CXXFLAGS="-Wno-error=redundant-move"
 RUN if [ "$INSTALL_PyPartMC" = "true" ]; then poetry install --all-extras; else poetry install; fi

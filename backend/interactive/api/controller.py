@@ -49,7 +49,7 @@ def load_example(example):
             break
 
     if not configuration:
-        logging.error(f"Example {example} not found")
+        logger.error(f"Example {example} not found")
         raise Http404(f"Example {example} not found")
     return get_configuration_as_json(os.path.dirname(configuration.path))
 
@@ -63,14 +63,16 @@ def get_configuration_as_json(file_path):
     files = [os.path.join(dp, f)
              for dp, _, fn in os.walk(file_path) for f in fn if '__MACOSX' not in dp]
     if not files:
-        logging.error("No files in example foler")
+        logger.error("No files in example folder")
         raise Http404("No files in example folder")
 
     for file in files:
+        logger.info(f"Processing file: {file}")
         if 'species.json' in file:
             with open(file, 'r') as contents:
                 mechanism['species'] = json.load(contents)
         if 'reactions.json' in file:
+            logger.info(f"Loading reactions from file: {file}")
             with open(file, 'r') as contents:
                 mechanism['reactions'] = json.load(contents)
         if 'my_config.json' in file:
@@ -78,10 +80,10 @@ def get_configuration_as_json(file_path):
                 music_box = MusicBox()
                 music_box.loadJson(file)
             except (FileNotFoundError, json.JSONDecodeError) as e:
-                logging.error(f"Error loading configuration file {file}: {e}")
+                logger.error(f"Error loading configuration file {file}: {e}")
                 raise Http404(f"Configuration file {file} is invalid or corrupted.")
             except Exception as e:
-                logging.error(f"Unexpected error loading configuration file {file}: {e}")
+                logger.error(f"Unexpected error loading configuration file {file}: {e}")
                 raise Http404(f"Unexpected error loading configuration file {file}.")
 
             with open(file, 'r') as contents:

@@ -25,7 +25,7 @@ const options = [
   },
   {
     displayName: "diffusion coefficient",
-    name: "diffusion coeff [m^2 s-1]",
+    name: "diffusion coefficient [m2 s-1]",
     dataType: "number",
     value: 0,
   },
