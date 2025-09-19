@@ -154,6 +154,9 @@ function EnhancedTableToolbar(props) {
 
 const ConditionTable = (props) => {
   const unsetNames = props.data.filter((row) => !row.name).length;
+  if (props.data.length > 0) {
+    console.log(props.data[0])
+  }
   const [rows, setRows] = useState(props.data);
   const [selected, setSelected] = useState([]);
   const [order, setOrder] = useState("asc");

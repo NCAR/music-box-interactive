@@ -19,9 +19,8 @@ from shared.configuration_utils import compress_configuration, \
     get_zip_file_path
 from partmc_model.partmc_utils import compress_partmc, get_partmc_zip_file_path
 from shared.rabbit_mq import publish_message
-from acom_music_box import Examples
 from api.request_models import Example
-from acom_music_box import MusicBox
+from acom_music_box import Examples, MusicBox
 
 logger = logging.getLogger(__name__)
 
@@ -100,7 +99,7 @@ def get_configuration_as_json(file_path):
             }
 
             conditions["initial conditions"] = {
-                f"{param}.s-1": float(val)
+                f"{param}": float(val)
                 for param, val in music_box.initial_conditions.rate_parameters.items()
             }
 
@@ -124,6 +123,8 @@ def get_configuration_as_json(file_path):
                     rows.append(row)
                 df = pd.DataFrame(rows, columns=headers)
                 conditions["evolving conditions"] = df.to_dict()
+
+    logger.info(f"number of reactions: {len(mechanism['reactions']['camp-data'][0]['reactions'])}")
 
     return conditions, filter_diagnostics(mechanism)
 

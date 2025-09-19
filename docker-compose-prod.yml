@@ -3,13 +3,13 @@ services:
     container_name: 'api-server'
     build: 
       context: .
-      dockerfile: ./docker/Dockerfile.api
+      dockerfile: ./backend/docker/Dockerfile
+      target: api-server
     ports:
       - 8000:8000
     env_file:
       - /home/shared/.env
-    entrypoint: ["poetry", "run", "python", "interactive/manage.py"]
-    command: ["runserver_plus", "--cert-file", "/certificates/acom.ucar.edu.crt", "--key-file", "/certificates/acom.ucar.edu.key", "0.0.0.0:8000"]
+    command: ["python3", "-u", "interactive/manage.py", "runserver_plus", "--cert-file", "/certificates/acom.ucar.edu.crt", "--key-file", "/certificates/acom.ucar.edu.key", "0.0.0.0:8000"]
     volumes:
       - db-data:/music-box-interactive/interactive
       - /etc/pki/:/certificates
@@ -24,7 +24,8 @@ services:
   model-runner:
     build: 
       context: .
-      dockerfile: ./docker/Dockerfile.model_runner
+      dockerfile: ./backend/docker/Dockerfile
+      target: model-runner
     env_file:
       - /home/shared/.env
     restart: on-failure

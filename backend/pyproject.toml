@@ -1,39 +1,41 @@
-[tool.poetry]
-name = "music_box_interactive_api"
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "music_box_interactive"
 version = "3.3.3"
 description = "The server component of MusicBox Interactive"
 authors = [
-  "ACOM MUSICA Developers <musica-support@ucar.edu>"
+  { name = "ACOM MUSICA Developers", email = "musica-support@ucar.edu" },
 ]
-package-mode = false
 license = "Apache-2.0"
+requires-python = ">=3.9"
+dependencies = [
+  "Django>=4.0,<5.0",
+  "django-cors-headers>=3.13",
+  "django-extensions>=3.2",
+  "django-prometheus>=2.1",
+  "drf-yasg>=1.20",
+  "fjson>=0.1.6",
+  "numpy>=2.0",
+  "pandas>=2.0",
+  "pika>=1.2",
+  "pyOpenSSL>=22.0",
+  "scipy>=1.7",
+  "setuptools>=70.0",
+  "Werkzeug>=2.0",
+  "acom_music_box @ git+https://github.com/NCAR/music-box.git@9c67eaf2c47acba8f68c223bc83117b9755d6849",
+]
 
-[tool.poetry.dependencies]
-Django = "^4.0"
-django-cors-headers = "^3.13"
-django-extensions = "^3.2"
-django-prometheus = "^2.1"
-drf-yasg = "^1.20"
-fjson = "^0.1.6"
-numpy = "^2.0"
-pandas = "^2.0"
-pika = "^1.2"
-pyOpenSSL = "^22.0"
-python = "^3.9"
-scipy = "^1.7"
-setuptools = "^70.0"
-Werkzeug = "^2.0"
-acom_music_box = { git = "https://github.com/NCAR/music-box.git", rev = "fa9313db74835c6921f895a4ce7ee79826753c0a" }
+[project.optional-dependencies]
+partmc = [
+  "pypartmc>=1.3.3"
+]
+dev = [
+  "pytest>=7.0", 
+  "pytest-django>=4.5"
+]
 
-pypartmc = { version = "^1.3.3", optional = true }
-
-[tool.poetry.dev-dependencies]
-pytest = "^7.0"
-pytest-django = "^4.5"
-
-[tool.poetry.extras]
-partmc = ["pypartmc"]
-
-[build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+[tool.setuptools]
+packages = ["interactive"]

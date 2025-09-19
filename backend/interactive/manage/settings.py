@@ -209,6 +209,11 @@ LOGGING = {
         'pika': {
             'propagate': False
         },
+        'acom_music_box': {
+            'handlers': ['console'],
+            'level': 'WARNING',
+            'propagate': False
+        },
         '': {  # Root logger
             'handlers': ['console'],
             'level': 'DEBUG',

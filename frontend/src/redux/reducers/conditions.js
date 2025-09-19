@@ -76,6 +76,7 @@ export const conditionsReducer = (state = initialState, action) => {
         name: "",
         suffix: "",
       };
+      console.log("ADDING CONDITION", condition);
       const conditionId = condition.id || uuidv4();
       const otherConditions = state[schema.classKey].filter((condition) => {
         return condition.id !== conditionId;

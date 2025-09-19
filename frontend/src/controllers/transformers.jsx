@@ -34,6 +34,7 @@ function extract_mechanism_from_example(config) {
     let properties = [];
     if (species.type === "CHEM_SPEC") {
       Object.keys(species).forEach((key) => {
+        console.log(`KEY: ${key}`);
         switch (key) {
           case "tracer type": {
             properties.push({
@@ -49,9 +50,16 @@ function extract_mechanism_from_example(config) {
             });
             break;
           }
-          case "molecular weight": {
+          case "molecular weight [kg mol-1]": {
             properties.push({
               name: "molecular weight [kg mol-1]",
+              value: species[key],
+            });
+            break;
+          }
+          case "diffusion coefficient [m2 s-1]": {
+            properties.push({
+              name: "diffusion coefficient [m2 s-1]",
               value: species[key],
             });
             break;
@@ -69,7 +77,6 @@ function extract_mechanism_from_example(config) {
     return acc;
   }, []);
 
-  console.log(camp_reactions);
   const reactions = camp_reactions.map((reaction) => {
     let key =
       reaction.__music_box_type || reaction.music_box_type || reaction.type;
@@ -369,11 +376,32 @@ function extract_conditions_from_example(config, mechanism) {
         type = ReactionTypes.FIRST_ORDER_LOSS;
         identifier = identifier.replace(/LOSS_/, "");
       }
+      let suffix = "";
+      if (type == "SURF") {
+        type = ReactionTypes.SURFACE_REACTION;
+        // surface reactions are special because they have two conditions, and the last place of the key which
+        // is usually the units is the name of the condition followed by the units in brackets. The names of these 
+        // are what we call a suffix
+        // extract the units from within the [] brackets, get the name of the property from everything before the brackets
+        let loc = units.indexOf(" [");
+        if (loc !== -1) {
+          suffix = `.${units.replace(units_re, "").trim()}`;
+        } else {
+          console.warn(
+            `No units found for surface reaction condition ${key}, using default (# m-3).`,
+          );
+        }
+        const matches = units_re.exec(units);
+        if (matches) {
+          units = matches[1];
+        }
+      }
       const reaction = reactions.find((reaction) => {
         return (
           reaction.data.musica_name == identifier && reaction.data.type == type
         );
       });
+      let name = reaction.data.musica_name || ReactionTypes.shortName(reaction);
       let default_units = "";
       /*
        * Emissions and loss are modelled as photolysis reactions in musicbox. This is because
@@ -401,15 +429,28 @@ function extract_conditions_from_example(config, mechanism) {
           break;
         }
       }
-      return {
+      /*
+        {
+          "reactionId": "a265baf0-4131-4f5f-a73c-31c50ef6949d",
+          "value": 0,
+          "units": "",
+          "name": "",
+          "suffix": ".particle number concentration",
+          "id": "50df475d-1d82-49dd-920b-b1153ce41c19",
+          "type": "SURFACE",
+          "possibleUnits": []
+        },
+      */
+      let thing = {
         id: uuidv4(),
         reactionId: reaction.id,
         value: initial_conditions[key],
         type: type,
         units: units || default_units,
-        suffix: "",
-        name: reaction.data.musica_name || ReactionTypes.shortName(reaction),
+        suffix: suffix,
+        name: name
       };
+      return thing;
     });
   }
 
