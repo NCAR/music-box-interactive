@@ -34,7 +34,6 @@ function extract_mechanism_from_example(config) {
     let properties = [];
     if (species.type === "CHEM_SPEC") {
       Object.keys(species).forEach((key) => {
-        console.log(`KEY: ${key}`);
         switch (key) {
           case "tracer type": {
             properties.push({
