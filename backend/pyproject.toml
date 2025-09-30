@@ -25,7 +25,7 @@ dependencies = [
   "scipy>=1.7",
   "setuptools>=70.0",
   "Werkzeug>=2.0",
-  "acom_music_box @ git+https://github.com/NCAR/music-box.git@9c67eaf2c47acba8f68c223bc83117b9755d6849",
+  "acom_music_box @ git+https://github.com/NCAR/music-box.git@56e90e0cfd32f2941a617f963bbe2d16417db7e0",
 ]
 
 [project.optional-dependencies]
