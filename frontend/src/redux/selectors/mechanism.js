@@ -97,14 +97,14 @@ export const getUserDefinedRatesIds = (store) => {
             type: reaction.data.type,
             name: reaction.data.musica_name || reactionToLabel(reaction),
             suffix: ".particle number concentration",
-            possibleUnits: "# m-3"
+            possibleUnits: "# m-3",
           },
           {
             id: reaction.id,
             type: reaction.data.type,
             name: reaction.data.musica_name || reactionToLabel(reaction),
             suffix: ".effective radius",
-            possibleUnits: "m"
+            possibleUnits: "m",
           },
         );
       } else {

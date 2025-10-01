@@ -435,7 +435,7 @@ function extract_conditions_from_example(config, mechanism) {
         type: type,
         units: units || default_units,
         suffix: suffix,
-        name: name
+        name: name,
       };
     });
   }
@@ -671,7 +671,14 @@ function translate_reactions_to_camp_config(config, species) {
         break;
       }
       case ReactionTypes.SURFACE_REACTION: {
-        let { type, products, gas_phase_reactant, reaction_probability, musica_name, ...data } = reaction.data;
+        let {
+          type,
+          products,
+          gas_phase_reactant,
+          reaction_probability,
+          musica_name,
+          ...data
+        } = reaction.data;
         musica_name = musica_name || ReactionTypes.shortName(reaction);
         camp_reaction = {
           ...camp_reaction,
@@ -827,8 +834,7 @@ function translate_to_musicbox_conditions(conditions, mechanism) {
     } else if (curr.type == "PHOT") {
       type = "PHOTO";
       units = "s-1";
-    }
-    else if (curr.type == "SURF") {
+    } else if (curr.type == "SURF") {
       musica_name = musica_name + curr.suffix;
     }
 
