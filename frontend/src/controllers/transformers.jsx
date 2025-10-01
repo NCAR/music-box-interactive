@@ -378,9 +378,9 @@ function extract_conditions_from_example(config, mechanism) {
       let suffix = "";
       if (type == "SURF") {
         type = ReactionTypes.SURFACE_REACTION;
-        // surface reactions are special because they have two conditions, and the last place of the key which
-        // is usually the units is the name of the condition followed by the units in brackets. The names of these 
-        // are what we call a suffix
+        // Surface reactions are special because they have two conditions. In these cases, the last part of the key,
+        // which is usually the units, is instead the name of the condition followed by the units in brackets.
+        // We refer to this name as a "suffix".
         // extract the units from within the [] brackets, get the name of the property from everything before the brackets
         let loc = units.indexOf(" [");
         if (loc !== -1) {
