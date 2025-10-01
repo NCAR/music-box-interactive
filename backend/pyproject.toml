@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "music_box_interactive"
-version = "3.3.3"
+version = "3.4.0"
 description = "The server component of MusicBox Interactive"
 authors = [
   { name = "ACOM MUSICA Developers", email = "musica-support@ucar.edu" },
@@ -25,7 +25,7 @@ dependencies = [
   "scipy>=1.7",
   "setuptools>=70.0",
   "Werkzeug>=2.0",
-  "acom_music_box @ git+https://github.com/NCAR/music-box.git@56e90e0cfd32f2941a617f963bbe2d16417db7e0",
+  "acom_music_box>=2.1.0"
 ]
 
 [project.optional-dependencies]

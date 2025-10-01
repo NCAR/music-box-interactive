@@ -428,19 +428,7 @@ function extract_conditions_from_example(config, mechanism) {
           break;
         }
       }
-      /*
-        {
-          "reactionId": "a265baf0-4131-4f5f-a73c-31c50ef6949d",
-          "value": 0,
-          "units": "",
-          "name": "",
-          "suffix": ".particle number concentration",
-          "id": "50df475d-1d82-49dd-920b-b1153ce41c19",
-          "type": "SURFACE",
-          "possibleUnits": []
-        },
-      */
-      let thing = {
+      return {
         id: uuidv4(),
         reactionId: reaction.id,
         value: initial_conditions[key],
@@ -449,7 +437,6 @@ function extract_conditions_from_example(config, mechanism) {
         suffix: suffix,
         name: name
       };
-      return thing;
     });
   }
 
