@@ -16,7 +16,7 @@ export const getConditions = (store, schema) => {
               name:
                 reaction.data.musica_name || ReactionTypes.shortName(reaction),
               suffix: ".particle number concentration",
-              possibleUnits: ["# m-3"]
+              possibleUnits: ["# m-3"],
             },
             {
               id: reaction.id,
@@ -24,7 +24,7 @@ export const getConditions = (store, schema) => {
               name:
                 reaction.data.musica_name || ReactionTypes.shortName(reaction),
               suffix: ".effective radius",
-              possibleUnits: ["m"]
+              possibleUnits: ["m"],
             },
           );
         } else {
