@@ -191,8 +191,32 @@ LOGGING = {
             'level': 'DEBUG',
             'propagate': False
         },
+        'api.controller': {
+            'handlers': ['console'],
+            'level': 'DEBUG',
+            'propagate': False
+        },
+        'shared': {
+            'handlers': ['console'],
+            'level': 'DEBUG',
+            'propagate': False
+        },
+        'partmc_model': {
+            'handlers': ['console'],
+            'level': 'DEBUG',
+            'propagate': False
+        },
         'pika': {
             'propagate': False
+        },
+        'acom_music_box': {
+            'handlers': ['console'],
+            'level': 'WARNING',
+            'propagate': False
+        },
+        '': {  # Root logger
+            'handlers': ['console'],
+            'level': 'DEBUG',
         }
     },
 }

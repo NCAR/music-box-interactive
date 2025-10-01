@@ -124,12 +124,10 @@ test("Test Surface Reaction is Translated Correctly", async () => {
   const reaction = reactions[0];
 
   expect(reaction.type).toEqual("SURFACE");
-  expect(reaction.reaction_probability).toEqual(0.3);
-  expect(reaction.musica_name).toEqual("test_surface_reaction");
+  expect(reaction["reaction probability"]).toEqual(0.3);
+  expect(reaction["MUSICA name"]).toEqual("test_surface_reaction");
   expect(reaction["gas-phase reactant"]).toBeDefined();
-  expect(reaction["gas-phase reactant"]["A"]).toBeDefined();
-  expect(reaction["gas-phase reactant"]["A"]["qty"]).toBeDefined();
-  expect(reaction["gas-phase reactant"]["A"]["qty"]).toEqual(1);
+  expect(reaction["gas-phase reactant"]).toEqual("A");
 
   expect(reaction["gas-phase products"]).toBeDefined();
   expect(reaction["gas-phase products"]["B"]).toBeDefined();
@@ -217,7 +215,7 @@ test("Test Surface Reaction is Extracted From Configuration Correctly", async ()
                 type: "SURFACE",
                 "gas-phase reactant": "A",
                 "reaction probability": 0.3,
-                "musica name": "test_surface_reaction",
+                "MUSICA name": "test_surface_reaction",
                 "gas-phase products": {
                   B: {},
                   C: {},

@@ -15,16 +15,16 @@ export const getConditions = (store, schema) => {
               type: reaction.tablePrefix,
               name:
                 reaction.data.musica_name || ReactionTypes.shortName(reaction),
-              suffix: ".number",
-              possibleUnits: reaction.possibleUnits,
+              suffix: ".particle number concentration",
+              possibleUnits: ["# m-3"]
             },
             {
               id: reaction.id,
               type: reaction.tablePrefix,
               name:
                 reaction.data.musica_name || ReactionTypes.shortName(reaction),
-              suffix: ".radius",
-              possibleUnits: reaction.possibleUnits,
+              suffix: ".effective radius",
+              possibleUnits: ["m"]
             },
           );
         } else {
