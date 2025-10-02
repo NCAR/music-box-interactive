@@ -1,0 +1,54 @@
+@import "./global.css";
+
+.flow_area {
+  background-color: white;
+  
+
+  text-shadow: -3px -3px 5px white, 3px -3px 5px white, -3px 3px 5px white, 3px 3px 5px white;
+  border-radius: 8px;
+  box-shadow: "0px 0px 10px #c6c6c6";
+  height: 100vh;
+    max-width: 100%;
+}
+@media (min-width: 768px){
+  .flow_area {
+    height:100% ;
+  }
+}
+.species {
+  stroke:var(--ncar-color-primary-dark-blue);
+  fill:var(--ncar-color-primary-dark-blue);
+  r:8;
+}
+
+.reaction {
+  stroke:var(--ncar-color-primary-light-green);
+  fill:var(--ncar-color-primary-light-green);
+  r:8;
+}
+
+.flux {
+  stroke:var(--ncar-color-primary-dark-green);
+  fill:var(--ncar-color-primary-dark-green);
+  stroke-width: 1px;
+}
+
+.muted {
+  stroke:var(--ncar-color-text-light);
+  fill:var(--ncar-color-text-light);
+  stroke-width: 1px;
+}
+
+.reaction_highlighted {
+  stroke:var(--ncar-color-text-highlight-green);
+  fill:var(--ncar-color-text-highlight-green);
+}
+
+.tooltip {
+  opacity: 0;
+  background-color: white;
+  border: solid;
+  border-width: 2px;
+  border-radius: 5px;
+  padding: 5px;
+}

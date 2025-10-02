@@ -1,0 +1,41 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "music_box_interactive"
+version = "3.4.0"
+description = "The server component of MusicBox Interactive"
+authors = [
+  { name = "ACOM MUSICA Developers", email = "musica-support@ucar.edu" },
+]
+license = "Apache-2.0"
+requires-python = ">=3.9"
+dependencies = [
+  "Django>=4.0,<5.0",
+  "django-cors-headers>=3.13",
+  "django-extensions>=3.2",
+  "django-prometheus>=2.1",
+  "drf-yasg>=1.20",
+  "fjson>=0.1.6",
+  "numpy>=2.0",
+  "pandas>=2.0",
+  "pika>=1.2",
+  "pyOpenSSL>=22.0",
+  "scipy>=1.7",
+  "setuptools>=70.0",
+  "Werkzeug>=2.0",
+  "acom_music_box>=2.1.0"
+]
+
+[project.optional-dependencies]
+partmc = [
+  "pypartmc>=1.3.3"
+]
+dev = [
+  "pytest>=7.0", 
+  "pytest-django>=4.5"
+]
+
+[tool.setuptools]
+packages = ["interactive"]

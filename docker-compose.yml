@@ -3,26 +3,27 @@ services:
     container_name: 'api-server'
     build: 
       context: .
-      dockerfile: ./docker/Dockerfile.api
+      dockerfile: ./backend/docker/Dockerfile
+      target: api-server
       args:
         - INSTALL_PyPartMC=false
     ports:
       - 8000:8000
     env_file:
-      - ./.env
-    entrypoint: ["poetry", "run", "python", "interactive/manage.py"]
-    command: ["runserver_plus", "0.0.0.0:8000"]
+      - ./backend/.env
     volumes:
       - db-data:/music-box-interactive/interactive
       - partmc-data:/music-box-interactive/interactive/partmc-volume
+    command: ["python3", "-u", "interactive/manage.py", "runserver_plus", "0.0.0.0:8000"]
   model-runner:
     build: 
       context: .
-      dockerfile: ./docker/Dockerfile.model_runner
+      dockerfile: ./backend/docker/Dockerfile
+      target: model-runner
       args:
         - INSTALL_PyPartMC=false
     env_file:
-      - ./.env
+      - ./backend/.env
     depends_on:
       - rabbitmq
     restart: on-failure
@@ -34,6 +35,7 @@ services:
     volumes:
       - partmc-data:/partmc/partmc-volume
       - db-data:/music-box-interactive/interactive
+    command: ["python3", "-u", "/music-box-interactive/interactive/rabbit_mq_model_runner.py"]
   rabbitmq:
     container_name: 'rabbitmq'
     image: rabbitmq:3.11-management
@@ -48,6 +50,16 @@ services:
       interval: 5s
       timeout: 15s
       retries: 1
+
+  frontend:
+    container_name: frontend
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "5173:5173"
+    working_dir: /MusicBoxInteractiveFrontend
+    command: ["vite", "--host"]
 volumes:
   db-data:
   partmc-data:

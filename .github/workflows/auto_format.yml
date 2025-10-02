@@ -1,0 +1,33 @@
+name: Auto format python code with PEP8 and javascript code with prettier
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  autoFormat:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install autopep8
+        working-directory: ./backend
+        run: pip install autopep8
+      - name: Run autopep8
+        working-directory: ./backend
+        run: autopep8 --recursive --in-place --aggressive --max-line-length 120 .      
+      - name: Install packages
+        working-directory: ./frontend
+        run: npm install
+      - name: Format code
+        working-directory: ./frontend
+        run: npm run format      
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: auto format action fixes
+          title: Fixes by autopep8 and prettier action
+          body: This is an auto-generated PR with fixes by autopep8 and prettier.
+          branch: autoformat-patches

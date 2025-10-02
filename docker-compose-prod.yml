@@ -3,13 +3,13 @@ services:
     container_name: 'api-server'
     build: 
       context: .
-      dockerfile: ./docker/Dockerfile.api
+      dockerfile: ./backend/docker/Dockerfile
+      target: api-server
     ports:
       - 8000:8000
     env_file:
       - /home/shared/.env
-    entrypoint: ["poetry", "run", "python", "interactive/manage.py"]
-    command: ["runserver_plus", "--cert-file", "/certificates/acom.ucar.edu.crt", "--key-file", "/certificates/acom.ucar.edu.key", "0.0.0.0:8000"]
+    command: ["python3", "-u", "interactive/manage.py", "runserver_plus", "--cert-file", "/certificates/acom.ucar.edu.crt", "--key-file", "/certificates/acom.ucar.edu.key", "0.0.0.0:8000"]
     volumes:
       - db-data:/music-box-interactive/interactive
       - /etc/pki/:/certificates
@@ -24,7 +24,8 @@ services:
   model-runner:
     build: 
       context: .
-      dockerfile: ./docker/Dockerfile.model_runner
+      dockerfile: ./backend/docker/Dockerfile
+      target: model-runner
     env_file:
       - /home/shared/.env
     restart: on-failure
@@ -40,6 +41,15 @@ services:
       options:
         max-size: "10m"    # Maximum size of each log file, e.g., 10 megabytes
         max-file: "5"      # Maximum number of log files to retain
+  frontend:
+    container_name: frontend
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "5173:5173"
+    working_dir: /MusicBoxInteractiveFrontend
+    command: ["vite", "--host"]
 volumes:
   db-data:
   # partmc-data:
