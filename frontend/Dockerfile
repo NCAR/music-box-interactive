@@ -16,6 +16,9 @@ RUN rm -rf node_modules package-lock.json
 # Install dependencies
 RUN npm install
 
+# Build the project
+RUN npm run build
+
 # Expose Vite dev server port
 EXPOSE 5173
 
