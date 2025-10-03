@@ -13,7 +13,6 @@ services:
     volumes:
       - db-data:/music-box-interactive/interactive
       - /etc/pki/:/certificates
-      # - partmc-data:/music-box-interactive/interactive/partmc-volume
     network_mode: "host"
     restart: on-failure
     logging:
@@ -33,7 +32,6 @@ services:
       mode: replicated
       replicas: 6
     volumes:
-      # - partmc-data:/partmc/partmc-volume
       - db-data:/music-box-interactive/interactive
     network_mode: "host"
     logging:
@@ -41,14 +39,5 @@ services:
       options:
         max-size: "10m"    # Maximum size of each log file, e.g., 10 megabytes
         max-file: "5"      # Maximum number of log files to retain
-  frontend:
-    container_name: frontend
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
-    ports:
-      - "5173:5173"
-    working_dir: /MusicBoxInteractiveFrontend
-    command: ["vite", "--host"]
 volumes:
   db-data:
