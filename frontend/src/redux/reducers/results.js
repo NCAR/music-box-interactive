@@ -42,7 +42,7 @@ export const resultsReducer = (state = initialState, action) => {
       const irr_keys = Object.keys(data).filter((key) => key.includes("irr__"));
       const irr_data = {};
       irr_keys.forEach((key) => {
-        irr_data[key.substring(10).replace(".mol m-3", "")] = data[key]; // trims `CONC.irr__`
+        irr_data[key.substring(10).replace(".mol m-3", "")] = data[key]; // trims `CONC.irr__` prefix and removes units
       });
 
       // get the species concentrations
