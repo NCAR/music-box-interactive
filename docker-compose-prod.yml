@@ -31,6 +31,7 @@ services:
     deploy:
       mode: replicated
       replicas: 6
+    command: ["python3", "-u", "/music-box-interactive/interactive/rabbit_mq_model_runner.py"]
     volumes:
       - db-data:/music-box-interactive/interactive
     network_mode: "host"
