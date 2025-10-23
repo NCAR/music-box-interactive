@@ -94,20 +94,14 @@ export const getPossibleConditions = (store) => {
         return reaction.isUserDefined && reaction.data.musica_name.length > 0;
       })
       .map((reaction) => {
+        const name = `${reaction.tablePrefix}.${reaction.data.musica_name} [${reaction.possibleUnits[0]}]`;
+        let tableName = `${reaction.data.musica_name}.s-1`;
+        if (reaction.tablePrefix === "PHOT") {
+          tableName = `PHOTO.${tableName}`;
+        }
         return {
-          name:
-            reaction.tablePrefix +
-            "." +
-            reaction.data.musica_name +
-            " [" +
-            reaction.possibleUnits[0] +
-            "]",
-          tableName:
-            (reaction.tablePrefix === "PHOT"
-              ? "PHOT."
-              : `PHOT.${reaction.tablePrefix}_`) +
-            reaction.data.musica_name +
-            ".s-1",
+          name: name,
+          tableName: tableName,
         };
       }),
   ];
