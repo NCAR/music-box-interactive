@@ -3,13 +3,13 @@ import * as d3 from "d3";
 
 const LinePlot = ({
   data,
-  label,
-  units,
-  labelFontSize,
-  tickFontSize,
-  toolTipFontSize,
-  height,
-  precision,
+  label = "",
+  units = "",
+  labelFontSize = 16,
+  tickFontSize = 14,
+  toolTipFontSize = 18,
+  height = 400,
+  precision = 3,
   setActiveIndex,
   activeIndex,
 }) => {
@@ -226,16 +226,6 @@ const LinePlot = ({
       <svg ref={svgRef} />
     </div>
   );
-};
-
-LinePlot.defaultProps = {
-  label: "",
-  units: "",
-  labelFontSize: 16,
-  tickFontSize: 14,
-  toolTipFontSize: 18,
-  height: 400,
-  precision: 3,
 };
 
 export default LinePlot;
