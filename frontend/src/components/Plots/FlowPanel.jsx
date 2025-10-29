@@ -278,15 +278,15 @@ function FlowPanel(props) {
                       e.preventDefault(); // prevents this list item from changing the URL to add a query parameter with this element's name which would cause a re-render
                       elem.isSelected
                         ? props.deselectSpecies(
-                            elem.name,
-                            props.reactions,
-                            props.results,
-                          )
+                          elem.name,
+                          props.reactions,
+                          props.results,
+                        )
                         : props.selectSpecies(
-                            elem.name,
-                            props.reactions,
-                            props.results,
-                          );
+                          elem.name,
+                          props.reactions,
+                          props.results,
+                        );
                     }}
                   >
                     <span className="species-select-list-item">
@@ -351,16 +351,16 @@ const mapStateToProps = (state) => {
   const fluxMax = Math.max(...links.map((link) => link.flux));
   let fluxValues = isLogScale
     ? Array.from({ length: 1000 }, (val, idx) =>
-        Math.exp(
-          ((Math.log(fluxMax) - Math.log(Math.max(fluxMin, 1.0e-60))) / 1000) *
-            idx +
-            Math.log(Math.max(fluxMin, 1.0e-60)),
-        ),
-      )
+      Math.exp(
+        ((Math.log(fluxMax) - Math.log(Math.max(fluxMin, 1.0e-60))) / 1000) *
+        idx +
+        Math.log(Math.max(fluxMin, 1.0e-60)),
+      ),
+    )
     : Array.from(
-        { length: 1000 },
-        (val, idx) => fluxMin + ((fluxMax - fluxMin) / 1000) * idx,
-      );
+      { length: 1000 },
+      (val, idx) => fluxMin + ((fluxMax - fluxMin) / 1000) * idx,
+    );
   fluxValues[0] = fluxMin;
   fluxValues[fluxValues.length - 1] = fluxMax;
   let fluxRangeStart = getFlowFluxRangeStart(state);
@@ -389,12 +389,16 @@ const mapStateToProps = (state) => {
     timeSteps: timeSteps,
     timeRangeStartIndex: startTimeIndex,
     timeRangeEndIndex: endTimeIndex,
-    localTimeRangeStart: localTimeStart
+    localTimeRangeStart: localTimeStart !== undefined
       ? localTimeStart
-      : startTime
+      : startTime !== undefined
         ? startTime
         : 0,
-    localTimeRangeEnd: localTimeEnd ? localTimeEnd : endTime ? endTime : 0,
+    localTimeRangeEnd: localTimeEnd !== undefined
+      ? localTimeEnd
+      : endTime !== undefined
+        ? endTime
+        : 0,
     fluxMin: fluxValues[0],
     fluxMax: fluxValues[fluxValues.length - 1],
     fluxValues: fluxValues,
@@ -411,8 +415,8 @@ const mapStateToProps = (state) => {
     }, 0),
     fluxRangeStart: fluxRangeStart,
     fluxRangeEnd: fluxRangeEnd,
-    localFluxRangeStart: getFlowLocalFluxRangeStart(state),
-    localFluxRangeEnd: getFlowLocalFluxRangeEnd(state),
+    localFluxRangeStart: getFlowLocalFluxRangeStart(state) ?? fluxRangeStart,
+    localFluxRangeEnd: getFlowLocalFluxRangeEnd(state) ?? fluxRangeEnd,
   };
 };
 

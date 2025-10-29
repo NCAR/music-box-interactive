@@ -98,13 +98,13 @@ function FlowGraph({ nodes, links, fluxRange }) {
           return (
             ((Math.log(d.flux) - Math.log(fluxRange.start)) /
               (Math.log(fluxRange.end) - Math.log(fluxRange.start))) *
-              fluxRange.maxArrowWidth +
+            fluxRange.maxArrowWidth +
             0.5
           );
         } else {
           return (
             ((d.flux - fluxRange.start) / (fluxRange.end - fluxRange.start)) *
-              fluxRange.maxArrowWidth +
+            fluxRange.maxArrowWidth +
             0.5
           );
         }
@@ -266,8 +266,8 @@ function FlowGraph({ nodes, links, fluxRange }) {
 
   return (
     <svg id="flow-diagram" ref={ref}>
-      <g class="graph" />
-      <g class="info" />
+      <g className="graph" />
+      <g className="info" />
     </svg>
   );
 }
