@@ -63,6 +63,13 @@ function extract_mechanism_from_example(config) {
             });
             break;
           }
+          case "__description": {
+            properties.push({
+              name: "description",
+              value: species[key],
+            });
+            break;
+          }
           default:
             break;
         }
