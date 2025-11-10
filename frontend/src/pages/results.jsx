@@ -192,7 +192,7 @@ const Results = ({ runStatus, error }) => {
             case RunStatus.DONE:
               return <ResultsDone />;
             case RunStatus.ERROR:
-              return <ResultsError errorMessage={error.message} />;
+              return <ResultsError errorMessage={error} />;
             case RunStatus.WAITING:
               return <ResultsNotStarted />;
             case RunStatus.NOT_FOUND:

@@ -137,9 +137,7 @@ def run_request_callback(ch, method, properties, body):
             run_music_box(session_id)
 
     except Exception as e:
-        body = {"error.json": json.dumps(
-            {'message': str(e)}), "session_id": session_id}
-        set_model_run_status(session_id, RunStatus.ERROR.value, error=body)
+        set_model_run_status(session_id, RunStatus.ERROR.value, error=str(e))
         logging.exception('Setting up run failed')
 
     logging.debug(f"Resuming consumer for session {session_id} and acknowledging message")
