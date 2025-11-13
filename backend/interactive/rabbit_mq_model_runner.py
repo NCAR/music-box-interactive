@@ -63,7 +63,7 @@ def music_box_exited_handler(session_id, output_directory):
     shutil.rmtree(output_directory)
 
     if exception_message is not None:
-        error = json.dumps({'message': exception_message})
+        error = exception_message
 
     set_model_run_status(session_id, status, error=error, output=output)
 
@@ -101,7 +101,7 @@ def partmc_exited_callback(session_id, future):
             exception_message = "No output files found"
 
     if exception_message is not None:
-        error = json.dumps({'message': exception_message})
+        error = exception_message
 
     set_model_run_status(session_id, status, error=error, partmc_output_path=partmc_output_path)
 
@@ -137,9 +137,7 @@ def run_request_callback(ch, method, properties, body):
             run_music_box(session_id)
 
     except Exception as e:
-        body = {"error.json": json.dumps(
-            {'message': str(e)}), "session_id": session_id}
-        set_model_run_status(session_id, RunStatus.ERROR.value, error=body)
+        set_model_run_status(session_id, RunStatus.ERROR.value, error=str(e))
         logging.exception('Setting up run failed')
 
     logging.debug(f"Resuming consumer for session {session_id} and acknowledging message")

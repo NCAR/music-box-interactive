@@ -63,6 +63,13 @@ function extract_mechanism_from_example(config) {
             });
             break;
           }
+          case "__description": {
+            properties.push({
+              name: "description",
+              value: species[key],
+            });
+            break;
+          }
           default:
             break;
         }
@@ -774,6 +781,9 @@ function translate_to_camp_config(config) {
             break;
           case "fixed concentration":
             camp_species["tracer type"] = property.value;
+            break;
+          case "description":
+            camp_species["__description"] = property.value;
             break;
           default:
             camp_species[property.name] = property.value;
