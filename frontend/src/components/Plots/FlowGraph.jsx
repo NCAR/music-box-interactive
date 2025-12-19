@@ -266,8 +266,8 @@ function FlowGraph({ nodes, links, fluxRange }) {
 
   return (
     <svg id="flow-diagram" ref={ref}>
-      <g class="graph" />
-      <g class="info" />
+      <g className="graph" />
+      <g className="info" />
     </svg>
   );
 }

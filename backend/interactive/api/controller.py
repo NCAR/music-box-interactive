@@ -214,13 +214,23 @@ def create_model_run(uid):
 # get status of a run
 def get_run_status(uid):
     error = {}
+    model = None
+    status = RunStatus.NOT_FOUND
     try:
         model = get_model_run(uid)
-        logger.debug(f"model: {model} | {model.status}")
-        status = RunStatus(model.status)
-        if status == RunStatus.ERROR:
-            error = json.loads(model.results['error'])
     except Exception:
         status = RunStatus.NOT_FOUND
         logger.info(f"[{uid}] model run not found for user")
+
+    if model:
+        logger.debug(f"model: {model} | {model.status}")
+        status = RunStatus(model.status)
+
+    if status == RunStatus.ERROR:
+        try:
+            logger.debug(f"model error: {model.results['error']}")
+            error = model.results['error']
+        except Exception as e:
+            logger.error(f"Error retrieving error message: {e}")
+
     return {'status': status, 'error': error}

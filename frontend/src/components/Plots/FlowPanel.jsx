@@ -389,12 +389,18 @@ const mapStateToProps = (state) => {
     timeSteps: timeSteps,
     timeRangeStartIndex: startTimeIndex,
     timeRangeEndIndex: endTimeIndex,
-    localTimeRangeStart: localTimeStart
-      ? localTimeStart
-      : startTime
-        ? startTime
-        : 0,
-    localTimeRangeEnd: localTimeEnd ? localTimeEnd : endTime ? endTime : 0,
+    localTimeRangeStart:
+      localTimeStart !== undefined
+        ? localTimeStart
+        : startTime !== undefined
+          ? startTime
+          : 0,
+    localTimeRangeEnd:
+      localTimeEnd !== undefined
+        ? localTimeEnd
+        : endTime !== undefined
+          ? endTime
+          : 0,
     fluxMin: fluxValues[0],
     fluxMax: fluxValues[fluxValues.length - 1],
     fluxValues: fluxValues,
@@ -411,8 +417,8 @@ const mapStateToProps = (state) => {
     }, 0),
     fluxRangeStart: fluxRangeStart,
     fluxRangeEnd: fluxRangeEnd,
-    localFluxRangeStart: getFlowLocalFluxRangeStart(state),
-    localFluxRangeEnd: getFlowLocalFluxRangeEnd(state),
+    localFluxRangeStart: getFlowLocalFluxRangeStart(state) ?? fluxRangeStart,
+    localFluxRangeEnd: getFlowLocalFluxRangeEnd(state) ?? fluxRangeEnd,
   };
 };
 
