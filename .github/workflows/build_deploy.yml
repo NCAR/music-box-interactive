@@ -1,0 +1,55 @@
+name: Build and push container image
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "[0-9]+.[0-9].[0-9]"
+
+jobs:
+  buildpush:
+    name: Build and push image
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Get short sha
+      run: echo "SHORT_SHA=$(echo $GITHUB_SHA | cut -c1-7)" >> $GITHUB_ENV
+
+    - name: Chekcout Repo
+      uses: actions/checkout@v5
+      with:
+        path: repo
+        fetch-depth: 0
+
+    - name: registry login
+      uses: docker/login-action@v3
+      with:
+        registry: hub.k8s.ucar.edu/musicbox
+        username: ${{ secrets.hub_user }}
+        password: ${{ secrets.hub_password }}
+
+    - name: BuildPush Backend
+      uses: docker/build-push-action@v6
+      with:
+        push: true
+        tags: hub.k8s.ucar.edu/musicbox/backend:${{ env.SHORT_SHA }}
+        file: repo/backend/docker/Dockerfile
+        context: repo/backend
+    
+    - name: BuildPush Frontend
+      uses: docker/build-push-action@v6
+      with:
+        push: true
+        tags: hub.k8s.ucar.edu/musicbox/frontend:${{ env.SHORT_SHA }}
+        file: repo/frontend/Dockerfile
+        context: repo/frontend
+
+#    - name: Update kustomization
+#      run: |
+#        cd repo/deploy
+#        kustomize edit set image  hub.k8s.ucar.edu/musicbox/frontend=hub.k8s.ucar.edu/musicbox/frontend:${{ env.SHORT_SHA }}
+#        git config user.email "kyleshores@ucar.edu"
+#        git config user.name "Auto-ci"
+#        git add kustomization.yaml
+#        git commit -m "CI updating kustomization image tag"
+#        git push
