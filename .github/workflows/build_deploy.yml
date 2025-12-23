@@ -42,7 +42,7 @@ jobs:
         push: true
         tags: hub.k8s.ucar.edu/musicbox/frontend:${{ env.SHORT_SHA }}
         file: repo/frontend/Dockerfile
-        context: repo/
+        context: repo/frontend/
 
 #    - name: Update kustomization
 #      run: |
