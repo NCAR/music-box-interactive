@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
   push:
     tags:
-      - "[0-9]+.[0-9].[0-9]"
+      - "v[0-9]+.[0-9].[0-9]"
 
 jobs:
   buildpush:
@@ -34,7 +34,7 @@ jobs:
         push: true
         tags: hub.k8s.ucar.edu/musicbox/backend:${{ env.SHORT_SHA }}
         file: repo/backend/docker/Dockerfile
-        context: repo/backend
+        context: repo/
     
     - name: BuildPush Frontend
       uses: docker/build-push-action@v6
@@ -42,7 +42,7 @@ jobs:
         push: true
         tags: hub.k8s.ucar.edu/musicbox/frontend:${{ env.SHORT_SHA }}
         file: repo/frontend/Dockerfile
-        context: repo/frontend
+        context: repo/
 
 #    - name: Update kustomization
 #      run: |
