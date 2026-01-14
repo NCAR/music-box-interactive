@@ -1,0 +1,20 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+images:
+- name: hub.k8s.ucar.edu/musicbox/frontend
+  newTag: "f3305dc"
+- name: hub.k8s.ucar.edu/musicbox/backend
+  newTag: "f3305dc"
+
+resources:
+- rabbitmq-deploy.yaml
+- rabbitmq-service.yaml
+- backend-deploy.yaml
+- backend-service.yaml
+- frontend-deploy.yaml
+- frontend-service.yaml
+- model-deploy.yaml
+- ingress.yaml
+- pvc.yaml
+

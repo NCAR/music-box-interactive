@@ -1,0 +1,58 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: model-runner
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: model-runner
+  template:
+    metadata:
+      labels:
+        app: model-runner
+    spec:
+      containers:
+      - name: model-runner
+        image: hub.k8s.ucar.edu/musicbox/backend:latest
+        command: ["python"]
+        args: 
+          - "-u"
+          - "/music-box-interactive/interactive/rabbit_mq_model_runner.py"
+        volumeMounts: 
+          - name: db-data
+            mountPath: /music-box-interactive/interactive/db-data
+          - name: partmc-data
+            mountPath: /partmc/partmc-volume
+        env:
+          - name: BASE_API_URL
+            value: "http://localhost:8000"
+          - name: IsDebug
+            value: "true"
+          - name: LOG_LEVEL
+            value: "DEBUG"
+          - name: MUSIC_BOX_BUILD_DIR
+            value: "/musicbox/build"
+          - name: MUSIC_BOX_CONFIG_DIR
+            value: "/config-files"
+          - name: MUSIC_BOX_ZIP_DIR
+            value: "/config-archives"
+          - name: PARTMC_ZIP_DIR
+            value: "/partmc-archives"
+          - name: RABBIT_MQ_HOST
+            value: "rabbitmq"
+          - name: RABBIT_MQ_PASSWORD
+            value: "guest"
+          - name: RABBIT_MQ_PORT
+            value: "5672"
+          - name: RABBIT_MQ_USER
+            value: "guest"
+          - name: SWAGGER_BASE_PATH
+            value: ""
+      volumes:
+        - name: db-data
+          persistentVolumeClaim:
+            claimName: db-data
+        - name: partmc-data
+          persistentVolumeClaim:
+            claimName: partmc-data

@@ -1,0 +1,30 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: frontend
+  template:
+    metadata:
+      labels:
+        app: frontend
+    spec:
+      containers:
+      - name: frontend
+        image: hub.k8s.ucar.edu/musicbox/frontend:latest
+        command: ['vite', '--host', '--debug']
+        ports:
+        - containerPort: 5173
+          name: http
+        env:
+          - name: __VITE_ADDITIONAL_SERVER_ALLOWED_HOSTS
+            value: "musicbox.k8s.ucar.edu"
+          - name: DEBUG
+            value: "vite=*"
+          - name: VITE_API_URL
+            value: "https://musicbox.k8s.ucar.edu"
+              #- name: VITE_FEATURE_FLAGS
+              #value: "{ 'FLOW_DIAGRAM': true, 'PART_MC': false }"

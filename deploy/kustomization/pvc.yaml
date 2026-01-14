@@ -1,0 +1,23 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: db-data
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 10Gi 
+  storageClassName: cephfs
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: partmc-data
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 10Gi  
+  storageClassName: cephfs

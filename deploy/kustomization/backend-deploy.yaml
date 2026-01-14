@@ -1,0 +1,61 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: backend
+  template:
+    metadata:
+      labels:
+        app: backend
+    spec:
+      containers:
+      - name: backend
+        image: hub.k8s.ucar.edu/musicbox/backend:latest
+        command: ["/usr/bin/sh"]
+        args: 
+          - "-c"
+          - "python interactive/manage.py makemigrations && python interactive/manage.py migrate && python -u interactive/manage.py runserver_plus 0.0.0.0:8000"
+        ports:
+        - containerPort: 8000
+          name: http
+        volumeMounts: 
+          - name: db-data
+            mountPath: /music-box-interactive/interactive/db-data
+          - name: partmc-data
+            mountPath: /music-box-interactive/interactive/partmc-volume
+        env:
+          - name: BASE_API_URL
+            value: "http://localhost:8000"
+          - name: IsDebug
+            value: "true"
+          - name: LOG_LEVEL
+            value: "DEBUG"
+          - name: MUSIC_BOX_BUILD_DIR
+            value: "/musicbox/build"
+          - name: MUSIC_BOX_CONFIG_DIR
+            value: "/config-files"
+          - name: MUSIC_BOX_ZIP_DIR
+            value: "/config-archives"
+          - name: PARTMC_ZIP_DIR
+            value: "/partmc-archives"
+          - name: RABBIT_MQ_HOST
+            value: "rabbitmq"
+          - name: RABBIT_MQ_PASSWORD
+            value: "guest"
+          - name: RABBIT_MQ_PORT
+            value: "5672"
+          - name: RABBIT_MQ_USER
+            value: "guest"
+          - name: SWAGGER_BASE_PATH
+            value: ""
+      volumes:
+        - name: db-data
+          persistentVolumeClaim:
+            claimName: db-data
+        - name: partmc-data
+          persistentVolumeClaim:
+            claimName: partmc-data
