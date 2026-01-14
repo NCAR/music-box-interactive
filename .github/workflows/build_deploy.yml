@@ -18,6 +18,7 @@ jobs:
     - name: Chekcout Repo
       uses: actions/checkout@v5
       with:
+        ref: main
         path: repo
         fetch-depth: 0
 
@@ -32,7 +33,9 @@ jobs:
       uses: docker/build-push-action@v6
       with:
         push: true
-        tags: hub.k8s.ucar.edu/musicbox/backend:${{ env.SHORT_SHA }}
+        tags: |
+          hub.k8s.ucar.edu/musicbox/backend:${{ env.SHORT_SHA }}
+          hub.k8s.ucar.edu/musicbox/backend:${{ github.ref_name }}
         file: repo/backend/docker/Dockerfile
         context: repo/
     
@@ -40,16 +43,19 @@ jobs:
       uses: docker/build-push-action@v6
       with:
         push: true
-        tags: hub.k8s.ucar.edu/musicbox/frontend:${{ env.SHORT_SHA }}
+        tags: |
+          hub.k8s.ucar.edu/musicbox/frontend:${{ env.SHORT_SHA }}
+          hub.k8s.ucar.edu/musicbox/frontend:${{ github.ref_name }}
         file: repo/frontend/Dockerfile
         context: repo/frontend/
 
-#    - name: Update kustomization
-#      run: |
-#        cd repo/deploy
-#        kustomize edit set image  hub.k8s.ucar.edu/musicbox/frontend=hub.k8s.ucar.edu/musicbox/frontend:${{ env.SHORT_SHA }}
-#        git config user.email "kyleshores@ucar.edu"
-#        git config user.name "Auto-ci"
-#        git add kustomization.yaml
-#        git commit -m "CI updating kustomization image tag"
-#        git push
+    - name: Update kustomization
+      run: |
+        cd repo/deploy
+        kustomize edit set image  hub.k8s.ucar.edu/musicbox/frontend=hub.k8s.ucar.edu/musicbox/frontend:${{ github.ref_name }}
+        kustomize edit set image  hub.k8s.ucar.edu/musicbox/backend=hub.k8s.ucar.edu/musicbox/backend:${{ github.ref_name }}
+        git config user.email "kyleshores@ucar.edu"
+        git config user.name "Auto-ci"
+        git add kustomization.yaml
+        git commit -m "CI updating kustomization image tag"
+        git push origin HEAD:main
