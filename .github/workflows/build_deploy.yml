@@ -51,9 +51,9 @@ jobs:
         file: repo/frontend/Dockerfile
         context: repo/frontend/
 
-    - name: Update kustomization
+    - name: Update devel kustomization
       run: |
-        cd repo/deploy/kustomization
+        cd repo/deploy/kustomization/overlays/devel
         kustomize edit set image  hub.k8s.ucar.edu/musicbox/frontend=hub.k8s.ucar.edu/musicbox/frontend:${{ env.SHORT_SHA }}
         kustomize edit set image  hub.k8s.ucar.edu/musicbox/backend=hub.k8s.ucar.edu/musicbox/backend:${{ env.SHORT_SHA }}
         git config user.email "kyleshores@ucar.edu"
