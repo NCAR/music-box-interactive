@@ -6,11 +6,11 @@ spec:
   replicas: 2
   selector:
     matchLabels:
-      app: model-runner
+      app.kubernetes.io/component: model-runner
   template:
     metadata:
       labels:
-        app: model-runner
+        app.kubernetes.io/component: model-runner
     spec:
       containers:
       - name: model-runner

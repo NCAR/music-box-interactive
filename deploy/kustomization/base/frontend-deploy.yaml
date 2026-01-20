@@ -6,11 +6,11 @@ spec:
   replicas: 1
   selector:
     matchLabels:
-      app: frontend
+      app.kubernetes.io/component: frontend
   template:
     metadata:
       labels:
-        app: frontend
+        app.kubernetes.io/component: frontend
     spec:
       containers:
       - name: frontend
@@ -21,7 +21,7 @@ spec:
           name: http
         env:
           - name: __VITE_ADDITIONAL_SERVER_ALLOWED_HOSTS
-            value: "musicbox.k8s.ucar.edu"
+            value: "musicbox-devel.acom.ucar.edu"
           - name: DEBUG
             value: "vite=*"
           - name: VITE_API_URL

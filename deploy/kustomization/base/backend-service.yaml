@@ -4,7 +4,7 @@ metadata:
   name: backend
 spec:
   selector:
-    app: backend
+    app.kubernetes.io/component: backend
   ports:
   - port: 8000
     targetPort: http

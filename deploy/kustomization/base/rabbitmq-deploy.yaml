@@ -6,11 +6,11 @@ spec:
   replicas: 1
   selector:
     matchLabels:
-      app: rabbitmq
+      app.kubernetes.io/component: rabbitmq
   template:
     metadata:
       labels:
-        app: rabbitmq
+        app.kubernetes.io/component: rabbitmq
     spec:
       containers:
       - name: rabbitmq

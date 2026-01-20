@@ -3,9 +3,9 @@ kind: Kustomization
 
 images:
 - name: hub.k8s.ucar.edu/musicbox/frontend
-  newTag: "f3305dc"
+  newTag: 9edc9fc
 - name: hub.k8s.ucar.edu/musicbox/backend
-  newTag: "f3305dc"
+  newTag: 9edc9fc
 
 resources:
 - rabbitmq-deploy.yaml
@@ -18,3 +18,8 @@ resources:
 - ingress.yaml
 - pvc.yaml
 
+labels:
+- includeSelectors: true
+  pairs:
+    app.kubernetes.io/instance: prod
+    app.kubernetes.io/name: musicbox

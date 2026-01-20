@@ -6,11 +6,11 @@ spec:
   replicas: 1
   selector:
     matchLabels:
-      app: backend
+      app.kubernetes.io/component: backend
   template:
     metadata:
       labels:
-        app: backend
+        app.kubernetes.io/component: backend
     spec:
       containers:
       - name: backend
