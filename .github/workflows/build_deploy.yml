@@ -24,6 +24,13 @@ jobs:
         path: repo
         fetch-depth: 0
 
+    - name: Chekcout Deploy Branch
+      uses: actions/checkout@v5
+      with:
+        ref: deploy
+        path: deploy
+        fetch-depth: 0
+
     - name: registry login
       uses: docker/login-action@v3
       with:
@@ -53,7 +60,7 @@ jobs:
 
     - name: Update devel kustomization
       run: |
-        cd repo/deploy/kustomization/overlays/devel
+        cd deploy/deploy/kustomization/overlays/devel
         kustomize edit set image  hub.k8s.ucar.edu/musicbox/frontend=hub.k8s.ucar.edu/musicbox/frontend:${{ env.SHORT_SHA }}
         kustomize edit set image  hub.k8s.ucar.edu/musicbox/backend=hub.k8s.ucar.edu/musicbox/backend:${{ env.SHORT_SHA }}
         git config user.email "kyleshores@ucar.edu"
