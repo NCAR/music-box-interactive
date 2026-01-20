@@ -67,4 +67,4 @@ jobs:
         git config user.name "Auto-ci"
         git add kustomization.yaml
         git commit -m "CI updating kustomization image tag"
-        git push origin HEAD:main
+        git push origin HEAD:deploy
