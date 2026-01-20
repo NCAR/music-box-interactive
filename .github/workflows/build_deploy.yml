@@ -3,6 +3,8 @@ name: Build and push container image
 on:
   workflow_dispatch:
   push:
+    branches:
+      - main
     tags:
       - "v[0-9]+.[0-9].[0-9]"
 
@@ -51,9 +53,9 @@ jobs:
 
     - name: Update kustomization
       run: |
-        cd repo/deploy
-        kustomize edit set image  hub.k8s.ucar.edu/musicbox/frontend=hub.k8s.ucar.edu/musicbox/frontend:${{ github.ref_name }}
-        kustomize edit set image  hub.k8s.ucar.edu/musicbox/backend=hub.k8s.ucar.edu/musicbox/backend:${{ github.ref_name }}
+        cd repo/deploy/kustomization
+        kustomize edit set image  hub.k8s.ucar.edu/musicbox/frontend=hub.k8s.ucar.edu/musicbox/frontend:${{ env.SHORT_SHA }}
+        kustomize edit set image  hub.k8s.ucar.edu/musicbox/backend=hub.k8s.ucar.edu/musicbox/backend:${{ env.SHORT_SHA }}
         git config user.email "kyleshores@ucar.edu"
         git config user.name "Auto-ci"
         git add kustomization.yaml
