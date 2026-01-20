@@ -18,7 +18,7 @@ jobs:
     - name: Chekcout Repo
       uses: actions/checkout@v5
       with:
-        ref: main
+        ref: ${{ github.ref_name }}
         path: repo
         fetch-depth: 0
 
