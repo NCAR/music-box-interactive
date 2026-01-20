@@ -24,7 +24,7 @@ SECRET_KEY = os.environ.get('SECRET_KEY') or get_random_secret_key()
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get('IsDebug', False)
 
-ALLOWED_HOSTS = ["musicbox.acom.ucar.edu", "localhost"]
+ALLOWED_HOSTS = ["musicbox.acom.ucar.edu", "musicbox.k8s.ucar.edu", "musicbox-devel.acom.ucar.edu", "localhost"]
 # Application definition
 
 INSTALLED_APPS = [
@@ -83,7 +83,7 @@ WSGI_APPLICATION = 'manage.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+        'NAME': os.path.join(BASE_DIR, 'db-data', 'db.sqlite3'),
     }
 }
 
