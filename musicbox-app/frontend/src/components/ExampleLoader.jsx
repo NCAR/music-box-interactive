@@ -9,11 +9,62 @@ import { clearSimulation } from '../redux/slices/simulationSlice'
 
 const API_URL = 'http://localhost:3001/api'
 
+
+import { MusicBox } from '@ncar/music-box';
+
+
 /**
  * ExampleLoader Component
  * Loads pre-configured example simulations
  */
 export function ExampleLoader({ onExampleSelected }) {
+  async function handleClick() {
+    const config = {
+      'box model options': {
+        'chemistry time step [min]': 1.0,
+        'output time step [min]': 10.0,
+        'simulation length [hr]': 1.0,
+      },
+      conditions: {
+        data: [
+          {
+            headers: ['time.s', 'ENV.temperature.K', 'ENV.pressure.Pa',
+                      'CONC.O3.mol m-3', 'CONC.O2.mol m-3'],
+            rows: [[0.0, 217.6, 1394.3, 6.43e-6, 0.162]],
+          },
+          {
+            headers: ['time.s', 'PHOTO.O2_1.s-1', 'PHOTO.O3_1.s-1'],
+            rows: [
+              [0,    1.47e-12, 4.25e-5],
+              [3600, 1.12e-13, 1.33e-6],
+            ],
+          },
+        ],
+      },
+      mechanism: {
+        "conditions": {
+          "data": [
+            {
+              "headers": ["time.s", "ENV.temperature.K", "ENV.pressure.Pa"],
+              "rows": [[0.0, 217.6, 1394.3]]
+            },
+            {
+              "headers": ["time.s", "PHOTO.O2_1.s-1", "PHOTO.O3_1.s-1"],
+              "rows": [
+                [0,    1.47e-12, 4.25e-5],
+                [3600, 1.12e-13, 1.33e-6]
+              ]
+            }
+          ]
+        }
+      },
+    };
+
+    const box = MusicBox.fromJson(config);
+    const results = await box.solve();
+    console.log('Simulation results:', results);
+  }
+
   const [examples, setExamples] = useState([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
@@ -87,6 +138,10 @@ export function ExampleLoader({ onExampleSelected }) {
             {error}
           </div>
         )}
+
+        <button onClick={handleClick}>
+          Click Me
+        </button>
 
         <div className="grid gap-3">
           {examples.map((example) => (
