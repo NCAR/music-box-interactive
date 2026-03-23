@@ -1,0 +1,109 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="17.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\yaml-cpp-src\src\contrib\graphbuilder.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\yaml-cpp-src\src\contrib\graphbuilderadapter.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\yaml-cpp-src\src\binary.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\yaml-cpp-src\src\convert.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\yaml-cpp-src\src\depthguard.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\yaml-cpp-src\src\directives.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\yaml-cpp-src\src\emit.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\yaml-cpp-src\src\emitfromevents.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\yaml-cpp-src\src\emitter.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\yaml-cpp-src\src\emitterstate.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\yaml-cpp-src\src\emitterutils.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\yaml-cpp-src\src\exceptions.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\yaml-cpp-src\src\exp.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\yaml-cpp-src\src\fptostring.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\yaml-cpp-src\src\memory.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\yaml-cpp-src\src\node.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\yaml-cpp-src\src\node_data.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\yaml-cpp-src\src\nodebuilder.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\yaml-cpp-src\src\nodeevents.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\yaml-cpp-src\src\null.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\yaml-cpp-src\src\ostream_wrapper.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\yaml-cpp-src\src\parse.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\yaml-cpp-src\src\parser.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\yaml-cpp-src\src\regex_yaml.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\yaml-cpp-src\src\scanner.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\yaml-cpp-src\src\scanscalar.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\yaml-cpp-src\src\scantag.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\yaml-cpp-src\src\scantoken.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\yaml-cpp-src\src\simplekey.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\yaml-cpp-src\src\singledocparser.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\yaml-cpp-src\src\stream.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\yaml-cpp-src\src\tag.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="C:\Documents\Capstone\Project\musica\build\_deps\yaml-cpp-src\CMakeLists.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{BF8F81D5-67D8-3C65-AD36-1618346D30B7}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

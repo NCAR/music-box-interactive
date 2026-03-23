@@ -23,6 +23,7 @@
     "@emotion/styled": "^11.13.0",
     "@mui/icons-material": "^5.16.7",
     "@mui/material": "^5.16.7",
+    "@ncar/music-box": "^3.0.0-rc.1",
     "axios": "^1.6.2",
     "better-react-mathjax": "^2.0.3",
     "bootstrap": "^5.3.2",

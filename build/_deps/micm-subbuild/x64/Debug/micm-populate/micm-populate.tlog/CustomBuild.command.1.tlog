@@ -1,0 +1,150 @@
+^C:\DOCUMENTS\CAPSTONE\PROJECT\MUSICA\BUILD\_DEPS\MICM-SUBBUILD\CMAKEFILES\D33C28E8E547B47A5F5A21E27D0E41C0\MICM-POPULATE-MKDIR.RULE
+setlocal
+"C:\Program Files\CMake\bin\cmake.exe" -Dcfgdir=/Debug -P C:/Documents/Capstone/Project/musica/build/_deps/micm-subbuild/micm-populate-prefix/tmp/micm-populate-mkdirs.cmake
+if %errorlevel% neq 0 goto :cmEnd
+"C:\Program Files\CMake\bin\cmake.exe" -E touch C:/Documents/Capstone/Project/musica/build/_deps/micm-subbuild/micm-populate-prefix/src/micm-populate-stamp/Debug/micm-populate-mkdir
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd
+^C:\DOCUMENTS\CAPSTONE\PROJECT\MUSICA\BUILD\_DEPS\MICM-SUBBUILD\CMAKEFILES\D33C28E8E547B47A5F5A21E27D0E41C0\MICM-POPULATE-DOWNLOAD.RULE
+setlocal
+cd C:\Documents\Capstone\Project\musica\build\_deps
+if %errorlevel% neq 0 goto :cmEnd
+C:
+if %errorlevel% neq 0 goto :cmEnd
+"C:\Program Files\CMake\bin\cmake.exe" -DCMAKE_MESSAGE_LOG_LEVEL=VERBOSE -P C:/Documents/Capstone/Project/musica/build/_deps/micm-subbuild/micm-populate-prefix/tmp/micm-populate-gitclone.cmake
+if %errorlevel% neq 0 goto :cmEnd
+"C:\Program Files\CMake\bin\cmake.exe" -E touch C:/Documents/Capstone/Project/musica/build/_deps/micm-subbuild/micm-populate-prefix/src/micm-populate-stamp/Debug/micm-populate-download
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd
+^C:\DOCUMENTS\CAPSTONE\PROJECT\MUSICA\BUILD\_DEPS\MICM-SUBBUILD\CMAKEFILES\D33C28E8E547B47A5F5A21E27D0E41C0\MICM-POPULATE-UPDATE.RULE
+setlocal
+cd C:\Documents\Capstone\Project\musica\build\_deps\micm-src
+if %errorlevel% neq 0 goto :cmEnd
+C:
+if %errorlevel% neq 0 goto :cmEnd
+"C:\Program Files\CMake\bin\cmake.exe" -Dcan_fetch=YES -DCMAKE_MESSAGE_LOG_LEVEL=VERBOSE -P C:/Documents/Capstone/Project/musica/build/_deps/micm-subbuild/micm-populate-prefix/tmp/micm-populate-gitupdate.cmake
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd
+^C:\DOCUMENTS\CAPSTONE\PROJECT\MUSICA\BUILD\_DEPS\MICM-SUBBUILD\CMAKEFILES\D33C28E8E547B47A5F5A21E27D0E41C0\MICM-POPULATE-PATCH.RULE
+setlocal
+"C:\Program Files\CMake\bin\cmake.exe" -E echo_append
+if %errorlevel% neq 0 goto :cmEnd
+"C:\Program Files\CMake\bin\cmake.exe" -E touch C:/Documents/Capstone/Project/musica/build/_deps/micm-subbuild/micm-populate-prefix/src/micm-populate-stamp/Debug/micm-populate-patch
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd
+^C:\DOCUMENTS\CAPSTONE\PROJECT\MUSICA\BUILD\_DEPS\MICM-SUBBUILD\CMAKEFILES\D33C28E8E547B47A5F5A21E27D0E41C0\MICM-POPULATE-CONFIGURE.RULE
+setlocal
+cd C:\Documents\Capstone\Project\musica\build\_deps\micm-build
+if %errorlevel% neq 0 goto :cmEnd
+C:
+if %errorlevel% neq 0 goto :cmEnd
+"C:\Program Files\CMake\bin\cmake.exe" -E echo_append
+if %errorlevel% neq 0 goto :cmEnd
+"C:\Program Files\CMake\bin\cmake.exe" -E touch C:/Documents/Capstone/Project/musica/build/_deps/micm-subbuild/micm-populate-prefix/src/micm-populate-stamp/Debug/micm-populate-configure
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd
+^C:\DOCUMENTS\CAPSTONE\PROJECT\MUSICA\BUILD\_DEPS\MICM-SUBBUILD\CMAKEFILES\D33C28E8E547B47A5F5A21E27D0E41C0\MICM-POPULATE-BUILD.RULE
+setlocal
+cd C:\Documents\Capstone\Project\musica\build\_deps\micm-build
+if %errorlevel% neq 0 goto :cmEnd
+C:
+if %errorlevel% neq 0 goto :cmEnd
+"C:\Program Files\CMake\bin\cmake.exe" -E echo_append
+if %errorlevel% neq 0 goto :cmEnd
+"C:\Program Files\CMake\bin\cmake.exe" -E touch C:/Documents/Capstone/Project/musica/build/_deps/micm-subbuild/micm-populate-prefix/src/micm-populate-stamp/Debug/micm-populate-build
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd
+^C:\DOCUMENTS\CAPSTONE\PROJECT\MUSICA\BUILD\_DEPS\MICM-SUBBUILD\CMAKEFILES\D33C28E8E547B47A5F5A21E27D0E41C0\MICM-POPULATE-INSTALL.RULE
+setlocal
+cd C:\Documents\Capstone\Project\musica\build\_deps\micm-build
+if %errorlevel% neq 0 goto :cmEnd
+C:
+if %errorlevel% neq 0 goto :cmEnd
+"C:\Program Files\CMake\bin\cmake.exe" -E echo_append
+if %errorlevel% neq 0 goto :cmEnd
+"C:\Program Files\CMake\bin\cmake.exe" -E touch C:/Documents/Capstone/Project/musica/build/_deps/micm-subbuild/micm-populate-prefix/src/micm-populate-stamp/Debug/micm-populate-install
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd
+^C:\DOCUMENTS\CAPSTONE\PROJECT\MUSICA\BUILD\_DEPS\MICM-SUBBUILD\CMAKEFILES\D33C28E8E547B47A5F5A21E27D0E41C0\MICM-POPULATE-TEST.RULE
+setlocal
+cd C:\Documents\Capstone\Project\musica\build\_deps\micm-build
+if %errorlevel% neq 0 goto :cmEnd
+C:
+if %errorlevel% neq 0 goto :cmEnd
+"C:\Program Files\CMake\bin\cmake.exe" -E echo_append
+if %errorlevel% neq 0 goto :cmEnd
+"C:\Program Files\CMake\bin\cmake.exe" -E touch C:/Documents/Capstone/Project/musica/build/_deps/micm-subbuild/micm-populate-prefix/src/micm-populate-stamp/Debug/micm-populate-test
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd
+^C:\DOCUMENTS\CAPSTONE\PROJECT\MUSICA\BUILD\_DEPS\MICM-SUBBUILD\CMAKEFILES\6F8AC7D46AA5479A412D0B552B15630B\MICM-POPULATE-COMPLETE.RULE
+setlocal
+"C:\Program Files\CMake\bin\cmake.exe" -E make_directory C:/Documents/Capstone/Project/musica/build/_deps/micm-subbuild/CMakeFiles/Debug
+if %errorlevel% neq 0 goto :cmEnd
+"C:\Program Files\CMake\bin\cmake.exe" -E touch C:/Documents/Capstone/Project/musica/build/_deps/micm-subbuild/CMakeFiles/Debug/micm-populate-complete
+if %errorlevel% neq 0 goto :cmEnd
+"C:\Program Files\CMake\bin\cmake.exe" -E touch C:/Documents/Capstone/Project/musica/build/_deps/micm-subbuild/micm-populate-prefix/src/micm-populate-stamp/Debug/micm-populate-done
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd
+^C:\DOCUMENTS\CAPSTONE\PROJECT\MUSICA\BUILD\_DEPS\MICM-SUBBUILD\CMAKEFILES\14DC04C6709290E2C576CEA566F1D15E\MICM-POPULATE.RULE
+setlocal
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd
+^C:\DOCUMENTS\CAPSTONE\PROJECT\MUSICA\BUILD\_DEPS\MICM-SUBBUILD\CMAKELISTS.TXT
+setlocal
+"C:\Program Files\CMake\bin\cmake.exe" -SC:/Documents/Capstone/Project/musica/build/_deps/micm-subbuild -BC:/Documents/Capstone/Project/musica/build/_deps/micm-subbuild --check-stamp-file C:/Documents/Capstone/Project/musica/build/_deps/micm-subbuild/CMakeFiles/generate.stamp
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd

@@ -1,0 +1,217 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="17.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\mechanism_configuration-src\src\parse_status.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\mechanism_configuration-src\src\validate_schema.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\mechanism_configuration-src\src\v0\parser.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\mechanism_configuration-src\src\v0\species_parser.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\mechanism_configuration-src\src\v0\photolysis_parser.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\mechanism_configuration-src\src\v0\emission_parser.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\mechanism_configuration-src\src\v0\first_order_loss_parser.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\mechanism_configuration-src\src\v0\arrhenius_parser.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\mechanism_configuration-src\src\v0\troe_parser.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\mechanism_configuration-src\src\v0\ternary_chemical_activation_parser.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\mechanism_configuration-src\src\v0\branched_parser.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\mechanism_configuration-src\src\v0\tunneling_parser.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\mechanism_configuration-src\src\v0\surface_parser.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\mechanism_configuration-src\src\v0\user_defined_reaction_parser.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\mechanism_configuration-src\src\v1\parser.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\mechanism_configuration-src\src\v1\mechanism_parsers.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\mechanism_configuration-src\src\v1\utils.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\mechanism_configuration-src\src\v1\reactions\arrhenius_parser.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\mechanism_configuration-src\src\v1\reactions\branched_parser.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\mechanism_configuration-src\src\v1\reactions\emission_parser.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\mechanism_configuration-src\src\v1\reactions\first_order_loss_parser.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\mechanism_configuration-src\src\v1\reactions\photolysis_parser.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\mechanism_configuration-src\src\v1\reactions\surface_parser.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\mechanism_configuration-src\src\v1\reactions\taylor_series_parser.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\mechanism_configuration-src\src\v1\reactions\troe_parser.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\mechanism_configuration-src\src\v1\reactions\ternary_chemical_activation_parser.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\mechanism_configuration-src\src\v1\reactions\tunneling_parser.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\mechanism_configuration-src\src\v1\reactions\user_defined_parser.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\mechanism_configuration-src\src\development\parser.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\mechanism_configuration-src\src\development\mechanism_parsers.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\mechanism_configuration-src\src\development\utils.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\mechanism_configuration-src\src\development\validator.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\mechanism_configuration-src\src\development\models\gas_model_paser.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\mechanism_configuration-src\src\development\models\modal_model_parser.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\mechanism_configuration-src\src\development\reactions\parsers\aqueous_equilibrium.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\mechanism_configuration-src\src\development\reactions\parsers\arrhenius.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\mechanism_configuration-src\src\development\reactions\parsers\branched.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\mechanism_configuration-src\src\development\reactions\parsers\condensed_phase_arrhenius.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\mechanism_configuration-src\src\development\reactions\parsers\condensed_phase_photolysis.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\mechanism_configuration-src\src\development\reactions\parsers\emission.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\mechanism_configuration-src\src\development\reactions\parsers\first_order_loss.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\mechanism_configuration-src\src\development\reactions\parsers\henrys_law.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\mechanism_configuration-src\src\development\reactions\parsers\photolysis.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\mechanism_configuration-src\src\development\reactions\parsers\simpol_phase_transfer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\mechanism_configuration-src\src\development\reactions\parsers\surface.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\mechanism_configuration-src\src\development\reactions\parsers\taylor_series.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\mechanism_configuration-src\src\development\reactions\parsers\ternary_chemical_activation.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\mechanism_configuration-src\src\development\reactions\parsers\troe.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\mechanism_configuration-src\src\development\reactions\parsers\tunneling.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\mechanism_configuration-src\src\development\reactions\parsers\user_defined.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\mechanism_configuration-src\src\development\reactions\parsers\wet_deposition.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\mechanism_configuration-src\src\development\reactions\validators\aqueous_equilibrium.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\mechanism_configuration-src\src\development\reactions\validators\arrhenius.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\mechanism_configuration-src\src\development\reactions\validators\branched.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\mechanism_configuration-src\src\development\reactions\validators\condensed_phase_arrhenius.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\mechanism_configuration-src\src\development\reactions\validators\condensed_phase_photolysis.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\mechanism_configuration-src\src\development\reactions\validators\emission.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\mechanism_configuration-src\src\development\reactions\validators\first_order_loss.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\mechanism_configuration-src\src\development\reactions\validators\henrys_law.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\mechanism_configuration-src\src\development\reactions\validators\photolysis.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\mechanism_configuration-src\src\development\reactions\validators\simpol_phase_transfer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\mechanism_configuration-src\src\development\reactions\validators\surface.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\mechanism_configuration-src\src\development\reactions\validators\taylor_series.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\mechanism_configuration-src\src\development\reactions\validators\ternary_chemical_activation.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\mechanism_configuration-src\src\development\reactions\validators\troe.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\mechanism_configuration-src\src\development\reactions\validators\tunneling.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\mechanism_configuration-src\src\development\reactions\validators\user_defined.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\mechanism_configuration-src\src\development\reactions\validators\wet_deposition.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="C:\Documents\Capstone\Project\musica\build\_deps\mechanism_configuration-src\src\CMakeLists.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{BF8F81D5-67D8-3C65-AD36-1618346D30B7}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

@@ -1,0 +1,150 @@
+^C:\DOCUMENTS\CAPSTONE\PROJECT\MUSICA\BUILD\_DEPS\MECHANISM_CONFIGURATION-SUBBUILD\CMAKEFILES\F74B5A6FCB699FCFE40DD337CF59B1ED\MECHANISM_CONFIGURATION-POPULATE-MKDIR.RULE
+setlocal
+"C:\Program Files\CMake\bin\cmake.exe" -Dcfgdir=/Debug -P C:/Documents/Capstone/Project/musica/build/_deps/mechanism_configuration-subbuild/mechanism_configuration-populate-prefix/tmp/mechanism_configuration-populate-mkdirs.cmake
+if %errorlevel% neq 0 goto :cmEnd
+"C:\Program Files\CMake\bin\cmake.exe" -E touch C:/Documents/Capstone/Project/musica/build/_deps/mechanism_configuration-subbuild/mechanism_configuration-populate-prefix/src/mechanism_configuration-populate-stamp/Debug/mechanism_configuration-populate-mkdir
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd
+^C:\DOCUMENTS\CAPSTONE\PROJECT\MUSICA\BUILD\_DEPS\MECHANISM_CONFIGURATION-SUBBUILD\CMAKEFILES\F74B5A6FCB699FCFE40DD337CF59B1ED\MECHANISM_CONFIGURATION-POPULATE-DOWNLOAD.RULE
+setlocal
+cd C:\Documents\Capstone\Project\musica\build\_deps
+if %errorlevel% neq 0 goto :cmEnd
+C:
+if %errorlevel% neq 0 goto :cmEnd
+"C:\Program Files\CMake\bin\cmake.exe" -DCMAKE_MESSAGE_LOG_LEVEL=VERBOSE -P C:/Documents/Capstone/Project/musica/build/_deps/mechanism_configuration-subbuild/mechanism_configuration-populate-prefix/tmp/mechanism_configuration-populate-gitclone.cmake
+if %errorlevel% neq 0 goto :cmEnd
+"C:\Program Files\CMake\bin\cmake.exe" -E touch C:/Documents/Capstone/Project/musica/build/_deps/mechanism_configuration-subbuild/mechanism_configuration-populate-prefix/src/mechanism_configuration-populate-stamp/Debug/mechanism_configuration-populate-download
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd
+^C:\DOCUMENTS\CAPSTONE\PROJECT\MUSICA\BUILD\_DEPS\MECHANISM_CONFIGURATION-SUBBUILD\CMAKEFILES\F74B5A6FCB699FCFE40DD337CF59B1ED\MECHANISM_CONFIGURATION-POPULATE-UPDATE.RULE
+setlocal
+cd C:\Documents\Capstone\Project\musica\build\_deps\mechanism_configuration-src
+if %errorlevel% neq 0 goto :cmEnd
+C:
+if %errorlevel% neq 0 goto :cmEnd
+"C:\Program Files\CMake\bin\cmake.exe" -Dcan_fetch=YES -DCMAKE_MESSAGE_LOG_LEVEL=VERBOSE -P C:/Documents/Capstone/Project/musica/build/_deps/mechanism_configuration-subbuild/mechanism_configuration-populate-prefix/tmp/mechanism_configuration-populate-gitupdate.cmake
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd
+^C:\DOCUMENTS\CAPSTONE\PROJECT\MUSICA\BUILD\_DEPS\MECHANISM_CONFIGURATION-SUBBUILD\CMAKEFILES\F74B5A6FCB699FCFE40DD337CF59B1ED\MECHANISM_CONFIGURATION-POPULATE-PATCH.RULE
+setlocal
+"C:\Program Files\CMake\bin\cmake.exe" -E echo_append
+if %errorlevel% neq 0 goto :cmEnd
+"C:\Program Files\CMake\bin\cmake.exe" -E touch C:/Documents/Capstone/Project/musica/build/_deps/mechanism_configuration-subbuild/mechanism_configuration-populate-prefix/src/mechanism_configuration-populate-stamp/Debug/mechanism_configuration-populate-patch
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd
+^C:\DOCUMENTS\CAPSTONE\PROJECT\MUSICA\BUILD\_DEPS\MECHANISM_CONFIGURATION-SUBBUILD\CMAKEFILES\F74B5A6FCB699FCFE40DD337CF59B1ED\MECHANISM_CONFIGURATION-POPULATE-CONFIGURE.RULE
+setlocal
+cd C:\Documents\Capstone\Project\musica\build\_deps\mechanism_configuration-build
+if %errorlevel% neq 0 goto :cmEnd
+C:
+if %errorlevel% neq 0 goto :cmEnd
+"C:\Program Files\CMake\bin\cmake.exe" -E echo_append
+if %errorlevel% neq 0 goto :cmEnd
+"C:\Program Files\CMake\bin\cmake.exe" -E touch C:/Documents/Capstone/Project/musica/build/_deps/mechanism_configuration-subbuild/mechanism_configuration-populate-prefix/src/mechanism_configuration-populate-stamp/Debug/mechanism_configuration-populate-configure
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd
+^C:\DOCUMENTS\CAPSTONE\PROJECT\MUSICA\BUILD\_DEPS\MECHANISM_CONFIGURATION-SUBBUILD\CMAKEFILES\F74B5A6FCB699FCFE40DD337CF59B1ED\MECHANISM_CONFIGURATION-POPULATE-BUILD.RULE
+setlocal
+cd C:\Documents\Capstone\Project\musica\build\_deps\mechanism_configuration-build
+if %errorlevel% neq 0 goto :cmEnd
+C:
+if %errorlevel% neq 0 goto :cmEnd
+"C:\Program Files\CMake\bin\cmake.exe" -E echo_append
+if %errorlevel% neq 0 goto :cmEnd
+"C:\Program Files\CMake\bin\cmake.exe" -E touch C:/Documents/Capstone/Project/musica/build/_deps/mechanism_configuration-subbuild/mechanism_configuration-populate-prefix/src/mechanism_configuration-populate-stamp/Debug/mechanism_configuration-populate-build
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd
+^C:\DOCUMENTS\CAPSTONE\PROJECT\MUSICA\BUILD\_DEPS\MECHANISM_CONFIGURATION-SUBBUILD\CMAKEFILES\F74B5A6FCB699FCFE40DD337CF59B1ED\MECHANISM_CONFIGURATION-POPULATE-INSTALL.RULE
+setlocal
+cd C:\Documents\Capstone\Project\musica\build\_deps\mechanism_configuration-build
+if %errorlevel% neq 0 goto :cmEnd
+C:
+if %errorlevel% neq 0 goto :cmEnd
+"C:\Program Files\CMake\bin\cmake.exe" -E echo_append
+if %errorlevel% neq 0 goto :cmEnd
+"C:\Program Files\CMake\bin\cmake.exe" -E touch C:/Documents/Capstone/Project/musica/build/_deps/mechanism_configuration-subbuild/mechanism_configuration-populate-prefix/src/mechanism_configuration-populate-stamp/Debug/mechanism_configuration-populate-install
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd
+^C:\DOCUMENTS\CAPSTONE\PROJECT\MUSICA\BUILD\_DEPS\MECHANISM_CONFIGURATION-SUBBUILD\CMAKEFILES\F74B5A6FCB699FCFE40DD337CF59B1ED\MECHANISM_CONFIGURATION-POPULATE-TEST.RULE
+setlocal
+cd C:\Documents\Capstone\Project\musica\build\_deps\mechanism_configuration-build
+if %errorlevel% neq 0 goto :cmEnd
+C:
+if %errorlevel% neq 0 goto :cmEnd
+"C:\Program Files\CMake\bin\cmake.exe" -E echo_append
+if %errorlevel% neq 0 goto :cmEnd
+"C:\Program Files\CMake\bin\cmake.exe" -E touch C:/Documents/Capstone/Project/musica/build/_deps/mechanism_configuration-subbuild/mechanism_configuration-populate-prefix/src/mechanism_configuration-populate-stamp/Debug/mechanism_configuration-populate-test
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd
+^C:\DOCUMENTS\CAPSTONE\PROJECT\MUSICA\BUILD\_DEPS\MECHANISM_CONFIGURATION-SUBBUILD\CMAKEFILES\5DCD0DCF765AACD914C83F9447E40829\MECHANISM_CONFIGURATION-POPULATE-COMPLETE.RULE
+setlocal
+"C:\Program Files\CMake\bin\cmake.exe" -E make_directory C:/Documents/Capstone/Project/musica/build/_deps/mechanism_configuration-subbuild/CMakeFiles/Debug
+if %errorlevel% neq 0 goto :cmEnd
+"C:\Program Files\CMake\bin\cmake.exe" -E touch C:/Documents/Capstone/Project/musica/build/_deps/mechanism_configuration-subbuild/CMakeFiles/Debug/mechanism_configuration-populate-complete
+if %errorlevel% neq 0 goto :cmEnd
+"C:\Program Files\CMake\bin\cmake.exe" -E touch C:/Documents/Capstone/Project/musica/build/_deps/mechanism_configuration-subbuild/mechanism_configuration-populate-prefix/src/mechanism_configuration-populate-stamp/Debug/mechanism_configuration-populate-done
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd
+^C:\DOCUMENTS\CAPSTONE\PROJECT\MUSICA\BUILD\_DEPS\MECHANISM_CONFIGURATION-SUBBUILD\CMAKEFILES\EF0D83959BDBB1804228C57ECB168835\MECHANISM_CONFIGURATION-POPULATE.RULE
+setlocal
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd
+^C:\DOCUMENTS\CAPSTONE\PROJECT\MUSICA\BUILD\_DEPS\MECHANISM_CONFIGURATION-SUBBUILD\CMAKELISTS.TXT
+setlocal
+"C:\Program Files\CMake\bin\cmake.exe" -SC:/Documents/Capstone/Project/musica/build/_deps/mechanism_configuration-subbuild -BC:/Documents/Capstone/Project/musica/build/_deps/mechanism_configuration-subbuild --check-stamp-file C:/Documents/Capstone/Project/musica/build/_deps/mechanism_configuration-subbuild/CMakeFiles/generate.stamp
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd

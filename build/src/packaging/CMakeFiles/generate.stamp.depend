@@ -1,0 +1,9 @@
+# CMake generation dependency list for this directory.
+C:/Documents/Capstone/Project/musica/build/CMakeFiles/cmake.verify_globs
+C:/Documents/Capstone/Project/musica/cmake/cmake_uninstall.cmake.in
+C:/Documents/Capstone/Project/musica/cmake/musica.pc.in
+C:/Documents/Capstone/Project/musica/cmake/musicaConfig.cmake.in
+C:/Documents/Capstone/Project/musica/src/packaging/CMakeLists.txt
+C:/Program Files/CMake/share/cmake-3.30/Modules/BasicConfigVersion-SameMajorVersion.cmake.in
+C:/Program Files/CMake/share/cmake-3.30/Modules/CMakePackageConfigHelpers.cmake
+C:/Program Files/CMake/share/cmake-3.30/Modules/WriteBasicConfigVersionFile.cmake

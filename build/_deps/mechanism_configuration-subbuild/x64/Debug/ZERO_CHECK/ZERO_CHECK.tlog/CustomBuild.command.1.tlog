@@ -1,0 +1,10 @@
+^C:\DOCUMENTS\CAPSTONE\PROJECT\MUSICA\BUILD\_DEPS\MECHANISM_CONFIGURATION-SUBBUILD\CMAKEFILES\EF0D83959BDBB1804228C57ECB168835\GENERATE.STAMP.RULE
+setlocal
+"C:\Program Files\CMake\bin\cmake.exe" -SC:/Documents/Capstone/Project/musica/build/_deps/mechanism_configuration-subbuild -BC:/Documents/Capstone/Project/musica/build/_deps/mechanism_configuration-subbuild --check-stamp-list CMakeFiles/generate.stamp.list --vs-solution-file C:/Documents/Capstone/Project/musica/build/_deps/mechanism_configuration-subbuild/mechanism_configuration-populate.sln
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd

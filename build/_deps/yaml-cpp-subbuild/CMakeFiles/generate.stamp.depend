@@ -1,0 +1,22 @@
+# CMake generation dependency list for this directory.
+C:/Documents/Capstone/Project/musica/build/_deps/yaml-cpp-subbuild/CMakeFiles/3.30.2/CMakeSystem.cmake
+C:/Documents/Capstone/Project/musica/build/_deps/yaml-cpp-subbuild/CMakeLists.txt
+C:/Documents/Capstone/Project/musica/build/_deps/yaml-cpp-subbuild/yaml-cpp-populate-prefix/tmp/yaml-cpp-populate-mkdirs.cmake
+C:/Program Files/CMake/share/cmake-3.30/Modules/CMakeDetermineSystem.cmake
+C:/Program Files/CMake/share/cmake-3.30/Modules/CMakeGenericSystem.cmake
+C:/Program Files/CMake/share/cmake-3.30/Modules/CMakeInitializeConfigs.cmake
+C:/Program Files/CMake/share/cmake-3.30/Modules/CMakeSystem.cmake.in
+C:/Program Files/CMake/share/cmake-3.30/Modules/CMakeSystemSpecificInformation.cmake
+C:/Program Files/CMake/share/cmake-3.30/Modules/CMakeSystemSpecificInitialize.cmake
+C:/Program Files/CMake/share/cmake-3.30/Modules/ExternalProject.cmake
+C:/Program Files/CMake/share/cmake-3.30/Modules/ExternalProject/PatchInfo.txt.in
+C:/Program Files/CMake/share/cmake-3.30/Modules/ExternalProject/RepositoryInfo.txt.in
+C:/Program Files/CMake/share/cmake-3.30/Modules/ExternalProject/UpdateInfo.txt.in
+C:/Program Files/CMake/share/cmake-3.30/Modules/ExternalProject/cfgcmd.txt.in
+C:/Program Files/CMake/share/cmake-3.30/Modules/ExternalProject/gitclone.cmake.in
+C:/Program Files/CMake/share/cmake-3.30/Modules/ExternalProject/gitupdate.cmake.in
+C:/Program Files/CMake/share/cmake-3.30/Modules/ExternalProject/mkdirs.cmake.in
+C:/Program Files/CMake/share/cmake-3.30/Modules/ExternalProject/shared_internal_commands.cmake
+C:/Program Files/CMake/share/cmake-3.30/Modules/Platform/Windows-Initialize.cmake
+C:/Program Files/CMake/share/cmake-3.30/Modules/Platform/Windows.cmake
+C:/Program Files/CMake/share/cmake-3.30/Modules/Platform/WindowsPaths.cmake

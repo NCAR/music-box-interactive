@@ -1,0 +1,3 @@
+C:/Documents/Capstone/Project/musica/build/_deps/mechanism_configuration-subbuild/CMakeFiles/mechanism_configuration-populate.dir
+C:/Documents/Capstone/Project/musica/build/_deps/mechanism_configuration-subbuild/CMakeFiles/ALL_BUILD.dir
+C:/Documents/Capstone/Project/musica/build/_deps/mechanism_configuration-subbuild/CMakeFiles/ZERO_CHECK.dir

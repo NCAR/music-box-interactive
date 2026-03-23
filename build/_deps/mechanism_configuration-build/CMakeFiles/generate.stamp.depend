@@ -1,0 +1,13 @@
+# CMake generation dependency list for this directory.
+C:/Documents/Capstone/Project/musica/build/CMakeFiles/cmake.verify_globs
+C:/Documents/Capstone/Project/musica/build/_deps/mechanism_configuration-src/CMakeLists.txt
+C:/Documents/Capstone/Project/musica/build/_deps/mechanism_configuration-src/cmake/dependencies.cmake
+C:/Program Files/CMake/share/cmake-3.30/Modules/ExternalProject/shared_internal_commands.cmake
+C:/Program Files/CMake/share/cmake-3.30/Modules/FetchContent.cmake
+C:/Program Files/CMake/share/cmake-3.30/Modules/FetchContent/CMakeLists.cmake.in
+C:/Program Files/CMake/share/cmake-3.30/Modules/FetchContent/package-config-version.cmake.in
+C:/Program Files/CMake/share/cmake-3.30/Modules/FetchContent/package-config.cmake.in
+C:/Program Files/CMake/share/cmake-3.30/Modules/FindGit.cmake
+C:/Program Files/CMake/share/cmake-3.30/Modules/FindPackageHandleStandardArgs.cmake
+C:/Program Files/CMake/share/cmake-3.30/Modules/FindPackageMessage.cmake
+C:/Program Files/CMake/share/cmake-3.30/Modules/GNUInstallDirs.cmake
