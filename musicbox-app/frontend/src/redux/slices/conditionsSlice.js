@@ -28,6 +28,10 @@ const initialState = {
     rateConstants: {},
   },
 
+  conditions: {},
+  exampleLoaded: true,
+  source_file: {},
+
   // Rate Constants (photolysis rates, etc.)
   rateConstants: {},
 }
@@ -91,6 +95,19 @@ export const conditionsSlice = createSlice({
       state.evolving.interpolationMethod = action.payload
     },
 
+    // Set conditions json directly (for loading examples)
+    setConditions: (state, action) => {
+      state.conditions = action.payload
+    },
+
+    setExampleLoaded: (state, action) => {
+      state.exampleLoaded = action.payload
+    },
+
+    setSourceFile: (state, action) => {
+      state.source_file = action.payload
+    },
+
     // Load full conditions (from example)
     loadConditions: (state, action) => {
       return { ...state, ...action.payload }
@@ -117,6 +134,9 @@ export const {
   setEvolvingPressure,
   setInterpolationMethod,
   loadConditions,
+  setConditions,
+  setExampleLoaded,
+  setSourceFile,
   resetConditions,
 } = conditionsSlice.actions
 

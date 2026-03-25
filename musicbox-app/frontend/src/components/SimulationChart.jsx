@@ -27,14 +27,30 @@ export function SimulationChart({ results, metadata }) {
 
   // Extract all species and filter significant ones
   const allSpecies = useMemo(() => {
-    if (!results || results.length === 0) return []
+    if (!Array.isArray(results) || results.length === 0) return []
 
     const MIN_VALUE = 1e-20
-    const speciesNames = Object.keys(results[0].concentrations)
+    const firstPoint = results[0]
+
+    // Handle two formats:
+    // 1) {time, concentrations:{species: value}}
+    // 2) {time, species1: value, species2: value}
+    let speciesNames = []
+
+    if (firstPoint?.concentrations && typeof firstPoint.concentrations === 'object') {
+      speciesNames = Object.keys(firstPoint.concentrations)
+    } else {
+      speciesNames = Object.keys(firstPoint).filter(
+        key => key !== 'time' && key !== 'timestamp' && key !== 'date' && key !== 'concentrations'
+      )
+    }
 
     // Filter species that have at least one significant value
     return speciesNames.filter(sp => {
-      return results.some(result => result.concentrations[sp] > MIN_VALUE)
+      return results.some(result => {
+        const value = result?.concentrations?.[sp] ?? result?.[sp]
+        return typeof value === 'number' && value > MIN_VALUE
+      })
     })
   }, [results])
 
@@ -114,21 +130,30 @@ export function SimulationChart({ results, metadata }) {
 
   // Format data for chart
   const chartData = useMemo(() => {
-    if (!results) return []
+    if (!Array.isArray(results) || results.length === 0) return []
 
     const MIN_VALUE = 1e-20
 
     return results.map(result => {
+      const time = result.time ?? result.timestamp ?? result.date ?? 0
       const point = {
-        timeSeconds: result.time  // Use seconds instead of hours
+        timeSeconds: time
       }
 
+      const source = (result?.concentrations && typeof result.concentrations === 'object')
+        ? result.concentrations
+        : result
+
       allSpecies.forEach(species => {
-        let value = result.concentrations[species]
+        let value = source[species]
 
         // CRITICAL FIX: MICM returns arrays (for multi-cell support), extract first element
         if (Array.isArray(value)) {
           value = value[0]
+        }
+
+        if (typeof value !== 'number' || !isFinite(value)) {
+          value = MIN_VALUE
         }
 
         // For log scale, replace zeros with MIN_VALUE

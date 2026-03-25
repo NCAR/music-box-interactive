@@ -5,6 +5,7 @@ import { Button } from '../ui/button'
 import { addSpecies, updateSpecies, removeSpecies } from '../../redux/slices/mechanismSlice'
 import { useToast } from '@/hooks/use-toast'
 import { Info, Plus, Atom, Lightbulb } from 'lucide-react'
+import { addSpeciesIfValid } from './speciesUtils';
 
 // visual editor for species in the mechanism
 export function SpeciesEditor() {
@@ -25,53 +26,69 @@ export function SpeciesEditor() {
   const isPredefined = preDefinedMechanisms[selectedMechanism]
 
   const handleAddSpecies = () => {
-    if (!newSpeciesName) {
-      toast({
-        title: 'Error',
-        description: 'Please enter a species name',
-        variant: 'destructive',
-      })
-      return
-    }
+  const added = addSpeciesIfValid({
+    species,
+    newSpeciesName,
+    newMolWeight,
+    dispatch,
+    toast,
+    addSpecies,
+  });
 
-    // convert to uppercase (chemistry convention)
-    const normalizedName = newSpeciesName.trim().toUpperCase()
-
-    if (species.find(s => s.name === normalizedName)) {
-      toast({
-        title: 'Error',
-        description: `Species "${normalizedName}" already exists`,
-        variant: 'destructive',
-      })
-      return
-    }
-
-    // default to air mol weight if not provided
-    const molWeight = newMolWeight ? parseFloat(newMolWeight) : 0.029
-    if (isNaN(molWeight)) {
-      toast({
-        title: 'Error',
-        description: 'Molecular weight must be a valid number',
-        variant: 'destructive',
-      })
-      return
-    }
-
-    dispatch(addSpecies({
-      name: normalizedName,
-      molecular_weight_kg_mol: molWeight,
-      properties: {},
-    }))
-
-    toast({
-      title: 'Success',
-      description: `Species "${normalizedName}" added successfully`,
-      variant: 'success',
-    })
-
-    setNewSpeciesName('')
-    setNewMolWeight('')
+  if (added) {
+    setNewSpeciesName('');
+    setNewMolWeight('');
   }
+};
+
+  // const handleAddSpecies = () => {
+  //   if (!newSpeciesName) {
+  //     toast({
+  //       title: 'Error',
+  //       description: 'Please enter a species name',
+  //       variant: 'destructive',
+  //     })
+  //     return
+  //   }
+
+  //   // convert to uppercase (chemistry convention)
+  //   const normalizedName = newSpeciesName.trim().toUpperCase()
+
+  //   if (species.find(s => s.name === normalizedName)) {
+  //     toast({
+  //       title: 'Error',
+  //       description: `Species "${normalizedName}" already exists`,
+  //       variant: 'destructive',
+  //     })
+  //     return
+  //   }
+
+  //   // default to air mol weight if not provided
+  //   const molWeight = newMolWeight ? parseFloat(newMolWeight) : 0.029
+  //   if (isNaN(molWeight)) {
+  //     toast({
+  //       title: 'Error',
+  //       description: 'Molecular weight must be a valid number',
+  //       variant: 'destructive',
+  //     })
+  //     return
+  //   }
+
+  //   dispatch(addSpecies({
+  //     name: normalizedName,
+  //     molecular_weight_kg_mol: molWeight,
+  //     properties: {},
+  //   }))
+
+  //   toast({
+  //     title: 'Success',
+  //     description: `Species "${normalizedName}" added successfully`,
+  //     variant: 'success',
+  //   })
+
+  //   setNewSpeciesName('')
+  //   setNewMolWeight('')
+  // }
 
   const handleRemoveSpecies = (speciesName) => {
     dispatch(removeSpecies(speciesName))

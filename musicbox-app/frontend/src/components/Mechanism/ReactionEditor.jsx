@@ -31,8 +31,17 @@ export function ReactionEditor() {
 
   const reactionTypes = [
     { value: 'ARRHENIUS', label: 'Arrhenius (Temperature-dependent)' },
+    { value: 'EMISSION', label: 'Emission' },
+    { value: 'FIRST_ORDER_LOSS', label: 'First-Order Loss' },
     { value: 'PHOTOLYSIS', label: 'Photolysis (Light-dependent)' },
-    { value: 'USER_DEFINED', label: 'User-Defined (Custom rate)' },
+    { value: 'TERNARY_CHEMICAL_ACTIVATION', label: 'Ternary Chemical Activation' },
+    { value: 'TROE', label: 'Troe (Fall-Off)' },
+    { value: 'BRANCHED', label: 'Branched' },
+    { value: 'TUNNELING', label: 'Tunneling' },
+    { value: 'SURFACE_REACTION', label: 'Surface Reaction' },
+    { value: 'USER_DEFINED', label: 'User-Defined Rate' },
+    
+    
   ]
 
   const parseReactionString = (str) => {
@@ -46,9 +55,9 @@ export function ReactionEditor() {
         if (match) {
           const coeff = match[1] ? parseFloat(match[1]) : 1.0
           const name = match[2].trim().toUpperCase()  // Convert to uppercase
-          return { name, coefficient: coeff }
+          return { "species name": name, "coefficient": coeff }
         }
-        return { name: s.toUpperCase(), coefficient: 1.0 }  // Convert to uppercase
+        return { "species name": s.toUpperCase(), "coefficient": 1.0 }  // Convert to uppercase
       })
   }
 
@@ -84,10 +93,16 @@ export function ReactionEditor() {
       const newReaction = {
         id: uuidv4(),
         type: reactionType,
-        reactants: parsedReactants,
-        products: parsedProducts,
-        name: normalizedProducts ? `${normalizedReactants} → ${normalizedProducts}` : `${normalizedReactants} → (removed)`,
+        "reactants": parsedReactants,
+        "products": parsedProducts,
+        "name": normalizedProducts ? `${normalizedReactants} → ${normalizedProducts}` : `${normalizedReactants} → (removed)`,
       }
+
+      // console.log(newReaction.reactants);
+      // console.log(newReaction.products);
+      // console.log(newReaction.type);
+      // console.log(newReaction.name);
+      console.log(newReaction);
 
       // add type-specific params
       if (reactionType === 'ARRHENIUS') {
@@ -133,11 +148,11 @@ export function ReactionEditor() {
 
   const formatReactionDisplay = (reaction) => {
     const reactantStr = reaction.reactants && reaction.reactants.length > 0
-      ? reaction.reactants.map(r => `${r.coefficient > 1 ? r.coefficient : ''}${r.name}`).join(' + ')
+      ? reaction.reactants.map(r => `${r.coefficient > 1 ? r.coefficient : ''}${r["species name"]}`).join(' + ')
       : '∅'  // Empty set symbol for emissions
 
     const productStr = reaction.products && reaction.products.length > 0
-      ? reaction.products.map(p => `${p.coefficient > 1 ? p.coefficient : ''}${p.name}`).join(' + ')
+      ? reaction.products.map(p => `${p.coefficient > 1 ? p.coefficient : ''}${p["species name"]}`).join(' + ')
       : '∅'  // Empty set symbol for loss reactions
 
     return `${reactantStr} → ${productStr}`

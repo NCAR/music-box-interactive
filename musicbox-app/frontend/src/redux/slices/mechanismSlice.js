@@ -10,6 +10,8 @@ const initialState = {
   phases: [],
   loading: false,
   error: null,
+
+  mechanism: {},
 }
 
 export const mechanismSlice = createSlice({
@@ -58,6 +60,10 @@ export const mechanismSlice = createSlice({
     setError: (state, action) => {
       state.error = action.payload
     },
+    setMechanism: (state, action) => {
+      state.mechanism = action.payload
+    },
+
     resetMechanism: () => initialState,
   },
 })
@@ -75,6 +81,7 @@ export const {
   removeReaction,
   setLoading,
   setError,
+  setMechanism,
   resetMechanism,
 } = mechanismSlice.actions
 

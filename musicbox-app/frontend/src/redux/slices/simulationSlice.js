@@ -52,6 +52,9 @@ export const simulationSlice = createSlice({
     setResults: (state, action) => {
       state.results = action.payload
     },
+    setMetadata: (state, action) => {
+      state.metadata = action.payload
+    },
     setError: (state, action) => {
       state.error = action.payload
     },
@@ -109,6 +112,7 @@ export const simulationSlice = createSlice({
 export const {
   setStatus,
   setResults,
+  setMetadata,
   setError,
   setSimulationId,
   setPollingInterval,
