@@ -4,7 +4,8 @@ import { Button } from './ui/button'
 import { runSimulation, setResults, setStatus, setMetadata, setError } from '../redux/slices/simulationSlice'
 import { Loader2, Play } from 'lucide-react'
 import { MusicBox } from '@ncar/music-box';
-import analyticalConfig from '@ncar/music-box/examples/ts1/my_config.json' with { type: 'json' };
+import analyticalConfig from '@ncar/music-box/examples/analytical/my_config.json' with { type: 'json' };
+import { useState } from 'react';
 
 // Sample JSON data for testing - update this with your actual data
 const SAMPLE_SIMULATION_DATA = {
@@ -45,6 +46,8 @@ export function RunSimulationButton({ className = '' }) {
   const currentExample = useSelector((state) => state.mechanism.currentExample)
   const conditions = useSelector((state) => state.conditions)
   const loadedExample = useSelector((state) => state.conditions.exampleLoaded)
+
+  const [config, setConfig] = useState(analyticalConfig);
 
   const downloadJSON = (data) => {
     const blob = new Blob(
@@ -150,7 +153,42 @@ export function RunSimulationButton({ className = '' }) {
       }
     }
 
+    const updatedConfig = {
+      ...analyticalConfig,
+      conditions: {
+        ...analyticalConfig.conditions,
+        data: analyticalConfig.conditions.data.map((item, index) =>
+          index === 0
+            ? {
+                ...item,
+                headers: [...item.headers, "CONC.D.mol m-3"],
+                rows: item.rows.map(row => [...row, 0.0])
+              }
+            : item
+        )
+      },
+      mechanism: {
+        ...analyticalConfig.mechanism,
+        species: [
+          ...analyticalConfig.mechanism.species,
+          { name: "D" }
+        ],
+        phases: analyticalConfig.mechanism.phases.map(phase =>
+          phase.name === "gas"
+            ? {
+                ...phase,
+                species: [...phase.species, { name: "D" }]
+              }
+            : phase
+        )
+      }
+    };
+
     const cleaned = stripExtraFields(finalMechanism);
+
+    const box1 = MusicBox.fromJson(updatedConfig)
+    const results1 = await box1.solve()
+    console.log('local MusicBox results:', results1)
 
     // console.log(mechanismData);
     // console.log(conditions);
