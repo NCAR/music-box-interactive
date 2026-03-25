@@ -74,11 +74,11 @@ export function SimulationChart({ results, metadata }) {
         }
       })
 
-      console.log('Species metrics:', speciesMetrics.map(m => ({
-        species: m.species,
-        range: m.range.toFixed(3),
-        maxValue: m.maxValue.toExponential(2)
-      })))
+      // console.log('Species metrics:', speciesMetrics.map(m => ({
+      //   species: m.species,
+      //   range: m.range.toFixed(3),
+      //   maxValue: m.maxValue.toExponential(2)
+      // })))
 
       // First, try to select by variability (species with range > 1.0001, meaning they vary by at least 0.01%)
       // LOWERED from 1.001 to 1.0001 to catch even smaller changes
@@ -88,11 +88,11 @@ export function SimulationChart({ results, metadata }) {
         .slice(0, 8)
         .map(s => s.species)
 
-      console.log('Variable species (range > 1.0001):', topSpecies)
+      // console.log('Variable species (range > 1.0001):', topSpecies)
 
       // Fallback 1: If we have fewer than 3 variable species, add species with highest concentrations
       if (topSpecies.length < 3) {
-        console.log('Low variability detected, using concentration-based selection')
+        // console.log('Low variability detected, using concentration-based selection')
         const concentrationBased = speciesMetrics
           .sort((a, b) => b.maxValue - a.maxValue)
           .slice(0, 8)
@@ -104,11 +104,11 @@ export function SimulationChart({ results, metadata }) {
 
       // Fallback 2: If still no species (edge case), just take first 8 species
       if (topSpecies.length === 0) {
-        console.log('No species with significant values, selecting first available species')
+        // console.log('No species with significant values, selecting first available species')
         topSpecies = allSpecies.slice(0, 8)
       }
 
-      console.log('Selected species for plot:', topSpecies)
+      // console.log('Selected species for plot:', topSpecies)
       setSelectedSpecies(topSpecies)
       setInitialized(true)
     }
@@ -184,13 +184,13 @@ export function SimulationChart({ results, metadata }) {
 
     // Add extra padding for better line visibility (3 orders of magnitude instead of 1)
     const domain = [minValue / 1000, maxValue * 1000]
-    console.log('Y-axis domain:', {
-      minValue: minValue.toExponential(2),
-      maxValue: maxValue.toExponential(2),
-      domainMin: domain[0].toExponential(2),
-      domainMax: domain[1].toExponential(2),
-      displaySpecies: showAll ? 'all' : selectedSpecies.join(', ')
-    })
+    // console.log('Y-axis domain:', {
+    //   minValue: minValue.toExponential(2),
+    //   maxValue: maxValue.toExponential(2),
+    //   domainMin: domain[0].toExponential(2),
+    //   domainMax: domain[1].toExponential(2),
+    //   displaySpecies: showAll ? 'all' : selectedSpecies.join(', ')
+    // })
     return domain
   }, [chartData, allSpecies, selectedSpecies, showAll])
 
@@ -233,16 +233,16 @@ export function SimulationChart({ results, metadata }) {
 
   // Debug: log display species whenever it changes
   useEffect(() => {
-    console.log('=== Chart Display Debug ===')
-    console.log('Total species:', allSpecies.length, allSpecies)
-    console.log('Selected species:', selectedSpecies.length, selectedSpecies)
-    console.log('Show all?:', showAll)
-    console.log('Actually displaying:', displaySpecies.length, displaySpecies)
-    console.log('Data points:', chartData.length)
-    if (chartData.length > 0 && displaySpecies.length > 0) {
-      console.log('Sample data point 0:', chartData[0])
-      console.log('Sample data point last:', chartData[chartData.length - 1])
-    }
+    // console.log('=== Chart Display Debug ===')
+    // console.log('Total species:', allSpecies.length, allSpecies)
+    // console.log('Selected species:', selectedSpecies.length, selectedSpecies)
+    // console.log('Show all?:', showAll)
+    // console.log('Actually displaying:', displaySpecies.length, displaySpecies)
+    // console.log('Data points:', chartData.length)
+    // if (chartData.length > 0 && displaySpecies.length > 0) {
+    //   console.log('Sample data point 0:', chartData[0])
+    //   console.log('Sample data point last:', chartData[chartData.length - 1])
+    // }
   }, [displaySpecies, allSpecies, selectedSpecies, showAll, chartData])
 
   // Validation checks
@@ -492,12 +492,12 @@ export function SimulationChart({ results, metadata }) {
                 domain={[
                   (dataMin) => {
                     const min = dataMin > 0 ? dataMin / 10 : 1e-20
-                    console.log('Y-axis dataMin:', dataMin, '→ domain min:', min)
+                    // console.log('Y-axis dataMin:', dataMin, '→ domain min:', min)
                     return min
                   },
                   (dataMax) => {
                     const max = dataMax * 10
-                    console.log('Y-axis dataMax:', dataMax, '→ domain max:', max)
+                    // console.log('Y-axis dataMax:', dataMax, '→ domain max:', max)
                     return max
                   }
                 ]}

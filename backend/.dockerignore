@@ -1,8 +1,0 @@
-# ignore all
-*
-
-# Include
-!interactive
-!pyproject.toml
-!conftest.py
-!pytest.ini

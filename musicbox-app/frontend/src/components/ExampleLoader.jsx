@@ -38,9 +38,19 @@ export function ExampleLoader() {
   const navigate = useNavigate();
 
   async function handleClick() {
-    const box = MusicBox.fromJson(analyticalConfig);
+    const box = MusicBox.fromJson(flowTubeConfig);
     const results = await box.solve();
     console.log(results);
+    // const response = await axios.get(`${API_URL}/examples/chapman`)
+    // const solverConfig = response.data?.example?.solverConfig
+
+    // if (!solverConfig) {
+    //   throw new Error('Missing solverConfig from backend example response')
+    // }
+
+    // const box = MusicBox.fromJson(solverConfig);
+    // const results = await box.solve();
+    // console.log(results);
   }
 
   // const [examples, setExamples] = useState([])
@@ -248,9 +258,9 @@ export function ExampleLoader() {
           </div>
         )}
 
-        {/* <button onClick={handleClick}>
+        <button onClick={handleClick}>
           Click Me
-        </button> */}
+        </button>
 
         <div className="grid gap-3">
           {examples.map((example) => (
