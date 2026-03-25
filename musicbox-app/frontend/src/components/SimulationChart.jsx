@@ -25,34 +25,20 @@ export function SimulationChart({ results, metadata }) {
     '#a855f7', '#22c55e', '#eab308', '#64748b'
   ]
 
-  // Extract all species and filter significant ones
+  // Extract all species, do not filter by value (show even if all zero)
   const allSpecies = useMemo(() => {
-    if (!Array.isArray(results) || results.length === 0) return []
-
-    const MIN_VALUE = 1e-20
-    const firstPoint = results[0]
-
-    // Handle two formats:
-    // 1) {time, concentrations:{species: value}}
-    // 2) {time, species1: value, species2: value}
-    let speciesNames = []
-
+    if (!Array.isArray(results) || results.length === 0) return [];
+    const firstPoint = results[0];
+    let speciesNames = [];
     if (firstPoint?.concentrations && typeof firstPoint.concentrations === 'object') {
-      speciesNames = Object.keys(firstPoint.concentrations)
+      speciesNames = Object.keys(firstPoint.concentrations);
     } else {
       speciesNames = Object.keys(firstPoint).filter(
         key => key !== 'time' && key !== 'timestamp' && key !== 'date' && key !== 'concentrations'
-      )
+      );
     }
-
-    // Filter species that have at least one significant value
-    return speciesNames.filter(sp => {
-      return results.some(result => {
-        const value = result?.concentrations?.[sp] ?? result?.[sp]
-        return typeof value === 'number' && value > MIN_VALUE
-      })
-    })
-  }, [results])
+    return speciesNames;
+  }, [results]);
 
   // Reset initialization when results change
   useEffect(() => {

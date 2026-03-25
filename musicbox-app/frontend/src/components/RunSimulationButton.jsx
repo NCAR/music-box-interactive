@@ -162,13 +162,14 @@ export function RunSimulationButton({ className = '' }) {
     // const results = await box.solve();
     // console.log(results);
 
-    const box = MusicBox.fromJson(mechanismData.mechanism);
+    const box = MusicBox.fromJson(cleaned);
     const results = await box.solve();
-    console.log(results);
+    console.log('Raw simulation results:', results);
 
     // Normalize the results to work with the plots
     const normalizedResults = normalizeManualResults(results)
     console.log('Normalized simulation results:', normalizedResults)
+    console.log('Normalized results length:', normalizedResults.length)
 
     if (normalizedResults.length > 0) {
       dispatch(setResults(normalizedResults))
@@ -205,13 +206,11 @@ export function RunSimulationButton({ className = '' }) {
             concentrations[col] = values[index]
           }
         })
-        
         return {
           time: time,
           concentrations: concentrations,
         }
       })
-      
       return normalized
     }
 
