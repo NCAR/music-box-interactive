@@ -1,4 +1,4 @@
-import { React } from 'react'
+import { React, useState } from 'react'
 import { FlowGraph } from './FlowGraph'
 import { FlowPanel } from './FlowPanel'
 
@@ -9,13 +9,49 @@ import { FlowPanel } from './FlowPanel'
 */
 
 export function FlowDiagram() {
+  const [arrowScaling, setArrowScaling] = useState('linear');
+  const [arrowWidth, setArrowWidth] = useState(1);
+
+  const timeValues = Array.from({ length: 1000 }, (_, i) => i * 259);
+  const [timeRange, setTimeRange] = useState({ minIndex: 0, maxIndex: timeValues.length - 1 });
+
+  const FLUX_MIN = 0.00004155230486602744;
+  const FLUX_MAX = 0.9648828478468641;
+  const fluxValues = Array.from({ length: 1000 }, (_, i) =>
+      FLUX_MIN + (i / 999) * (FLUX_MAX - FLUX_MIN)
+  );
+  const [fluxRange, setFluxRange] = useState({ minIndex: 0, maxIndex: fluxValues.length - 1 });
+
+  const [selectedSpecies, setSelectedSpecies] = useState([]); // TODO: Implement the species selection logic in FlowPanel
+
   return (
     <div className="flex h-full min-h-screen w-full gap-4">
       <div className="w-[30%] h-full">
-        <FlowPanel />
+        <FlowPanel
+          arrowScaling={arrowScaling}
+          setArrowScaling={setArrowScaling}
+          arrowWidth={arrowWidth}
+          setArrowWidth={setArrowWidth}
+          timeValues={timeValues}
+          range={timeRange}
+          setRange={setTimeRange}
+          fluxValues={fluxValues}
+          fluxRange={fluxRange}
+          setFluxRange={setFluxRange}
+          selectedSpecies={selectedSpecies}
+          setSelectedSpecies={setSelectedSpecies}
+        />
       </div>
-      <div className="w-[70%] h-full">
-        <FlowGraph />
+      <div className="w-[70%] h-[50%] bg-white">
+        <FlowGraph
+          selectedSpecies={selectedSpecies}
+          fluxRange={{
+              start: fluxValues[fluxRange.minIndex],
+              end: fluxValues[fluxRange.maxIndex],
+              isLogScale: arrowScaling === 'logarithmic',
+              maxArrowWidth: Number(arrowWidth),
+          }}
+        />
       </div>
     </div>
   )

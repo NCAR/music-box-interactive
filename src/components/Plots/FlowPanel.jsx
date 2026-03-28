@@ -1,32 +1,39 @@
 import { DropdownMenuIcon } from '@radix-ui/react-icons'
 import { React, useState } from 'react'
 import { MultiRange } from '../ui/multirange'
+import { Button } from '../ui/button'
 
 /* 
     * FlowPanel Component
     * Creates a control panel that allows for customization of flow visualizations
     * Features include:
     *   - Arrow Width Scaling 
-    *       - Linear or logaritmic
+    *       - Linear or logarithmic
     *       - Slider to adjust width
     *   - Time Range(s) Selection w/slider
     *   - Flux Range Slider (in mol m-3)
     *   - Species Selection Dropdown
 */
 
-export function FlowPanel() {
-    const [arrowScaling, setArrowScaling] = useState('linear');
-    const [arrowWidth, setArrowWidth] = useState(1);
+export function FlowPanel({
+    arrowScaling, setArrowScaling,
+    arrowWidth, setArrowWidth,
+    timeValues, range, setRange,
+    fluxValues, fluxRange, setFluxRange,
+    selectedSpecies, setSelectedSpecies 
+}) {
 
-    const timeValues = Array.from({ length: 1000 }, (_, i) => i * 259);
-    const [range, setRange] = useState({ minIndex: 0, maxIndex: timeValues.length - 1 });
-
-    const FLUX_MIN = 0.00004155230486602744;
-    const FLUX_MAX = 0.9648828478468641
-    const fluxValues = Array.from({ length: 1000 }, (_, i) => 
-        FLUX_MIN + (i / 999) * (FLUX_MAX - FLUX_MIN)
-    );
-    const [fluxRange, setFluxRange] = useState({ minIndex: 0, maxIndex: fluxValues.length - 1 });
+    const species = [
+        { id: '1', name: 'Ar'},
+        { id: '2', name: 'CO2'},
+        { id: '3', name: 'H2O'},
+        { id: '4', name: 'M'},
+        { id: '5', name: 'N2'},
+        { id: '6', name: 'O'},
+        { id: '7', name: 'O1D'},
+        { id: '8', name: 'O2'},
+        { id: '9', name: 'O3'},
+    ]
 
     return (
         <div className="flex flex-col gap-4 p-4 h-full min-h-[24rem] border rounded-md bg-white/10 text-white">
@@ -87,6 +94,27 @@ export function FlowPanel() {
             {/* Species Selection */}
             <label className="flex flex-col gap-1 items-center text-lg font-semibold">
                 Select Species:
+                <div className="w-full flex flex-col gap-1 font-normal text-base">
+                    {species.map((s) => {
+                        const isSelected = selectedSpecies?.includes(s.name);
+                        return (
+                            <button
+                                key={s.id}
+                                onClick={() => {
+                                    if (isSelected) {
+                                        setSelectedSpecies(selectedSpecies.filter((name) => name !== s.name));
+                                    } else {
+                                        setSelectedSpecies([...selectedSpecies, s.name]);
+                                    }
+                                }}
+                                className={`w-full px-4 py-2 rounded text-white text-center transition-colors
+                                          ${isSelected ? 'bg-white/30 backdrop-blur-sm border border-white/40 hover:bg-white/40' : 'bg-white/10 hover:bg-white/20'}`}
+                            >
+                                {s.name}
+                            </button>
+                        );
+                    })}
+                </div>
             </label>
         </div>
     )
