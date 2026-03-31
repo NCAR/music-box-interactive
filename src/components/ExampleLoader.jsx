@@ -18,7 +18,7 @@ import { resetMechanism } from '../redux/slices/mechanismSlice'
 import { resetConditions } from '../redux/slices/conditionsSlice'
 import { resetSimulation } from '../redux/slices/simulationSlice'
 
-import { MusicBox } from '@ncar/music-box';
+import { MusicBox, parseCsvToBlock } from '@ncar/music-box';
 
 // Can't be imported and therefore we have no way to change its values if desired
 // import chapmanConditionsBoulder from '@ncar/music-box/examples/chapman/conditions_Boulder.csv' with { type: 'csv' };
@@ -28,6 +28,13 @@ import analyticalConfig from '@ncar/music-box/examples/analytical/my_config.json
 import ts1Config from '@ncar/music-box/examples/ts1/my_config.json' with { type: 'json' };
 import flowTubeConfig from '@ncar/music-box/examples/flow_tube/my_config.json' with { type: 'json' };
 import carbonBond5Config from '@ncar/music-box/examples/carbon_bond_5/my_config.json' with { type: 'json' };
+import chapmanInitialConcentrationsCsv from '@ncar/music-box/examples/chapman/initial_concentrations.csv?raw';
+import chapmanConditionsBoulderCsv from '@ncar/music-box/examples/chapman/conditions_Boulder.csv?raw';
+import ts1InitialConditionsCsv from '@ncar/music-box/examples/ts1/initial_conditions.csv?raw';
+import flowTubeInitialConcentrationsCsv from '@ncar/music-box/examples/flow_tube/initial_concentrations.csv?raw';
+import flowTubeInitialReactionRatesCsv from '@ncar/music-box/examples/flow_tube/initial_reaction_rates.csv?raw';
+import carbonBond5InitialConcentrationsCsv from '@ncar/music-box/examples/carbon_bond_5/initial_concentrations.csv?raw';
+import carbonBond5InitialReactionRatesCsv from '@ncar/music-box/examples/carbon_bond_5/initial_reaction_rates.csv?raw';
 
 
 /**
@@ -36,6 +43,21 @@ import carbonBond5Config from '@ncar/music-box/examples/carbon_bond_5/my_config.
  */
 export function ExampleLoader() {
   const navigate = useNavigate();
+
+  const withInlineConditionData = (config, csvContents = []) => {
+    const existingData = Array.isArray(config?.conditions?.data) ? config.conditions.data : []
+    const parsedBlocks = csvContents
+      .filter((content) => typeof content === 'string' && content.trim().length > 0)
+      .map((content) => parseCsvToBlock(content))
+
+    return {
+      ...config,
+      conditions: {
+        ...(config.conditions || {}),
+        data: [...existingData, ...parsedBlocks],
+      },
+    }
+  }
 
   async function handleClick() {
     const box = MusicBox.fromJson(flowTubeConfig);
@@ -71,28 +93,28 @@ export function ExampleLoader() {
         name: 'Chapman Mechanism',
         description: 'Stratospheric oxygen chemistry with photolysis',
         mechanism_name: chapmanConfig.mechanism.name,
-        mechanism: chapmanConfig,
+      mechanism: withInlineConditionData(chapmanConfig, [chapmanInitialConcentrationsCsv, chapmanConditionsBoulderCsv]),
     },
     {
         id: 'Flow-Tube Wall Loss',
         name: 'Flow-Tube Wall Loss',
         description: 'A simple characterization of wall loss of a-Pinene oxidation products in a flow-tube reactor. ',
         mechanism_name: flowTubeConfig.mechanism.name,
-        mechanism: flowTubeConfig,
+      mechanism: withInlineConditionData(flowTubeConfig, [flowTubeInitialConcentrationsCsv, flowTubeInitialReactionRatesCsv]),
     },
     {
         id: 'Full Gas-Phase Mechanism',
         name: 'Full Gas-Phase Mechanism',
         description: 'A variant of the Carbon Bond 5 chemical mechanism used in the MONARCH global/regional chemical weather prediction system. The description of the modified version of CB-05 used in MONARCH',
         mechanism_name: carbonBond5Config.mechanism.name,
-        mechanism: carbonBond5Config,
+      mechanism: withInlineConditionData(carbonBond5Config, [carbonBond5InitialConcentrationsCsv, carbonBond5InitialReactionRatesCsv]),
     },
     {
         id: 'Troposphere-Stratosphere mechanism (TS1)',
         name: 'Troposphere-Stratosphere mechanism (TS1)',
         description: 'A comprehensive model of the chemistry in the troposphere and stratosphere. Read about its formulation in this paper.',
         mechanism_name: ts1Config.mechanism.name,
-        mechanism: ts1Config,
+      mechanism: withInlineConditionData(ts1Config, [ts1InitialConditionsCsv]),
     },
   ]
 
@@ -152,6 +174,14 @@ export function ExampleLoader() {
   const reactionJsonToString = (arr = []) => {
     return arr
       .map(item => {
+        if (typeof item === 'string') {
+          return item.trim().toUpperCase();
+        }
+
+        if (!item || typeof item !== 'object') {
+          return "";
+        }
+
         const name = item["species name"]?.trim()?.toUpperCase() ?? "";
         const coeff = parseFloat(item["coefficient"]);
 
@@ -181,21 +211,22 @@ export function ExampleLoader() {
     })
 
     example.mechanism.reactions.map(reaction => {
+      const displayReactants = reaction.reactants
+        || reaction['gas-phase species']
+        || [];
+      const displayProducts = reaction.products
+        || reaction['gas-phase products']
+        || reaction['alkoxy products']
+        || [];
 
-      const normalizedReactants = reactionJsonToString(reaction.reactants ?? []).toUpperCase();
-      const normalizedProducts = reactionJsonToString(reaction.products ?? []).toUpperCase();
+      const normalizedReactants = reactionJsonToString(Array.isArray(displayReactants)
+        ? displayReactants
+        : [displayReactants]).toUpperCase();
+      const normalizedProducts = reactionJsonToString(displayProducts ?? []).toUpperCase();
 
       const newReaction = {
+        ...reaction,
         id: uuidv4(),
-        type: reaction.type,
-        "A": reaction.A,
-        "B": reaction.B,
-        "C": reaction.C,
-        "D": reaction.D,
-        "E": reaction.E,
-        "reactants": reaction.reactants,
-        "products": reaction.products,
-        "gas phase": reaction["gas phase"],
         "name": normalizedProducts
           ? `${normalizedReactants} → ${normalizedProducts}`
           : `${normalizedReactants} → (removed)`,
