@@ -130,15 +130,15 @@ export function RunSimulationButton({ className = '' }) {
       }
     };
 
-    // console.log('Final mechanism config:', finalMechanism);
-    // const box = MusicBox.fromJson(finalMechanism);
-    // const results = await box.solve();
-    // console.log('Results from final mechanism config:', results);
-
-    console.log('Final mechanism config:', c5Config);
-    const box = MusicBox.fromJson(c5Config);
+    console.log('Final mechanism config:', finalMechanism);
+    const box = MusicBox.fromJson(finalMechanism);
     const results = await box.solve();
     console.log('Results from final mechanism config:', results);
+
+    // console.log('Final mechanism config:', c5Config);
+    // const box = MusicBox.fromJson(c5Config);
+    // const results = await box.solve();
+    // console.log('Results from final mechanism config:', results);
 
     dispatch(setResults(results))
     dispatch(setMetadata({
