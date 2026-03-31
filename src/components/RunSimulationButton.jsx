@@ -86,6 +86,36 @@ export function RunSimulationButton({ className = '' }) {
     }
 
 
+    function serializeReaction(reaction) {
+      if (reaction.type === 'EMISSION') {
+        return {
+          type: 'EMISSION',
+          name: reaction.name,
+          "scaling factor": reaction["scaling factor"],
+          products: reaction.products.map(product => ({
+            "species name": product["species name"],
+            coefficient: product.coefficient
+          })),
+          "gas phase": reaction["gas phase"]
+        };
+      }
+      // Default: Arrhenius and others
+      return {
+        type: reaction.type,
+        A: reaction.A,
+        B: reaction.B,
+        C: reaction.C,
+        D: reaction.D,
+        E: reaction.E,
+        reactants: reaction.reactants,
+        products: reaction.products.map(product => ({
+          "species name": product["species name"],
+          coefficient: product.coefficient
+        })),
+        "gas phase": reaction["gas phase"]
+      };
+    }
+
     const finalMechanism = {
       "box model options": {
         "grid": "box",
@@ -98,23 +128,7 @@ export function RunSimulationButton({ className = '' }) {
 
       "mechanism": {
         "name": mechanismData.currentExample,
-        "reactions": mechanismData.reactions.map(reaction => ({
-          type: reaction.type,
-          A: reaction.A,
-          B: reaction.B,
-          C: reaction.C,
-          D: reaction.D,
-          E: reaction.E,
-          reactants: reaction.reactants.map(reactant => ({
-            "species name": reactant["species name"],
-            coefficient: reactant.coefficient
-          })),
-          products: reaction.products.map(product => ({
-            "species name": product["species name"],
-            coefficient: product.coefficient
-          })),
-          "gas phase": reaction["gas phase"]
-        })),
+        "reactions": mechanismData.reactions.map(serializeReaction),
         "species": mechanismData.species.map(species => ({
           name: species.name
         })),

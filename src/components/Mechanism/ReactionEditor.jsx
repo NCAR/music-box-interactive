@@ -23,6 +23,8 @@ export function ReactionEditor() {
   const [rateC, setRateC] = useState('0.0')
   const [rateD, setRateD] = useState('0.0')
   const [rateE, setRateE] = useState('0.0')
+  const [emissionProduct, setEmissionProduct] = useState('')
+  const [emissionScaling, setEmissionScaling] = useState('1.0')
   const [error, setError] = useState(null)
 
   // check if predefined mech
@@ -66,17 +68,29 @@ export function ReactionEditor() {
   }
 
   const handleAddReaction = () => {
-    if (!reactants) {
-      setError('Please enter reactants')
-      setTimeout(() => setError(null), 3000)
-      return
-    }
-
-    // products can be empty for decay/loss reactions
-    if (!products && reactionType !== 'USER_DEFINED') {
-      setError('Please enter products (or use User-Defined type for decay reactions)')
-      setTimeout(() => setError(null), 3000)
-      return
+    if (reactionType === 'EMISSION') {
+      if (!emissionProduct) {
+        setError('Please enter a product species name for emission')
+        setTimeout(() => setError(null), 3000)
+        return
+      }
+      if (isNaN(parseFloat(emissionScaling))) {
+        setError('Scaling factor must be a valid number')
+        setTimeout(() => setError(null), 3000)
+        return
+      }
+    } else {
+      if (!reactants) {
+        setError('Please enter reactants')
+        setTimeout(() => setError(null), 3000)
+        return
+      }
+      // products can be empty for decay/loss reactions
+      if (!products && reactionType !== 'USER_DEFINED') {
+        setError('Please enter products (or use User-Defined type for decay reactions)')
+        setTimeout(() => setError(null), 3000)
+        return
+      }
     }
 
 
@@ -107,13 +121,30 @@ export function ReactionEditor() {
       const normalizedReactants = reactants.toUpperCase()
       const normalizedProducts = products ? products.toUpperCase() : ''
 
-      const newReaction = {
-        id: uuidv4(),
-        type: reactionType,
-        "gas phase": 'gas',
-        reactants: parsedReactants,
-        products: parsedProducts,
-        name: normalizedProducts ? `${normalizedReactants} → ${normalizedProducts}` : `${normalizedReactants} → (removed)`,
+      let newReaction
+      if (reactionType === 'EMISSION') {
+        newReaction = {
+          id: uuidv4(),
+          type: 'EMISSION',
+          name: emissionProduct.toUpperCase(),
+          'scaling factor': parseFloat(emissionScaling),
+          products: [
+            {
+              'species name': emissionProduct.toUpperCase(),
+              coefficient: 1.0
+            }
+          ],
+          'gas phase': 'gas',
+        }
+      } else {
+        newReaction = {
+          id: uuidv4(),
+          type: reactionType,
+          "gas phase": 'gas',
+          reactants: parsedReactants,
+          products: parsedProducts,
+          name: normalizedProducts ? `${normalizedReactants} → ${normalizedProducts}` : `${normalizedReactants} → (removed)`,
+        }
       }
 
       // console.log(newReaction.reactants);
@@ -150,6 +181,8 @@ export function ReactionEditor() {
       setRateC('0.0')
       setRateD('0.0')
       setRateE('0.0')
+      setEmissionProduct('')
+      setEmissionScaling('1.0')
     } catch (err) {
       setError('Invalid reaction format')
       setTimeout(() => setError(null), 3000)
@@ -246,31 +279,64 @@ export function ReactionEditor() {
                 </select>
               </div>
 
-              <div>
-                <label className="block text-xs font-semibold text-blue-100 mb-1">
-                  Reactants (e.g., "O2 + O" or "2NO2")
-                </label>
-                <input
-                  type="text"
-                  value={reactants}
-                  onChange={(e) => setReactants(e.target.value)}
-                  placeholder="O2 + O"
-                  className="w-full px-3 py-2 border-2 border-white/30 bg-white/10 text-white placeholder:text-gray-400 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
-                />
-              </div>
+              {reactionType !== 'EMISSION' && (
+                <div>
+                  <label className="block text-xs font-semibold text-blue-100 mb-1">
+                    Reactants (e.g., "O2 + O" or "2NO2")
+                  </label>
+                  <input
+                    type="text"
+                    value={reactants}
+                    onChange={(e) => setReactants(e.target.value)}
+                    placeholder="O2 + O"
+                    className="w-full px-3 py-2 border-2 border-white/30 bg-white/10 text-white placeholder:text-gray-400 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
+                  />
+                </div>
+              )}
 
-              <div>
-                <label className="block text-xs font-semibold text-blue-100 mb-1">
-                  Products (e.g., "O3" or "NO + O2")
-                </label>
-                <input
-                  type="text"
-                  value={products}
-                  onChange={(e) => setProducts(e.target.value)}
-                  placeholder="O3"
-                  className="w-full px-3 py-2 border-2 border-white/30 bg-white/10 text-white placeholder:text-gray-400 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
-                />
-              </div>
+              {reactionType !== 'EMISSION' && (
+                <div>
+                  <label className="block text-xs font-semibold text-blue-100 mb-1">
+                    Products (e.g., "O3" or "NO + O2")
+                  </label>
+                  <input
+                    type="text"
+                    value={products}
+                    onChange={(e) => setProducts(e.target.value)}
+                    placeholder="O3"
+                    className="w-full px-3 py-2 border-2 border-white/30 bg-white/10 text-white placeholder:text-gray-400 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
+                  />
+                </div>
+              )}
+
+              {reactionType === 'EMISSION' && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-semibold text-blue-100 mb-1">
+                      Product Species Name
+                    </label>
+                    <input
+                      type="text"
+                      value={emissionProduct}
+                      onChange={(e) => setEmissionProduct(e.target.value)}
+                      placeholder="ISOP"
+                      className="w-full px-3 py-2 border-2 border-white/30 bg-white/10 text-white placeholder:text-gray-400 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-blue-100 mb-1">
+                      Scaling Factor
+                    </label>
+                    <input
+                      type="text"
+                      value={emissionScaling}
+                      onChange={(e) => setEmissionScaling(e.target.value)}
+                      placeholder="1.0"
+                      className="w-full px-3 py-2 border-2 border-white/30 bg-white/10 text-white placeholder:text-gray-400 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
+                    />
+                  </div>
+                </div>
+              )}
 
               {reactionType === 'ARRHENIUS' && (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
