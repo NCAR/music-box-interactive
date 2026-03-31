@@ -152,6 +152,14 @@ export function ExampleLoader() {
   const reactionJsonToString = (arr = []) => {
     return arr
       .map(item => {
+        if (typeof item === 'string') {
+          return item.trim().toUpperCase();
+        }
+
+        if (!item || typeof item !== 'object') {
+          return "";
+        }
+
         const name = item["species name"]?.trim()?.toUpperCase() ?? "";
         const coeff = parseFloat(item["coefficient"]);
 
@@ -181,21 +189,22 @@ export function ExampleLoader() {
     })
 
     example.mechanism.reactions.map(reaction => {
+      const displayReactants = reaction.reactants
+        || reaction['gas-phase species']
+        || [];
+      const displayProducts = reaction.products
+        || reaction['gas-phase products']
+        || reaction['alkoxy products']
+        || [];
 
-      const normalizedReactants = reactionJsonToString(reaction.reactants ?? []).toUpperCase();
-      const normalizedProducts = reactionJsonToString(reaction.products ?? []).toUpperCase();
+      const normalizedReactants = reactionJsonToString(Array.isArray(displayReactants)
+        ? displayReactants
+        : [displayReactants]).toUpperCase();
+      const normalizedProducts = reactionJsonToString(displayProducts ?? []).toUpperCase();
 
       const newReaction = {
+        ...reaction,
         id: uuidv4(),
-        type: reaction.type,
-        "A": reaction.A,
-        "B": reaction.B,
-        "C": reaction.C,
-        "D": reaction.D,
-        "E": reaction.E,
-        "reactants": reaction.reactants,
-        "products": reaction.products,
-        "gas phase": reaction["gas phase"],
         "name": normalizedProducts
           ? `${normalizedReactants} → ${normalizedProducts}`
           : `${normalizedReactants} → (removed)`,

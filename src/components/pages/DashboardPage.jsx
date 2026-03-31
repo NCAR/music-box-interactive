@@ -12,7 +12,8 @@ import {
   setSelectedMechanism,
   setSpecies,
   setReactions,
-  setCurrentExample
+  setCurrentExample,
+  setMechanism
 } from '../../redux/slices/mechanismSlice'
 import {
   resetConditions,
@@ -22,7 +23,8 @@ import {
   setTemperature,
   setPressure,
   setConcentrations,
-  loadConditions
+  loadConditions,
+  setConditions
 } from '../../redux/slices/conditionsSlice'
 import { useToast } from '@/hooks/use-toast'
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert'
@@ -87,16 +89,16 @@ export function DashboardPage() {
         }
 
         if (config.mechanism.reactions && Array.isArray(config.mechanism.reactions)) {
-          // add IDs if missing
-          // normalize reactant/product names to uppercase
+          // Add ids for UI operations, but preserve all mechanism keys losslessly.
           const reactionsWithIds = config.mechanism.reactions.map(reaction => ({
             ...reaction,
             id: reaction.id || uuidv4(),
-            reactants: reaction.reactants?.map(r => ({ ...r, name: r.name.toUpperCase() })) || [],
-            products: reaction.products?.map(p => ({ ...p, name: p.name.toUpperCase() })) || []
           }))
           dispatch(setReactions(reactionsWithIds))
         }
+
+        // Keep the original uploaded payload so run-time serialization can remain schema-complete.
+        dispatch(setMechanism(config))
 
         // mark as uploaded config
         dispatch(setCurrentExample({
@@ -142,6 +144,9 @@ export function DashboardPage() {
             evolving: config.conditions.evolving
           }))
         }
+
+        // Preserve source conditions object for solver input.
+        dispatch(setConditions(config.conditions))
 
         // hide examples/status when loading config
         setShowExamples(false)

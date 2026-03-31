@@ -1,12 +1,9 @@
 import { useSelector, useDispatch } from 'react-redux'
 import { useNavigate } from 'react-router-dom'
 import { Button } from './ui/button'
-import { runSimulation, setResults, setStatus, setMetadata, setError } from '../redux/slices/simulationSlice'
+import { setResults, setStatus, setMetadata } from '../redux/slices/simulationSlice'
 import { Loader2, Play } from 'lucide-react'
 import { MusicBox } from '@ncar/music-box';
-import c5Config from '@ncar/music-box/examples/carbon_bond_5/my_config.json' with { type: 'json' };
-import { setSpecies } from '../redux/slices/mechanismSlice'
-import { useState } from 'react';
 
 /**
  * RunSimulationButton Component
@@ -22,99 +19,110 @@ export function RunSimulationButton({ className = '' }) {
   const conditions = useSelector((state) => state.conditions)
   const loadedExample = useSelector((state) => state.conditions.exampleLoaded)
 
-  // For testing purposes this just downloads a json file to device
-  const downloadJSON = (data) => {
-    const blob = new Blob(
-      [JSON.stringify(data, null, 2)],
-      { type: 'application/json' }
-    );
-
-    const url = URL.createObjectURL(blob);
-
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'config.json'; // filename
-    a.click();
-
-    URL.revokeObjectURL(url);
-  };
-
   async function handleRunSimulation() {
-    function getSpeciesNamesFromReactions(reactions) {
-      const names = new Set();
+    const normalizeReactionComponents = (components = []) => {
+      return (components || []).map((component) => {
+        if (!component || typeof component !== 'object') return component
 
-      for (const reaction of reactions || []) {
-        for (const reactant of reaction.reactants || []) {
-          if (reactant["species name"]) {
-            names.add(reactant["species name"]);
-          }
+        if (component['species name'] || !component.name) {
+          return component
         }
 
-        for (const product of reaction.products || []) {
-          if (product["species name"]) {
-            names.add(product["species name"]);
-          }
+        const { name, ...rest } = component
+        return {
+          ...rest,
+          'species name': name,
         }
-      }
-
-      return names;
+      })
     }
-
-    function getSpeciesNamesFromConditions(conditions) {
-      const names = new Set();
-
-      if (conditions?.initial?.concentrations) {
-        for (const name of Object.keys(conditions.initial.concentrations)) {
-          names.add(name);
-        }
-      }
-
-      if (conditions?.conditions?.data) {
-        for (const block of conditions.conditions.data) {
-          for (const header of block.headers || []) {
-            if (header.startsWith("CONC.") && header.endsWith(".mol m-3")) {
-              const speciesName = header
-                .replace("CONC.", "")
-                .replace(".mol m-3", "");
-              names.add(speciesName);
-            }
-          }
-        }
-      }
-
-      return names;
-    }
-
 
     function serializeReaction(reaction) {
-      if (reaction.type === 'EMISSION') {
-        return {
-          type: 'EMISSION',
-          name: reaction.name,
-          "scaling factor": reaction["scaling factor"],
-          products: reaction.products.map(product => ({
-            "species name": product["species name"],
-            coefficient: product.coefficient
-          })),
-          "gas phase": reaction["gas phase"]
-        };
+      if (!reaction || typeof reaction !== 'object') {
+        return reaction
       }
-      // Default: Arrhenius and others
-      return {
-        type: reaction.type,
-        A: reaction.A,
-        B: reaction.B,
-        C: reaction.C,
-        D: reaction.D,
-        E: reaction.E,
-        reactants: reaction.reactants,
-        products: reaction.products.map(product => ({
-          "species name": product["species name"],
-          coefficient: product.coefficient
-        })),
-        "gas phase": reaction["gas phase"]
-      };
+
+      const { id, ...serialized } = reaction
+
+      if (serialized.type === 'SURFACE_REACTION') {
+        serialized.type = 'SURFACE'
+      }
+
+      if (serialized.type === 'BRANCHED') {
+        serialized.type = 'BRANCHED_NO_RO2'
+      }
+
+      if (serialized.scalingFactor !== undefined && serialized['scaling factor'] === undefined) {
+        serialized['scaling factor'] = serialized.scalingFactor
+      }
+      delete serialized.scalingFactor
+
+      if (serialized.reactants) {
+        serialized.reactants = normalizeReactionComponents(serialized.reactants)
+      }
+
+      if (serialized.products) {
+        serialized.products = normalizeReactionComponents(serialized.products)
+      }
+
+      if (serialized['gas-phase products']) {
+        serialized['gas-phase products'] = normalizeReactionComponents(serialized['gas-phase products'])
+      }
+
+      if (serialized['alkoxy products']) {
+        serialized['alkoxy products'] = normalizeReactionComponents(serialized['alkoxy products'])
+      }
+
+      if (serialized['nitrate products']) {
+        serialized['nitrate products'] = normalizeReactionComponents(serialized['nitrate products'])
+      }
+
+      // UI surface reactions are authored as reactants/products; v1 expects gas-phase fields.
+      if (serialized.type === 'SURFACE') {
+        if (serialized['gas-phase species'] === undefined && Array.isArray(serialized.reactants) && serialized.reactants.length > 0) {
+          const firstReactant = serialized.reactants[0]
+          serialized['gas-phase species'] = firstReactant?.['species name'] || firstReactant?.name || firstReactant
+        }
+
+        if (!serialized['gas-phase products'] && Array.isArray(serialized.products)) {
+          serialized['gas-phase products'] = normalizeReactionComponents(serialized.products)
+        }
+
+        delete serialized.reactants
+        delete serialized.products
+      }
+
+      return serialized
     }
+
+    const serializeSpecies = (species) => {
+      if (!species || typeof species !== 'object') {
+        return species
+      }
+
+      const { id, molecular_weight_kg_mol, properties, ...serialized } = species
+
+      if (serialized['molecular weight [kg mol-1]'] === undefined && molecular_weight_kg_mol !== undefined) {
+        serialized['molecular weight [kg mol-1]'] = molecular_weight_kg_mol
+      }
+
+      return serialized
+    }
+
+    const sourceMechanism = mechanismData.mechanism?.mechanism || {}
+    const species = mechanismData.species.length > 0
+      ? mechanismData.species.map(serializeSpecies)
+      : (sourceMechanism.species || []).map(serializeSpecies)
+    const reactions = mechanismData.reactions.length > 0
+      ? mechanismData.reactions.map(serializeReaction)
+      : (sourceMechanism.reactions || []).map(serializeReaction)
+    const phases = Array.isArray(sourceMechanism.phases) && sourceMechanism.phases.length > 0
+      ? sourceMechanism.phases
+      : [
+          {
+            name: 'gas',
+            species: species.map((sp) => ({ name: sp.name }))
+          }
+        ]
 
     const finalMechanism = {
       "box model options": {
@@ -127,22 +135,18 @@ export function RunSimulationButton({ className = '' }) {
       "conditions": conditions.conditions,
 
       "mechanism": {
-        "name": mechanismData.currentExample,
-        "reactions": mechanismData.reactions.map(serializeReaction),
-        "species": mechanismData.species.map(species => ({
-          name: species.name
-        })),
-        "phases": [
-          {
-            "name": "gas",
-            "species": mechanismData.species.map(species => ({
-              name: species.name
-            }))
-          }
-        ],
-        "version": "1.0.0"
+        ...sourceMechanism,
+        "name": sourceMechanism.name || mechanismData.currentExample?.name || mechanismData.currentExample || 'custom',
+        "reactions": reactions,
+        "species": species,
+        "phases": phases,
+        "version": sourceMechanism.version || '1.0.0'
       }
     };
+
+    if (!finalMechanism.mechanism || !Array.isArray(finalMechanism.mechanism.species) || !Array.isArray(finalMechanism.mechanism.reactions)) {
+      throw new Error('Invalid mechanism payload: expected mechanism.species[] and mechanism.reactions[] before solve()')
+    }
 
     console.log('Final mechanism config:', finalMechanism);
     const box = MusicBox.fromJson(finalMechanism);
