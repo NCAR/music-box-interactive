@@ -20,6 +20,72 @@ export function RunSimulationButton({ className = '' }) {
   const loadedExample = useSelector((state) => state.conditions.exampleLoaded)
 
   async function handleRunSimulation() {
+    const buildSolverConditions = () => {
+      const source = conditions.conditions || {}
+
+      const hasDataBlocks = Array.isArray(source.data)
+      const blocks = hasDataBlocks ? [...source.data] : []
+
+      const reduxInitial = conditions.initial || {}
+      const sourceInitial = source.initial || {}
+      const initial = {
+        temperature: sourceInitial.temperature ?? reduxInitial.temperature,
+        pressure: sourceInitial.pressure ?? reduxInitial.pressure,
+        concentrations: {
+          ...(reduxInitial.concentrations || {}),
+          ...(sourceInitial.concentrations || {}),
+        },
+      }
+
+      const rateConstants = {
+        ...(conditions.rateConstants || {}),
+        ...(source.rateConstants || {}),
+      }
+
+      const evolving = source.evolving || conditions.evolving || {}
+
+      const hasAnyConcColumns = blocks.some((block) =>
+        (block?.headers || []).some((h) => typeof h === 'string' && h.startsWith('CONC.'))
+      )
+
+      // If there are no concentration columns, seed t=0 with initial state from Redux/source.
+      if (!hasAnyConcColumns) {
+        const headers = ['time.s', 'ENV.temperature.K', 'ENV.pressure.Pa']
+        const row = [
+          0,
+          initial.temperature ?? 298.15,
+          initial.pressure ?? 101325,
+        ]
+
+        Object.entries(initial.concentrations || {}).forEach(([species, value]) => {
+          headers.push(`CONC.${species}.mol m-3`)
+          row.push(value)
+        })
+
+        Object.entries(rateConstants).forEach(([name, value]) => {
+          headers.push(name)
+          row.push(value)
+        })
+
+        blocks.push({ headers, rows: [row] })
+      }
+
+      if (evolving.enabled && Array.isArray(evolving.times) && evolving.times.length > 0) {
+        const envHeaders = ['time.s', 'ENV.temperature.K', 'ENV.pressure.Pa']
+        const envRows = evolving.times.map((time, i) => [
+          time,
+          evolving.temperature?.[i] ?? initial.temperature ?? 298.15,
+          evolving.pressure?.[i] ?? initial.pressure ?? 101325,
+        ])
+        blocks.push({ headers: envHeaders, rows: envRows })
+      }
+
+      return {
+        ...(source || {}),
+        data: blocks,
+      }
+    }
+
     const normalizeReactionComponents = (components = []) => {
       return (components || []).map((component) => {
         if (!component || typeof component !== 'object') return component
@@ -132,7 +198,7 @@ export function RunSimulationButton({ className = '' }) {
         "simulation length [sec]": conditions.basic.duration
       },
 
-      "conditions": conditions.conditions,
+      "conditions": buildSolverConditions(),
 
       "mechanism": {
         ...sourceMechanism,
@@ -146,6 +212,10 @@ export function RunSimulationButton({ className = '' }) {
 
     if (!finalMechanism.mechanism || !Array.isArray(finalMechanism.mechanism.species) || !Array.isArray(finalMechanism.mechanism.reactions)) {
       throw new Error('Invalid mechanism payload: expected mechanism.species[] and mechanism.reactions[] before solve()')
+    }
+
+    if (!Array.isArray(finalMechanism.conditions?.data) || finalMechanism.conditions.data.length === 0) {
+      throw new Error('Invalid conditions payload: expected conditions.data[] with at least one block')
     }
 
     console.log('Final mechanism config:', finalMechanism);
