@@ -206,10 +206,15 @@ export function ReactionEditor() {
                 <select
                   value={reactionType}
                   onChange={(e) => setReactionType(e.target.value)}
-                  className="w-full px-3 py-2 border-2 border-white/30 bg-white/10 text-white placeholder:text-gray-400 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-600"
+                  className="w-full px-3 py-2 border-2 border-white/30 bg-white/10 text-black placeholder:text-gray-400 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-600"
+                  style={{ color: 'white', backgroundColor: 'rgba(255,255,255,0.1)' }}
                 >
                   {reactionTypes.map(type => (
-                    <option key={type.value} value={type.value}>
+                    <option
+                      key={type.value}
+                      value={type.value}
+                      style={{ color: 'black', backgroundColor: 'rgba(255,255,255,0.95)' }}
+                    >
                       {type.label}
                     </option>
                   ))}
