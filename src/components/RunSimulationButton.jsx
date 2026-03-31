@@ -4,7 +4,7 @@ import { Button } from './ui/button'
 import { runSimulation, setResults, setStatus, setMetadata, setError } from '../redux/slices/simulationSlice'
 import { Loader2, Play } from 'lucide-react'
 import { MusicBox } from '@ncar/music-box';
-import analyticalConfig from '@ncar/music-box/examples/analytical/my_config.json' with { type: 'json' };
+import c5Config from '@ncar/music-box/examples/carbon_bond_5/my_config.json' with { type: 'json' };
 import { setSpecies } from '../redux/slices/mechanismSlice'
 import { useState } from 'react';
 
@@ -21,8 +21,6 @@ export function RunSimulationButton({ className = '' }) {
   const currentExample = useSelector((state) => state.mechanism.currentExample)
   const conditions = useSelector((state) => state.conditions)
   const loadedExample = useSelector((state) => state.conditions.exampleLoaded)
-
-  const [config, setConfig] = useState(analyticalConfig);
 
   // For testing purposes this just downloads a json file to device
   const downloadJSON = (data) => {
@@ -132,8 +130,13 @@ export function RunSimulationButton({ className = '' }) {
       }
     };
 
-    console.log('Final mechanism config:', finalMechanism);
-    const box = MusicBox.fromJson(finalMechanism);
+    // console.log('Final mechanism config:', finalMechanism);
+    // const box = MusicBox.fromJson(finalMechanism);
+    // const results = await box.solve();
+    // console.log('Results from final mechanism config:', results);
+
+    console.log('Final mechanism config:', c5Config);
+    const box = MusicBox.fromJson(c5Config);
     const results = await box.solve();
     console.log('Results from final mechanism config:', results);
 

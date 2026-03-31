@@ -505,7 +505,7 @@ export function SimulationChart({ results, metadata }) {
                   if (!payload || payload.length === 0) return null
 
                   return (
-                    <div className="flex flex-wrap justify-center gap-3 px-4">
+                    <div className="flex flex-wrap justify-center gap-3 px-4" style={{ maxHeight: '200px', overflowY: 'auto' }}>
                       {payload.map((entry, index) => (
                         <div
                           key={`legend-${index}`}
