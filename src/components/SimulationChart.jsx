@@ -14,7 +14,7 @@ import { BarChart3, Atom, AlertCircle, Lightbulb } from 'lucide-react'
  */
 export function SimulationChart({ results, metadata }) {
   const [selectedSpecies, setSelectedSpecies] = useState([])
-  const [showAll, setShowAll] = useState(true)
+  const [showAll, setShowAll] = useState(false)
   const [initialized, setInitialized] = useState(false)
 
   // Generate color palette for species
@@ -46,71 +46,10 @@ export function SimulationChart({ results, metadata }) {
     setSelectedSpecies([])
   }, [results])
 
-  // Initialize selected species on first render
+  // No auto-selection: leave all species unselected by default
   useEffect(() => {
     if (!initialized && allSpecies.length > 0 && selectedSpecies.length === 0) {
-      // Calculate species metrics for selection
-      const speciesMetrics = allSpecies.map(sp => {
-        const values = results.map(r => r.concentrations[sp])
-        const positiveValues = values.filter(v => v > 0)
-
-        // Handle edge cases
-        if (positiveValues.length === 0) {
-          return { species: sp, range: 0, maxValue: 0, avgValue: 0 }
-        }
-
-        const max = Math.max(...values)
-        const min = Math.min(...positiveValues)
-        const avg = positiveValues.reduce((sum, v) => sum + v, 0) / positiveValues.length
-
-        // Calculate variability range (max/min ratio)
-        const range = (min > 0 && max > 0) ? max / min : max
-
-        return {
-          species: sp,
-          range: isFinite(range) ? range : 0,
-          maxValue: max,
-          avgValue: avg
-        }
-      })
-
-      // console.log('Species metrics:', speciesMetrics.map(m => ({
-      //   species: m.species,
-      //   range: m.range.toFixed(3),
-      //   maxValue: m.maxValue.toExponential(2)
-      // })))
-
-      // First, try to select by variability (species with range > 1.0001, meaning they vary by at least 0.01%)
-      // LOWERED from 1.001 to 1.0001 to catch even smaller changes
-      let topSpecies = speciesMetrics
-        .filter(m => m.range > 1.0001)
-        .sort((a, b) => b.range - a.range)
-        .slice(0, 8)
-        .map(s => s.species)
-
-      // console.log('Variable species (range > 1.0001):', topSpecies)
-
-      // Fallback 1: If we have fewer than 3 variable species, add species with highest concentrations
-      if (topSpecies.length < 3) {
-        // console.log('Low variability detected, using concentration-based selection')
-        const concentrationBased = speciesMetrics
-          .sort((a, b) => b.maxValue - a.maxValue)
-          .slice(0, 8)
-          .map(s => s.species)
-
-        // Combine variability-based and concentration-based, remove duplicates
-        topSpecies = [...new Set([...topSpecies, ...concentrationBased])].slice(0, 8)
-      }
-
-      // Fallback 2: If still no species (edge case), just take first 8 species
-      if (topSpecies.length === 0) {
-        // console.log('No species with significant values, selecting first available species')
-        topSpecies = allSpecies.slice(0, 8)
-      }
-
-      // console.log('Selected species for plot:', topSpecies)
-      setSelectedSpecies(topSpecies)
-      setInitialized(true)
+      setInitialized(true);
     }
   }, [allSpecies, results, selectedSpecies.length, initialized])
 
