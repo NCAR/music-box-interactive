@@ -19,6 +19,10 @@ export function ReactionEditor() {
   const [reactants, setReactants] = useState('')
   const [products, setProducts] = useState('')
   const [rateA, setRateA] = useState('1.0')
+  const [rateB, setRateB] = useState('0.0')
+  const [rateC, setRateC] = useState('0.0')
+  const [rateD, setRateD] = useState('0.0')
+  const [rateE, setRateE] = useState('0.0')
   const [error, setError] = useState(null)
 
   // check if predefined mech
@@ -75,11 +79,24 @@ export function ReactionEditor() {
       return
     }
 
+
     const A = parseFloat(rateA)
-    if (isNaN(A)) {
-      setError('Rate constant A must be a valid number')
-      setTimeout(() => setError(null), 3000)
-      return
+    const B = parseFloat(rateB)
+    const C = parseFloat(rateC)
+    const D = parseFloat(rateD)
+    const E = parseFloat(rateE)
+    if (reactionType === 'ARRHENIUS') {
+      if (isNaN(A) || isNaN(B) || isNaN(C) || isNaN(D) || isNaN(E)) {
+        setError('All Arrhenius parameters (A, B, C, D, E) must be valid numbers')
+        setTimeout(() => setError(null), 3000)
+        return
+      }
+    } else {
+      if (isNaN(A)) {
+        setError('Rate constant A must be a valid number')
+        setTimeout(() => setError(null), 3000)
+        return
+      }
     }
 
     try {
@@ -93,9 +110,10 @@ export function ReactionEditor() {
       const newReaction = {
         id: uuidv4(),
         type: reactionType,
-        "reactants": parsedReactants,
-        "products": parsedProducts,
-        "name": normalizedProducts ? `${normalizedReactants} → ${normalizedProducts}` : `${normalizedReactants} → (removed)`,
+        "gas phase": 'gas',
+        reactants: parsedReactants,
+        products: parsedProducts,
+        name: normalizedProducts ? `${normalizedReactants} → ${normalizedProducts}` : `${normalizedReactants} → (removed)`,
       }
 
       // console.log(newReaction.reactants);
@@ -105,10 +123,13 @@ export function ReactionEditor() {
       console.log(newReaction);
 
       // add type-specific params
+
       if (reactionType === 'ARRHENIUS') {
         newReaction.A = A
-        newReaction.B = 0.0
-        newReaction.C = 0.0
+        newReaction.B = B
+        newReaction.C = C
+        newReaction.D = D
+        newReaction.E = E
       } else if (reactionType === 'PHOTOLYSIS' || reactionType === 'USER_DEFINED') {
         newReaction.scalingFactor = A
       }
@@ -125,6 +146,10 @@ export function ReactionEditor() {
       setReactants('')
       setProducts('')
       setRateA('1.0')
+      setRateB('0.0')
+      setRateC('0.0')
+      setRateD('0.0')
+      setRateE('0.0')
     } catch (err) {
       setError('Invalid reaction format')
       setTimeout(() => setError(null), 3000)
@@ -248,17 +273,67 @@ export function ReactionEditor() {
               </div>
 
               {reactionType === 'ARRHENIUS' && (
-                <div>
-                  <label className="block text-xs font-semibold text-blue-100 mb-1">
-                    Rate Constant A (pre-exponential factor)
-                  </label>
-                  <input
-                    type="text"
-                    value={rateA}
-                    onChange={(e) => setRateA(e.target.value)}
-                    placeholder="1.0e-10"
-                    className="w-full px-3 py-2 border-2 border-white/30 bg-white/10 text-white placeholder:text-gray-400 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
-                  />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-semibold text-blue-100 mb-1">
+                      Rate Constant A (pre-exponential factor)
+                    </label>
+                    <input
+                      type="text"
+                      value={rateA}
+                      onChange={(e) => setRateA(e.target.value)}
+                      placeholder="1.0e-10"
+                      className="w-full px-3 py-2 border-2 border-white/30 bg-white/10 text-white placeholder:text-gray-400 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-blue-100 mb-1">
+                      Parameter B
+                    </label>
+                    <input
+                      type="text"
+                      value={rateB}
+                      onChange={(e) => setRateB(e.target.value)}
+                      placeholder="0.0"
+                      className="w-full px-3 py-2 border-2 border-white/30 bg-white/10 text-white placeholder:text-gray-400 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-blue-100 mb-1">
+                      Parameter C
+                    </label>
+                    <input
+                      type="text"
+                      value={rateC}
+                      onChange={(e) => setRateC(e.target.value)}
+                      placeholder="0.0"
+                      className="w-full px-3 py-2 border-2 border-white/30 bg-white/10 text-white placeholder:text-gray-400 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-blue-100 mb-1">
+                      Parameter D
+                    </label>
+                    <input
+                      type="text"
+                      value={rateD}
+                      onChange={(e) => setRateD(e.target.value)}
+                      placeholder="0.0"
+                      className="w-full px-3 py-2 border-2 border-white/30 bg-white/10 text-white placeholder:text-gray-400 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-blue-100 mb-1">
+                      Parameter E
+                    </label>
+                    <input
+                      type="text"
+                      value={rateE}
+                      onChange={(e) => setRateE(e.target.value)}
+                      placeholder="0.0"
+                      className="w-full px-3 py-2 border-2 border-white/30 bg-white/10 text-white placeholder:text-gray-400 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
+                    />
+                  </div>
                 </div>
               )}
 
