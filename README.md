@@ -11,6 +11,20 @@ Users can:
 - visualize concentration profiles over time
 - load/save configurations as json files
 
+## Docker (quickest way to run)
+
+If you just want to run the app without setting up a dev environment:
+
+```bash
+# build the image
+docker build -t musicbox-frontend .
+
+# run it
+docker run --rm -p 8080:80 musicbox-frontend
+```
+
+Then open **http://localhost:8080** in your browser. `Ctrl+C` stops the container.
+
 ## prerequisites
 
 before you start, make sure you got these installed:
