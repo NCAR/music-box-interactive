@@ -4,19 +4,11 @@ kind: Kustomization
 images:
 - name: hub.k8s.ucar.edu/musicbox/frontend
   newTag: 9edc9fc
-- name: hub.k8s.ucar.edu/musicbox/backend
-  newTag: 9edc9fc
 
 resources:
-- rabbitmq-deploy.yaml
-- rabbitmq-service.yaml
-- backend-deploy.yaml
-- backend-service.yaml
 - frontend-deploy.yaml
 - frontend-service.yaml
-- model-deploy.yaml
 - ingress.yaml
-- pvc.yaml
 
 labels:
 - includeSelectors: true
