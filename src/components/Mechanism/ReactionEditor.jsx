@@ -9,11 +9,30 @@ import { useToast } from '@/hooks/use-toast'
 
 // visual editor for reactions in the mechanism
 export function ReactionEditor() {
+
   const dispatch = useDispatch()
   const { toast } = useToast()
   const reactions = useSelector((state) => state.mechanism.reactions)
   const species = useSelector((state) => state.mechanism.species)
   const selectedMechanism = useSelector((state) => state.mechanism.selectedMechanism)
+
+  const [reactionSearch, setReactionSearch] = useState("");
+
+  // Move formatReactionDisplay above filteredReactions so it's available
+  function formatReactionDisplay(reaction) {
+    const reactantStr = reaction.reactants && reaction.reactants.length > 0
+      ? reaction.reactants.map(r => `${r.coefficient > 1 ? r.coefficient : ''}${r["species name"]}`).join(' + ')
+      : '∅';
+    const productStr = reaction.products && reaction.products.length > 0
+      ? reaction.products.map(p => `${p.coefficient > 1 ? p.coefficient : ''}${p["species name"]}`).join(' + ')
+      : '∅';
+    return `${reactantStr} → ${productStr}`;
+  }
+
+  // Filtered reactions list based on search
+  const filteredReactions = reactions.filter((reaction) => {
+    return formatReactionDisplay(reaction).toLowerCase().includes(reactionSearch.toLowerCase());
+  });
 
   const [reactionType, setReactionType] = useState('ARRHENIUS')
   const [reactants, setReactants] = useState('')
@@ -204,17 +223,7 @@ export function ReactionEditor() {
     })
   }
 
-  const formatReactionDisplay = (reaction) => {
-    const reactantStr = reaction.reactants && reaction.reactants.length > 0
-      ? reaction.reactants.map(r => `${r.coefficient > 1 ? r.coefficient : ''}${r["species name"]}`).join(' + ')
-      : '∅'  // Empty set symbol for emissions
-
-    const productStr = reaction.products && reaction.products.length > 0
-      ? reaction.products.map(p => `${p.coefficient > 1 ? p.coefficient : ''}${p["species name"]}`).join(' + ')
-      : '∅'  // Empty set symbol for loss reactions
-
-    return `${reactantStr} → ${productStr}`
-  }
+  // ...existing code... (formatReactionDisplay is now only defined once at the top)
 
   return (
     <div className="space-y-4">
@@ -429,13 +438,22 @@ export function ReactionEditor() {
             </Button>
           </div>
 
-          {/* Reactions List */}
+          {/* Reactions List with Search */}
           <div>
             <h4 className="font-semibold text-sm mb-2">
               {isPredefined
                 ? `${isPredefined.name} Mechanism Reactions (${isPredefined.reactions} pre-configured${reactions.length > 0 ? ` + ${reactions.length} custom` : ''})`
                 : `Reactions List (${reactions.length} total)`}
             </h4>
+
+            {/* Search Bar */}
+            <input
+              type="text"
+              value={reactionSearch}
+              onChange={e => setReactionSearch(e.target.value)}
+              placeholder="Search reactions by formula"
+              className="w-full mb-3 px-3 py-2 border-2 border-white/30 bg-white/10 text-white placeholder:text-gray-400 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
+            />
 
             {isPredefined && reactions.length === 0 ? (
               <div className="text-center py-8 bg-white/10 backdrop-blur-lg rounded-lg border border-white/20">
@@ -463,17 +481,63 @@ export function ReactionEditor() {
                   </p>
                 </div>
                 <div className="space-y-2 max-h-96 overflow-y-auto">
-                  {reactions.map((reaction) => (
+                  {filteredReactions.length === 0 ? (
+                    <p className="text-center text-gray-500 py-8">No matching reactions found.</p>
+                  ) : (
+                    filteredReactions.map((reaction) => (
+                      <div
+                        key={reaction.id}
+                        className="flex items-center justify-between p-3 border border-white/20 rounded-lg bg-white/5 hover:bg-white/10 transition-colors"
+                      >
+                        <div className="flex-1">
+                          <h5 className="font-semibold text-sm font-mono">{formatReactionDisplay(reaction)}</h5>
+                          <p className="text-xs text-gray-300">
+                            Type: {reaction.type} •
+                            {reaction.type === 'ARRHENIUS' ? ` A = ${reaction.A}` : ` Scale = ${reaction.scalingFactor}`}
+                          </p>
+                        </div>
+
+                        <Button
+                          variant="glass"
+                          size="sm"
+                          onClick={() => handleRemoveReaction(reaction.id)}
+                          className="rounded-lg text-red-600 hover:bg-red-900/20 backdrop-blur-lg"
+                        >
+                          Remove
+                        </Button>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            ) : reactions.length === 0 ? (
+              <p className="text-center text-gray-500 py-8">
+                No reactions defined. Add your first reaction above.
+              </p>
+            ) : (
+              <div className="space-y-2 max-h-96 overflow-y-auto">
+                {filteredReactions.length === 0 ? (
+                  <p className="text-center text-gray-500 py-8">No matching reactions found.</p>
+                ) : (
+                  filteredReactions.map((reaction) => (
                     <div
                       key={reaction.id}
                       className="flex items-center justify-between p-3 border border-white/20 rounded-lg bg-white/5 hover:bg-white/10 transition-colors"
                     >
                       <div className="flex-1">
-                        <h5 className="font-semibold text-sm font-mono">{formatReactionDisplay(reaction)}</h5>
-                        <p className="text-xs text-gray-300">
-                          Type: {reaction.type} •
-                          {reaction.type === 'ARRHENIUS' ? ` A = ${reaction.A}` : ` Scale = ${reaction.scalingFactor}`}
-                        </p>
+                        <h5 className="font-semibold text-sm font-mono">
+                          {formatReactionDisplay(reaction)}
+                        </h5>
+                        <div className="flex gap-3 mt-1">
+                          <span className="text-xs px-2 py-0.5 bg-white/10 backdrop-blur-lg border border-white/20 text-blue-400 rounded">
+                            {reaction.type}
+                          </span>
+                          {reaction.A && (
+                            <span className="text-xs text-gray-300">
+                              A = {reaction.A.toExponential(2)}
+                            </span>
+                          )}
+                        </div>
                       </div>
 
                       <Button
@@ -485,46 +549,8 @@ export function ReactionEditor() {
                         Remove
                       </Button>
                     </div>
-                  ))}
-                </div>
-              </div>
-            ) : reactions.length === 0 ? (
-              <p className="text-center text-gray-500 py-8">
-                No reactions defined. Add your first reaction above.
-              </p>
-            ) : (
-              <div className="space-y-2 max-h-96 overflow-y-auto">
-                {reactions.map((reaction) => (
-                  <div
-                    key={reaction.id}
-                    className="flex items-center justify-between p-3 border border-white/20 rounded-lg bg-white/5 hover:bg-white/10 transition-colors"
-                  >
-                    <div className="flex-1">
-                      <h5 className="font-semibold text-sm font-mono">
-                        {formatReactionDisplay(reaction)}
-                      </h5>
-                      <div className="flex gap-3 mt-1">
-                        <span className="text-xs px-2 py-0.5 bg-white/10 backdrop-blur-lg border border-white/20 text-blue-400 rounded">
-                          {reaction.type}
-                        </span>
-                        {reaction.A && (
-                          <span className="text-xs text-gray-300">
-                            A = {reaction.A.toExponential(2)}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-
-                    <Button
-                      variant="glass"
-                      size="sm"
-                      onClick={() => handleRemoveReaction(reaction.id)}
-                      className="rounded-lg text-red-600 hover:bg-red-900/20 backdrop-blur-lg"
-                    >
-                      Remove
-                    </Button>
-                  </div>
-                ))}
+                  ))
+                )}
               </div>
             )}
           </div>

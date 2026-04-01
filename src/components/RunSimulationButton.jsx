@@ -181,14 +181,34 @@ export function RunSimulationButton({ className = '' }) {
     const reactions = mechanismData.reactions.length > 0
       ? mechanismData.reactions.map(serializeReaction)
       : (sourceMechanism.reactions || []).map(serializeReaction)
-    const phases = Array.isArray(sourceMechanism.phases) && sourceMechanism.phases.length > 0
-      ? sourceMechanism.phases
-      : [
-          {
-            name: 'gas',
-            species: species.map((sp) => ({ name: sp.name }))
-          }
-        ]
+
+    // Always ensure all current species are included in the phases list
+    let phases = [];
+    if (Array.isArray(sourceMechanism.phases) && sourceMechanism.phases.length > 0) {
+      // Deep copy to avoid mutating the original
+      phases = sourceMechanism.phases.map(phase => ({
+        ...phase,
+        species: Array.isArray(phase.species)
+          ? [
+              ...phase.species.filter(
+                (sp) => species.some((s) => s.name === (sp.name || sp))
+              ),
+              ...species
+                .filter((sp) =>
+                  !phase.species.some((s) => (s.name || s) === sp.name)
+                )
+                .map((sp) => ({ name: sp.name }))
+            ]
+          : species.map((sp) => ({ name: sp.name })),
+      }));
+    } else {
+      phases = [
+        {
+          name: 'gas',
+          species: species.map((sp) => ({ name: sp.name })),
+        },
+      ];
+    }
 
     const finalMechanism = {
       "box model options": {

@@ -16,6 +16,20 @@ export function SpeciesEditor() {
 
   const [newSpeciesName, setNewSpeciesName] = useState('')
   const [newMolWeight, setNewMolWeight] = useState('')
+  const [speciesSearch, setSpeciesSearch] = useState('')
+  // Filtered and sorted species list based on search
+  const filteredSpecies = species
+    .filter((sp) => sp.name.toLowerCase().includes(speciesSearch.toLowerCase()))
+    .sort((a, b) => {
+      const search = speciesSearch.trim().toLowerCase();
+      if (!search) return 0;
+      const aExact = a.name.toLowerCase() === search;
+      const bExact = b.name.toLowerCase() === search;
+      if (aExact && !bExact) return -1;
+      if (!aExact && bExact) return 1;
+      // Otherwise, keep original order
+      return 0;
+    });
 
   // check if predefined mech
   const preDefinedMechanisms = {
@@ -207,13 +221,22 @@ export function SpeciesEditor() {
             </Button>
           </div>
 
-          {/* Species List */}
+          {/* Species List with Search */}
           <div>
             <h4 className="font-semibold text-sm mb-2">
               {isPredefined
                 ? `${isPredefined.name} Mechanism Species (${isPredefined.species} pre-configured${species.length > 0 ? ` + ${species.length} custom` : ''})`
                 : `Species List (${species.length} total)`}
             </h4>
+
+            {/* Search Bar */}
+            <input
+              type="text"
+              value={speciesSearch}
+              onChange={e => setSpeciesSearch(e.target.value)}
+              placeholder="Search species by name"
+              className="w-full mb-3 px-3 py-2 border-2 border-white/30 bg-white/10 text-white placeholder:text-gray-400 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
+            />
 
             {isPredefined && species.length === 0 ? (
               <div className="text-center py-8 bg-white/10 backdrop-blur-lg rounded-lg border border-white/20">
@@ -241,7 +264,44 @@ export function SpeciesEditor() {
                   </p>
                 </div>
                 <div className="space-y-2 max-h-96 overflow-y-auto">
-                  {species.map((sp) => (
+                  {filteredSpecies.length === 0 ? (
+                    <p className="text-center text-gray-500 py-8">No matching species found.</p>
+                  ) : (
+                    filteredSpecies.map((sp) => (
+                      <div
+                        key={sp.name}
+                        className="flex items-center justify-between p-3 border border-white/20 rounded-lg bg-white/5 hover:bg-white/10 transition-colors"
+                      >
+                        <div className="flex-1">
+                          <h5 className="font-semibold text-sm">{sp.name}</h5>
+                          <p className="text-xs text-gray-300">
+                            MW: {sp.molecular_weight_kg_mol} kg/mol
+                          </p>
+                        </div>
+
+                        <Button
+                          variant="glass"
+                          size="sm"
+                          onClick={() => handleRemoveSpecies(sp.name)}
+                          className="rounded-lg text-red-600 hover:bg-red-900/20 backdrop-blur-lg"
+                        >
+                          Remove
+                        </Button>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            ) : species.length === 0 ? (
+              <p className="text-center text-gray-500 py-8">
+                No species defined. Add your first species above.
+              </p>
+            ) : (
+              <div className="space-y-2 max-h-96 overflow-y-auto">
+                {filteredSpecies.length === 0 ? (
+                  <p className="text-center text-gray-500 py-8">No matching species found.</p>
+                ) : (
+                  filteredSpecies.map((sp) => (
                     <div
                       key={sp.name}
                       className="flex items-center justify-between p-3 border border-white/20 rounded-lg bg-white/5 hover:bg-white/10 transition-colors"
@@ -262,37 +322,8 @@ export function SpeciesEditor() {
                         Remove
                       </Button>
                     </div>
-                  ))}
-                </div>
-              </div>
-            ) : species.length === 0 ? (
-              <p className="text-center text-gray-500 py-8">
-                No species defined. Add your first species above.
-              </p>
-            ) : (
-              <div className="space-y-2 max-h-96 overflow-y-auto">
-                {species.map((sp) => (
-                  <div
-                    key={sp.name}
-                    className="flex items-center justify-between p-3 border border-white/20 rounded-lg bg-white/5 hover:bg-white/10 transition-colors"
-                  >
-                    <div className="flex-1">
-                      <h5 className="font-semibold text-sm">{sp.name}</h5>
-                      <p className="text-xs text-gray-300">
-                        MW: {sp.molecular_weight_kg_mol} kg/mol
-                      </p>
-                    </div>
-
-                    <Button
-                      variant="glass"
-                      size="sm"
-                      onClick={() => handleRemoveSpecies(sp.name)}
-                      className="rounded-lg text-red-600 hover:bg-red-900/20 backdrop-blur-lg"
-                    >
-                      Remove
-                    </Button>
-                  </div>
-                ))}
+                  ))
+                )}
               </div>
             )}
           </div>
