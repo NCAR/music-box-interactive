@@ -15,16 +15,6 @@ spec:
       containers:
       - name: frontend
         image: hub.k8s.ucar.edu/musicbox/frontend:latest
-        command: ['vite', '--host', '--debug']
         ports:
-        - containerPort: 5173
+        - containerPort: 80
           name: http
-        env:
-          - name: __VITE_ADDITIONAL_SERVER_ALLOWED_HOSTS
-            value: "musicbox-devel.acom.ucar.edu"
-          - name: DEBUG
-            value: "vite=*"
-          - name: VITE_API_URL
-            value: "https://musicbox.k8s.ucar.edu"
-              #- name: VITE_FEATURE_FLAGS
-              #value: "{ 'FLOW_DIAGRAM': true, 'PART_MC': false }"
