@@ -7,7 +7,7 @@ images:
   newTag: 6f7e2bc
 - name: hub.k8s.ucar.edu/musicbox/frontend
   newName: hub.k8s.ucar.edu/musicbox/frontend
-  newTag: c3298d5
+  newTag: 001bd5a
 
 namePrefix: devel-
 
