@@ -52,7 +52,7 @@ jobs:
       run: |
         cd deploy/deploy/kustomization/overlays/devel
         kustomize edit set image  hub.k8s.ucar.edu/musicbox/frontend=hub.k8s.ucar.edu/musicbox/frontend:${{ env.SHORT_SHA }}
-        git config user.email "kyleshores@ucar.edu"
+        git config user.email "kshores@ucar.edu"
         git config user.name "Auto-ci"
         git add kustomization.yaml
         git commit -m "CI updating kustomization image tag"
