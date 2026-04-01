@@ -48,12 +48,16 @@ jobs:
         file: repo/Dockerfile
         context: repo/
 
+    - name: Sync kustomization manifests to deploy branch
+      run: |
+        cp -r repo/deploy/kustomization/. deploy/deploy/kustomization/
+
     - name: Update devel kustomization
       run: |
         cd deploy/deploy/kustomization/overlays/devel
         kustomize edit set image  hub.k8s.ucar.edu/musicbox/frontend=hub.k8s.ucar.edu/musicbox/frontend:${{ env.SHORT_SHA }}
         git config user.email "kshores@ucar.edu"
         git config user.name "Auto-ci"
-        git add kustomization.yaml
+        git add -A ../../
         git commit -m "CI updating kustomization image tag"
         git push origin HEAD:deploy
