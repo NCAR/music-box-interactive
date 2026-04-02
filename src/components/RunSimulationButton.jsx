@@ -131,6 +131,23 @@ export function RunSimulationButton({ className = '' }) {
       }
       delete serialized.lambdaFunction
 
+      // Lambda callbacks are registered by label "Lambda.<name>" in MUSICA.
+      if (serialized.type === 'LAMBDA_RATE_CONSTANT' && (!serialized.name || !String(serialized.name).trim())) {
+        const lhs = Array.isArray(serialized.reactants)
+          ? serialized.reactants
+              .map((component) => component?.['species name'] || component?.name)
+              .filter(Boolean)
+              .join('_')
+          : 'rxn'
+        const rhs = Array.isArray(serialized.products)
+          ? serialized.products
+              .map((component) => component?.['species name'] || component?.name)
+              .filter(Boolean)
+              .join('_')
+          : 'prod'
+        serialized.name = `${lhs}_to_${rhs}`
+      }
+
       if (serialized.reactants) {
         serialized.reactants = normalizeReactionComponents(serialized.reactants)
       }
@@ -228,8 +245,7 @@ export function RunSimulationButton({ className = '' }) {
     }
 
     console.log('Final mechanism config:', finalMechanism);
-    const box = MusicBox.fromJson(finalMechanism);
-    const results = await box.solve();
+    const results = await MusicBox.fromJson(finalMechanism).solve()
     console.log('Results from final mechanism config:', results);
 
     // console.log('Final mechanism config:', c5Config);

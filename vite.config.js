@@ -12,6 +12,6 @@ export default defineConfig({
     },
   },
   optimizeDeps: {
-    exclude: ['@ncar/musica']
+    exclude: ['@ncar/musica', '@ncar/music-box']
   },
 })
