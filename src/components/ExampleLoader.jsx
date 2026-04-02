@@ -20,8 +20,6 @@ import { resetSimulation } from '../redux/slices/simulationSlice'
 
 import { MusicBox, parseCsvToBlock } from '@ncar/music-box';
 
-// Can't be imported and therefore we have no way to change its values if desired
-// import chapmanConditionsBoulder from '@ncar/music-box/examples/chapman/conditions_Boulder.csv' with { type: 'csv' };
 
 import chapmanConfig from '@ncar/music-box/examples/chapman/my_config.json' with { type: 'json' };
 import analyticalConfig from '@ncar/music-box/examples/analytical/my_config.json' with { type: 'json' };
@@ -59,23 +57,6 @@ export function ExampleLoader() {
     }
   }
 
-  async function handleClick() {
-    const box = MusicBox.fromJson(flowTubeConfig);
-    const results = await box.solve();
-    console.log(results);
-    // const response = await axios.get(`${API_URL}/examples/chapman`)
-    // const solverConfig = response.data?.example?.solverConfig
-
-    // if (!solverConfig) {
-    //   throw new Error('Missing solverConfig from backend example response')
-    // }
-
-    // const box = MusicBox.fromJson(solverConfig);
-    // const results = await box.solve();
-    // console.log(results);
-  }
-
-  // const [examples, setExamples] = useState([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
   const dispatch = useDispatch()
@@ -117,59 +98,6 @@ export function ExampleLoader() {
       mechanism: withInlineConditionData(ts1Config, [ts1InitialConditionsCsv]),
     },
   ]
-
-  // Fetch available examples on component mount
-  // useEffect(() => {
-  //   fetchExamples()
-  // }, [])
-
-  // const fetchExamples = async () => {
-  //   try {
-  //     const response = await axios.get(`${API_URL}/examples`)
-  //     setExamples(response.data.examples)
-  //   } catch (err) {
-  //     console.error('Error fetching examples:', err)
-  //     setError('Failed to load examples')
-  //   }
-  // }
-
-  // const loadExample = async (exampleId) => {
-  //   setLoading(true)
-  //   setError(null)
-
-  //   try {
-  //     const response = await axios.get(`${API_URL}/examples/${exampleId}`)
-  //     const exampleData = response.data.example
-
-  //     // Find the example metadata from the list
-  //     const exampleMetadata = examples.find(ex => ex.id === exampleId)
-
-  //     // CRITICAL: Clear old simulation results before loading new example
-  //     // This ensures Simulation Status shows the new example info, not old results
-  //     dispatch(clearSimulation())
-
-  //     // Update Redux store with example configuration
-  //     dispatch(setSelectedMechanism(exampleData.mechanism))
-  //     dispatch(loadConditions(exampleData.conditions))
-  //     dispatch(setCurrentExample({
-  //       id: exampleId,
-  //       name: exampleData.name,
-  //       description: exampleData.description || exampleMetadata?.description,
-  //     }))
-
-  //     console.log(`Loaded example: ${exampleData.name}`)
-
-  //     // Call callback to notify parent that example was selected
-  //     if (onExampleSelected) {
-  //       onExampleSelected()
-  //     }
-  //   } catch (err) {
-  //     console.error('Error loading example:', err)
-  //     setError(`Failed to load example: ${exampleId}`)
-  //   } finally {
-  //     setLoading(false)
-  //   }
-  // }
 
   const reactionJsonToString = (arr = []) => {
     return arr
@@ -228,8 +156,8 @@ export function ExampleLoader() {
         ...reaction,
         id: uuidv4(),
         "name": normalizedProducts
-          ? `${normalizedReactants} → ${normalizedProducts}`
-          : `${normalizedReactants} → (removed)`,
+          ? `${normalizedReactants} -> ${normalizedProducts}`
+          : `${normalizedReactants} -> (removed)`,
       }
 
       dispatch(addReaction(newReaction));
@@ -288,10 +216,6 @@ export function ExampleLoader() {
             {error}
           </div>
         )}
-
-        <button onClick={handleClick}>
-          Click Me
-        </button>
 
         <div className="grid gap-3">
           {examples.map((example) => (

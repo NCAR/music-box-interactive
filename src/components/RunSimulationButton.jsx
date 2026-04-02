@@ -4,6 +4,7 @@ import { Button } from './ui/button'
 import { setResults, setStatus, setMetadata } from '../redux/slices/simulationSlice'
 import { Loader2, Play } from 'lucide-react'
 import { MusicBox } from '@ncar/music-box';
+import analyticalConfig from '@ncar/music-box/examples/analytical/my_config.json'
 
 /**
  * RunSimulationButton Component
@@ -178,11 +179,41 @@ export function RunSimulationButton({ className = '' }) {
     const species = mechanismData.species.length > 0
       ? mechanismData.species.map(serializeSpecies)
       : (sourceMechanism.species || []).map(serializeSpecies)
-    const reactions = mechanismData.reactions.length > 0
+
+    // Add new species irr_1, irr_2, ... to each reaction's products
+    let reactions = mechanismData.reactions.length > 0
       ? mechanismData.reactions.map(serializeReaction)
       : (sourceMechanism.reactions || []).map(serializeReaction)
 
-    // Always ensure all current species are included in the phases list
+
+
+    // Track the actual new product species names and their corresponding CONC keys
+    const productSpeciesToAdd = [];
+    const productConcentrationKeys = [];
+    reactions.forEach((reaction) => {
+      let prodName = '';
+      if (typeof reaction.name === 'string' && reaction.name.length > 0) {
+        prodName = reaction.name.replace(/\s+/g, '_').replace(/[^A-Za-z0-9_]/g, '').toUpperCase();
+      } else {
+        prodName = 'REACT_' + Math.random().toString(36).substring(2, 10).toUpperCase();
+      }
+      if (Array.isArray(reaction.products)) {
+        reaction.products.push({ 'species name': prodName, coefficient: 1 });
+        productSpeciesToAdd.push(prodName);
+        // Track the expected concentration key for this species
+        productConcentrationKeys.push(`CONC.${prodName}.mol m-3`);
+      }
+    });
+
+    // Add new product species to species array if not already present
+    productSpeciesToAdd.forEach((prodName) => {
+      if (!species.some((sp) => sp.name === prodName)) {
+        species.push({ name: prodName, 'molecular weight [kg mol-1]': 0.029 });
+      }
+    });
+
+
+    // Always ensure all current species (including irr species) are included in the phases list
     let phases = [];
     if (Array.isArray(sourceMechanism.phases) && sourceMechanism.phases.length > 0) {
       // Deep copy to avoid mutating the original
@@ -243,8 +274,8 @@ export function RunSimulationButton({ className = '' }) {
     const results = await box.solve();
     console.log('Results from final mechanism config:', results);
 
-    // console.log('Final mechanism config:', c5Config);
-    // const box = MusicBox.fromJson(c5Config);
+    // console.log('Final mechanism config:', analyticalConfig);
+    // const box = MusicBox.fromJson(analyticalConfig);
     // const results = await box.solve();
     // console.log('Results from final mechanism config:', results);
 
@@ -256,10 +287,19 @@ export function RunSimulationButton({ className = '' }) {
     dispatch(setStatus('succeeded'))
     navigate('/plots')
 
-    const normalizedResults = normalizeManualResults(results);
 
-    if (normalizedResults.length > 0) {
-      dispatch(setResults(normalizedResults))
+    // Exclude new product species (from reaction names) from results before plotting, using the actual CONC keys
+    const excludeConcentrationKeys = new Set(productConcentrationKeys);
+    const filteredResults = normalizeManualResults(results).map(point => {
+      if (!point || typeof point !== 'object' || !point.concentrations) return point;
+      const filteredConcentrations = Object.fromEntries(
+        Object.entries(point.concentrations).filter(([key]) => !excludeConcentrationKeys.has(key))
+      );
+      return { ...point, concentrations: filteredConcentrations };
+    });
+
+    if (filteredResults.length > 0) {
+      dispatch(setResults(filteredResults))
       dispatch(setMetadata({
         mechanism: mechanismData.currentExample || mechanismData.mechanism?.mechanism?.name || 'local',
         duration: conditions.basic.duration || 0,

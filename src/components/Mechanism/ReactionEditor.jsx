@@ -26,7 +26,7 @@ export function ReactionEditor() {
     const productStr = reaction.products && reaction.products.length > 0
       ? reaction.products.map(p => `${p.coefficient > 1 ? p.coefficient : ''}${p["species name"]}`).join(' + ')
       : '∅';
-    return `${reactantStr} → ${productStr}`;
+    return `${reactantStr} -> ${productStr}`;
   }
 
   // Filtered reactions list based on search
@@ -162,7 +162,7 @@ export function ReactionEditor() {
           "gas phase": 'gas',
           reactants: parsedReactants,
           products: parsedProducts,
-          name: normalizedProducts ? `${normalizedReactants} → ${normalizedProducts}` : `${normalizedReactants} → (removed)`,
+          name: normalizedProducts ? `${normalizedReactants} -> ${normalizedProducts}` : `${normalizedReactants} -> (removed)`,
         }
       }
 
