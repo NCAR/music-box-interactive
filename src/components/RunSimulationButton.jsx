@@ -4,7 +4,6 @@ import { Button } from './ui/button'
 import { setResults, setStatus, setMetadata } from '../redux/slices/simulationSlice'
 import { Loader2, Play } from 'lucide-react'
 import { MusicBox } from '@ncar/music-box';
-import analyticalConfig from '@ncar/music-box/examples/analytical/my_config.json'
 
 /**
  * RunSimulationButton Component
@@ -49,7 +48,6 @@ export function RunSimulationButton({ className = '' }) {
         (block?.headers || []).some((h) => typeof h === 'string' && h.startsWith('CONC.'))
       )
 
-      // If there are no concentration columns, seed t=0 with initial state from Redux/source.
       if (!hasAnyConcColumns) {
         const headers = ['time.s', 'ENV.temperature.K', 'ENV.pressure.Pa']
         const row = [
@@ -180,7 +178,6 @@ export function RunSimulationButton({ className = '' }) {
       ? mechanismData.species.map(serializeSpecies)
       : (sourceMechanism.species || []).map(serializeSpecies)
 
-    // Add new species irr_1, irr_2, ... to each reaction's products
     let reactions = mechanismData.reactions.length > 0
       ? mechanismData.reactions.map(serializeReaction)
       : (sourceMechanism.reactions || []).map(serializeReaction)
@@ -213,7 +210,6 @@ export function RunSimulationButton({ className = '' }) {
     });
 
 
-    // Always ensure all current species (including irr species) are included in the phases list
     let phases = [];
     if (Array.isArray(sourceMechanism.phases) && sourceMechanism.phases.length > 0) {
       // Deep copy to avoid mutating the original
@@ -274,11 +270,6 @@ export function RunSimulationButton({ className = '' }) {
     const results = await box.solve();
     console.log('Results from final mechanism config:', results);
 
-    // console.log('Final mechanism config:', analyticalConfig);
-    // const box = MusicBox.fromJson(analyticalConfig);
-    // const results = await box.solve();
-    // console.log('Results from final mechanism config:', results);
-
     dispatch(setResults(results))
     dispatch(setMetadata({
       mechanism: mechanismData.currentExample || mechanismData.mechanism?.mechanism?.name || 'local',
@@ -290,13 +281,29 @@ export function RunSimulationButton({ className = '' }) {
 
     // Exclude new product species (from reaction names) from results before plotting, using the actual CONC keys
     const excludeConcentrationKeys = new Set(productConcentrationKeys);
-    const filteredResults = normalizeManualResults(results).map(point => {
-      if (!point || typeof point !== 'object' || !point.concentrations) return point;
-      const filteredConcentrations = Object.fromEntries(
-        Object.entries(point.concentrations).filter(([key]) => !excludeConcentrationKeys.has(key))
-      );
-      return { ...point, concentrations: filteredConcentrations };
-    });
+
+    // Filters
+    const normalizedPoints = normalizeManualResults(results);
+    const filteredResults = [];
+    const excludedResults = [];
+    for (const point of normalizedPoints) {
+      if (!point || typeof point !== 'object' || !point.concentrations) {
+        filteredResults.push(point);
+        excludedResults.push({});
+        continue;
+      }
+      const filteredConcentrations = {};
+      const excludedConcentrations = {};
+      for (const [key, value] of Object.entries(point.concentrations)) {
+        if (excludeConcentrationKeys.has(key)) {
+          excludedConcentrations[key] = value;
+        } else {
+          filteredConcentrations[key] = value;
+        }
+      }
+      filteredResults.push({ ...point, concentrations: filteredConcentrations });
+      excludedResults.push({ time: point.time, concentrations: excludedConcentrations });
+    }
 
     if (filteredResults.length > 0) {
       dispatch(setResults(filteredResults))

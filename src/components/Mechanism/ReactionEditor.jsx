@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui
 import { Button } from '../ui/button'
 import { addReaction, removeReaction } from '../../redux/slices/mechanismSlice'
 import { v4 as uuidv4 } from 'uuid'
-import { Plus, FlaskConical, Lightbulb } from 'lucide-react'
+import { Plus, Lightbulb } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 
 // visual editor for reactions in the mechanism
@@ -13,12 +13,9 @@ export function ReactionEditor() {
   const dispatch = useDispatch()
   const { toast } = useToast()
   const reactions = useSelector((state) => state.mechanism.reactions)
-  const species = useSelector((state) => state.mechanism.species)
-  const selectedMechanism = useSelector((state) => state.mechanism.selectedMechanism)
 
   const [reactionSearch, setReactionSearch] = useState("");
 
-  // Move formatReactionDisplay above filteredReactions so it's available
   function formatReactionDisplay(reaction) {
     const reactantStr = reaction.reactants && reaction.reactants.length > 0
       ? reaction.reactants.map(r => `${r.coefficient > 1 ? r.coefficient : ''}${r["species name"]}`).join(' + ')
@@ -46,13 +43,7 @@ export function ReactionEditor() {
   const [emissionScaling, setEmissionScaling] = useState('1.0')
   const [error, setError] = useState(null)
 
-  // check if predefined mech
-  const preDefinedMechanisms = {
-    chapman: { name: 'Chapman', species: 5, reactions: 6, description: 'Stratospheric oxygen chemistry' },
-    ts1: { name: 'TS1', species: 209, reactions: 512, description: '209 species tropospheric mechanism' },
-    analytical: { name: 'Analytical', species: 3, reactions: 3, description: 'Simple test mechanism (A→B→C)' },
-  }
-  const isPredefined = preDefinedMechanisms[selectedMechanism]
+  // Removed isPredefined logic; always use custom mechanism UI
 
   const reactionTypes = [
     { value: 'ARRHENIUS', label: 'Arrhenius (Temperature-dependent)' },
@@ -166,14 +157,6 @@ export function ReactionEditor() {
         }
       }
 
-      // console.log(newReaction.reactants);
-      // console.log(newReaction.products);
-      // console.log(newReaction.type);
-      // console.log(newReaction.name);
-      console.log(newReaction);
-
-      // add type-specific params
-
       if (reactionType === 'ARRHENIUS') {
         newReaction.A = A
         newReaction.B = B
@@ -223,34 +206,18 @@ export function ReactionEditor() {
     })
   }
 
-  // ...existing code... (formatReactionDisplay is now only defined once at the top)
-
   return (
     <div className="space-y-4">
       <Card>
         <CardHeader>
           <CardTitle>Reaction Editor</CardTitle>
           <CardDescription>
-            {isPredefined
-              ? `Viewing ${isPredefined.name} mechanism - reactions are pre-configured`
-              : 'Add, edit, or remove chemical reactions in the mechanism'}
+            {'Add, edit, or remove chemical reactions in the mechanism'}
           </CardDescription>
         </CardHeader>
 
         <CardContent className="space-y-4">
-          {/* Info box for predefined mechanisms */}
-          {isPredefined && (
-            <div className="bg-blue-50 border-2 border-blue-300 rounded-lg p-3 text-sm">
-              <p className="font-semibold text-blue-800 mb-1 flex items-center gap-2">
-                <FlaskConical className="w-4 h-4" />
-                Extending Pre-defined Mechanism
-              </p>
-              <p className="text-blue-700 text-xs">
-                You can add custom reactions to the {isPredefined.name} mechanism.
-                This allows you to extend the mechanism with additional chemistry for specialized simulations.
-              </p>
-            </div>
-          )}
+
 
           {/* Add New Reaction Form (shown for all mechanisms) */}
           <div className="p-4 bg-white/0 backdrop-blur-lg rounded-xl border-2 border-white/20">
@@ -441,9 +408,7 @@ export function ReactionEditor() {
           {/* Reactions List with Search */}
           <div>
             <h4 className="font-semibold text-sm mb-2">
-              {isPredefined
-                ? `${isPredefined.name} Mechanism Reactions (${isPredefined.reactions} pre-configured${reactions.length > 0 ? ` + ${reactions.length} custom` : ''})`
-                : `Reactions List (${reactions.length} total)`}
+              {`Reactions List (${reactions.length} total)`}
             </h4>
 
             {/* Search Bar */}
@@ -455,62 +420,7 @@ export function ReactionEditor() {
               className="w-full mb-3 px-3 py-2 border-2 border-white/30 bg-white/10 text-white placeholder:text-gray-400 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
             />
 
-            {isPredefined && reactions.length === 0 ? (
-              <div className="text-center py-8 bg-white/10 backdrop-blur-lg rounded-lg border border-white/20">
-                <div className="flex justify-center mb-2">
-                  <FlaskConical className="w-16 h-16" />
-                </div>
-                <p className="text-blue-100 font-medium mb-1">
-                  {isPredefined.reactions} reactions are pre-configured in this mechanism
-                </p>
-                <p className="text-xs text-gray-400 mb-2">
-                  Reaction definitions are loaded from the mechanism config file
-                </p>
-                <p className="text-xs text-blue-300">
-                  Add custom reactions above to extend the mechanism
-                </p>
-              </div>
-            ) : isPredefined && reactions.length > 0 ? (
-              <div>
-                <div className="text-center py-4 bg-white/10 backdrop-blur-lg rounded-lg border border-white/20 mb-3">
-                  <p className="text-blue-100 font-medium text-sm mb-1">
-                    {isPredefined.reactions} pre-configured + {reactions.length} custom reactions
-                  </p>
-                  <p className="text-xs text-gray-400">
-                    Custom reactions shown below
-                  </p>
-                </div>
-                <div className="space-y-2 max-h-96 overflow-y-auto">
-                  {filteredReactions.length === 0 ? (
-                    <p className="text-center text-gray-500 py-8">No matching reactions found.</p>
-                  ) : (
-                    filteredReactions.map((reaction) => (
-                      <div
-                        key={reaction.id}
-                        className="flex items-center justify-between p-3 border border-white/20 rounded-lg bg-white/5 hover:bg-white/10 transition-colors"
-                      >
-                        <div className="flex-1">
-                          <h5 className="font-semibold text-sm font-mono">{formatReactionDisplay(reaction)}</h5>
-                          <p className="text-xs text-gray-300">
-                            Type: {reaction.type} •
-                            {reaction.type === 'ARRHENIUS' ? ` A = ${reaction.A}` : ` Scale = ${reaction.scalingFactor}`}
-                          </p>
-                        </div>
-
-                        <Button
-                          variant="glass"
-                          size="sm"
-                          onClick={() => handleRemoveReaction(reaction.id)}
-                          className="rounded-lg text-red-600 hover:bg-red-900/20 backdrop-blur-lg"
-                        >
-                          Remove
-                        </Button>
-                      </div>
-                    ))
-                  )}
-                </div>
-              </div>
-            ) : reactions.length === 0 ? (
+            {reactions.length === 0 ? (
               <p className="text-center text-gray-500 py-8">
                 No reactions defined. Add your first reaction above.
               </p>

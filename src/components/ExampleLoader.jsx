@@ -1,12 +1,9 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useDispatch } from 'react-redux'
 import { useNavigate } from 'react-router-dom'
-import axios from 'axios'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card'
 import { Button } from './ui/button'
-import { loadConditions } from '../redux/slices/conditionsSlice'
-import { setSelectedMechanism, setCurrentExample, mechanismSlice } from '../redux/slices/mechanismSlice'
-import { clearSimulation } from '../redux/slices/simulationSlice'
+import { setCurrentExample } from '../redux/slices/mechanismSlice'
 
 import { addSpecies, addReaction, setMechanism } from '../redux/slices/mechanismSlice'
 import { setDuration, setTimeStep, setOutputFrequency, setConditions, setExampleLoaded, setSourceFile } from '../redux/slices/conditionsSlice'
@@ -18,7 +15,7 @@ import { resetMechanism } from '../redux/slices/mechanismSlice'
 import { resetConditions } from '../redux/slices/conditionsSlice'
 import { resetSimulation } from '../redux/slices/simulationSlice'
 
-import { MusicBox, parseCsvToBlock } from '@ncar/music-box';
+import { parseCsvToBlock } from '@ncar/music-box';
 
 
 import chapmanConfig from '@ncar/music-box/examples/chapman/my_config.json' with { type: 'json' };
@@ -185,9 +182,6 @@ export function ExampleLoader() {
       dispatch(setOutputFrequency(options["output time step [sec]"]))
     }
 
-    // Preserve "__source file" if it exists in the original JSON.
-    // This ensures it is carried through Redux and can be re-added
-    // when rebuilding the final configuration file.
     if (example["__source file"] != null) {
       dispatch(setSourceFile(example["__source file"]));
     } else {
@@ -235,7 +229,6 @@ export function ExampleLoader() {
                 variant="glass"
                 size="sm"
                 onClick={() => loadExample(example.mechanism)}
-                // onClick={() => handleClick()}
                 disabled={loading}
                 className="rounded-2xl ml-4"
               >
