@@ -3,29 +3,18 @@ import { useSelector, useDispatch } from 'react-redux'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card'
 import { Button } from '../ui/button'
 import { addReaction, removeReaction } from '../../redux/slices/mechanismSlice'
-import { v4 as uuidv4 } from 'uuid'
 import { Plus, FlaskConical, Lightbulb } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
+import { getReactionDefinition, reactionRegistry } from './reactions/reactionRegistry'
 
 // visual editor for reactions in the mechanism
 export function ReactionEditor() {
   const dispatch = useDispatch()
   const { toast } = useToast()
   const reactions = useSelector((state) => state.mechanism.reactions)
-  const species = useSelector((state) => state.mechanism.species)
   const selectedMechanism = useSelector((state) => state.mechanism.selectedMechanism)
 
-  const [reactionType, setReactionType] = useState('ARRHENIUS')
-  const [reactants, setReactants] = useState('')
-  const [products, setProducts] = useState('')
-  const [rateA, setRateA] = useState('1.0')
-  const [rateB, setRateB] = useState('0.0')
-  const [rateC, setRateC] = useState('0.0')
-  const [rateD, setRateD] = useState('0.0')
-  const [rateE, setRateE] = useState('0.0')
-  const [emissionProduct, setEmissionProduct] = useState('')
-  const [emissionScaling, setEmissionScaling] = useState('1.0')
-  const [error, setError] = useState(null)
+  const [reactionType, setReactionType] = useState(reactionRegistry[0].type)
 
   // check if predefined mech
   const preDefinedMechanisms = {
@@ -35,163 +24,16 @@ export function ReactionEditor() {
   }
   const isPredefined = preDefinedMechanisms[selectedMechanism]
 
-  const reactionTypes = [
-    { value: 'ARRHENIUS', label: 'Arrhenius (Temperature-dependent)' },
-    { value: 'EMISSION', label: 'Emission' },
-    { value: 'FIRST_ORDER_LOSS', label: 'First-Order Loss' },
-    { value: 'PHOTOLYSIS', label: 'Photolysis (Light-dependent)' },
-    { value: 'TERNARY_CHEMICAL_ACTIVATION', label: 'Ternary Chemical Activation' },
-    { value: 'TROE', label: 'Troe (Fall-Off)' },
-    { value: 'BRANCHED', label: 'Branched' },
-    { value: 'TUNNELING', label: 'Tunneling' },
-    { value: 'SURFACE_REACTION', label: 'Surface Reaction' },
-    { value: 'USER_DEFINED', label: 'User-Defined Rate' },
-    
-    
-  ]
+  const activeReactionDefinition = getReactionDefinition(reactionType)
+  const ActiveReactionForm = activeReactionDefinition.component
 
-  const parseReactionString = (str) => {
-    // parse "A + 2B" format and normalize to uppercase
-    return str
-      .split('+')
-      .map(s => s.trim())
-      .filter(s => s)
-      .map(s => {
-        const match = s.match(/^(\d*\.?\d*)\s*(.+)$/)
-        if (match) {
-          const coeff = match[1] ? parseFloat(match[1]) : 1.0
-          const name = match[2].trim().toUpperCase()  // Convert to uppercase
-          return { "species name": name, "coefficient": coeff }
-        }
-        return { "species name": s.toUpperCase(), "coefficient": 1.0 }  // Convert to uppercase
-      })
-  }
-
-  const handleAddReaction = () => {
-    if (reactionType === 'EMISSION') {
-      if (!emissionProduct) {
-        setError('Please enter a product species name for emission')
-        setTimeout(() => setError(null), 3000)
-        return
-      }
-      if (isNaN(parseFloat(emissionScaling))) {
-        setError('Scaling factor must be a valid number')
-        setTimeout(() => setError(null), 3000)
-        return
-      }
-    } else {
-      if (!reactants) {
-        setError('Please enter reactants')
-        setTimeout(() => setError(null), 3000)
-        return
-      }
-      // products can be empty for decay/loss reactions
-      if (!products && reactionType !== 'USER_DEFINED') {
-        setError('Please enter products (or use User-Defined type for decay reactions)')
-        setTimeout(() => setError(null), 3000)
-        return
-      }
-    }
-
-
-    const A = parseFloat(rateA)
-    const B = parseFloat(rateB)
-    const C = parseFloat(rateC)
-    const D = parseFloat(rateD)
-    const E = parseFloat(rateE)
-    if (reactionType === 'ARRHENIUS') {
-      if (isNaN(A) || isNaN(B) || isNaN(C) || isNaN(D) || isNaN(E)) {
-        setError('All Arrhenius parameters (A, B, C, D, E) must be valid numbers')
-        setTimeout(() => setError(null), 3000)
-        return
-      }
-    } else {
-      if (isNaN(A)) {
-        setError('Rate constant A must be a valid number')
-        setTimeout(() => setError(null), 3000)
-        return
-      }
-    }
-
-    try {
-      const parsedReactants = parseReactionString(reactants)
-      const parsedProducts = products ? parseReactionString(products) : []
-
-      // create normalized display name
-      const normalizedReactants = reactants.toUpperCase()
-      const normalizedProducts = products ? products.toUpperCase() : ''
-
-      let newReaction
-      if (reactionType === 'EMISSION') {
-        newReaction = {
-          id: uuidv4(),
-          type: 'EMISSION',
-          name: emissionProduct.toUpperCase(),
-          'scaling factor': parseFloat(emissionScaling),
-          products: [
-            {
-              'species name': emissionProduct.toUpperCase(),
-              coefficient: 1.0
-            }
-          ],
-          'gas phase': 'gas',
-        }
-      } else {
-        newReaction = {
-          id: uuidv4(),
-          type: reactionType,
-          "gas phase": 'gas',
-          reactants: parsedReactants,
-          products: parsedProducts,
-          name: normalizedProducts ? `${normalizedReactants} → ${normalizedProducts}` : `${normalizedReactants} → (removed)`,
-        }
-      }
-
-      // console.log(newReaction.reactants);
-      // console.log(newReaction.products);
-      // console.log(newReaction.type);
-      // console.log(newReaction.name);
-      console.log(newReaction);
-
-      // add type-specific params
-
-      if (reactionType === 'ARRHENIUS') {
-        newReaction.A = A
-        newReaction.B = B
-        newReaction.C = C
-        newReaction.D = D
-        newReaction.E = E
-      } else if (reactionType === 'PHOTOLYSIS' || reactionType === 'USER_DEFINED') {
-        newReaction.scalingFactor = A
-      }
-
-      dispatch(addReaction(newReaction))
-
-      toast({
-        title: 'Reaction Added',
-        description: `Successfully added reaction: ${newReaction.name}`,
-        variant: 'success',
-      })
-
-      // reset form
-      setReactants('')
-      setProducts('')
-      setRateA('1.0')
-      setRateB('0.0')
-      setRateC('0.0')
-      setRateD('0.0')
-      setRateE('0.0')
-      setEmissionProduct('')
-      setEmissionScaling('1.0')
-    } catch (err) {
-      setError('Invalid reaction format')
-      setTimeout(() => setError(null), 3000)
-      toast({
-        title: 'Error',
-        description: 'Invalid reaction format',
-        variant: 'destructive',
-      })
-    }
+  const handleAddReaction = (newReaction) => {
+    dispatch(addReaction(newReaction))
+    toast({
+      title: 'Reaction Added',
+      description: `Successfully added reaction: ${newReaction.name}`,
+      variant: 'success',
+    })
   }
 
   const handleRemoveReaction = (reactionId) => {
@@ -204,14 +46,32 @@ export function ReactionEditor() {
     })
   }
 
-  const formatReactionDisplay = (reaction) => {
-    const reactantStr = reaction.reactants && reaction.reactants.length > 0
-      ? reaction.reactants.map(r => `${r.coefficient > 1 ? r.coefficient : ''}${r["species name"]}`).join(' + ')
-      : '∅'  // Empty set symbol for emissions
+  const formatReactionComponents = (components) => {
+    if (!Array.isArray(components) || components.length === 0) {
+      return '∅'
+    }
 
-    const productStr = reaction.products && reaction.products.length > 0
-      ? reaction.products.map(p => `${p.coefficient > 1 ? p.coefficient : ''}${p["species name"]}`).join(' + ')
-      : '∅'  // Empty set symbol for loss reactions
+    return components
+      .map((component) => {
+        if (typeof component === 'string') {
+          return component
+        }
+
+        const name = component['species name'] || component.name || ''
+        const coefficient = Number(component.coefficient)
+        const coeffPrefix = Number.isFinite(coefficient) && coefficient > 1 ? coefficient : ''
+
+        return `${coeffPrefix}${name}`
+      })
+      .join(' + ')
+  }
+
+  const formatReactionDisplay = (reaction) => {
+    const reactants = reaction.reactants || reaction['gas-phase species'] || []
+    const products = reaction.products || reaction['gas-phase products'] || reaction['alkoxy products'] || []
+
+    const reactantStr = formatReactionComponents(Array.isArray(reactants) ? reactants : [reactants])
+    const productStr = formatReactionComponents(Array.isArray(products) ? products : [products])
 
     return `${reactantStr} → ${productStr}`
   }
@@ -250,12 +110,6 @@ export function ReactionEditor() {
               Add New Reaction
             </h4>
 
-            {error && (
-              <div className="bg-red-900/20 backdrop-blur-lg border border-red-400/30 text-red-700 px-3 py-2 rounded mb-3 text-xs">
-                {error}
-              </div>
-            )}
-
             <div className="space-y-3">
               <div>
                 <label className="block text-xs font-semibold text-blue-100 mb-1">
@@ -267,10 +121,10 @@ export function ReactionEditor() {
                   className="w-full px-3 py-2 border-2 border-white/30 bg-white/10 text-black placeholder:text-gray-400 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-600"
                   style={{ color: 'white', backgroundColor: 'rgba(255,255,255,0.1)' }}
                 >
-                  {reactionTypes.map(type => (
+                  {reactionRegistry.map((type) => (
                     <option
-                      key={type.value}
-                      value={type.value}
+                      key={type.type}
+                      value={type.type}
                       style={{ color: 'black', backgroundColor: 'rgba(255,255,255,0.95)' }}
                     >
                       {type.label}
@@ -279,154 +133,11 @@ export function ReactionEditor() {
                 </select>
               </div>
 
-              {reactionType !== 'EMISSION' && (
-                <div>
-                  <label className="block text-xs font-semibold text-blue-100 mb-1">
-                    Reactants (e.g., "O2 + O" or "2NO2")
-                  </label>
-                  <input
-                    type="text"
-                    value={reactants}
-                    onChange={(e) => setReactants(e.target.value)}
-                    placeholder="O2 + O"
-                    className="w-full px-3 py-2 border-2 border-white/30 bg-white/10 text-white placeholder:text-gray-400 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
-                  />
-                </div>
-              )}
-
-              {reactionType !== 'EMISSION' && (
-                <div>
-                  <label className="block text-xs font-semibold text-blue-100 mb-1">
-                    Products (e.g., "O3" or "NO + O2")
-                  </label>
-                  <input
-                    type="text"
-                    value={products}
-                    onChange={(e) => setProducts(e.target.value)}
-                    placeholder="O3"
-                    className="w-full px-3 py-2 border-2 border-white/30 bg-white/10 text-white placeholder:text-gray-400 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
-                  />
-                </div>
-              )}
-
-              {reactionType === 'EMISSION' && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-xs font-semibold text-blue-100 mb-1">
-                      Product Species Name
-                    </label>
-                    <input
-                      type="text"
-                      value={emissionProduct}
-                      onChange={(e) => setEmissionProduct(e.target.value)}
-                      placeholder="ISOP"
-                      className="w-full px-3 py-2 border-2 border-white/30 bg-white/10 text-white placeholder:text-gray-400 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-semibold text-blue-100 mb-1">
-                      Scaling Factor
-                    </label>
-                    <input
-                      type="text"
-                      value={emissionScaling}
-                      onChange={(e) => setEmissionScaling(e.target.value)}
-                      placeholder="1.0"
-                      className="w-full px-3 py-2 border-2 border-white/30 bg-white/10 text-white placeholder:text-gray-400 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
-                    />
-                  </div>
-                </div>
-              )}
-
-              {reactionType === 'ARRHENIUS' && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-xs font-semibold text-blue-100 mb-1">
-                      Rate Constant A (pre-exponential factor)
-                    </label>
-                    <input
-                      type="text"
-                      value={rateA}
-                      onChange={(e) => setRateA(e.target.value)}
-                      placeholder="1.0e-10"
-                      className="w-full px-3 py-2 border-2 border-white/30 bg-white/10 text-white placeholder:text-gray-400 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-semibold text-blue-100 mb-1">
-                      Parameter B
-                    </label>
-                    <input
-                      type="text"
-                      value={rateB}
-                      onChange={(e) => setRateB(e.target.value)}
-                      placeholder="0.0"
-                      className="w-full px-3 py-2 border-2 border-white/30 bg-white/10 text-white placeholder:text-gray-400 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-semibold text-blue-100 mb-1">
-                      Parameter C
-                    </label>
-                    <input
-                      type="text"
-                      value={rateC}
-                      onChange={(e) => setRateC(e.target.value)}
-                      placeholder="0.0"
-                      className="w-full px-3 py-2 border-2 border-white/30 bg-white/10 text-white placeholder:text-gray-400 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-semibold text-blue-100 mb-1">
-                      Parameter D
-                    </label>
-                    <input
-                      type="text"
-                      value={rateD}
-                      onChange={(e) => setRateD(e.target.value)}
-                      placeholder="0.0"
-                      className="w-full px-3 py-2 border-2 border-white/30 bg-white/10 text-white placeholder:text-gray-400 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-semibold text-blue-100 mb-1">
-                      Parameter E
-                    </label>
-                    <input
-                      type="text"
-                      value={rateE}
-                      onChange={(e) => setRateE(e.target.value)}
-                      placeholder="0.0"
-                      className="w-full px-3 py-2 border-2 border-white/30 bg-white/10 text-white placeholder:text-gray-400 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
-                    />
-                  </div>
-                </div>
-              )}
-
-              {(reactionType === 'PHOTOLYSIS' || reactionType === 'USER_DEFINED') && (
-                <div>
-                  <label className="block text-xs font-semibold text-blue-100 mb-1">
-                    Scaling Factor (rate multiplier)
-                  </label>
-                  <input
-                    type="text"
-                    value={rateA}
-                    onChange={(e) => setRateA(e.target.value)}
-                    placeholder="1.0"
-                    className="w-full px-3 py-2 border-2 border-white/30 bg-white/10 text-white placeholder:text-gray-400 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
-                  />
-                </div>
-              )}
+              <ActiveReactionForm
+                onAddReaction={handleAddReaction}
+                {...(activeReactionDefinition.componentProps || {})}
+              />
             </div>
-
-            <Button
-              onClick={handleAddReaction}
-              variant="apple"
-              size="default"
-              className="mt-3 rounded-2xl"
-            >
-              Add Reaction
-            </Button>
           </div>
 
           {/* Reactions List */}
@@ -471,8 +182,10 @@ export function ReactionEditor() {
                       <div className="flex-1">
                         <h5 className="font-semibold text-sm font-mono">{formatReactionDisplay(reaction)}</h5>
                         <p className="text-xs text-gray-300">
-                          Type: {reaction.type} •
-                          {reaction.type === 'ARRHENIUS' ? ` A = ${reaction.A}` : ` Scale = ${reaction.scalingFactor}`}
+                          Type: {reaction.type}
+                          {reaction.A !== undefined && ` • A = ${reaction.A}`}
+                          {reaction.A === undefined && (reaction.scalingFactor !== undefined || reaction['scaling factor'] !== undefined)
+                            && ` • Scale = ${reaction.scalingFactor ?? reaction['scaling factor']}`}
                         </p>
                       </div>
 
@@ -507,9 +220,14 @@ export function ReactionEditor() {
                         <span className="text-xs px-2 py-0.5 bg-white/10 backdrop-blur-lg border border-white/20 text-blue-400 rounded">
                           {reaction.type}
                         </span>
-                        {reaction.A && (
+                        {reaction.A !== undefined && (
                           <span className="text-xs text-gray-300">
                             A = {reaction.A.toExponential(2)}
+                          </span>
+                        )}
+                        {reaction.A === undefined && (reaction.scalingFactor !== undefined || reaction['scaling factor'] !== undefined) && (
+                          <span className="text-xs text-gray-300">
+                            Scale = {reaction.scalingFactor ?? reaction['scaling factor']}
                           </span>
                         )}
                       </div>

@@ -117,10 +117,19 @@ export function RunSimulationButton({ className = '' }) {
         serialized.type = 'BRANCHED_NO_RO2'
       }
 
+      if (serialized.type === 'LAMBDA_RATE') {
+        serialized.type = 'LAMBDA_RATE_CONSTANT'
+      }
+
       if (serialized.scalingFactor !== undefined && serialized['scaling factor'] === undefined) {
         serialized['scaling factor'] = serialized.scalingFactor
       }
       delete serialized.scalingFactor
+
+      if (serialized.lambdaFunction !== undefined && serialized['lambda function'] === undefined) {
+        serialized['lambda function'] = serialized.lambdaFunction
+      }
+      delete serialized.lambdaFunction
 
       if (serialized.reactants) {
         serialized.reactants = normalizeReactionComponents(serialized.reactants)
