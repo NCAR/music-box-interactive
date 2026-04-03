@@ -20,11 +20,39 @@ export function RunSimulationButton({ className = '' }) {
   const loadedExample = useSelector((state) => state.conditions.exampleLoaded)
 
   async function handleRunSimulation() {
+    const mechanismLabel = mechanismData.currentExample?.name
+      || mechanismData.currentExample?.mechanism_name
+      || mechanismData.mechanism?.mechanism?.name
+      || 'local'
+
+    function downloadJSON(data, filename = "data.json") {
+      // Convert object to JSON string
+      const jsonString = JSON.stringify(data, null, 2);
+
+      // Create a blob
+      const blob = new Blob([jsonString], { type: "application/json" });
+
+      // Create a temporary URL
+      const url = URL.createObjectURL(blob);
+
+      // Create a temporary anchor element
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = filename;
+
+      // Trigger download
+      document.body.appendChild(link);
+      link.click();
+
+      // Cleanup
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    }
+
+
     const buildSolverConditions = () => {
       const source = conditions.conditions || {}
-
-      const hasDataBlocks = Array.isArray(source.data)
-      const blocks = hasDataBlocks ? [...source.data] : []
+      const { filepaths, ...sourceWithoutFilepaths } = source
 
       const reduxInitial = conditions.initial || {}
       const sourceInitial = source.initial || {}
@@ -44,43 +72,41 @@ export function RunSimulationButton({ className = '' }) {
 
       const evolving = source.evolving || conditions.evolving || {}
 
-      const hasAnyConcColumns = blocks.some((block) =>
-        (block?.headers || []).some((h) => typeof h === 'string' && h.startsWith('CONC.'))
-      )
+      const initialHeaders = ['time.s', 'ENV.temperature.K', 'ENV.pressure.Pa']
+      const initialRow = [
+        0,
+        initial.temperature ?? 298.15,
+        initial.pressure ?? 101325,
+      ]
 
-      if (!hasAnyConcColumns) {
-        const headers = ['time.s', 'ENV.temperature.K', 'ENV.pressure.Pa']
-        const row = [
-          0,
-          initial.temperature ?? 298.15,
-          initial.pressure ?? 101325,
-        ]
+      Object.entries(initial.concentrations || {}).forEach(([species, value]) => {
+        initialHeaders.push(`CONC.${species}.mol m-3`)
+        initialRow.push(value)
+      })
 
-        Object.entries(initial.concentrations || {}).forEach(([species, value]) => {
-          headers.push(`CONC.${species}.mol m-3`)
-          row.push(value)
-        })
+      Object.entries(rateConstants).forEach(([name, value]) => {
+        initialHeaders.push(name)
+        initialRow.push(value)
+      })
 
-        Object.entries(rateConstants).forEach(([name, value]) => {
-          headers.push(name)
-          row.push(value)
-        })
-
-        blocks.push({ headers, rows: [row] })
-      }
+      const blocks = [{ headers: initialHeaders, rows: [initialRow] }]
 
       if (evolving.enabled && Array.isArray(evolving.times) && evolving.times.length > 0) {
-        const envHeaders = ['time.s', 'ENV.temperature.K', 'ENV.pressure.Pa']
+        const additionalSeries = evolving.additionalSeries || {}
+        const additionalHeaders = Object.keys(additionalSeries)
+
+        const envHeaders = ['time.s', 'ENV.temperature.K', 'ENV.pressure.Pa', ...additionalHeaders]
         const envRows = evolving.times.map((time, i) => [
           time,
           evolving.temperature?.[i] ?? initial.temperature ?? 298.15,
           evolving.pressure?.[i] ?? initial.pressure ?? 101325,
+          ...additionalHeaders.map((header) => additionalSeries[header]?.[i] ?? null),
         ])
         blocks.push({ headers: envHeaders, rows: envRows })
       }
 
       return {
-        ...(source || {}),
+        ...sourceWithoutFilepaths,
         data: blocks,
       }
     }
@@ -269,10 +295,11 @@ export function RunSimulationButton({ className = '' }) {
     const box = MusicBox.fromJson(finalMechanism);
     const results = await box.solve();
     console.log('Results from final mechanism config:', results);
+    // downloadJSON(finalMechanism, 'final_mechanism.json')
 
     dispatch(setResults(results))
     dispatch(setMetadata({
-      mechanism: mechanismData.currentExample || mechanismData.mechanism?.mechanism?.name || 'local',
+      mechanism: mechanismLabel,
       duration: conditions.basic.duration || 0,
     }))
     dispatch(setStatus('succeeded'))
@@ -308,7 +335,7 @@ export function RunSimulationButton({ className = '' }) {
     if (filteredResults.length > 0) {
       dispatch(setResults(filteredResults))
       dispatch(setMetadata({
-        mechanism: mechanismData.currentExample || mechanismData.mechanism?.mechanism?.name || 'local',
+        mechanism: mechanismLabel,
         duration: conditions.basic.duration || 0,
       }))
       dispatch(setStatus('succeeded'))
