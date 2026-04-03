@@ -6,7 +6,7 @@ import { buildReactionName, parseReactionString } from './reactionUtils'
 export function LambdaRateReactionForm({ onAddReaction }) {
   const [reactants, setReactants] = useState('')
   const [products, setProducts] = useState('')
-  const [lambdaFunction, setLambdaFunction] = useState('[](double T, double P, double airDensity) { return 1.0e-12; }')
+  const [lambdaFunction, setLambdaFunction] = useState('(T, P, airDensity) => 1.0e-12')
   const [error, setError] = useState(null)
 
   const validateLambdaFunction = (source) => {
@@ -15,32 +15,17 @@ export function LambdaRateReactionForm({ onAddReaction }) {
       return 'Please enter a lambda function'
     }
 
-    const lambdaMatch = trimmed.match(/^\[\]\s*\(\s*([^)]*?)\s*\)\s*\{[\s\S]*\}$/)
-    if (!lambdaMatch) {
-      return 'Use C++ lambda syntax, e.g., [](double T, double P, double airDensity) { return 1.0e-12; }'
-    }
-
-    const rawParamList = lambdaMatch[1].trim()
-    const allowedParams = new Set(['T', 'P', 'airDensity'])
-    const params = rawParamList.length === 0
-      ? []
-      : rawParamList.split(',').map((param) => param.trim())
-
-    const invalidParams = []
-    for (const param of params) {
-      const typedParam = param.match(/^double\s+([A-Za-z_][A-Za-z0-9_]*)$/)
-      if (!typedParam) {
-        invalidParams.push(param)
-        continue
+    try {
+      const fn = new Function(`return (${trimmed});`)()
+      if (typeof fn !== 'function') {
+        return 'Lambda input must evaluate to a JavaScript function'
       }
-
-      if (!allowedParams.has(typedParam[1])) {
-        invalidParams.push(typedParam[1])
+      const value = fn(298.15, 101325, 2.5e19)
+      if (typeof value !== 'number' || Number.isNaN(value)) {
+        return 'Lambda function must return a number'
       }
-    }
-
-    if (invalidParams.length > 0) {
-      return `Invalid parameter declaration(s): ${invalidParams.join(', ')}. Allowed parameters: double T, double P, double airDensity`
+    } catch {
+      return 'Use JavaScript function syntax, e.g., (T, P, airDensity) => 1.0e-12'
     }
 
     return null
@@ -80,7 +65,7 @@ export function LambdaRateReactionForm({ onAddReaction }) {
 
     setReactants('')
     setProducts('')
-    setLambdaFunction('[](double T, double P, double airDensity) { return 1.0e-12; }')
+    setLambdaFunction('(T, P, airDensity) => 1.0e-12')
   }
 
   return (
@@ -119,17 +104,17 @@ export function LambdaRateReactionForm({ onAddReaction }) {
 
       <div>
         <label className="block text-xs font-semibold text-blue-100 mb-1">
-          Lambda Function (C++)
+          Lambda Function (JavaScript)
         </label>
         <textarea
           value={lambdaFunction}
           onChange={(e) => setLambdaFunction(e.target.value)}
-          placeholder="[](double T, double P, double airDensity) { return 1.2e-5 * exp(-500.0 / T); }"
+          placeholder="(T, P, airDensity) => 1.2e-5 * Math.exp(-500.0 / T)"
           rows={4}
           className="w-full px-3 py-2 border-2 border-white/30 bg-white/10 text-white placeholder:text-gray-400 rounded-lg text-xs font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
         />
         <p className="mt-1 text-[11px] text-gray-300">
-          Allowed parameters: <strong>double T</strong>, <strong>double P</strong>, <strong>double airDensity</strong> (any subset)
+          Allowed parameters: <strong>T</strong>, <strong>P</strong>, <strong>airDensity</strong>
         </p>
       </div>
 
