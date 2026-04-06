@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { v4 as uuidv4 } from 'uuid'
 import { Button } from '../../ui/button'
-import { buildReactionName, parseReactionString } from './reactionUtils'
+import { parseReactionString } from './reactionUtils'
 
 export function LambdaRateReactionForm({ onAddReaction }) {
   const [reactants, setReactants] = useState('')
@@ -57,7 +57,6 @@ export function LambdaRateReactionForm({ onAddReaction }) {
       'gas phase': 'gas',
       reactants: parseReactionString(reactants),
       products: parseReactionString(products),
-      name: buildReactionName(reactants, products),
       lambdaFunction: lambdaFunction.trim(),
     }
 

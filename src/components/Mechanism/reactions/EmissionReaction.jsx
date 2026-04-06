@@ -3,19 +3,20 @@ import { v4 as uuidv4 } from 'uuid'
 import { Button } from '../../ui/button'
 
 export function EmissionReactionForm({ onAddReaction }) {
-  const [emissionProduct, setEmissionProduct] = useState('')
-  const [emissionScaling, setEmissionScaling] = useState('1.0')
+  const [products, setProducts] = useState('')
+  const [emissionScaling, setEmissionScaling] = useState('')
   const [error, setError] = useState(null)
 
   const handleAdd = () => {
-    if (!emissionProduct.trim()) {
+    if (!products.trim()) {
       setError('Please enter a product species name for emission')
       setTimeout(() => setError(null), 3000)
       return
     }
 
-    const scaling = parseFloat(emissionScaling)
-    if (Number.isNaN(scaling)) {
+    const hasScalingFactor = emissionScaling.trim().length > 0
+    const scaling = hasScalingFactor ? parseFloat(emissionScaling) : undefined
+    if (hasScalingFactor && Number.isNaN(scaling)) {
       setError('Scaling factor must be a valid number')
       setTimeout(() => setError(null), 3000)
       return
@@ -24,8 +25,6 @@ export function EmissionReactionForm({ onAddReaction }) {
     const newReaction = {
       id: uuidv4(),
       type: 'EMISSION',
-      name: emissionProduct.toUpperCase(),
-      'scaling factor': scaling,
       products: [
         {
           'species name': emissionProduct.toUpperCase(),
@@ -33,12 +32,13 @@ export function EmissionReactionForm({ onAddReaction }) {
         },
       ],
       'gas phase': 'gas',
+      ...(hasScalingFactor ? { 'scaling factor': scaling } : {}),
     }
 
     onAddReaction(newReaction)
 
     setEmissionProduct('')
-    setEmissionScaling('1.0')
+    setEmissionScaling('')
   }
 
   return (
@@ -49,28 +49,29 @@ export function EmissionReactionForm({ onAddReaction }) {
         </div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+      <div>
+        <label className="block text-xs font-semibold text-blue-100 mb-1">
+          Products (e.g., "O3" or "NO + O2")
+        </label>
+        <input
+          type="text"
+          value={products}
+          onChange={(e) => setProducts(e.target.value)}
+          placeholder="O3"
+          className="w-full px-3 py-2 border-2 border-white/30 bg-white/10 text-white placeholder:text-gray-400 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
+        />
+      </div>
+
+      <div>
         <div>
           <label className="block text-xs font-semibold text-blue-100 mb-1">
-            Product Species Name
-          </label>
-          <input
-            type="text"
-            value={emissionProduct}
-            onChange={(e) => setEmissionProduct(e.target.value)}
-            placeholder="ISOP"
-            className="w-full px-3 py-2 border-2 border-white/30 bg-white/10 text-white placeholder:text-gray-400 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
-          />
-        </div>
-        <div>
-          <label className="block text-xs font-semibold text-blue-100 mb-1">
-            Scaling Factor
+            Scaling Factor (optional; defaults to 1.0)
           </label>
           <input
             type="text"
             value={emissionScaling}
             onChange={(e) => setEmissionScaling(e.target.value)}
-            placeholder="1.0"
+            placeholder="12.3"
             className="w-full px-3 py-2 border-2 border-white/30 bg-white/10 text-white placeholder:text-gray-400 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
           />
         </div>

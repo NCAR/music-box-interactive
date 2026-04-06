@@ -1,12 +1,12 @@
 import { useState } from 'react'
 import { v4 as uuidv4 } from 'uuid'
 import { Button } from '../../ui/button'
-import { buildReactionName, parseReactionString } from './reactionUtils'
+import { parseReactionString } from './reactionUtils'
 
 export function ScaledReactionForm({ onAddReaction, reactionType, allowEmptyProducts = false }) {
   const [reactants, setReactants] = useState('')
   const [products, setProducts] = useState('')
-  const [scalingFactor, setScalingFactor] = useState('1.0')
+  const [scalingFactor, setScalingFactor] = useState('')
   const [error, setError] = useState(null)
 
   const handleAdd = () => {
@@ -22,8 +22,9 @@ export function ScaledReactionForm({ onAddReaction, reactionType, allowEmptyProd
       return
     }
 
-    const scaling = parseFloat(scalingFactor)
-    if (Number.isNaN(scaling)) {
+    const hasScalingFactor = scalingFactor.trim().length > 0
+    const scaling = hasScalingFactor ? parseFloat(scalingFactor) : undefined
+    if (hasScalingFactor && Number.isNaN(scaling)) {
       setError('Scaling factor must be a valid number')
       setTimeout(() => setError(null), 3000)
       return
@@ -35,15 +36,14 @@ export function ScaledReactionForm({ onAddReaction, reactionType, allowEmptyProd
       'gas phase': 'gas',
       reactants: parseReactionString(reactants),
       products: products.trim() ? parseReactionString(products) : [],
-      name: buildReactionName(reactants, products),
-      scalingFactor: scaling,
+      ...(hasScalingFactor ? { 'scaling factor': scaling } : {}),
     }
 
     onAddReaction(newReaction)
 
     setReactants('')
     setProducts('')
-    setScalingFactor('1.0')
+    setScalingFactor('')
   }
 
   return (
@@ -82,13 +82,13 @@ export function ScaledReactionForm({ onAddReaction, reactionType, allowEmptyProd
 
       <div>
         <label className="block text-xs font-semibold text-blue-100 mb-1">
-          Scaling Factor (rate multiplier)
+          Scaling Factor (optional; defaults to 1.0)
         </label>
         <input
           type="text"
           value={scalingFactor}
           onChange={(e) => setScalingFactor(e.target.value)}
-          placeholder="1.0"
+          placeholder="12.3"
           className="w-full px-3 py-2 border-2 border-white/30 bg-white/10 text-white placeholder:text-gray-400 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
         />
       </div>

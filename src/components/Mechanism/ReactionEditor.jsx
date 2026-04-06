@@ -31,7 +31,7 @@ export function ReactionEditor() {
     dispatch(addReaction(newReaction))
     toast({
       title: 'Reaction Added',
-      description: `Successfully added reaction: ${newReaction.name}`,
+      description: `Successfully added reaction: ${newReaction.name || formatReactionDisplay(newReaction)}`,
       variant: 'success',
     })
   }

@@ -1,16 +1,16 @@
 import { useState } from 'react'
 import { v4 as uuidv4 } from 'uuid'
 import { Button } from '../../ui/button'
-import { buildReactionName, parseReactionString } from './reactionUtils'
+import { parseReactionString } from './reactionUtils'
 
 export function ArrheniusReactionForm({ onAddReaction }) {
   const [reactants, setReactants] = useState('')
   const [products, setProducts] = useState('')
-  const [rateA, setRateA] = useState('1.0')
-  const [rateB, setRateB] = useState('0.0')
-  const [rateC, setRateC] = useState('0.0')
-  const [rateD, setRateD] = useState('0.0')
-  const [rateE, setRateE] = useState('0.0')
+  const [rateA, setRateA] = useState('')
+  const [rateB, setRateB] = useState('')
+  const [rateC, setRateC] = useState('')
+  const [rateD, setRateD] = useState('')
+  const [rateE, setRateE] = useState('')
   const [error, setError] = useState(null)
 
   const handleAdd = () => {
@@ -26,13 +26,26 @@ export function ArrheniusReactionForm({ onAddReaction }) {
       return
     }
 
-    const A = parseFloat(rateA)
-    const B = parseFloat(rateB)
-    const C = parseFloat(rateC)
-    const D = parseFloat(rateD)
-    const E = parseFloat(rateE)
+    const parseOptionalNumber = (raw) => {
+      if (!raw.trim()) {
+        return { hasValue: false, value: undefined }
+      }
 
-    if ([A, B, C, D, E].some((value) => Number.isNaN(value))) {
+      const value = parseFloat(raw)
+      if (Number.isNaN(value)) {
+        return { hasValue: true, invalid: true }
+      }
+
+      return { hasValue: true, value }
+    }
+
+    const parsedA = parseOptionalNumber(rateA)
+    const parsedB = parseOptionalNumber(rateB)
+    const parsedC = parseOptionalNumber(rateC)
+    const parsedD = parseOptionalNumber(rateD)
+    const parsedE = parseOptionalNumber(rateE)
+
+    if ([parsedA, parsedB, parsedC, parsedD, parsedE].some((value) => value.invalid)) {
       setError('All Arrhenius parameters (A, B, C, D, E) must be valid numbers')
       setTimeout(() => setError(null), 3000)
       return
@@ -44,23 +57,22 @@ export function ArrheniusReactionForm({ onAddReaction }) {
       'gas phase': 'gas',
       reactants: parseReactionString(reactants),
       products: parseReactionString(products),
-      name: buildReactionName(reactants, products),
-      A,
-      B,
-      C,
-      D,
-      E,
+      ...(parsedA.hasValue ? { A: parsedA.value } : {}),
+      ...(parsedB.hasValue ? { B: parsedB.value } : {}),
+      ...(parsedC.hasValue ? { C: parsedC.value } : {}),
+      ...(parsedD.hasValue ? { D: parsedD.value } : {}),
+      ...(parsedE.hasValue ? { E: parsedE.value } : {}),
     }
 
     onAddReaction(newReaction)
 
     setReactants('')
     setProducts('')
-    setRateA('1.0')
-    setRateB('0.0')
-    setRateC('0.0')
-    setRateD('0.0')
-    setRateE('0.0')
+    setRateA('')
+    setRateB('')
+    setRateC('')
+    setRateD('')
+    setRateE('')
   }
 
   return (
