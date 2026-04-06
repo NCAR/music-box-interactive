@@ -207,8 +207,10 @@ export function ExampleLoader() {
 
     if (options["simulation length [day]"] != null) {
       dispatch(setDuration(options["simulation length [day]"] * 24 * 3600))
-    } else if (options["simulation length [hour]"] != null || options["simulation length [hr]"] != null) {
+    } else if (options["simulation length [hour]"] != null) {
       dispatch(setDuration(options["simulation length [hour]"] * 3600))
+    } else if (options["simulation length [hr]"] != null) {
+      dispatch(setDuration(options["simulation length [hr]"] * 3600))
     } else if (options["simulation length [sec]"] != null) {
       dispatch(setDuration(options["simulation length [sec]"]))
     }

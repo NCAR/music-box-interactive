@@ -7,6 +7,7 @@ import {
   setTemperature,
   setPressure,
   setConcentrations,
+  setRateConstants,
   setConcentration,
   removeConcentration,
   markInitialHydrated,
@@ -37,42 +38,93 @@ export function InitialConditionsTab() {
       return
     }
 
-    const initialConditionsBlock =
-      exampleFiles?.initial_conditions?.headers?.length && exampleFiles?.initial_conditions?.rows?.length
-        ? exampleFiles.initial_conditions
-        : (exampleFiles?.data || []).find((block) => {
-            const headers = block?.headers || []
-            const rows = block?.rows || []
-            return rows.length > 0 && headers.some((header) => typeof header === 'string' && header.startsWith('ENV.'))
-          })
+    const getValidBlock = (block) => (
+      block?.headers?.length && block?.rows?.length ? block : null
+    )
 
-    if (!initialConditionsBlock?.headers?.length || !initialConditionsBlock?.rows?.length) {
+    const initialConditionsBlock = getValidBlock(exampleFiles?.initial_conditions)
+    const initialConcentrationsBlock = getValidBlock(exampleFiles?.initial_concentrations)
+    const initialReactionRatesBlock = getValidBlock(exampleFiles?.initial_reaction_rates)
+
+    const fallbackDataBlock = (exampleFiles?.data || []).find((block) => {
+      const headers = block?.headers || []
+      const rows = block?.rows || []
+      return rows.length > 0
+        && headers.includes('time.s')
+        && headers.some((header) => typeof header === 'string' && header.startsWith('ENV.'))
+    })
+
+    const blocksToHydrate = [
+      initialConditionsBlock,
+      initialConcentrationsBlock,
+      initialReactionRatesBlock,
+    ].filter(Boolean)
+
+    if (blocksToHydrate.length === 0 && !fallbackDataBlock) {
       dispatch(markInitialHydrated(exampleId))
       return
     }
 
-    const headers = initialConditionsBlock.headers
-    const firstRow = initialConditionsBlock.rows[0]
     const nextConcentrations = {}
+    const nextRateConstants = {}
+    let nextTemperature = null
+    let nextPressure = null
 
-    headers.forEach((header, index) => {
-      const value = firstRow[index]
+    blocksToHydrate.forEach((block) => {
+      const headers = block.headers || []
+      const firstRow = block.rows?.[0] || []
 
-      if (header === 'ENV.temperature.K' && Number.isFinite(value)) {
-        dispatch(setTemperature(value))
-      }
+      headers.forEach((header, index) => {
+        const value = firstRow[index]
 
-      if (header === 'ENV.pressure.Pa' && Number.isFinite(value)) {
-        dispatch(setPressure(value))
-      }
+        if (header === 'ENV.temperature.K' && Number.isFinite(value)) {
+          nextTemperature = value
+        }
 
-      const concentrationMatch = /^CONC\.([^.]+)\./.exec(header)
-      if (concentrationMatch && Number.isFinite(value)) {
-        nextConcentrations[concentrationMatch[1].toUpperCase()] = value
-      }
+        if (header === 'ENV.pressure.Pa' && Number.isFinite(value)) {
+          nextPressure = value
+        }
+
+        const concentrationMatch = /^CONC\.([^.]+)\./.exec(header)
+        if (concentrationMatch && Number.isFinite(value)) {
+          nextConcentrations[concentrationMatch[1].toUpperCase()] = value
+        }
+
+        const isTimeColumn = header === 'time.s'
+        const isEnvironmentalColumn = header.startsWith('ENV.')
+        if (!isTimeColumn && !isEnvironmentalColumn && !concentrationMatch && Number.isFinite(value)) {
+          nextRateConstants[header] = value
+        }
+      })
     })
 
+    if ((nextTemperature === null || nextPressure === null) && fallbackDataBlock) {
+      const headers = fallbackDataBlock.headers || []
+      const firstRow = fallbackDataBlock.rows?.[0] || []
+
+      headers.forEach((header, index) => {
+        const value = firstRow[index]
+
+        if (nextTemperature === null && header === 'ENV.temperature.K' && Number.isFinite(value)) {
+          nextTemperature = value
+        }
+
+        if (nextPressure === null && header === 'ENV.pressure.Pa' && Number.isFinite(value)) {
+          nextPressure = value
+        }
+      })
+    }
+
+    if (nextTemperature !== null) {
+      dispatch(setTemperature(nextTemperature))
+    }
+
+    if (nextPressure !== null) {
+      dispatch(setPressure(nextPressure))
+    }
+
     dispatch(setConcentrations(nextConcentrations))
+    dispatch(setRateConstants(nextRateConstants))
     dispatch(markInitialHydrated(exampleId))
   }, [currentExample, dispatch, exampleFiles, hydratedExampleId])
 
