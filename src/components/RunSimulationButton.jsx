@@ -208,10 +208,36 @@ export function RunSimulationButton({ className = '' }) {
         serialized.type = 'BRANCHED_NO_RO2'
       }
 
+      if (serialized.type === 'LAMBDA_RATE') {
+        serialized.type = 'LAMBDA_RATE_CONSTANT'
+      }
+
       if (serialized.scalingFactor !== undefined && serialized['scaling factor'] === undefined) {
         serialized['scaling factor'] = serialized.scalingFactor
       }
       delete serialized.scalingFactor
+
+      if (serialized.lambdaFunction !== undefined && serialized['lambda function'] === undefined) {
+        serialized['lambda function'] = serialized.lambdaFunction
+      }
+      delete serialized.lambdaFunction
+
+      // Lambda callbacks are registered by label "Lambda.<name>" in MUSICA.
+      if (serialized.type === 'LAMBDA_RATE_CONSTANT' && (!serialized.name || !String(serialized.name).trim())) {
+        const lhs = Array.isArray(serialized.reactants)
+          ? serialized.reactants
+              .map((component) => component?.['species name'] || component?.name)
+              .filter(Boolean)
+              .join('_')
+          : 'rxn'
+        const rhs = Array.isArray(serialized.products)
+          ? serialized.products
+              .map((component) => component?.['species name'] || component?.name)
+              .filter(Boolean)
+              .join('_')
+          : 'prod'
+        serialized.name = `${lhs}_to_${rhs}`
+      }
 
       if (serialized.reactants) {
         serialized.reactants = normalizeReactionComponents(serialized.reactants)
@@ -376,8 +402,7 @@ export function RunSimulationButton({ className = '' }) {
     }
 
     console.log('Final mechanism config:', finalMechanism);
-    const box = MusicBox.fromJson(finalMechanism);
-    const results = await box.solve();
+    const results = await MusicBox.fromJson(finalMechanism).solve()
     console.log('Results from final mechanism config:', results);
     // downloadJSON(finalMechanism, 'final_mechanism.json')
 
