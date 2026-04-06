@@ -89,25 +89,91 @@ export function RunSimulationButton({ className = '' }) {
         initialRow.push(value)
       })
 
-      const blocks = [{ headers: initialHeaders, rows: [initialRow] }]
+      let mergedHeaders = [...initialHeaders];
+      let mergedRows = [[...initialRow]];
+
 
       if (evolving.enabled && Array.isArray(evolving.times) && evolving.times.length > 0) {
-        const additionalSeries = evolving.additionalSeries || {}
-        const additionalHeaders = Object.keys(additionalSeries)
+        const additionalSeries = evolving.additionalSeries || {};
+        const additionalHeaders = Object.keys(additionalSeries);
+        // Merge all headers
+        mergedHeaders = Array.from(new Set([...initialHeaders, ...additionalHeaders.map(h => h.startsWith('ENV.') || h.startsWith('CONC.') ? h : h)]));
 
-        const envHeaders = ['time.s', 'ENV.temperature.K', 'ENV.pressure.Pa', ...additionalHeaders]
-        const envRows = evolving.times.map((time, i) => [
-          time,
-          evolving.temperature?.[i] ?? initial.temperature ?? 298.15,
-          evolving.pressure?.[i] ?? initial.pressure ?? 101325,
-          ...additionalHeaders.map((header) => additionalSeries[header]?.[i] ?? null),
-        ])
-        blocks.push({ headers: envHeaders, rows: envRows })
+        // Helper to align a row to mergedHeaders, filling missing/nulls with 0
+        const alignRow = (row, headers, mergedHeaders) =>
+          mergedHeaders.map((header, idx) => {
+            const headerIdx = headers.indexOf(header);
+            let value = headerIdx !== -1 ? row[headerIdx] : null;
+            return value == null ? 0 : value;
+          });
+
+        // Build evolving rows, aligned and with nulls as 0
+        const envRows = evolving.times.map((time, i) => {
+          const evolvingRow = mergedHeaders.map((header) => {
+            if (header === 'time.s') {
+              return time;
+            } else if (header === 'ENV.temperature.K') {
+              return evolving.temperature?.[i] ?? initial.temperature ?? 298.15;
+            } else if (header === 'ENV.pressure.Pa') {
+              return evolving.pressure?.[i] ?? initial.pressure ?? 101325;
+            } else if (header.startsWith('CONC.')) {
+              // Concentrations are only in the initial row, so fill with 0
+              return 0;
+            } else if (additionalHeaders.includes(header)) {
+              const val = additionalSeries[header]?.[i];
+              return val == null ? 0 : val;
+            } else {
+              // For rate constants or other headers
+              const idx = initialHeaders.indexOf(header);
+              if (idx !== -1) {
+                return initialRow[idx] == null ? 0 : initialRow[idx];
+              } else {
+                return 0;
+              }
+            }
+          });
+          return evolvingRow;
+        });
+
+        // Align initial row
+        const alignedInitialRow = alignRow(initialRow, initialHeaders, mergedHeaders);
+
+        // If there is an evolving row with time.s === 0, merge it with the initial row
+        const timeIndex = mergedHeaders.indexOf('time.s');
+        let mergedRowsTemp = [];
+        let merged = false;
+        envRows.forEach((row) => {
+          if (timeIndex !== -1 && row[timeIndex] === 0) {
+            // Merge with initial row: use evolving values for duplicates
+            const mergedRow = alignedInitialRow.map((val, idx) => {
+              // If evolving value is not 0 (or initial is 0), use evolving
+              return row[idx] !== 0 ? row[idx] : val;
+            });
+            mergedRowsTemp.push(mergedRow);
+            merged = true;
+          } else {
+            mergedRowsTemp.push(row);
+          }
+        });
+        // If no evolving row with time.s === 0, add initial row at the top
+        if (!merged) {
+          mergedRowsTemp = [alignedInitialRow, ...envRows];
+        }
+        mergedRows = mergedRowsTemp;
+      } else {
+        // If no evolving, align initial row to mergedHeaders and fill nulls with 0
+        const alignRow = (row, headers, mergedHeaders) =>
+          mergedHeaders.map((header, idx) => {
+            const headerIdx = headers.indexOf(header);
+            let value = headerIdx !== -1 ? row[headerIdx] : null;
+            return value == null ? 0 : value;
+          });
+        mergedRows = [alignRow(initialRow, initialHeaders, mergedHeaders)];
       }
 
       return {
         ...sourceWithoutFilepaths,
-        data: blocks,
+        data: [{ headers: mergedHeaders, rows: mergedRows }],
       }
     }
 
@@ -288,7 +354,25 @@ export function RunSimulationButton({ className = '' }) {
     }
 
     if (!Array.isArray(finalMechanism.conditions?.data) || finalMechanism.conditions.data.length === 0) {
-      throw new Error('Invalid conditions payload: expected conditions.data[] with at least one block')
+      // Always combine initial and evolving conditions into a single block at index 0
+      if (Array.isArray(finalMechanism.conditions?.data) && finalMechanism.conditions.data.length >= 1) {
+        const blocks = finalMechanism.conditions.data;
+        // Collect all unique headers
+        const mergedHeaders = Array.from(new Set(blocks.flatMap(b => b.headers || [])));
+        // Collect all rows from all blocks, mapping to mergedHeaders
+        const mergedRows = blocks.flatMap(block =>
+          (block.rows || []).map(row =>
+            mergedHeaders.map(header => {
+              const idx = (block.headers || []).indexOf(header);
+              return idx !== -1 ? row[idx] : null;
+            })
+          )
+        );
+        finalMechanism.conditions.data = [{ headers: mergedHeaders, rows: mergedRows }];
+      }
+      if (!Array.isArray(finalMechanism.conditions?.data) || finalMechanism.conditions.data.length === 0) {
+        throw new Error('Invalid conditions payload: expected conditions.data[] with at least one block')
+      }
     }
 
     console.log('Final mechanism config:', finalMechanism);
