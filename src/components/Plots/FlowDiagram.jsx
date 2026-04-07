@@ -7,13 +7,13 @@ import { Waypoints } from 'lucide-react'
 
 /*
     * FlowDiagram Component
-    * Visualizes the flow of chemical species and reactions in a diagram format
-    * This is a placeholder component and can be implemented using libraries like react-flow or d3 for interactive diagrams
+    * Visualizes the flow of chemical species and reactions in a diagram format.
+    * Owns all shared state and passes it down to FlowPanel (controls) and FlowGraph (rendering).
 */
 
 export function FlowDiagram() {
   const [arrowScaling, setArrowScaling] = useState('linear');
-  const [arrowWidth, setArrowWidth] = useState(1);
+  const [arrowWidth, setArrowWidth]     = useState(1);
 
   const timeValues = Array.from({ length: 1000 }, (_, i) => i * 259);
   const [timeRange, setTimeRange] = useState({ minIndex: 0, maxIndex: timeValues.length - 1 });
@@ -25,7 +25,7 @@ export function FlowDiagram() {
   );
   const [fluxRange, setFluxRange] = useState({ minIndex: 0, maxIndex: fluxValues.length - 1 });
 
-  const [selectedSpecies, setSelectedSpecies] = useState([]); // TODO: Implement the species selection logic in FlowPanel
+  const [selectedSpecies, setSelectedSpecies] = useState([]);
 
   // If no simulation results, show placeholder
   const simulation = useSelector((state) => state.simulation);
@@ -66,10 +66,15 @@ export function FlowDiagram() {
         <FlowGraph
           selectedSpecies={selectedSpecies}
           fluxRange={{
-              start: fluxValues[fluxRange.minIndex],
-              end: fluxValues[fluxRange.maxIndex],
-              isLogScale: arrowScaling === 'logarithmic',
+              start:        fluxValues[fluxRange.minIndex],
+              end:          fluxValues[fluxRange.maxIndex],
+              isLogScale:   arrowScaling === 'logarithmic',
               maxArrowWidth: Number(arrowWidth),
+          }}
+          // Pass actual time values (not indices) so FlowGraph can filter results rows
+          timeRange={{
+              start: timeValues[timeRange.minIndex],
+              end:   timeValues[timeRange.maxIndex],
           }}
         />
       </div>

@@ -517,6 +517,20 @@ export function RunSimulationButton({ className = '' }) {
     } else {
       console.error('No valid results after normalization')
     }
+
+    console.log('filteredResults:', filteredResults);
+    console.log('excludedResults: ', excludedResults);
+
+    } catch (error) {
+      console.error('Error running simulation:', error)
+      dispatch(setError(error.message))
+      dispatch(setStatus('failed'))
+      toast({
+        title: 'Simulation Error',
+        description: error.message,
+        variant: 'destructive',
+      })
+    }
   }
 
   const normalizeManualResults = (raw) => {
