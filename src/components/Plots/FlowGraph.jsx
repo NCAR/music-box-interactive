@@ -1,30 +1,152 @@
 import * as d3 from "d3";
-import { React, useEffect, useRef } from 'react'
+import { React, useEffect, useRef, useState } from 'react'
+import { useSelector } from 'react-redux'
 
-const MOCK_SPECIES = ["H2O", "M", "N2", "O", "O1D", "O2", "O3"];
+// ─── Helpers ────────────────────────────────────────────────────────────────
 
-const MOCK_REACTIONS = [
-    { source: "O",   target: "O3",  flux: 0.85,  name: "O + O2 + M -> O3 + M",   className: "flux" },
-    { source: "O3",  target: "O",   flux: 0.60,  name: "O3 -> O + O2",            className: "flux" },
-    { source: "O3",  target: "O1D", flux: 0.45,  name: "O3 -> O1D + O2",          className: "flux" },
-    { source: "O1D", target: "O",   flux: 0.30,  name: "O1D + N2 -> O + N2",      className: "flux" },
-    { source: "O1D", target: "O2",  flux: 0.20,  name: "O1D + O2 -> O + O2",      className: "flux" },
-    { source: "O2",  target: "O",   flux: 0.90,  name: "O2 -> 2O",                className: "flux" },
-    { source: "O",   target: "O2",  flux: 0.55,  name: "O + O3 -> 2O2",           className: "flux" },
-    { source: "N2",  target: "O1D", flux: 0.10,  name: "O1D + N2 -> O + N2",      className: "flux" },
-    { source: "O2",  target: "O3",  flux: 0.40,  name: "O + O2 + M -> O3 + M",    className: "flux" },
-    { source: "H2O", target: "O1D", flux: 0.05,  name: "O1D + H2O -> 2OH",        className: "flux" },
-    { source: "M",   target: "O3",  flux: 0.15,  name: "O + O2 + M -> O3 + M",    className: "flux" },
-];
+/**
+ * MUSICA products contain internal tracking species with __ in their name
+ * (e.g. "O1D__N2__O__N2"). Filter these out so they don't appear in labels
+ * or drive edges between reaction nodes.
+ */
+const isRealSpecies = (name) => !name.includes('__');
 
-export function FlowGraph({ selectedSpecies, fluxRange }) {
+/**
+ * Build a human-readable label for a reaction from its reactants/products arrays.
+ * Coefficient of 1 is omitted; coefficient > 1 is prepended (e.g. "2O2").
+ * Internal MUSICA tracking species (containing "__") are excluded from the label.
+ */
+function reactionLabel(reaction) {
+    const fmt = (arr) =>
+        arr
+            .filter((s) => isRealSpecies(s['species name']))
+            .map((s) => (s.coefficient === 1 ? s['species name'] : `${s.coefficient}${s['species name']}`))
+            .join(' + ');
+    return `${fmt(reaction.reactants)} → ${fmt(reaction.products)}`;
+}
+
+/**
+ * Compute flux for a reaction over [timeStart, timeEnd].
+ * Flux = sum over all time steps in range of (sum of reactant concentrations at that step).
+ * Uses state.simulation.results which has shape { columns: [...], data: { "CONC.X.mol m-3": [...] } }
+ */
+function computeFlux(reaction, results, timeStart, timeEnd) {
+    if (!results?.data || !results?.columns) return 0;
+
+    const timeCol = results.data['time.s'];
+    if (!timeCol) return 0;
+
+    // Real reactant species names only
+    const reactantNames = reaction.reactants
+        .map((r) => r['species name'])
+        .filter(isRealSpecies);
+
+    // Map each reactant to its results column key
+    const concKeys = reactantNames.map((name) => {
+        // Column format: "CONC.<name>.mol m-3"
+        return `CONC.${name}.mol m-3`;
+    });
+
+    let total = 0;
+    for (let i = 0; i < timeCol.length; i++) {
+        const t = timeCol[i];
+        if (t < timeStart || t > timeEnd) continue;
+        for (const key of concKeys) {
+            const col = results.data[key];
+            if (col) total += col[i] ?? 0;
+        }
+    }
+    return total;
+}
+
+/**
+ * Given all reactions, build directed edges between reaction nodes.
+ * An edge A → B exists when:
+ *   - A real-species product of reaction A is a real-species reactant of reaction B
+ *   - A !== B
+ * Returns an array of { source: reactionName, target: reactionName, sharedSpecies: name }
+ */
+function buildEdges(reactions) {
+    const edges = [];
+    for (let i = 0; i < reactions.length; i++) {
+        const a = reactions[i];
+        const aProducts = new Set(
+            a.products.map((p) => p['species name']).filter(isRealSpecies)
+        );
+        for (let j = 0; j < reactions.length; j++) {
+            if (i === j) continue;
+            const b = reactions[j];
+            const bReactants = b.reactants
+                .map((r) => r['species name'])
+                .filter(isRealSpecies);
+            for (const sp of bReactants) {
+                if (aProducts.has(sp)) {
+                    edges.push({
+                        source: a.name,
+                        target: b.name,
+                        sharedSpecies: sp,
+                    });
+                }
+            }
+        }
+    }
+    return edges;
+}
+
+// ─── Component ──────────────────────────────────────────────────────────────
+
+export function FlowGraph({ selectedSpecies, fluxRange, timeRange }) {
     const ref = useRef();
+    const [selectedNode, setSelectedNode] = useState(null);
+
+    // Pull reactions and results from Redux
+    const reactions = useSelector((state) => state.mechanism.reactions);
+    const results   = useSelector((state) => state.simulation.results);
 
     useEffect(() => {
         if (!selectedSpecies || selectedSpecies.length === 0) return;
+        if (!reactions || reactions.length === 0) return;
 
-        const width = 900;
+        // ── 1. Filter visible reaction nodes ──────────────────────────────
+        // A reaction is visible only when ALL of its real reactants are selected
+        const visibleReactions = reactions.filter((rxn) => {
+            const realReactants = rxn.reactants
+                .map((r) => r['species name'])
+                .filter(isRealSpecies);
+            return realReactants.length > 0 && realReactants.every((sp) => selectedSpecies.includes(sp));
+        });
+
+        if (visibleReactions.length === 0) return;
+
+        // ── 2. Compute flux per reaction ──────────────────────────────────
+        const timeStart = timeRange?.start ?? 0;
+        const timeEnd   = timeRange?.end   ?? Infinity;
+
+        const fluxMap = {};
+        for (const rxn of visibleReactions) {
+            fluxMap[rxn.name] = computeFlux(rxn, results, timeStart, timeEnd);
+        }
+
+        // ── 3. Build nodes ────────────────────────────────────────────────
+        const nodes = visibleReactions.map((rxn) => ({
+            id:    rxn.name,
+            label: reactionLabel(rxn),
+            flux:  fluxMap[rxn.name],
+        }));
+
+        // ── 4. Build directed edges (only between visible reactions) ──────
+        const visibleNames = new Set(visibleReactions.map((r) => r.name));
+        const allEdges = buildEdges(visibleReactions);
+        const links = allEdges.filter(
+            (e) => visibleNames.has(e.source) && visibleNames.has(e.target)
+        );
+
+        // ── 5. D3 setup ───────────────────────────────────────────────────
+        const width  = 900;
         const height = 800;
+        const NODE_W = 140;
+        const NODE_H = 36;
+        const NODE_RX = 8;
 
         const svg = d3
             .select(ref.current)
@@ -32,154 +154,199 @@ export function FlowGraph({ selectedSpecies, fluxRange }) {
             .attr("height", height)
             .attr("viewBox", [0, 0, width, height]);
 
-        // Filter nodes and links based on selected species
-        const nodes = selectedSpecies.map((id) => ({ id, name: id, className: "node" }));
-        const links = MOCK_REACTIONS.filter(
-            (r) => selectedSpecies.includes(r.source) && selectedSpecies.includes(r.target)
-        ).map((r) => ({ ...r }));
-
         // Arrow markers
         svg.selectAll("defs").remove();
-        svg.append("svg:defs")
-            .selectAll("marker")
-            .data(["arrow", "arrow-muted"])
-            .enter()
-            .append("svg:marker")
-            .attr("id", String)
-            .attr("viewBox", "0 -5 10 10")
-            .attr("refX", 23)
-            .attr("refY", 0)
-            .attr("markerWidth", 6)
-            .attr("markerHeight", 6)
-            .attr("orient", "auto")
-            .append("svg:path")
-            .attr("fill", (d) => d === "arrow" ? "#2dd4bf" : "#aaa")
-            .attr("d", "M0,-5L10,0L0,5");
+        const defs = svg.append("svg:defs");
+
+        ["arrow", "arrow-muted"].forEach((id) => {
+            defs.append("svg:marker")
+                .attr("id", id)
+                .attr("viewBox", "0 -5 10 10")
+                .attr("refX", 10)
+                .attr("refY", 0)
+                .attr("markerWidth", 6)
+                .attr("markerHeight", 6)
+                .attr("orient", "auto")
+                .append("svg:path")
+                .attr("fill", id === "arrow" ? "#2dd4bf" : "#6b7280")
+                .attr("d", "M0,-5L10,0L0,5");
+        });
 
         const g = svg.select("g.graph");
         g.selectAll("*").remove();
 
-        const simulation = d3
+        // ── 6. Force simulation ───────────────────────────────────────────
+        const sim = d3
             .forceSimulation(nodes)
-            .force("x", d3.forceX(width / 2))
-            .force("y", d3.forceY(height / 2))
-            .force("charge", d3.forceManyBody().strength(-300))
             .force("center", d3.forceCenter(width / 2, height / 2))
-            .force("collision", d3.forceCollide(40))
-            .force("link", d3.forceLink().id((d) => d.id).links(links));
+            .force("charge", d3.forceManyBody().strength(-500))
+            .force("collision", d3.forceCollide(90))
+            .force(
+                "link",
+                d3.forceLink(links)
+                    .id((d) => d.id)
+                    .distance(200)
+            );
 
+        // ── 7. Flux styling helpers ───────────────────────────────────────
         const isMuted = (d) =>
             d.flux < fluxRange.start || d.flux > fluxRange.end;
 
-        const strokeWidth = (d) => {
-            if (d.flux < fluxRange.start) return 0.5;
-            if (d.flux > fluxRange.end) return fluxRange.maxArrowWidth + 0.5;
+        const edgeStrokeWidth = (d) => {
+            const f = d.flux ?? 0;
+            if (f < fluxRange.start) return 0.5;
+            if (f > fluxRange.end)   return fluxRange.maxArrowWidth + 0.5;
             if (fluxRange.isLogScale) {
-                return (
-                    ((Math.log(d.flux) - Math.log(fluxRange.start)) /
-                        (Math.log(fluxRange.end) - Math.log(fluxRange.start))) *
-                    fluxRange.maxArrowWidth + 0.5
-                );
+                const lo = Math.log(Math.max(fluxRange.start, 1e-30));
+                const hi = Math.log(Math.max(fluxRange.end,   1e-30));
+                if (hi === lo) return 0.5;
+                return ((Math.log(f) - lo) / (hi - lo)) * fluxRange.maxArrowWidth + 0.5;
             }
-            return (
-                ((d.flux - fluxRange.start) / (fluxRange.end - fluxRange.start)) *
-                fluxRange.maxArrowWidth + 0.5
-            );
+            const range = fluxRange.end - fluxRange.start;
+            if (range === 0) return 0.5;
+            return ((f - fluxRange.start) / range) * fluxRange.maxArrowWidth + 0.5;
         };
 
-        // Tooltip
-        const tooltipGroup = svg.select("g.info");
-        tooltipGroup.selectAll("*").remove();
-        tooltipGroup.style("opacity", 0).attr("transform", `translate(5, ${height - 24})`);
-        const tooltipText = tooltipGroup.append("text").style("font-size", "12px").style("fill", "#333");
+        // ── 8. Edges ──────────────────────────────────────────────────────
+        // Attach flux to each link from its source node's flux value
+        const nodeFluxById = Object.fromEntries(nodes.map((n) => [n.id, n.flux]));
+        links.forEach((l) => {
+            l.flux = nodeFluxById[typeof l.source === 'object' ? l.source.id : l.source] ?? 0;
+        });
 
-        // Links
-        const link = g.selectAll("line.edge").data(links).join("line")
-            .style("stroke", (d) => isMuted(d) ? "#aaa" : "#2dd4bf")
-            .style("stroke-width", strokeWidth);
-
-        const linkArrow = g.selectAll("line.arrow").data(links).join("line")
-            .style("stroke", (d) => isMuted(d) ? "#aaa" : "#2dd4bf")
+        const link = g.selectAll("line.edge")
+            .data(links)
+            .join("line")
+            .attr("class", "edge")
+            .style("stroke", (d) => isMuted(d) ? "#6b7280" : "#2dd4bf")
+            .style("stroke-width", edgeStrokeWidth)
             .attr("marker-end", (d) => isMuted(d) ? "url(#arrow-muted)" : "url(#arrow)");
 
-        g.selectAll("line.tooltip-hit").data(links).join("line")
-            .style("stroke", "transparent")
-            .style("stroke-width", 10)
-            .on("mouseenter", (event, d) => {
-                tooltipText.text(`Flux: ${d.flux} mol m-3`);
-                tooltipGroup.style("opacity", 1);
-            })
-            .on("mouseleave", () => tooltipGroup.style("opacity", 0));
-
-        // Reaction label on links
-        const linkLabel = g.selectAll("text.link-label").data(links).join("text")
-            .attr("class", "link-label")
+        // Shared species label on edge midpoint
+        const edgeLabel = g.selectAll("text.edge-label")
+            .data(links)
+            .join("text")
+            .attr("class", "edge-label")
             .style("font-size", "10px")
-            .style("fill", "#555")
+            .style("fill", "#9ca3af")
+            .style("text-anchor", "middle")
             .style("pointer-events", "none")
-            .text((d) => d.name);
+            .text((d) => d.sharedSpecies);
 
-        // Nodes
-        const node = g.selectAll("circle").data(nodes).join("circle")
-            .attr("r", 20)
-            .style("fill", "#0d9488")
+        // ── 9. Reaction nodes (rounded rects + label) ─────────────────────
+        const nodeGroup = g.selectAll("g.reaction-node")
+            .data(nodes)
+            .join("g")
+            .attr("class", "reaction-node")
             .style("cursor", "grab")
             .call(
                 d3.drag()
                     .on("start", (event, d) => {
-                        if (!event.active) simulation.alphaTarget(0.3).restart();
+                        if (!event.active) sim.alphaTarget(0.3).restart();
                         d.fx = d.x; d.fy = d.y;
                     })
                     .on("drag", (event, d) => { d.fx = event.x; d.fy = event.y; })
                     .on("end", (event, d) => {
-                        if (!event.active) simulation.alphaTarget(0);
+                        if (!event.active) sim.alphaTarget(0);
                         d.fx = null; d.fy = null;
                     })
-            );
+            )
+            .on("click", (event, d) => {
+                event.stopPropagation();
+                setSelectedNode((prev) => (prev === d.id ? null : d.id));
+            });
 
-        const nodeLabel = g.selectAll("text.node-label").data(nodes).join("text")
+        // Node background rect
+        nodeGroup.append("rect")
+            .attr("width", NODE_W)
+            .attr("height", NODE_H)
+            .attr("rx", NODE_RX)
+            .attr("x", -NODE_W / 2)
+            .attr("y", -NODE_H / 2)
+            .style("fill", "#0d9488")
+            .style("stroke", "#99f6e4")
+            .style("stroke-width", 0.5);
+
+        // Reaction equation label (centred inside rect)
+        nodeGroup.append("text")
             .attr("class", "node-label")
-            .style("font-size", "12px")
-            .style("fill", "#333")
-            .style("text-anchor", "middle")
-            .style("dominant-baseline", "middle")
+            .attr("text-anchor", "middle")
+            .attr("dominant-baseline", "middle")
+            .style("font-size", "10px")
+            .style("fill", "#f0fdf4")
             .style("pointer-events", "none")
-            .text((d) => d.name);
+            .text((d) => d.label);
+
+        // Flux value text — shown below node only when this node is selected
+        // We use a React-controlled approach: update visibility after each render
+        nodeGroup.append("text")
+            .attr("class", "flux-label")
+            .attr("text-anchor", "middle")
+            .attr("y", NODE_H / 2 + 14)
+            .style("font-size", "10px")
+            .style("fill", "#5eead4")
+            .style("pointer-events", "none")
+            .text((d) => `Flux: ${d.flux.toExponential(3)} mol m⁻³`);
+
+        // Deselect when clicking blank SVG area
+        svg.on("click", () => setSelectedNode(null));
+
+        // ── 10. Tick ──────────────────────────────────────────────────────
+        sim.on("tick", () => {
+            link
+                .attr("x1", (d) => d.source.x)
+                .attr("y1", (d) => d.source.y)
+                .attr("x2", (d) => d.target.x)
+                .attr("y2", (d) => d.target.y);
+
+            edgeLabel
+                .attr("x", (d) => (d.source.x + d.target.x) / 2)
+                .attr("y", (d) => (d.source.y + d.target.y) / 2 - 5);
+
+            nodeGroup.attr("transform", (d) => `translate(${d.x},${d.y})`);
+        });
 
         // Zoom
         const zoom = d3.zoom()
-            .scaleExtent([0.01, 3])
+            .scaleExtent([0.05, 4])
             .on("zoom", ({ transform }) => g.attr("transform", transform));
         svg.call(zoom);
 
-        simulation.on("tick", () => {
-            const pos = (d, axis) => d[axis];
+        sim.alpha(0.4).restart();
+        return () => sim.stop();
 
-            [link, linkArrow].forEach((l) => l
-                .attr("x1", (d) => d.source.x).attr("y1", (d) => d.source.y)
-                .attr("x2", (d) => d.target.x).attr("y2", (d) => d.target.y)
-            );
+    }, [selectedSpecies, fluxRange, timeRange, reactions, results]);
 
-            g.selectAll("line.tooltip-hit")
-                .attr("x1", (d) => d.source.x).attr("y1", (d) => d.source.y)
-                .attr("x2", (d) => d.target.x).attr("y2", (d) => d.target.y);
+    // Sync selectedNode state → D3 flux label visibility
+    // Runs after every render (selectedNode change) without rebuilding the simulation
+    useEffect(() => {
+        const svg = d3.select(ref.current);
+        svg.selectAll("g.reaction-node").each(function (d) {
+            const isActive = d && d.id === selectedNode;
+            d3.select(this)
+                .select("text.flux-label")
+                .style("opacity", isActive ? 1 : 0);
 
-            linkLabel
-                .attr("x", (d) => (d.source.x + d.target.x) / 2)
-                .attr("y", (d) => (d.source.y + d.target.y) / 2);
-
-            node.attr("cx", (d) => d.x).attr("cy", (d) => d.y);
-            nodeLabel.attr("x", (d) => d.x).attr("y", (d) => d.y);
+            d3.select(this)
+                .select("rect")
+                .style("fill",   isActive ? "#0f766e" : "#0d9488")
+                .style("stroke", isActive ? "#2dd4bf" : "#99f6e4")
+                .style("stroke-width", isActive ? 1.5 : 0.5);
         });
-
-        simulation.alpha(0.3).restart();
-        return () => simulation.stop();
-    }, [selectedSpecies, fluxRange]);
+    }, [selectedNode]);
 
     if (!selectedSpecies || selectedSpecies.length === 0) {
         return (
             <div className="flex items-center justify-center h-full text-gray-400 text-lg">
-                To view Flux Graph, select a species
+                Select species in the panel to view reaction nodes
+            </div>
+        );
+    }
+
+    if (!reactions || reactions.length === 0) {
+        return (
+            <div className="flex items-center justify-center h-full text-gray-400 text-lg">
+                No reactions found in mechanism
             </div>
         );
     }
@@ -187,7 +354,6 @@ export function FlowGraph({ selectedSpecies, fluxRange }) {
     return (
         <svg ref={ref} className="w-full h-full">
             <g className="graph" />
-            <g className="info" />
         </svg>
     );
 }
