@@ -227,8 +227,7 @@ export function ReactionEditor() {
                         Remove
                       </Button>
                     </div>
-                  ))
-                )}
+                  ))}
               </div>
             )}
           </div>
