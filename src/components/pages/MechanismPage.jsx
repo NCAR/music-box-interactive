@@ -1,8 +1,11 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Card, CardContent } from '../ui/card'
 import { Button } from '../ui/button'
 import { SpeciesEditor, ReactionEditor } from '../Mechanism'
 import NextStepButton from '../NextStepButton'
+import { useDispatch, useSelector } from 'react-redux'
+import { hydrateInitialConditions, hydrateEvolvingConditions } from '../../utils/hydrateConditions'
+import { setTemperature, setPressure, setConcentrations, setRateConstants, markInitialHydrated, setEvolvingEnabled, setEvolvingTimes, setEvolvingTemperature, setEvolvingPressure, setEvolvingAdditionalSeries, markEvolvingHydrated } from '../../redux/slices/conditionsSlice'
 
 /**
  * MechanismPage Component
@@ -10,6 +13,34 @@ import NextStepButton from '../NextStepButton'
  */
 export function MechanismPage() {
   const [activeTab, setActiveTab] = useState('species') // 'species' | 'reactions'
+  const dispatch = useDispatch()
+  const exampleFiles = useSelector(state => state.conditions.exampleFiles)
+  const hydratedInitialId = useSelector(state => state.conditions.hydration.initialExampleId)
+  const hydratedEvolvingId = useSelector(state => state.conditions.hydration.evolvingExampleId)
+  const currentExample = useSelector(state => state.mechanism.currentExample)
+
+  // Hydrate initial and evolving conditions on mount/example change
+  useEffect(() => {
+    const exampleId = currentExample?.id
+    if (!exampleId) return
+    if (hydratedInitialId !== exampleId) {
+      const hydrated = hydrateInitialConditions(exampleFiles)
+      if (hydrated.temperature !== null) dispatch(setTemperature(hydrated.temperature))
+      if (hydrated.pressure !== null) dispatch(setPressure(hydrated.pressure))
+      dispatch(setConcentrations(hydrated.concentrations))
+      dispatch(setRateConstants(hydrated.rateConstants))
+      dispatch(markInitialHydrated(exampleId))
+    }
+    if (hydratedEvolvingId !== exampleId) {
+      const hydrated = hydrateEvolvingConditions(exampleFiles)
+      dispatch(setEvolvingEnabled(hydrated.enabled))
+      dispatch(setEvolvingTimes(hydrated.times))
+      dispatch(setEvolvingTemperature(hydrated.temperature))
+      dispatch(setEvolvingPressure(hydrated.pressure))
+      dispatch(setEvolvingAdditionalSeries(hydrated.additionalSeries))
+      dispatch(markEvolvingHydrated(exampleId))
+    }
+  }, [exampleFiles, currentExample, hydratedInitialId, hydratedEvolvingId, dispatch])
 
   const tabs = [
     { id: 'species', label: 'Species', component: SpeciesEditor, nextTab: 'reactions', nextLabel: 'Next to Add Reactions' },

@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
   push:
     branches:
-      - main
+      - TAMU_Capstone_2026_UI
     tags:
       - "v[0-9]+.[0-9].[0-9]"
 
@@ -38,16 +38,6 @@ jobs:
         username: ${{ secrets.hub_user }}
         password: ${{ secrets.hub_password }}
 
-    - name: BuildPush Backend
-      uses: docker/build-push-action@v6
-      with:
-        push: true
-        tags: |
-          hub.k8s.ucar.edu/musicbox/backend:${{ env.SHORT_SHA }}
-          hub.k8s.ucar.edu/musicbox/backend:${{ github.ref_name }}
-        file: repo/backend/docker/Dockerfile
-        context: repo/
-    
     - name: BuildPush Frontend
       uses: docker/build-push-action@v6
       with:
@@ -55,16 +45,19 @@ jobs:
         tags: |
           hub.k8s.ucar.edu/musicbox/frontend:${{ env.SHORT_SHA }}
           hub.k8s.ucar.edu/musicbox/frontend:${{ github.ref_name }}
-        file: repo/frontend/Dockerfile
-        context: repo/frontend/
+        file: repo/Dockerfile
+        context: repo/
+
+    - name: Sync kustomization manifests to deploy branch
+      run: |
+        cp -r repo/deploy/kustomization/. deploy/deploy/kustomization/
 
     - name: Update devel kustomization
       run: |
         cd deploy/deploy/kustomization/overlays/devel
         kustomize edit set image  hub.k8s.ucar.edu/musicbox/frontend=hub.k8s.ucar.edu/musicbox/frontend:${{ env.SHORT_SHA }}
-        kustomize edit set image  hub.k8s.ucar.edu/musicbox/backend=hub.k8s.ucar.edu/musicbox/backend:${{ env.SHORT_SHA }}
-        git config user.email "kyleshores@ucar.edu"
+        git config user.email "kshores@ucar.edu"
         git config user.name "Auto-ci"
-        git add kustomization.yaml
+        git add -A ../../
         git commit -m "CI updating kustomization image tag"
         git push origin HEAD:deploy

@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card'
 import { Button } from '../ui/button'
@@ -9,7 +9,9 @@ import {
   setEvolvingTimes,
   setEvolvingTemperature,
   setEvolvingPressure,
+  setEvolvingAdditionalSeries,
   setInterpolationMethod,
+  markEvolvingHydrated,
 } from '../../redux/slices/conditionsSlice'
 
 // manages time-varying environmental conditions
@@ -19,10 +21,106 @@ export function EvolvingConditionsTab() {
   const evolving = useSelector((state) => state.conditions.evolving)
   const basicConditions = useSelector((state) => state.conditions.basic)
   const initialConditions = useSelector((state) => state.conditions.initial)
+  const exampleFiles = useSelector((state) => state.conditions.exampleFiles)
+  const hydratedExampleId = useSelector((state) => state.conditions.hydration.evolvingExampleId)
+  const currentExample = useSelector((state) => state.mechanism.currentExample)
   const [newTime, setNewTime] = useState('')
   const [newTemp, setNewTemp] = useState('')
   const [newPress, setNewPress] = useState('')
   const fileInputRef = useRef(null)
+
+  const insertAdditionalSeriesValue = (series, insertIndex, value = null) => {
+    return Object.fromEntries(
+      Object.entries(series || {}).map(([name, values]) => {
+        const nextValues = Array.isArray(values) ? [...values] : []
+        nextValues.splice(insertIndex, 0, value)
+        return [name, nextValues]
+      })
+    )
+  }
+
+  const removeAdditionalSeriesValue = (series, removeIndex) => {
+    return Object.fromEntries(
+      Object.entries(series || {}).map(([name, values]) => [
+        name,
+        (Array.isArray(values) ? values : []).filter((_, index) => index !== removeIndex),
+      ])
+    )
+  }
+
+  useEffect(() => {
+    const exampleId = currentExample?.id
+
+    if (!exampleId || hydratedExampleId === exampleId) {
+      return
+    }
+
+    const boulderBlock = exampleFiles?.boulder
+    const fallbackDataBlock = (exampleFiles?.data || []).find((block) => {
+      const headers = block?.headers || []
+      const rows = block?.rows || []
+      return rows.length > 0
+        && headers.includes('time.s')
+        && headers.includes('ENV.pressure.Pa')
+        && headers.includes('ENV.temperature.K')
+    })
+    const evolvingBlock = boulderBlock?.headers?.length && boulderBlock?.rows?.length
+      ? boulderBlock
+      : fallbackDataBlock
+    const hasEvolvingRows = evolvingBlock?.headers?.length && evolvingBlock?.rows?.length
+
+    if (!hasEvolvingRows) {
+      dispatch(markEvolvingHydrated(exampleId))
+      return
+    }
+
+    const timeIndex = evolvingBlock.headers.indexOf('time.s')
+    const pressureIndex = evolvingBlock.headers.indexOf('ENV.pressure.Pa')
+    const temperatureIndex = evolvingBlock.headers.indexOf('ENV.temperature.K')
+
+    if (timeIndex === -1 || pressureIndex === -1 || temperatureIndex === -1) {
+      dispatch(markEvolvingHydrated(exampleId))
+      return
+    }
+
+    const parsedRows = evolvingBlock.rows
+      .map((row) => ({
+        time: row[timeIndex],
+        pressure: row[pressureIndex],
+        temperature: row[temperatureIndex],
+        row,
+      }))
+      .filter(({ time, pressure, temperature }) =>
+        Number.isFinite(time) && Number.isFinite(pressure) && Number.isFinite(temperature)
+      )
+      .sort((a, b) => a.time - b.time)
+
+    if (parsedRows.length === 0) {
+      dispatch(markEvolvingHydrated(exampleId))
+      return
+    }
+
+    const additionalHeaders = evolvingBlock.headers.filter((header) =>
+      header !== 'time.s' && header !== 'ENV.pressure.Pa' && header !== 'ENV.temperature.K'
+    )
+
+    const additionalSeries = Object.fromEntries(
+      additionalHeaders.map((header) => [
+        header,
+        parsedRows.map(({ row }) => {
+          const valueIndex = evolvingBlock.headers.indexOf(header)
+          return row[valueIndex]
+        }),
+      ])
+    )
+
+    dispatch(setEvolvingEnabled(true))
+    dispatch(setEvolvingTimes(parsedRows.map((row) => row.time)))
+    dispatch(setEvolvingPressure(parsedRows.map((row) => row.pressure)))
+    dispatch(setEvolvingTemperature(parsedRows.map((row) => row.temperature)))
+    dispatch(setEvolvingAdditionalSeries(additionalSeries))
+    dispatch(markEvolvingHydrated(exampleId))
+  }, [currentExample, dispatch, exampleFiles, hydratedExampleId])
 
   // validation for time point coverage
   const hasTimeAtZero = evolving.times && evolving.times.includes(0)
@@ -83,10 +181,12 @@ export function EvolvingConditionsTab() {
 
     const newPresses = [...evolving.pressure]
     newPresses.splice(insertIndex, 0, press)
+    const newAdditionalSeries = insertAdditionalSeriesValue(evolving.additionalSeries, insertIndex)
 
     dispatch(setEvolvingTimes(newTimes))
     dispatch(setEvolvingTemperature(newTemps))
     dispatch(setEvolvingPressure(newPresses))
+    dispatch(setEvolvingAdditionalSeries(newAdditionalSeries))
 
     toast({
       title: 'Time Point Added',
@@ -105,10 +205,12 @@ export function EvolvingConditionsTab() {
     const newTimes = evolving.times.filter((_, i) => i !== index)
     const newTemps = evolving.temperature.filter((_, i) => i !== index)
     const newPresses = evolving.pressure.filter((_, i) => i !== index)
+    const newAdditionalSeries = removeAdditionalSeriesValue(evolving.additionalSeries, index)
 
     dispatch(setEvolvingTimes(newTimes))
     dispatch(setEvolvingTemperature(newTemps))
     dispatch(setEvolvingPressure(newPresses))
+    dispatch(setEvolvingAdditionalSeries(newAdditionalSeries))
 
     toast({
       title: 'Time Point Removed',
@@ -135,10 +237,12 @@ export function EvolvingConditionsTab() {
 
     const newPresses = [...evolving.pressure]
     newPresses.splice(insertIndex, 0, initialConditions.pressure)
+    const newAdditionalSeries = insertAdditionalSeriesValue(evolving.additionalSeries, insertIndex)
 
     dispatch(setEvolvingTimes(newTimes))
     dispatch(setEvolvingTemperature(newTemps))
     dispatch(setEvolvingPressure(newPresses))
+    dispatch(setEvolvingAdditionalSeries(newAdditionalSeries))
 
     toast({
       title: 'Start Point Added',
@@ -173,10 +277,12 @@ export function EvolvingConditionsTab() {
 
     const newPresses = [...evolving.pressure]
     newPresses.splice(insertIndex, 0, lastPress)
+    const newAdditionalSeries = insertAdditionalSeriesValue(evolving.additionalSeries, insertIndex)
 
     dispatch(setEvolvingTimes(newTimes))
     dispatch(setEvolvingTemperature(newTemps))
     dispatch(setEvolvingPressure(newPresses))
+    dispatch(setEvolvingAdditionalSeries(newAdditionalSeries))
 
     toast({
       title: 'End Point Added',
@@ -233,6 +339,7 @@ export function EvolvingConditionsTab() {
         dispatch(setEvolvingTimes(sorted.map(s => s.time)))
         dispatch(setEvolvingTemperature(sorted.map(s => s.temp)))
         dispatch(setEvolvingPressure(sorted.map(s => s.press)))
+        dispatch(setEvolvingAdditionalSeries({}))
 
         toast({
           title: 'CSV Imported Successfully',

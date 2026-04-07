@@ -9,6 +9,7 @@ import { getReactionDefinition, reactionRegistry } from './reactions/reactionReg
 
 // visual editor for reactions in the mechanism
 export function ReactionEditor() {
+
   const dispatch = useDispatch()
   const { toast } = useToast()
   const reactions = useSelector((state) => state.mechanism.reactions)
@@ -82,26 +83,12 @@ export function ReactionEditor() {
         <CardHeader>
           <CardTitle>Reaction Editor</CardTitle>
           <CardDescription>
-            {isPredefined
-              ? `Viewing ${isPredefined.name} mechanism - reactions are pre-configured`
-              : 'Add, edit, or remove chemical reactions in the mechanism'}
+            {'Add, edit, or remove chemical reactions in the mechanism'}
           </CardDescription>
         </CardHeader>
 
         <CardContent className="space-y-4">
-          {/* Info box for predefined mechanisms */}
-          {isPredefined && (
-            <div className="bg-blue-50 border-2 border-blue-300 rounded-lg p-3 text-sm">
-              <p className="font-semibold text-blue-800 mb-1 flex items-center gap-2">
-                <FlaskConical className="w-4 h-4" />
-                Extending Pre-defined Mechanism
-              </p>
-              <p className="text-blue-700 text-xs">
-                You can add custom reactions to the {isPredefined.name} mechanism.
-                This allows you to extend the mechanism with additional chemistry for specialized simulations.
-              </p>
-            </div>
-          )}
+
 
           {/* Add New Reaction Form (shown for all mechanisms) */}
           <div className="p-4 bg-white/0 backdrop-blur-lg rounded-xl border-2 border-white/20">
@@ -140,12 +127,10 @@ export function ReactionEditor() {
             </div>
           </div>
 
-          {/* Reactions List */}
+          {/* Reactions List with Search */}
           <div>
             <h4 className="font-semibold text-sm mb-2">
-              {isPredefined
-                ? `${isPredefined.name} Mechanism Reactions (${isPredefined.reactions} pre-configured${reactions.length > 0 ? ` + ${reactions.length} custom` : ''})`
-                : `Reactions List (${reactions.length} total)`}
+              {`Reactions List (${reactions.length} total)`}
             </h4>
 
             {isPredefined && reactions.length === 0 ? (
@@ -233,16 +218,16 @@ export function ReactionEditor() {
                       </div>
                     </div>
 
-                    <Button
-                      variant="glass"
-                      size="sm"
-                      onClick={() => handleRemoveReaction(reaction.id)}
-                      className="rounded-lg text-red-600 hover:bg-red-900/20 backdrop-blur-lg"
-                    >
-                      Remove
-                    </Button>
-                  </div>
-                ))}
+                      <Button
+                        variant="glass"
+                        size="sm"
+                        onClick={() => handleRemoveReaction(reaction.id)}
+                        className="rounded-lg text-red-600 hover:bg-red-900/20 backdrop-blur-lg"
+                      >
+                        Remove
+                      </Button>
+                    </div>
+                  ))}
               </div>
             )}
           </div>

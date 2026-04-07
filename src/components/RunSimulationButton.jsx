@@ -21,14 +21,39 @@ export function RunSimulationButton({ className = '' }) {
   const loadedExample = useSelector((state) => state.conditions.exampleLoaded)
 
   async function handleRunSimulation() {
-    dispatch(setStatus('running'))
-    dispatch(setError(null))
+    const mechanismLabel = mechanismData.currentExample?.name
+      || mechanismData.currentExample?.mechanism_name
+      || mechanismData.mechanism?.mechanism?.name
+      || 'local'
+
+    function downloadJSON(data, filename = "data.json") {
+      // Convert object to JSON string
+      const jsonString = JSON.stringify(data, null, 2);
+
+      // Create a blob
+      const blob = new Blob([jsonString], { type: "application/json" });
+
+      // Create a temporary URL
+      const url = URL.createObjectURL(blob);
+
+      // Create a temporary anchor element
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = filename;
+
+      // Trigger download
+      document.body.appendChild(link);
+      link.click();
+
+      // Cleanup
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    }
+
 
     const buildSolverConditions = () => {
       const source = conditions.conditions || {}
-
-      const hasDataBlocks = Array.isArray(source.data)
-      const blocks = hasDataBlocks ? [...source.data] : []
+      const { filepaths, ...sourceWithoutFilepaths } = source
 
       const reduxInitial = conditions.initial || {}
       const sourceInitial = source.initial || {}
@@ -48,45 +73,108 @@ export function RunSimulationButton({ className = '' }) {
 
       const evolving = source.evolving || conditions.evolving || {}
 
-      const hasAnyConcColumns = blocks.some((block) =>
-        (block?.headers || []).some((h) => typeof h === 'string' && h.startsWith('CONC.'))
-      )
+      const initialHeaders = ['time.s', 'ENV.temperature.K', 'ENV.pressure.Pa']
+      const initialRow = [
+        0,
+        initial.temperature ?? 298.15,
+        initial.pressure ?? 101325,
+      ]
 
-      // If there are no concentration columns, seed t=0 with initial state from Redux/source.
-      if (!hasAnyConcColumns) {
-        const headers = ['time.s', 'ENV.temperature.K', 'ENV.pressure.Pa']
-        const row = [
-          0,
-          initial.temperature ?? 298.15,
-          initial.pressure ?? 101325,
-        ]
+      Object.entries(initial.concentrations || {}).forEach(([species, value]) => {
+        initialHeaders.push(`CONC.${species}.mol m-3`)
+        initialRow.push(value)
+      })
 
-        Object.entries(initial.concentrations || {}).forEach(([species, value]) => {
-          headers.push(`CONC.${species}.mol m-3`)
-          row.push(value)
-        })
+      Object.entries(rateConstants).forEach(([name, value]) => {
+        initialHeaders.push(name)
+        initialRow.push(value)
+      })
 
-        Object.entries(rateConstants).forEach(([name, value]) => {
-          headers.push(name)
-          row.push(value)
-        })
+      let mergedHeaders = [...initialHeaders];
+      let mergedRows = [[...initialRow]];
 
-        blocks.push({ headers, rows: [row] })
-      }
 
       if (evolving.enabled && Array.isArray(evolving.times) && evolving.times.length > 0) {
-        const envHeaders = ['time.s', 'ENV.temperature.K', 'ENV.pressure.Pa']
-        const envRows = evolving.times.map((time, i) => [
-          time,
-          evolving.temperature?.[i] ?? initial.temperature ?? 298.15,
-          evolving.pressure?.[i] ?? initial.pressure ?? 101325,
-        ])
-        blocks.push({ headers: envHeaders, rows: envRows })
+        const additionalSeries = evolving.additionalSeries || {};
+        const additionalHeaders = Object.keys(additionalSeries);
+        // Merge all headers
+        mergedHeaders = Array.from(new Set([...initialHeaders, ...additionalHeaders.map(h => h.startsWith('ENV.') || h.startsWith('CONC.') ? h : h)]));
+
+        // Helper to align a row to mergedHeaders, filling missing/nulls with 0
+        const alignRow = (row, headers, mergedHeaders) =>
+          mergedHeaders.map((header, idx) => {
+            const headerIdx = headers.indexOf(header);
+            let value = headerIdx !== -1 ? row[headerIdx] : null;
+            return value == null ? 0 : value;
+          });
+
+        // Build evolving rows, aligned and with nulls as 0
+        const envRows = evolving.times.map((time, i) => {
+          const evolvingRow = mergedHeaders.map((header) => {
+            if (header === 'time.s') {
+              return time;
+            } else if (header === 'ENV.temperature.K') {
+              return evolving.temperature?.[i] ?? initial.temperature ?? 298.15;
+            } else if (header === 'ENV.pressure.Pa') {
+              return evolving.pressure?.[i] ?? initial.pressure ?? 101325;
+            } else if (header.startsWith('CONC.')) {
+              // Concentrations are only in the initial row, so fill with 0
+              return 0;
+            } else if (additionalHeaders.includes(header)) {
+              const val = additionalSeries[header]?.[i];
+              return val == null ? 0 : val;
+            } else {
+              // For rate constants or other headers
+              const idx = initialHeaders.indexOf(header);
+              if (idx !== -1) {
+                return initialRow[idx] == null ? 0 : initialRow[idx];
+              } else {
+                return 0;
+              }
+            }
+          });
+          return evolvingRow;
+        });
+
+        // Align initial row
+        const alignedInitialRow = alignRow(initialRow, initialHeaders, mergedHeaders);
+
+        // If there is an evolving row with time.s === 0, merge it with the initial row
+        const timeIndex = mergedHeaders.indexOf('time.s');
+        let mergedRowsTemp = [];
+        let merged = false;
+        envRows.forEach((row) => {
+          if (timeIndex !== -1 && row[timeIndex] === 0) {
+            // Merge with initial row: use evolving values for duplicates
+            const mergedRow = alignedInitialRow.map((val, idx) => {
+              // If evolving value is not 0 (or initial is 0), use evolving
+              return row[idx] !== 0 ? row[idx] : val;
+            });
+            mergedRowsTemp.push(mergedRow);
+            merged = true;
+          } else {
+            mergedRowsTemp.push(row);
+          }
+        });
+        // If no evolving row with time.s === 0, add initial row at the top
+        if (!merged) {
+          mergedRowsTemp = [alignedInitialRow, ...envRows];
+        }
+        mergedRows = mergedRowsTemp;
+      } else {
+        // If no evolving, align initial row to mergedHeaders and fill nulls with 0
+        const alignRow = (row, headers, mergedHeaders) =>
+          mergedHeaders.map((header, idx) => {
+            const headerIdx = headers.indexOf(header);
+            let value = headerIdx !== -1 ? row[headerIdx] : null;
+            return value == null ? 0 : value;
+          });
+        mergedRows = [alignRow(initialRow, initialHeaders, mergedHeaders)];
       }
 
       return {
-        ...(source || {}),
-        data: blocks,
+        ...sourceWithoutFilepaths,
+        data: [{ headers: mergedHeaders, rows: mergedRows }],
       }
     }
 
@@ -271,17 +359,65 @@ export function RunSimulationButton({ className = '' }) {
     const species = mechanismData.species.length > 0
       ? mechanismData.species.map(serializeSpecies)
       : (sourceMechanism.species || []).map(serializeSpecies)
-    const reactions = mechanismData.reactions.length > 0
+
+    let reactions = mechanismData.reactions.length > 0
       ? mechanismData.reactions.map(serializeReaction)
       : (sourceMechanism.reactions || []).map(serializeReaction)
-    const phases = Array.isArray(sourceMechanism.phases) && sourceMechanism.phases.length > 0
-      ? sourceMechanism.phases
-      : [
-          {
-            name: 'gas',
-            species: species.map((sp) => ({ name: sp.name }))
-          }
-        ]
+
+
+
+    // Track the actual new product species names and their corresponding CONC keys
+    const productSpeciesToAdd = [];
+    const productConcentrationKeys = [];
+    reactions.forEach((reaction) => {
+      let prodName = '';
+      if (typeof reaction.name === 'string' && reaction.name.length > 0) {
+        prodName = reaction.name.replace(/\s+/g, '_').replace(/[^A-Za-z0-9_]/g, '').toUpperCase();
+      } else {
+        prodName = 'REACT_' + Math.random().toString(36).substring(2, 10).toUpperCase();
+      }
+      if (Array.isArray(reaction.products)) {
+        reaction.products.push({ 'species name': prodName, coefficient: 1 });
+        productSpeciesToAdd.push(prodName);
+        // Track the expected concentration key for this species
+        productConcentrationKeys.push(`CONC.${prodName}.mol m-3`);
+      }
+    });
+
+    // Add new product species to species array if not already present
+    productSpeciesToAdd.forEach((prodName) => {
+      if (!species.some((sp) => sp.name === prodName)) {
+        species.push({ name: prodName, 'molecular weight [kg mol-1]': 0.029 });
+      }
+    });
+
+
+    let phases = [];
+    if (Array.isArray(sourceMechanism.phases) && sourceMechanism.phases.length > 0) {
+      // Deep copy to avoid mutating the original
+      phases = sourceMechanism.phases.map(phase => ({
+        ...phase,
+        species: Array.isArray(phase.species)
+          ? [
+              ...phase.species.filter(
+                (sp) => species.some((s) => s.name === (sp.name || sp))
+              ),
+              ...species
+                .filter((sp) =>
+                  !phase.species.some((s) => (s.name || s) === sp.name)
+                )
+                .map((sp) => ({ name: sp.name }))
+            ]
+          : species.map((sp) => ({ name: sp.name })),
+      }));
+    } else {
+      phases = [
+        {
+          name: 'gas',
+          species: species.map((sp) => ({ name: sp.name })),
+        },
+      ];
+    }
 
     try {
       const finalMechanism = {
@@ -308,52 +444,78 @@ export function RunSimulationButton({ className = '' }) {
         throw new Error('Invalid mechanism payload: expected mechanism.species[] and mechanism.reactions[] before solve()')
       }
 
+    if (!Array.isArray(finalMechanism.conditions?.data) || finalMechanism.conditions.data.length === 0) {
+      // Always combine initial and evolving conditions into a single block at index 0
+      if (Array.isArray(finalMechanism.conditions?.data) && finalMechanism.conditions.data.length >= 1) {
+        const blocks = finalMechanism.conditions.data;
+        // Collect all unique headers
+        const mergedHeaders = Array.from(new Set(blocks.flatMap(b => b.headers || [])));
+        // Collect all rows from all blocks, mapping to mergedHeaders
+        const mergedRows = blocks.flatMap(block =>
+          (block.rows || []).map(row =>
+            mergedHeaders.map(header => {
+              const idx = (block.headers || []).indexOf(header);
+              return idx !== -1 ? row[idx] : null;
+            })
+          )
+        );
+        finalMechanism.conditions.data = [{ headers: mergedHeaders, rows: mergedRows }];
+      }
       if (!Array.isArray(finalMechanism.conditions?.data) || finalMechanism.conditions.data.length === 0) {
         throw new Error('Invalid conditions payload: expected conditions.data[] with at least one block')
       }
+    }
 
-      validateMechanismPayload(finalMechanism.mechanism)
+    console.log('Final mechanism config:', finalMechanism);
+    const results = await MusicBox.fromJson(finalMechanism).solve()
+    console.log('Results from final mechanism config:', results);
+    // downloadJSON(finalMechanism, 'final_mechanism.json')
 
-      console.log('Final mechanism config:', finalMechanism);
-      const results = await MusicBox.fromJson(finalMechanism).solve()
-      console.log('Results from final mechanism config:', results);
+    dispatch(setResults(results))
+    dispatch(setMetadata({
+      mechanism: mechanismLabel,
+      duration: conditions.basic.duration || 0,
+    }))
+    dispatch(setStatus('succeeded'))
+    navigate('/plots')
 
-    // console.log('Final mechanism config:', c5Config);
-    // const box = MusicBox.fromJson(c5Config);
-    // const results = await box.solve();
-    // console.log('Results from final mechanism config:', results);
 
-      dispatch(setResults(results))
+    // Exclude new product species (from reaction names) from results before plotting, using the actual CONC keys
+    const excludeConcentrationKeys = new Set(productConcentrationKeys);
+
+    // Filters
+    const normalizedPoints = normalizeManualResults(results);
+    const filteredResults = [];
+    const excludedResults = [];
+    for (const point of normalizedPoints) {
+      if (!point || typeof point !== 'object' || !point.concentrations) {
+        filteredResults.push(point);
+        excludedResults.push({});
+        continue;
+      }
+      const filteredConcentrations = {};
+      const excludedConcentrations = {};
+      for (const [key, value] of Object.entries(point.concentrations)) {
+        if (excludeConcentrationKeys.has(key)) {
+          excludedConcentrations[key] = value;
+        } else {
+          filteredConcentrations[key] = value;
+        }
+      }
+      filteredResults.push({ ...point, concentrations: filteredConcentrations });
+      excludedResults.push({ time: point.time, concentrations: excludedConcentrations });
+    }
+
+    if (filteredResults.length > 0) {
+      dispatch(setResults(filteredResults))
       dispatch(setMetadata({
-        mechanism: mechanismData.currentExample || mechanismData.mechanism?.mechanism?.name || 'local',
+        mechanism: mechanismLabel,
         duration: conditions.basic.duration || 0,
       }))
       dispatch(setStatus('succeeded'))
       navigate('/plots')
-
-      const normalizedResults = normalizeManualResults(results);
-
-      if (normalizedResults.length > 0) {
-        dispatch(setResults(normalizedResults))
-        dispatch(setMetadata({
-          mechanism: mechanismData.currentExample || mechanismData.mechanism?.mechanism?.name || 'local',
-          duration: conditions.basic.duration || 0,
-        }))
-        dispatch(setStatus('succeeded'))
-        navigate('/plots')
-      } else {
-        console.error('No valid results after normalization')
-      }
-    } catch (error) {
-      const message = error?.message || 'Failed to create MICM solver from mechanism'
-      console.error('Simulation failed:', error)
-      dispatch(setStatus('failed'))
-      dispatch(setError({ message }))
-      toast({
-        title: 'Simulation Failed',
-        description: message,
-        variant: 'delete',
-      })
+    } else {
+      console.error('No valid results after normalization')
     }
   }
 

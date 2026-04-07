@@ -13,6 +13,7 @@ import { BarChart3, Atom, AlertCircle, Lightbulb } from 'lucide-react'
  * @param {Object} props.metadata - Simulation metadata (mechanism, duration, etc.)
  */
 export function SimulationChart({ results, metadata }) {
+    const [speciesSearch, setSpeciesSearch] = useState("");
   const [selectedSpecies, setSelectedSpecies] = useState([])
   const [showAll, setShowAll] = useState(false)
   const [initialized, setInitialized] = useState(false)
@@ -228,6 +229,21 @@ export function SimulationChart({ results, metadata }) {
     )
   }
 
+  // Filter and sort species for the filter UI
+  const filteredSpecies = useMemo(() => {
+    const search = speciesSearch.trim().toLowerCase();
+    if (!search) return allSpecies;
+    return allSpecies
+      .filter((sp) => sp.toLowerCase().includes(search))
+      .sort((a, b) => {
+        const aExact = a.toLowerCase() === search;
+        const bExact = b.toLowerCase() === search;
+        if (aExact && !bExact) return -1;
+        if (!aExact && bExact) return 1;
+        return 0;
+      });
+  }, [allSpecies, speciesSearch]);
+
   return (
     <Card>
       <CardHeader>
@@ -259,35 +275,44 @@ export function SimulationChart({ results, metadata }) {
         {/* Species Filter */}
         <div className="border rounded-lg p-2 xs:p-3 sm:p-4 bg-gray-50">
           <div className="flex flex-col xs:flex-row items-start xs:items-center justify-between gap-2 xs:gap-0 mb-3">
-            <h4 className="font-semibold text-xs xs:text-sm text-gray-900">Species Filter ({displaySpecies.length} selected)</h4>
-            <div className="flex gap-2 w-full xs:w-auto">
+            <div className="flex items-center gap-3 w-full xs:w-auto">
+              <h4 className="font-semibold text-xs xs:text-sm text-gray-900 mr-4">Species Filter ({displaySpecies.length} selected)</h4>
               <Button
-                variant="glass"
+                variant="default"
                 size="sm"
                 onClick={() => {
-                  setShowAll(true)
-                  setSelectedSpecies([])
+                  setShowAll(false);
+                  setSelectedSpecies(filteredSpecies);
                 }}
-                className="rounded-lg text-xs flex-1 xs:flex-initial"
+                className="rounded-lg text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white shadow"
               >
-                Show All
+                Select All
               </Button>
               <Button
-                variant="glass"
+                variant="destructive"
                 size="sm"
                 onClick={() => {
-                  setShowAll(false)
-                  setSelectedSpecies([])
+                  setShowAll(false);
+                  setSelectedSpecies([]);
                 }}
-                className="rounded-lg text-xs flex-1 xs:flex-initial"
+                className="rounded-lg text-xs font-bold bg-red-600 hover:bg-red-700 text-white shadow"
               >
-                Clear All
+                Deselect All
               </Button>
             </div>
           </div>
 
+          {/* Search bar for species filter */}
+          <input
+            type="text"
+            value={speciesSearch}
+            onChange={e => setSpeciesSearch(e.target.value)}
+            placeholder="Search species"
+            className="w-full mb-3 px-3 py-2 border-2 border-gray-300 bg-white text-gray-800 placeholder:text-gray-400 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
+          />
+
           <div className="flex flex-wrap gap-1.5 xs:gap-2 max-h-32 overflow-y-auto">
-            {allSpecies.map((species, idx) => (
+            {filteredSpecies.map((species, idx) => (
               <button
                 key={species}
                 onClick={() => toggleSpecies(species)}

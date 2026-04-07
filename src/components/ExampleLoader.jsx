@@ -1,15 +1,12 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useDispatch } from 'react-redux'
 import { useNavigate } from 'react-router-dom'
-import axios from 'axios'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card'
 import { Button } from './ui/button'
-import { loadConditions } from '../redux/slices/conditionsSlice'
-import { setSelectedMechanism, setCurrentExample, mechanismSlice } from '../redux/slices/mechanismSlice'
-import { clearSimulation } from '../redux/slices/simulationSlice'
+import { setCurrentExample } from '../redux/slices/mechanismSlice'
 
 import { addSpecies, addReaction, setMechanism } from '../redux/slices/mechanismSlice'
-import { setDuration, setTimeStep, setOutputFrequency, setConditions, setExampleLoaded, setSourceFile } from '../redux/slices/conditionsSlice'
+import { setDuration, setTimeStep, setOutputFrequency, setConditions, setExampleFiles, setExampleLoaded, setSourceFile } from '../redux/slices/conditionsSlice'
 import { v4 as uuidv4 } from 'uuid'
 
 const API_URL = 'http://localhost:3001/api'
@@ -18,10 +15,8 @@ import { resetMechanism } from '../redux/slices/mechanismSlice'
 import { resetConditions } from '../redux/slices/conditionsSlice'
 import { resetSimulation } from '../redux/slices/simulationSlice'
 
-import { MusicBox, parseCsvToBlock } from '@ncar/music-box';
+import { parseCsvToBlock } from '@ncar/music-box';
 
-// Can't be imported and therefore we have no way to change its values if desired
-// import chapmanConditionsBoulder from '@ncar/music-box/examples/chapman/conditions_Boulder.csv' with { type: 'csv' };
 
 import chapmanConfig from '@ncar/music-box/examples/chapman/my_config.json' with { type: 'json' };
 import analyticalConfig from '@ncar/music-box/examples/analytical/my_config.json' with { type: 'json' };
@@ -35,7 +30,7 @@ import flowTubeInitialConcentrationsCsv from '@ncar/music-box/examples/flow_tube
 import flowTubeInitialReactionRatesCsv from '@ncar/music-box/examples/flow_tube/initial_reaction_rates.csv?raw';
 import carbonBond5InitialConcentrationsCsv from '@ncar/music-box/examples/carbon_bond_5/initial_concentrations.csv?raw';
 import carbonBond5InitialReactionRatesCsv from '@ncar/music-box/examples/carbon_bond_5/initial_reaction_rates.csv?raw';
-
+import analyticalInitialConditionsCsv from '@ncar/music-box/examples/analytical/initial_conditions.csv?raw';
 
 /**
  * ExampleLoader Component
@@ -43,6 +38,26 @@ import carbonBond5InitialReactionRatesCsv from '@ncar/music-box/examples/carbon_
  */
 export function ExampleLoader() {
   const navigate = useNavigate();
+
+  const toExampleCsvJson = (content) => {
+    if (typeof content !== 'string' || content.trim().length === 0) {
+      return {};
+    }
+
+    return parseCsvToBlock(content);
+  };
+
+  const buildExampleCsvJson = ({
+    initial_conditions = '',
+    initial_concentrations = '',
+    initial_reaction_rates = '',
+    boulder = '',
+  } = {}) => ({
+    initial_conditions: toExampleCsvJson(initial_conditions),
+    initial_concentrations: toExampleCsvJson(initial_concentrations),
+    initial_reaction_rates: toExampleCsvJson(initial_reaction_rates),
+    boulder: toExampleCsvJson(boulder),
+  });
 
   const withInlineConditionData = (config, csvContents = []) => {
     const existingData = Array.isArray(config?.conditions?.data) ? config.conditions.data : []
@@ -59,23 +74,6 @@ export function ExampleLoader() {
     }
   }
 
-  async function handleClick() {
-    const box = MusicBox.fromJson(flowTubeConfig);
-    const results = await box.solve();
-    console.log(results);
-    // const response = await axios.get(`${API_URL}/examples/chapman`)
-    // const solverConfig = response.data?.example?.solverConfig
-
-    // if (!solverConfig) {
-    //   throw new Error('Missing solverConfig from backend example response')
-    // }
-
-    // const box = MusicBox.fromJson(solverConfig);
-    // const results = await box.solve();
-    // console.log(results);
-  }
-
-  // const [examples, setExamples] = useState([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
   const dispatch = useDispatch()
@@ -86,90 +84,55 @@ export function ExampleLoader() {
         name: 'Analytical Mechanism',
         description: 'A simple analytical model for demonstration purposes',
         mechanism_name: analyticalConfig.mechanism.name,
-        mechanism: analyticalConfig,
+        csv: buildExampleCsvJson({
+          initial_conditions: analyticalInitialConditionsCsv,
+        }),
+        mechanism: withInlineConditionData(analyticalConfig, [analyticalInitialConditionsCsv]),
     },
     {
         id: 'chapman',
         name: 'Chapman Mechanism',
         description: 'Stratospheric oxygen chemistry with photolysis',
         mechanism_name: chapmanConfig.mechanism.name,
-      mechanism: withInlineConditionData(chapmanConfig, [chapmanInitialConcentrationsCsv, chapmanConditionsBoulderCsv]),
+        csv: buildExampleCsvJson({
+          initial_concentrations: chapmanInitialConcentrationsCsv,
+          boulder: chapmanConditionsBoulderCsv,
+        }),
+        mechanism: withInlineConditionData(chapmanConfig, [chapmanInitialConcentrationsCsv, chapmanConditionsBoulderCsv]),
     },
     {
         id: 'Flow-Tube Wall Loss',
         name: 'Flow-Tube Wall Loss',
         description: 'A simple characterization of wall loss of a-Pinene oxidation products in a flow-tube reactor. ',
         mechanism_name: flowTubeConfig.mechanism.name,
-      mechanism: withInlineConditionData(flowTubeConfig, [flowTubeInitialConcentrationsCsv, flowTubeInitialReactionRatesCsv]),
+        csv: buildExampleCsvJson({
+          initial_concentrations: flowTubeInitialConcentrationsCsv,
+          initial_reaction_rates: flowTubeInitialReactionRatesCsv,
+        }),
+        mechanism: withInlineConditionData(flowTubeConfig, [flowTubeInitialConcentrationsCsv, flowTubeInitialReactionRatesCsv]),
     },
     {
         id: 'Full Gas-Phase Mechanism',
         name: 'Full Gas-Phase Mechanism',
         description: 'A variant of the Carbon Bond 5 chemical mechanism used in the MONARCH global/regional chemical weather prediction system. The description of the modified version of CB-05 used in MONARCH',
         mechanism_name: carbonBond5Config.mechanism.name,
-      mechanism: withInlineConditionData(carbonBond5Config, [carbonBond5InitialConcentrationsCsv, carbonBond5InitialReactionRatesCsv]),
+        csv: buildExampleCsvJson({
+          initial_concentrations: carbonBond5InitialConcentrationsCsv,
+          initial_reaction_rates: carbonBond5InitialReactionRatesCsv,
+        }),
+        mechanism: withInlineConditionData(carbonBond5Config, [carbonBond5InitialConcentrationsCsv, carbonBond5InitialReactionRatesCsv]),
     },
     {
         id: 'Troposphere-Stratosphere mechanism (TS1)',
         name: 'Troposphere-Stratosphere mechanism (TS1)',
         description: 'A comprehensive model of the chemistry in the troposphere and stratosphere. Read about its formulation in this paper.',
         mechanism_name: ts1Config.mechanism.name,
-      mechanism: withInlineConditionData(ts1Config, [ts1InitialConditionsCsv]),
+        csv: buildExampleCsvJson({
+          initial_conditions: ts1InitialConditionsCsv,
+        }),
+        mechanism: withInlineConditionData(ts1Config, [ts1InitialConditionsCsv]),
     },
   ]
-
-  // Fetch available examples on component mount
-  // useEffect(() => {
-  //   fetchExamples()
-  // }, [])
-
-  // const fetchExamples = async () => {
-  //   try {
-  //     const response = await axios.get(`${API_URL}/examples`)
-  //     setExamples(response.data.examples)
-  //   } catch (err) {
-  //     console.error('Error fetching examples:', err)
-  //     setError('Failed to load examples')
-  //   }
-  // }
-
-  // const loadExample = async (exampleId) => {
-  //   setLoading(true)
-  //   setError(null)
-
-  //   try {
-  //     const response = await axios.get(`${API_URL}/examples/${exampleId}`)
-  //     const exampleData = response.data.example
-
-  //     // Find the example metadata from the list
-  //     const exampleMetadata = examples.find(ex => ex.id === exampleId)
-
-  //     // CRITICAL: Clear old simulation results before loading new example
-  //     // This ensures Simulation Status shows the new example info, not old results
-  //     dispatch(clearSimulation())
-
-  //     // Update Redux store with example configuration
-  //     dispatch(setSelectedMechanism(exampleData.mechanism))
-  //     dispatch(loadConditions(exampleData.conditions))
-  //     dispatch(setCurrentExample({
-  //       id: exampleId,
-  //       name: exampleData.name,
-  //       description: exampleData.description || exampleMetadata?.description,
-  //     }))
-
-  //     console.log(`Loaded example: ${exampleData.name}`)
-
-  //     // Call callback to notify parent that example was selected
-  //     if (onExampleSelected) {
-  //       onExampleSelected()
-  //     }
-  //   } catch (err) {
-  //     console.error('Error loading example:', err)
-  //     setError(`Failed to load example: ${exampleId}`)
-  //   } finally {
-  //     setLoading(false)
-  //   }
-  // }
 
   const reactionJsonToString = (arr = []) => {
     return arr
@@ -200,17 +163,22 @@ export function ExampleLoader() {
     dispatch(resetConditions());
     dispatch(resetSimulation());
 
-    dispatch(setMechanism(example));
+    const exampleConfig = example.mechanism;
+    const mechanismConfig = exampleConfig?.mechanism || {};
 
-    example.mechanism.species.map(species => {
+    dispatch(setMechanism(exampleConfig));
+
+    const mechanismSpecies = Array.isArray(mechanismConfig.species) ? mechanismConfig.species : [];
+    mechanismSpecies.forEach((species) => {
       dispatch(addSpecies({
         name: species.name,
         molecular_weight_kg_mol: 0.048, // Using default value
         properties: {},
       }));
-    })
+    });
 
-    example.mechanism.reactions.map(reaction => {
+    const mechanismReactions = Array.isArray(mechanismConfig.reactions) ? mechanismConfig.reactions : [];
+    mechanismReactions.forEach((reaction) => {
       const displayReactants = reaction.reactants
         || reaction['gas-phase species']
         || [];
@@ -228,19 +196,21 @@ export function ExampleLoader() {
         ...reaction,
         id: uuidv4(),
         "name": normalizedProducts
-          ? `${normalizedReactants} → ${normalizedProducts}`
-          : `${normalizedReactants} → (removed)`,
+          ? `${normalizedReactants} -> ${normalizedProducts}`
+          : `${normalizedReactants} -> (removed)`,
       }
 
       dispatch(addReaction(newReaction));
-    })
+    });
 
-    const options = example["box model options"];
+    const options = exampleConfig["box model options"] || {};
 
     if (options["simulation length [day]"] != null) {
       dispatch(setDuration(options["simulation length [day]"] * 24 * 3600))
-    } else if (options["simulation length [hour]"] != null || options["simulation length [hr]"] != null) {
+    } else if (options["simulation length [hour]"] != null) {
       dispatch(setDuration(options["simulation length [hour]"] * 3600))
+    } else if (options["simulation length [hr]"] != null) {
+      dispatch(setDuration(options["simulation length [hr]"] * 3600))
     } else if (options["simulation length [sec]"] != null) {
       dispatch(setDuration(options["simulation length [sec]"]))
     }
@@ -257,17 +227,24 @@ export function ExampleLoader() {
       dispatch(setOutputFrequency(options["output time step [sec]"]))
     }
 
-    // Preserve "__source file" if it exists in the original JSON.
-    // This ensures it is carried through Redux and can be re-added
-    // when rebuilding the final configuration file.
-    if (example["__source file"] != null) {
-      dispatch(setSourceFile(example["__source file"]));
+    if (exampleConfig["__source file"] != null) {
+      dispatch(setSourceFile(exampleConfig["__source file"]));
     } else {
       dispatch(setSourceFile(null));
     }
 
-    dispatch(setConditions(example.conditions));
-    dispatch(setCurrentExample(example.mechanism.name));
+    dispatch(setConditions(exampleConfig.conditions));
+    dispatch(setExampleFiles({
+      ...example.csv,
+      data: exampleConfig.conditions?.data || [],
+    }));
+    dispatch(setCurrentExample({
+      id: example.id,
+      name: example.name,
+      description: example.description,
+      mechanism_name: example.mechanism_name,
+      csv: example.csv,
+    }));
     dispatch(setExampleLoaded(false));
 
     navigate("/mechanism");
@@ -289,10 +266,6 @@ export function ExampleLoader() {
           </div>
         )}
 
-        <button onClick={handleClick}>
-          Click Me
-        </button>
-
         <div className="grid gap-3">
           {examples.map((example) => (
             <div
@@ -310,8 +283,7 @@ export function ExampleLoader() {
               <Button
                 variant="glass"
                 size="sm"
-                onClick={() => loadExample(example.mechanism)}
-                // onClick={() => handleClick()}
+                onClick={() => loadExample(example)}
                 disabled={loading}
                 className="rounded-2xl ml-4"
               >

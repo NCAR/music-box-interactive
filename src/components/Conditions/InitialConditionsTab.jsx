@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card'
 import { Button } from '../ui/button'
@@ -6,8 +6,11 @@ import { Lightbulb, Plus } from 'lucide-react'
 import {
   setTemperature,
   setPressure,
+  setConcentrations,
+  setRateConstants,
   setConcentration,
   removeConcentration,
+  markInitialHydrated,
 } from '../../redux/slices/conditionsSlice'
 import { useToast } from '@/hooks/use-toast'
 
@@ -19,11 +22,111 @@ export function InitialConditionsTab() {
   const dispatch = useDispatch()
   const { toast } = useToast()
   const initial = useSelector((state) => state.conditions.initial)
+  const exampleFiles = useSelector((state) => state.conditions.exampleFiles)
+  const hydratedExampleId = useSelector((state) => state.conditions.hydration.initialExampleId)
+  const currentExample = useSelector((state) => state.mechanism.currentExample)
   const selectedMechanism = useSelector((state) => state.mechanism.selectedMechanism)
 
   const [newSpecies, setNewSpecies] = useState('')
   const [newConcentration, setNewConcentration] = useState('')
   const [error, setError] = useState(null)
+
+  useEffect(() => {
+    const exampleId = currentExample?.id
+
+    if (!exampleId || hydratedExampleId === exampleId) {
+      return
+    }
+
+    const getValidBlock = (block) => (
+      block?.headers?.length && block?.rows?.length ? block : null
+    )
+
+    const initialConditionsBlock = getValidBlock(exampleFiles?.initial_conditions)
+    const initialConcentrationsBlock = getValidBlock(exampleFiles?.initial_concentrations)
+    const initialReactionRatesBlock = getValidBlock(exampleFiles?.initial_reaction_rates)
+
+    const fallbackDataBlock = (exampleFiles?.data || []).find((block) => {
+      const headers = block?.headers || []
+      const rows = block?.rows || []
+      return rows.length > 0
+        && headers.includes('time.s')
+        && headers.some((header) => typeof header === 'string' && header.startsWith('ENV.'))
+    })
+
+    const blocksToHydrate = [
+      initialConditionsBlock,
+      initialConcentrationsBlock,
+      initialReactionRatesBlock,
+    ].filter(Boolean)
+
+    if (blocksToHydrate.length === 0 && !fallbackDataBlock) {
+      dispatch(markInitialHydrated(exampleId))
+      return
+    }
+
+    const nextConcentrations = {}
+    const nextRateConstants = {}
+    let nextTemperature = null
+    let nextPressure = null
+
+    blocksToHydrate.forEach((block) => {
+      const headers = block.headers || []
+      const firstRow = block.rows?.[0] || []
+
+      headers.forEach((header, index) => {
+        const value = firstRow[index]
+
+        if (header === 'ENV.temperature.K' && Number.isFinite(value)) {
+          nextTemperature = value
+        }
+
+        if (header === 'ENV.pressure.Pa' && Number.isFinite(value)) {
+          nextPressure = value
+        }
+
+        const concentrationMatch = /^CONC\.([^.]+)\./.exec(header)
+        if (concentrationMatch && Number.isFinite(value)) {
+          nextConcentrations[concentrationMatch[1].toUpperCase()] = value
+        }
+
+        const isTimeColumn = header === 'time.s'
+        const isEnvironmentalColumn = header.startsWith('ENV.')
+        if (!isTimeColumn && !isEnvironmentalColumn && !concentrationMatch && Number.isFinite(value)) {
+          nextRateConstants[header] = value
+        }
+      })
+    })
+
+    if ((nextTemperature === null || nextPressure === null) && fallbackDataBlock) {
+      const headers = fallbackDataBlock.headers || []
+      const firstRow = fallbackDataBlock.rows?.[0] || []
+
+      headers.forEach((header, index) => {
+        const value = firstRow[index]
+
+        if (nextTemperature === null && header === 'ENV.temperature.K' && Number.isFinite(value)) {
+          nextTemperature = value
+        }
+
+        if (nextPressure === null && header === 'ENV.pressure.Pa' && Number.isFinite(value)) {
+          nextPressure = value
+        }
+      })
+    }
+
+    if (nextTemperature !== null) {
+      dispatch(setTemperature(nextTemperature))
+    }
+
+    if (nextPressure !== null) {
+      dispatch(setPressure(nextPressure))
+    }
+
+    dispatch(setConcentrations(nextConcentrations))
+    dispatch(setRateConstants(nextRateConstants))
+    dispatch(markInitialHydrated(exampleId))
+  }, [currentExample, dispatch, exampleFiles, hydratedExampleId])
 
   const handleAddSpecies = () => {
     if (!newSpecies || !newConcentration) {

@@ -24,13 +24,30 @@ const initialState = {
     temperature: [], // array of temperature values
     pressure: [], // array of pressure values
     interpolationMethod: 'linear', // 'linear' | 'step' | 'cubic'
+    // Hidden evolving series such as PHOTO.* are preserved here even if the UI does not display them.
+    additionalSeries: {},
     // Rate constants can also evolve
     rateConstants: {},
+  },
+
+  exampleFiles: {
+    initial_conditions: {},
+    initial_concentrations: {},
+    initial_reaction_rates: {},
+    boulder: {},
+    data: [],
+  },
+
+  hydration: {
+    initialExampleId: null,
+    evolvingExampleId: null,
   },
 
   conditions: {},
   exampleLoaded: true,
   source_file: {},
+
+  
 
   // Rate Constants (photolysis rates, etc.)
   rateConstants: {},
@@ -94,6 +111,26 @@ export const conditionsSlice = createSlice({
     setInterpolationMethod: (state, action) => {
       state.evolving.interpolationMethod = action.payload
     },
+    setEvolvingAdditionalSeries: (state, action) => {
+      state.evolving.additionalSeries = action.payload || {}
+    },
+
+    setExampleFiles: (state, action) => {
+      state.exampleFiles = {
+        initial_conditions: {},
+        initial_concentrations: {},
+        initial_reaction_rates: {},
+        boulder: {},
+        data: [],
+        ...(action.payload || {}),
+      }
+    },
+    markInitialHydrated: (state, action) => {
+      state.hydration.initialExampleId = action.payload || null
+    },
+    markEvolvingHydrated: (state, action) => {
+      state.hydration.evolvingExampleId = action.payload || null
+    },
 
     // Set conditions json directly (for loading examples)
     setConditions: (state, action) => {
@@ -133,6 +170,10 @@ export const {
   setEvolvingTemperature,
   setEvolvingPressure,
   setInterpolationMethod,
+  setEvolvingAdditionalSeries,
+  setExampleFiles,
+  markInitialHydrated,
+  markEvolvingHydrated,
   loadConditions,
   setConditions,
   setExampleLoaded,
