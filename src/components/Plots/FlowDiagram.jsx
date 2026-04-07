@@ -1,6 +1,9 @@
 import { React, useState } from 'react'
 import { FlowGraph } from './FlowGraph'
 import { FlowPanel } from './FlowPanel'
+import { useSelector } from 'react-redux'
+import { Card, CardContent } from '../ui/card'
+import { Waypoints } from 'lucide-react'
 
 /*
     * FlowDiagram Component
@@ -23,6 +26,23 @@ export function FlowDiagram() {
   const [fluxRange, setFluxRange] = useState({ minIndex: 0, maxIndex: fluxValues.length - 1 });
 
   const [selectedSpecies, setSelectedSpecies] = useState([]); // TODO: Implement the species selection logic in FlowPanel
+
+  // If no simulation results, show placeholder
+  const simulation = useSelector((state) => state.simulation);
+  if (!simulation.results || simulation.status !== 'succeeded') {
+    return (
+      <Card>
+        <CardContent className="flex items-center justify-center h-96">
+          <div className="text-center text-white-500">
+            <div className="flex justify-center mb-2">
+              <Waypoints className="w-12 h-12" />
+            </div>
+            <p>Run a simulation to see flow diagrams</p>
+          </div>
+        </CardContent>
+      </Card>
+    )
+  }
 
   return (
     <div className="flex h-full min-h-screen w-full gap-4">
