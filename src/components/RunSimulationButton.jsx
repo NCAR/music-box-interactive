@@ -80,6 +80,7 @@ export function RunSimulationButton({ className = '' }) {
       ]
 
       Object.entries(initial.concentrations || {}).forEach(([species, value]) => {
+        // console.log(species, value)
         initialHeaders.push(`CONC.${species}.mol m-3`)
         initialRow.push(value)
       })
@@ -404,7 +405,7 @@ export function RunSimulationButton({ className = '' }) {
     console.log('Final mechanism config:', finalMechanism);
     const results = await MusicBox.fromJson(finalMechanism).solve()
     console.log('Results from final mechanism config:', results);
-    // downloadJSON(finalMechanism, 'final_mechanism.json')
+    downloadJSON(finalMechanism, 'final_mechanism.json')
 
     dispatch(setResults(results))
     dispatch(setMetadata({
