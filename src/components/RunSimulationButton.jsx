@@ -370,7 +370,13 @@ export function RunSimulationButton({ className = '' }) {
         ...sourceMechanism,
         "name": sourceMechanism.name || mechanismData.currentExample?.name || mechanismData.currentExample || 'custom',
         "reactions": reactions,
-        "species": species,
+        "species": species.map(sp => {
+          const { ["molecular weight [kg mol-1]"]: _omit, ...rest } = sp;
+          return {
+            ...rest,
+            "is third body": Object.prototype.hasOwnProperty.call(rest, 'is third body') ? rest['is third body'] : false
+          };
+        }),
         "phases": phases,
         "version": sourceMechanism.version || '1.0.0'
       }
@@ -405,7 +411,7 @@ export function RunSimulationButton({ className = '' }) {
     console.log('Final mechanism config:', finalMechanism);
     const results = await MusicBox.fromJson(finalMechanism).solve()
     console.log('Results from final mechanism config:', results);
-    downloadJSON(finalMechanism, 'final_mechanism.json')
+    // downloadJSON(finalMechanism, 'final_mechanism.json')
 
     dispatch(setResults(results))
     dispatch(setMetadata({

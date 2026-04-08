@@ -173,6 +173,7 @@ export function ExampleLoader() {
       dispatch(addSpecies({
         name: species.name,
         molecular_weight_kg_mol: 0.048, // Using default value
+        "is third body": species["is third body"] || false,
         properties: {},
       }));
     });
