@@ -3,7 +3,7 @@ import { useDispatch } from 'react-redux'
 import { useNavigate } from 'react-router-dom'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card'
 import { Button } from './ui/button'
-import { setCurrentExample } from '../redux/slices/mechanismSlice'
+import { setCurrentExample, setSelectedMechanism } from '../redux/slices/mechanismSlice'
 
 import { addSpecies, addReaction, setMechanism } from '../redux/slices/mechanismSlice'
 import { setDuration, setTimeStep, setOutputFrequency, setConditions, setExampleFiles, setExampleLoaded, setSourceFile } from '../redux/slices/conditionsSlice'
@@ -196,9 +196,11 @@ export function ExampleLoader() {
       const newReaction = {
         ...reaction,
         id: uuidv4(),
-        "name": normalizedProducts
-          ? `${normalizedReactants} -> ${normalizedProducts}`
-          : `${normalizedReactants} -> (removed)`,
+        "name": (typeof reaction.name === 'string' && reaction.name.trim().length > 0)
+          ? reaction.name
+          : (normalizedProducts
+              ? `${normalizedReactants} -> ${normalizedProducts}`
+              : `${normalizedReactants} -> (removed)`),
       }
 
       dispatch(addReaction(newReaction));
@@ -246,6 +248,7 @@ export function ExampleLoader() {
       mechanism_name: example.mechanism_name,
       csv: example.csv,
     }));
+    dispatch(setSelectedMechanism(example.mechanism_name || example.id || 'custom'));
     dispatch(setExampleLoaded(false));
 
     navigate("/mechanism");

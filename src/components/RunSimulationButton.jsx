@@ -17,7 +17,6 @@ export function RunSimulationButton({ className = '' }) {
   const mechanismData = useSelector((state) => state.mechanism)
   const currentExample = useSelector((state) => state.mechanism.currentExample)
   const conditions = useSelector((state) => state.conditions)
-  const loadedExample = useSelector((state) => state.conditions.exampleLoaded)
 
   async function handleRunSimulation() {
     const mechanismLabel = mechanismData.currentExample?.name
@@ -25,158 +24,112 @@ export function RunSimulationButton({ className = '' }) {
       || mechanismData.mechanism?.mechanism?.name
       || 'local'
 
-    function downloadJSON(data, filename = "data.json") {
-      // Convert object to JSON string
-      const jsonString = JSON.stringify(data, null, 2);
-
-      // Create a blob
-      const blob = new Blob([jsonString], { type: "application/json" });
-
-      // Create a temporary URL
-      const url = URL.createObjectURL(blob);
-
-      // Create a temporary anchor element
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = filename;
-
-      // Trigger download
-      document.body.appendChild(link);
-      link.click();
-
-      // Cleanup
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
-    }
-
-
     const buildSolverConditions = () => {
-      const source = conditions.conditions || {}
-      const { filepaths, ...sourceWithoutFilepaths } = source
+      const source = conditions.conditions || {};
+      const { filepaths, ...sourceWithoutFilepaths } = source;
 
-      const reduxInitial = conditions.initial || {}
-      const sourceInitial = source.initial || {}
+      // 1) If the example/config already contains valid inline blocks, use them as-is.
+      // This is the correct path for bundled examples like Chapman.
+      if (Array.isArray(source.data) && source.data.length > 0) {
+        return {
+          ...sourceWithoutFilepaths,
+          data: source.data,
+        };
+      }
+
+      // 2) Otherwise, fall back to rebuilding from the UI state.
+      const reduxInitial = conditions.initial || {};
+      const sourceInitial = source.initial || {};
+
       const initial = {
-        temperature: sourceInitial.temperature ?? reduxInitial.temperature,
-        pressure: sourceInitial.pressure ?? reduxInitial.pressure,
+        temperature: sourceInitial.temperature ?? reduxInitial.temperature ?? 298.15,
+        pressure: sourceInitial.pressure ?? reduxInitial.pressure ?? 101325,
         concentrations: {
           ...(reduxInitial.concentrations || {}),
           ...(sourceInitial.concentrations || {}),
         },
-      }
+      };
 
       const rateConstants = {
         ...(conditions.rateConstants || {}),
         ...(source.rateConstants || {}),
-      }
+      };
 
-      const evolving = source.evolving || conditions.evolving || {}
+      const evolving = source.evolving || conditions.evolving || {};
+      const additionalSeries = evolving.additionalSeries || {};
 
-      const initialHeaders = ['time.s', 'ENV.temperature.K', 'ENV.pressure.Pa']
-      const initialRow = [
-        0,
-        initial.temperature ?? 298.15,
-        initial.pressure ?? 101325,
-      ]
+      const dataBlocks = [];
 
-      Object.entries(initial.concentrations || {}).forEach(([species, value]) => {
-        // console.log(species, value)
-        initialHeaders.push(`CONC.${species}.mol m-3`)
-        initialRow.push(value)
-      })
+      // Initial block
+      const initialHeaders = ['time.s', 'ENV.temperature.K', 'ENV.pressure.Pa'];
+      const initialRow = [0, initial.temperature, initial.pressure];
+
+      Object.entries(initial.concentrations).forEach(([species, value]) => {
+        if (value !== undefined && value !== null && value !== '') {
+          initialHeaders.push(`CONC.${species}.mol m-3`);
+          initialRow.push(value);
+        }
+      });
 
       Object.entries(rateConstants).forEach(([name, value]) => {
-        initialHeaders.push(name)
-        initialRow.push(value)
-      })
-
-      let mergedHeaders = [...initialHeaders];
-      let mergedRows = [[...initialRow]];
-
-
-      if (evolving.enabled && Array.isArray(evolving.times) && evolving.times.length > 0) {
-        const additionalSeries = evolving.additionalSeries || {};
-        const additionalHeaders = Object.keys(additionalSeries);
-        // Merge all headers
-        mergedHeaders = Array.from(new Set([...initialHeaders, ...additionalHeaders.map(h => h.startsWith('ENV.') || h.startsWith('CONC.') ? h : h)]));
-
-        // Helper to align a row to mergedHeaders, filling missing/nulls with 0
-        const alignRow = (row, headers, mergedHeaders) =>
-          mergedHeaders.map((header, idx) => {
-            const headerIdx = headers.indexOf(header);
-            let value = headerIdx !== -1 ? row[headerIdx] : null;
-            return value == null ? 0 : value;
-          });
-
-        // Build evolving rows, aligned and with nulls as 0
-        const envRows = evolving.times.map((time, i) => {
-          const evolvingRow = mergedHeaders.map((header) => {
-            if (header === 'time.s') {
-              return time;
-            } else if (header === 'ENV.temperature.K') {
-              return evolving.temperature?.[i] ?? initial.temperature ?? 298.15;
-            } else if (header === 'ENV.pressure.Pa') {
-              return evolving.pressure?.[i] ?? initial.pressure ?? 101325;
-            } else if (header.startsWith('CONC.')) {
-              // Concentrations are only in the initial row, so fill with 0
-              return 0;
-            } else if (additionalHeaders.includes(header)) {
-              const val = additionalSeries[header]?.[i];
-              return val == null ? 0 : val;
-            } else {
-              // For rate constants or other headers
-              const idx = initialHeaders.indexOf(header);
-              if (idx !== -1) {
-                return initialRow[idx] == null ? 0 : initialRow[idx];
-              } else {
-                return 0;
-              }
-            }
-          });
-          return evolvingRow;
-        });
-
-        // Align initial row
-        const alignedInitialRow = alignRow(initialRow, initialHeaders, mergedHeaders);
-
-        // If there is an evolving row with time.s === 0, merge it with the initial row
-        const timeIndex = mergedHeaders.indexOf('time.s');
-        let mergedRowsTemp = [];
-        let merged = false;
-        envRows.forEach((row) => {
-          if (timeIndex !== -1 && row[timeIndex] === 0) {
-            // Merge with initial row: use evolving values for duplicates
-            const mergedRow = alignedInitialRow.map((val, idx) => {
-              // If evolving value is not 0 (or initial is 0), use evolving
-              return row[idx] !== 0 ? row[idx] : val;
-            });
-            mergedRowsTemp.push(mergedRow);
-            merged = true;
-          } else {
-            mergedRowsTemp.push(row);
-          }
-        });
-        // If no evolving row with time.s === 0, add initial row at the top
-        if (!merged) {
-          mergedRowsTemp = [alignedInitialRow, ...envRows];
+        if (value !== undefined && value !== null && value !== '') {
+          initialHeaders.push(name);
+          initialRow.push(value);
         }
-        mergedRows = mergedRowsTemp;
-      } else {
-        // If no evolving, align initial row to mergedHeaders and fill nulls with 0
-        const alignRow = (row, headers, mergedHeaders) =>
-          mergedHeaders.map((header, idx) => {
-            const headerIdx = headers.indexOf(header);
-            let value = headerIdx !== -1 ? row[headerIdx] : null;
-            return value == null ? 0 : value;
+      });
+
+      dataBlocks.push({
+        headers: initialHeaders,
+        rows: [initialRow],
+      });
+
+      // Evolving block
+      if (evolving.enabled && Array.isArray(evolving.times) && evolving.times.length > 0) {
+        const evolvingHeaders = ['time.s'];
+
+        if (Array.isArray(evolving.temperature) && evolving.temperature.length > 0) {
+          evolvingHeaders.push('ENV.temperature.K');
+        }
+
+        if (Array.isArray(evolving.pressure) && evolving.pressure.length > 0) {
+          evolvingHeaders.push('ENV.pressure.Pa');
+        }
+
+        const additionalHeaders = Object.keys(additionalSeries).filter((key) => {
+          const arr = additionalSeries[key];
+          return Array.isArray(arr) && arr.length > 0;
+        });
+
+        evolvingHeaders.push(...additionalHeaders);
+
+        const evolvingRows = evolving.times.map((time, i) => {
+          return evolvingHeaders.map((header) => {
+            if (header === 'time.s') return time;
+            if (header === 'ENV.temperature.K') {
+              return evolving.temperature?.[i] ?? initial.temperature;
+            }
+            if (header === 'ENV.pressure.Pa') {
+              return evolving.pressure?.[i] ?? initial.pressure;
+            }
+            if (Object.prototype.hasOwnProperty.call(additionalSeries, header)) {
+              return additionalSeries[header]?.[i] ?? 0;
+            }
+            return 0;
           });
-        mergedRows = [alignRow(initialRow, initialHeaders, mergedHeaders)];
+        });
+
+        dataBlocks.push({
+          headers: evolvingHeaders,
+          rows: evolvingRows,
+        });
       }
 
       return {
         ...sourceWithoutFilepaths,
-        data: [{ headers: mergedHeaders, rows: mergedRows }],
-      }
-    }
+        data: dataBlocks,
+      };
+    };
+
 
     const normalizeReactionComponents = (components = []) => {
       return (components || []).map((component) => {
@@ -302,33 +255,6 @@ export function RunSimulationButton({ className = '' }) {
       : (sourceMechanism.reactions || []).map(serializeReaction)
 
 
-
-    // Track the actual new product species names and their corresponding CONC keys
-    const productSpeciesToAdd = [];
-    const productConcentrationKeys = [];
-    reactions.forEach((reaction) => {
-      let prodName = '';
-      if (typeof reaction.name === 'string' && reaction.name.length > 0) {
-        prodName = reaction.name.replace(/\s+/g, '_').replace(/[^A-Za-z0-9_]/g, '').toUpperCase();
-      } else {
-        prodName = 'REACT_' + Math.random().toString(36).substring(2, 10).toUpperCase();
-      }
-      if (Array.isArray(reaction.products)) {
-        reaction.products.push({ 'species name': prodName, coefficient: 1 });
-        productSpeciesToAdd.push(prodName);
-        // Track the expected concentration key for this species
-        productConcentrationKeys.push(`CONC.${prodName}.mol m-3`);
-      }
-    });
-
-    // Add new product species to species array if not already present
-    productSpeciesToAdd.forEach((prodName) => {
-      if (!species.some((sp) => sp.name === prodName)) {
-        species.push({ name: prodName, 'molecular weight [kg mol-1]': 0.029 });
-      }
-    });
-
-
     let phases = [];
     if (Array.isArray(sourceMechanism.phases) && sourceMechanism.phases.length > 0) {
       // Deep copy to avoid mutating the original
@@ -387,69 +313,16 @@ export function RunSimulationButton({ className = '' }) {
     }
 
     if (!Array.isArray(finalMechanism.conditions?.data) || finalMechanism.conditions.data.length === 0) {
-      // Always combine initial and evolving conditions into a single block at index 0
-      if (Array.isArray(finalMechanism.conditions?.data) && finalMechanism.conditions.data.length >= 1) {
-        const blocks = finalMechanism.conditions.data;
-        // Collect all unique headers
-        const mergedHeaders = Array.from(new Set(blocks.flatMap(b => b.headers || [])));
-        // Collect all rows from all blocks, mapping to mergedHeaders
-        const mergedRows = blocks.flatMap(block =>
-          (block.rows || []).map(row =>
-            mergedHeaders.map(header => {
-              const idx = (block.headers || []).indexOf(header);
-              return idx !== -1 ? row[idx] : null;
-            })
-          )
-        );
-        finalMechanism.conditions.data = [{ headers: mergedHeaders, rows: mergedRows }];
-      }
-      if (!Array.isArray(finalMechanism.conditions?.data) || finalMechanism.conditions.data.length === 0) {
-        throw new Error('Invalid conditions payload: expected conditions.data[] with at least one block')
-      }
+      throw new Error('Invalid conditions payload: expected conditions.data[] with at least one block')
     }
 
     console.log('Final mechanism config:', finalMechanism);
-    const results = await MusicBox.fromJson(finalMechanism).solve()
-    console.log('Results from final mechanism config:', results);
-    // downloadJSON(finalMechanism, 'final_mechanism.json')
+    const rawResults = await MusicBox.fromJson(finalMechanism).solve()
+    const normalizedResults = normalizeManualResults(rawResults)
+    console.log('Results from final mechanism config:', rawResults);
 
-    dispatch(setResults(results))
-    dispatch(setMetadata({
-      mechanism: mechanismLabel,
-      duration: conditions.basic.duration || 0,
-    }))
-    dispatch(setStatus('succeeded'))
-    navigate('/plots')
-
-
-    // Exclude new product species (from reaction names) from results before plotting, using the actual CONC keys
-    const excludeConcentrationKeys = new Set(productConcentrationKeys);
-
-    // Filters
-    const normalizedPoints = normalizeManualResults(results);
-    const filteredResults = [];
-    const excludedResults = [];
-    for (const point of normalizedPoints) {
-      if (!point || typeof point !== 'object' || !point.concentrations) {
-        filteredResults.push(point);
-        excludedResults.push({});
-        continue;
-      }
-      const filteredConcentrations = {};
-      const excludedConcentrations = {};
-      for (const [key, value] of Object.entries(point.concentrations)) {
-        if (excludeConcentrationKeys.has(key)) {
-          excludedConcentrations[key] = value;
-        } else {
-          filteredConcentrations[key] = value;
-        }
-      }
-      filteredResults.push({ ...point, concentrations: filteredConcentrations });
-      excludedResults.push({ time: point.time, concentrations: excludedConcentrations });
-    }
-
-    if (filteredResults.length > 0) {
-      dispatch(setResults(filteredResults))
+    if (normalizedResults.length > 0) {
+      dispatch(setResults(normalizedResults))
       dispatch(setMetadata({
         mechanism: mechanismLabel,
         duration: conditions.basic.duration || 0,
@@ -533,24 +406,26 @@ export function RunSimulationButton({ className = '' }) {
     return normalized
   }
 
-  // Check if we have a valid mechanism configuration
-  // For predefined mechanisms: need example loaded
-  // For custom mechanisms: need at least 1 species and 1 reaction
+  // Allow running whenever an actual mechanism payload is present.
+  // selectedMechanism may be null for some loaded examples.
+  const sourceMechanism = mechanismData.mechanism?.mechanism || {}
+  const payloadSpeciesCount = mechanismData.species.length > 0
+    ? mechanismData.species.length
+    : Array.isArray(sourceMechanism.species) ? sourceMechanism.species.length : 0
+  const payloadReactionCount = mechanismData.reactions.length > 0
+    ? mechanismData.reactions.length
+    : Array.isArray(sourceMechanism.reactions) ? sourceMechanism.reactions.length : 0
+  const hasValidMechanism = payloadSpeciesCount > 0 && payloadReactionCount > 0
+
   const isPredefinedMechanism = mechanism && mechanism !== 'custom'
   const isCustomMechanism = mechanism === 'custom'
-
-  const hasValidPredefined = isPredefinedMechanism && currentExample && currentExample.id
-  const hasValidCustom = isCustomMechanism && mechanismData.species.length > 0 && mechanismData.reactions.length > 0
-
-  const hasValidMechanism = hasValidPredefined || hasValidCustom
-  // const isDisabled = simulation.status === 'running' || !hasValidMechanism
-  const isDisabled = loadedExample;
+  const isDisabled = simulation.status === 'running' || !hasValidMechanism
 
   // Generate helpful tooltip message
   const getTooltip = () => {
     if (simulation.status === 'running') return 'Simulation is currently running...'
-    if (isCustomMechanism && mechanismData.species.length === 0) return 'Add at least 1 species to run simulation'
-    if (isCustomMechanism && mechanismData.reactions.length === 0) return 'Add at least 1 reaction to run simulation'
+    if (payloadSpeciesCount === 0) return 'Add or load species to run simulation'
+    if (payloadReactionCount === 0) return 'Add or load reactions to run simulation'
     if (isPredefinedMechanism && !currentExample) return 'Please select an example mechanism'
     return 'Run atmospheric chemistry simulation'
   }
