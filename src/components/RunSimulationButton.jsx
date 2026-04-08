@@ -1,8 +1,9 @@
 import { useSelector, useDispatch } from 'react-redux'
 import { useNavigate } from 'react-router-dom'
 import { Button } from './ui/button'
-import { setResults, setStatus, setMetadata } from '../redux/slices/simulationSlice'
+import { setResults, setStatus, setMetadata, setError } from '../redux/slices/simulationSlice'
 import { Loader2, Play } from 'lucide-react'
+import { toast } from '@/hooks/use-toast'
 import { MusicBox } from '@ncar/music-box';
 
 /**
@@ -49,6 +50,8 @@ export function RunSimulationButton({ className = '' }) {
       URL.revokeObjectURL(url);
     }
 
+    dispatch(setStatus('running'))
+    dispatch(setError(null))
 
     const buildSolverConditions = () => {
       const source = conditions.conditions || {}
@@ -277,6 +280,69 @@ export function RunSimulationButton({ className = '' }) {
       return serialized
     }
 
+    const extractSpeciesNames = (components) => {
+      if (!Array.isArray(components)) {
+        return []
+      }
+
+      return components
+        .map((component) => {
+          if (!component) return null
+          if (typeof component === 'string') return component
+          if (typeof component === 'object') return component['species name'] || component.name || null
+          return null
+        })
+        .filter(Boolean)
+    }
+
+    const validateMechanismPayload = (mechanismPayload) => {
+      const speciesNames = new Set(
+        (mechanismPayload.species || [])
+          .map((species) => (typeof species === 'string' ? species : species?.name))
+          .filter(Boolean)
+      )
+
+      const unknownSpecies = new Set()
+
+      ;(mechanismPayload.reactions || []).forEach((reaction) => {
+        if (!reaction || typeof reaction !== 'object') return
+
+        const referenced = [
+          ...extractSpeciesNames(reaction.reactants),
+          ...extractSpeciesNames(reaction.products),
+          ...extractSpeciesNames(reaction['gas-phase products']),
+          ...extractSpeciesNames(reaction['alkoxy products']),
+          ...extractSpeciesNames(reaction['nitrate products']),
+        ]
+
+        if (typeof reaction['gas-phase species'] === 'string') {
+          referenced.push(reaction['gas-phase species'])
+        }
+
+        referenced.forEach((name) => {
+          if (!speciesNames.has(name)) {
+            unknownSpecies.add(name)
+          }
+        })
+      })
+
+      if (unknownSpecies.size > 0) {
+        throw new Error(
+          `Unknown species in reactions for this mechanism: ${Array.from(unknownSpecies).join(', ')}`
+        )
+      }
+
+      const hasLambdaRate = (mechanismPayload.reactions || []).some(
+        (reaction) => reaction?.type === 'LAMBDA_RATE_CONSTANT'
+      )
+
+      if (hasLambdaRate) {
+        throw new Error(
+          'LAMBDA_RATE reactions are not supported by this Run Simulation path yet because lambda callbacks are not registered. Remove lambda reactions or run through a MUSICA callback-enabled path.'
+        )
+      }
+    }
+
     const serializeSpecies = (species) => {
       if (!species || typeof species !== 'object') {
         return species
@@ -355,102 +421,79 @@ export function RunSimulationButton({ className = '' }) {
       ];
     }
 
-    const finalMechanism = {
-      "box model options": {
-        "grid": "box",
-        "chemistry time step [sec]": conditions.basic.timeStep,
-        "output time step [sec]": conditions.basic.outputFrequency,
-        "simulation length [sec]": conditions.basic.duration
-      },
+    try {
+      const finalMechanism = {
+        "box model options": {
+          "grid": "box",
+          "chemistry time step [sec]": conditions.basic.timeStep,
+          "output time step [sec]": conditions.basic.outputFrequency,
+          "simulation length [sec]": conditions.basic.duration
+        },
 
-      "conditions": buildSolverConditions(),
+        "conditions": buildSolverConditions(),
 
-      "mechanism": {
-        ...sourceMechanism,
-        "name": sourceMechanism.name || mechanismData.currentExample?.name || mechanismData.currentExample || 'custom',
-        "reactions": reactions,
-        "species": species,
-        "phases": phases,
-        "version": sourceMechanism.version || '1.0.0'
+        "mechanism": {
+          ...sourceMechanism,
+          "name": sourceMechanism.name || mechanismData.currentExample?.name || mechanismData.currentExample || 'custom',
+          "reactions": reactions,
+          "species": species,
+          "phases": phases,
+          "version": sourceMechanism.version || '1.0.0'
+        }
+      };
+
+      if (!finalMechanism.mechanism || !Array.isArray(finalMechanism.mechanism.species) || !Array.isArray(finalMechanism.mechanism.reactions)) {
+        throw new Error('Invalid mechanism payload: expected mechanism.species[] and mechanism.reactions[] before solve()')
       }
-    };
 
-    if (!finalMechanism.mechanism || !Array.isArray(finalMechanism.mechanism.species) || !Array.isArray(finalMechanism.mechanism.reactions)) {
-      throw new Error('Invalid mechanism payload: expected mechanism.species[] and mechanism.reactions[] before solve()')
-    }
-
-    if (!Array.isArray(finalMechanism.conditions?.data) || finalMechanism.conditions.data.length === 0) {
-      // Always combine initial and evolving conditions into a single block at index 0
-      if (Array.isArray(finalMechanism.conditions?.data) && finalMechanism.conditions.data.length >= 1) {
-        const blocks = finalMechanism.conditions.data;
-        // Collect all unique headers
-        const mergedHeaders = Array.from(new Set(blocks.flatMap(b => b.headers || [])));
-        // Collect all rows from all blocks, mapping to mergedHeaders
-        const mergedRows = blocks.flatMap(block =>
-          (block.rows || []).map(row =>
-            mergedHeaders.map(header => {
-              const idx = (block.headers || []).indexOf(header);
-              return idx !== -1 ? row[idx] : null;
-            })
-          )
-        );
-        finalMechanism.conditions.data = [{ headers: mergedHeaders, rows: mergedRows }];
-      }
       if (!Array.isArray(finalMechanism.conditions?.data) || finalMechanism.conditions.data.length === 0) {
         throw new Error('Invalid conditions payload: expected conditions.data[] with at least one block')
       }
-    }
 
-    console.log('Final mechanism config:', finalMechanism);
-    const results = await MusicBox.fromJson(finalMechanism).solve()
-    console.log('Results from final mechanism config:', results);
-    // downloadJSON(finalMechanism, 'final_mechanism.json')
+      validateMechanismPayload(finalMechanism.mechanism)
 
-    dispatch(setResults(results))
-    dispatch(setMetadata({
-      mechanism: mechanismLabel,
-      duration: conditions.basic.duration || 0,
-    }))
-    dispatch(setStatus('succeeded'))
-    navigate('/plots')
+      console.log('Final mechanism config:', finalMechanism);
+      const rawResults = await MusicBox.fromJson(finalMechanism).solve()
+      console.log('Results from final mechanism config:', rawResults);
+      // downloadJSON(finalMechanism, 'final_mechanism.json')
 
+      // Exclude new product species (from reaction names) from results before plotting, using the actual CONC keys
+      const excludeConcentrationKeys = new Set(productConcentrationKeys);
 
-    // Exclude new product species (from reaction names) from results before plotting, using the actual CONC keys
-    const excludeConcentrationKeys = new Set(productConcentrationKeys);
-
-    // Filters
-    const normalizedPoints = normalizeManualResults(results);
-    const filteredResults = [];
-    const excludedResults = [];
-    for (const point of normalizedPoints) {
-      if (!point || typeof point !== 'object' || !point.concentrations) {
-        filteredResults.push(point);
-        excludedResults.push({});
-        continue;
-      }
-      const filteredConcentrations = {};
-      const excludedConcentrations = {};
-      for (const [key, value] of Object.entries(point.concentrations)) {
-        if (excludeConcentrationKeys.has(key)) {
-          excludedConcentrations[key] = value;
-        } else {
-          filteredConcentrations[key] = value;
+      // Filters
+      const normalizedPoints = normalizeManualResults(rawResults);
+      const filteredResults = [];
+      for (const point of normalizedPoints) {
+        if (!point || typeof point !== 'object' || !point.concentrations) {
+          filteredResults.push(point);
+          continue;
         }
+        const filteredConcentrations = {};
+        for (const [key, value] of Object.entries(point.concentrations)) {
+          if (!excludeConcentrationKeys.has(key)) {
+            filteredConcentrations[key] = value;
+          }
+        }
+        filteredResults.push({ ...point, concentrations: filteredConcentrations });
       }
-      filteredResults.push({ ...point, concentrations: filteredConcentrations });
-      excludedResults.push({ time: point.time, concentrations: excludedConcentrations });
-    }
 
-    if (filteredResults.length > 0) {
-      dispatch(setResults(filteredResults))
+      dispatch(setResults(filteredResults.length > 0 ? filteredResults : normalizedPoints))
       dispatch(setMetadata({
         mechanism: mechanismLabel,
         duration: conditions.basic.duration || 0,
       }))
       dispatch(setStatus('succeeded'))
       navigate('/plots')
-    } else {
-      console.error('No valid results after normalization')
+    } catch (error) {
+      const message = error?.message || 'Failed to create MICM solver from mechanism'
+      console.error('Simulation failed:', error)
+      dispatch(setStatus('failed'))
+      dispatch(setError({ message }))
+      toast({
+        title: 'Simulation Failed',
+        description: message,
+        variant: 'delete',
+      })
     }
   }
 
