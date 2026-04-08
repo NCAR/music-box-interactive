@@ -24,7 +24,8 @@ import {
   setPressure,
   setConcentrations,
   loadConditions,
-  setConditions
+  setConditions,
+  setExampleLoaded
 } from '../../redux/slices/conditionsSlice'
 import { useToast } from '@/hooks/use-toast'
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert'
@@ -48,6 +49,7 @@ export function DashboardPage() {
   const confirmStartFromScratch = () => {
     dispatch(resetMechanism())
     dispatch(resetConditions())
+    dispatch(setExampleLoaded(false))
     dispatch(setSelectedMechanism('custom'))
     // hide examples/status on fresh start
     setShowExamples(false)
@@ -262,7 +264,9 @@ export function DashboardPage() {
               <Button
                 variant="glass"
                 className="w-full rounded-2xl border-2 cursor-pointer text-xs xs:text-sm sm:text-base px-3 xs:px-4 py-2"
+                disabled
                 onClick={() => fileInputRef.current?.click()}
+                title="Uploading configurations is disabled"
               >
                 Upload Config
               </Button>

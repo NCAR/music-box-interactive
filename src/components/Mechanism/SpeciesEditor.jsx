@@ -16,6 +16,8 @@ export function SpeciesEditor() {
 
   const [newSpeciesName, setNewSpeciesName] = useState('')
   const [newMolWeight, setNewMolWeight] = useState('')
+  const [newDiffusionCoefficient, setNewDiffusionCoefficient] = useState('')
+  const [newSpeciesPhase, setNewSpeciesPhase] = useState('Gas')
   const [speciesSearch, setSpeciesSearch] = useState('')
   // Filtered and sorted species list based on search
   const filteredSpecies = species
@@ -40,20 +42,24 @@ export function SpeciesEditor() {
   const isPredefined = preDefinedMechanisms[selectedMechanism]
 
   const handleAddSpecies = () => {
-  const added = addSpeciesIfValid({
-    species,
-    newSpeciesName,
-    newMolWeight,
-    dispatch,
-    toast,
-    addSpecies,
-  });
+    const added = addSpeciesIfValid({
+      species,
+      newSpeciesName,
+      newMolWeight,
+      newDiffusionCoefficient,
+      newSpeciesPhase,
+      dispatch,
+      toast,
+      addSpecies,
+    })
 
-  if (added) {
-    setNewSpeciesName('');
-    setNewMolWeight('');
+    if (added) {
+      setNewSpeciesName('')
+      setNewMolWeight('')
+      setNewDiffusionCoefficient('')
+      setNewSpeciesPhase('Gas')
+    }
   }
-};
 
   // const handleAddSpecies = () => {
   //   if (!newSpeciesName) {
@@ -111,6 +117,51 @@ export function SpeciesEditor() {
       description: `"${speciesName}" has been removed from the mechanism`,
       variant: 'delete',
     })
+  }
+
+  const handleDiffusionCoefficientSave = (speciesName, rawValue) => {
+    const existingSpecies = species.find((sp) => sp.name === speciesName)
+
+    if (!existingSpecies) {
+      return
+    }
+
+    const trimmedValue = rawValue.trim()
+    const updatedSpecies = { ...existingSpecies }
+
+    if (!trimmedValue) {
+      delete updatedSpecies['diffusion coefficient [m2 s-1]']
+      dispatch(updateSpecies(updatedSpecies))
+      return
+    }
+
+    const parsedValue = Number.parseFloat(trimmedValue)
+
+    if (Number.isNaN(parsedValue)) {
+      toast({
+        title: 'Error',
+        description: 'Diffusion coefficient must be a valid number',
+        variant: 'destructive',
+      })
+      return
+    }
+
+    updatedSpecies['diffusion coefficient [m2 s-1]'] = parsedValue
+    updatedSpecies.phase = updatedSpecies.phase || 'Gas'
+    dispatch(updateSpecies(updatedSpecies))
+  }
+
+  const handlePhaseSave = (speciesName, phaseValue) => {
+    const existingSpecies = species.find((sp) => sp.name === speciesName)
+
+    if (!existingSpecies) {
+      return
+    }
+
+    dispatch(updateSpecies({
+      ...existingSpecies,
+      phase: phaseValue || 'Gas',
+    }))
   }
 
   return (
@@ -183,7 +234,7 @@ export function SpeciesEditor() {
               Add New Species
             </h4>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
               <div>
                 <label className="block text-xs font-semibold text-blue-100 mb-1">
                   Species Name
@@ -208,6 +259,34 @@ export function SpeciesEditor() {
                   placeholder="Leave empty for default (0.029 kg/mol)"
                   className="w-full px-3 py-2 border-2 border-white/30 bg-white/10 text-white placeholder:text-gray-400 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
                 />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-blue-100 mb-1">
+                  Diffusion Coefficient (optional, m2/s)
+                </label>
+                <input
+                  type="text"
+                  value={newDiffusionCoefficient}
+                  onChange={(e) => setNewDiffusionCoefficient(e.target.value)}
+                  placeholder="e.g., 1e-5"
+                  className="w-full px-3 py-2 border-2 border-white/30 bg-white/10 text-white placeholder:text-gray-400 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-blue-100 mb-1">
+                  Species Phase
+                </label>
+                <select
+                  value={newSpeciesPhase}
+                  onChange={(e) => setNewSpeciesPhase(e.target.value)}
+                  className="w-full px-3 py-2 border-2 border-white/30 bg-white/10 text-white rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
+                >
+                  <option value="Gas" className="text-black">Gas</option>
+                  <option value="Aqueous" className="text-black">Aqueous</option>
+                  <option value="Surface" className="text-black">Surface</option>
+                </select>
               </div>
             </div>
 
@@ -273,10 +352,41 @@ export function SpeciesEditor() {
                         className="flex items-center justify-between p-3 border border-white/20 rounded-lg bg-white/5 hover:bg-white/10 transition-colors"
                       >
                         <div className="flex-1">
-                          <h5 className="font-semibold text-sm">{sp.name}</h5>
+                          <div className="flex flex-wrap items-center gap-2 mb-1">
+                            <h5 className="font-semibold text-sm">{sp.name}</h5>
+                            <div className="flex items-center gap-1">
+                              <span className="text-[11px] uppercase tracking-wide text-blue-100">Phase</span>
+                              <select
+                                value={sp.phase || 'Gas'}
+                                onChange={(e) => handlePhaseSave(sp.name, e.target.value)}
+                                className="rounded-md border border-white/20 bg-white/10 px-2 py-1 text-[11px] font-semibold uppercase tracking-wide text-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-600"
+                              >
+                                <option value="Gas" className="text-black">Gas</option>
+                                <option value="Aqueous" className="text-black">Aqueous</option>
+                                <option value="Surface" className="text-black">Surface</option>
+                              </select>
+                            </div>
+                          </div>
                           <p className="text-xs text-gray-300">
                             MW: {sp.molecular_weight_kg_mol} kg/mol
                           </p>
+                          <div className="mt-2 flex flex-col gap-1">
+                            <label className="text-[11px] uppercase tracking-wide text-gray-300">
+                              Diffusion Coefficient (m2/s)
+                            </label>
+                            <input
+                              type="text"
+                              defaultValue={sp['diffusion coefficient [m2 s-1]'] ?? ''}
+                              onBlur={(e) => handleDiffusionCoefficientSave(sp.name, e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  e.currentTarget.blur()
+                                }
+                              }}
+                              placeholder="e.g., 1e-5"
+                              className="w-full max-w-xs px-3 py-2 border-2 border-white/20 bg-white/10 text-white placeholder:text-gray-400 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
+                            />
+                          </div>
                         </div>
 
                         <Button
@@ -307,10 +417,41 @@ export function SpeciesEditor() {
                       className="flex items-center justify-between p-3 border border-white/20 rounded-lg bg-white/5 hover:bg-white/10 transition-colors"
                     >
                       <div className="flex-1">
-                        <h5 className="font-semibold text-sm">{sp.name}</h5>
+                        <div className="flex flex-wrap items-center gap-2 mb-1">
+                          <h5 className="font-semibold text-sm">{sp.name}</h5>
+                          <div className="flex items-center gap-1">
+                            <span className="text-[11px] uppercase tracking-wide text-blue-100">Phase</span>
+                            <select
+                              value={sp.phase || 'Gas'}
+                              onChange={(e) => handlePhaseSave(sp.name, e.target.value)}
+                              className="rounded-md border border-white/20 bg-white/10 px-2 py-1 text-[11px] font-semibold uppercase tracking-wide text-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-600"
+                            >
+                              <option value="Gas" className="text-black">Gas</option>
+                              <option value="Aqueous" className="text-black">Aqueous</option>
+                              <option value="Surface" className="text-black">Surface</option>
+                            </select>
+                          </div>
+                        </div>
                         <p className="text-xs text-gray-300">
                           MW: {sp.molecular_weight_kg_mol} kg/mol
                         </p>
+                        <div className="mt-2 flex flex-col gap-1">
+                          <label className="text-[11px] uppercase tracking-wide text-gray-300">
+                            Diffusion Coefficient (m2/s)
+                          </label>
+                          <input
+                            type="text"
+                            defaultValue={sp['diffusion coefficient [m2 s-1]'] ?? ''}
+                            onBlur={(e) => handleDiffusionCoefficientSave(sp.name, e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                e.currentTarget.blur()
+                              }
+                            }}
+                            placeholder="e.g., 1e-5"
+                            className="w-full max-w-xs px-3 py-2 border-2 border-white/20 bg-white/10 text-white placeholder:text-gray-400 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
+                          />
+                        </div>
                       </div>
 
                       <Button
@@ -337,7 +478,9 @@ export function SpeciesEditor() {
         </p>
         <ul className="space-y-0.5 ml-4">
           <li>• Species names must be unique within the mechanism</li>
+          <li>• Species in this editor are treated as gas phase</li>
           <li>• Molecular weight is in kg/mol (e.g., O2 = 0.032 kg/mol)</li>
+          <li>• Diffusion coefficient is editable in m2/s</li>
           <li>• Removing a species will also remove it from all reactions</li>
           <li>• Common atmospheric species: M (air), O2, N2, H2O, CO2</li>
         </ul>

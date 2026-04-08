@@ -282,7 +282,15 @@ export function RunSimulationButton({ className = '' }) {
         return species
       }
 
-      const { id, molecular_weight_kg_mol, properties, ...serialized } = species
+      const {
+        id,
+        molecular_weight_kg_mol,
+        properties,
+        phase,
+        'diffusion coefficient [m2 s-1]': _uiDiffusion,
+        diffusion_coefficient_m2_s: _legacyDiffusion,
+        ...serialized
+      } = species
 
       if (serialized['molecular weight [kg mol-1]'] === undefined && molecular_weight_kg_mol !== undefined) {
         serialized['molecular weight [kg mol-1]'] = molecular_weight_kg_mol
@@ -403,7 +411,7 @@ export function RunSimulationButton({ className = '' }) {
 
     console.log('Final mechanism config:', finalMechanism);
     const results = await MusicBox.fromJson(finalMechanism).solve()
-    console.log('Results from final mechanism config:', results);
+    //console.log('Results from final mechanism config:', results);
     // downloadJSON(finalMechanism, 'final_mechanism.json')
 
     dispatch(setResults(results))
