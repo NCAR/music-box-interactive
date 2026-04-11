@@ -313,11 +313,35 @@ export function RunSimulationButton({ className = '' }) {
       } else {
         prodName = 'REACT_' + Math.random().toString(36).substring(2, 10).toUpperCase();
       }
+
+      // Handle products
       if (Array.isArray(reaction.products)) {
         reaction.products.push({ 'species name': prodName, coefficient: 1 });
         productSpeciesToAdd.push(prodName);
-        // Track the expected concentration key for this species
         productConcentrationKeys.push(`CONC.${prodName}.mol m-3`);
+      }
+
+      // Handle gas-phase products
+      if (Array.isArray(reaction['gas-phase products'])) {
+        reaction['gas-phase products'].push({ 'species name': prodName, coefficient: 1 });
+        productSpeciesToAdd.push(prodName);
+        productConcentrationKeys.push(`CONC.${prodName}.mol m-3`);
+      }
+
+      // Handle alkoxy products
+      if (Array.isArray(reaction['alkoxy products'])) {
+        const alkoxyProdName = `${prodName}_A`;
+        reaction['alkoxy products'].push({ 'species name': alkoxyProdName, coefficient: 1 });
+        productSpeciesToAdd.push(alkoxyProdName);
+        productConcentrationKeys.push(`CONC.${alkoxyProdName}.mol m-3`);
+      }
+
+      // Handle nitrate products
+      if (Array.isArray(reaction['nitrate products'])) {
+        const nitrateProdName = `${prodName}_B`;
+        reaction['nitrate products'].push({ 'species name': nitrateProdName, coefficient: 1 });
+        productSpeciesToAdd.push(nitrateProdName);
+        productConcentrationKeys.push(`CONC.${nitrateProdName}.mol m-3`);
       }
     });
 
@@ -405,7 +429,7 @@ export function RunSimulationButton({ className = '' }) {
     console.log('Final mechanism config:', finalMechanism);
     const results = await MusicBox.fromJson(finalMechanism).solve()
     console.log('Results from final mechanism config:', results);
-    downloadJSON(finalMechanism, 'final_mechanism.json')
+    // downloadJSON(finalMechanism, 'final_mechanism.json')
 
     dispatch(setResults(results))
     dispatch(setMetadata({
