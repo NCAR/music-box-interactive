@@ -2,6 +2,7 @@ import { DropdownMenuIcon } from '@radix-ui/react-icons'
 import { React, useState } from 'react'
 import { MultiRange } from '../ui/multirange'
 import { Button } from '../ui/button'
+import { useSelector } from 'react-redux'
 
 /* 
     * FlowPanel Component
@@ -23,17 +24,29 @@ export function FlowPanel({
     selectedSpecies, setSelectedSpecies 
 }) {
 
-    const species = [
-        { id: '1', name: 'Ar'},
-        { id: '2', name: 'CO2'},
-        { id: '3', name: 'H2O'},
-        { id: '4', name: 'M'},
-        { id: '5', name: 'N2'},
-        { id: '6', name: 'O'},
-        { id: '7', name: 'O1D'},
-        { id: '8', name: 'O2'},
-        { id: '9', name: 'O3'},
-    ]
+    const species = useSelector((state) => state.mechanism.species);
+
+    // Convert time values to indices and back
+    const timeValueToIndex = (timeVal) => {
+      if (!timeValues || timeValues.length === 0) return 0;
+      const idx = timeValues.findIndex(v => v >= timeVal);
+      return idx === -1 ? timeValues.length - 1 : idx;
+    };
+
+    const indexToTimeValue = (idx) => {
+      return timeValues[Math.max(0, Math.min(idx, timeValues.length - 1))] || 0;
+    };
+
+    // Convert range (time values) to indices for MultiRange
+    const minIdx = timeValueToIndex(range.min);
+    const maxIdx = timeValueToIndex(range.max);
+
+    const handleTimeRangeChange = (newRange) => {
+      setRange({
+        min: indexToTimeValue(newRange.minIndex),
+        max: indexToTimeValue(newRange.maxIndex),
+      });
+    };
 
     return (
         <div className="flex flex-col gap-4 p-4 h-full min-h-[24rem] border rounded-md bg-white/10 text-white">
@@ -70,10 +83,10 @@ export function FlowPanel({
                 Time Range [s]:
                 <div className="w-full font-normal text-base">
                     <MultiRange
-                        values={timeValues}
-                        minIndex={range.minIndex}
-                        maxIndex={range.maxIndex}
-                        onChange={setRange}
+                        values={timeValues} 
+                        minIndex={minIdx}
+                        maxIndex={maxIdx}
+                        onChange={handleTimeRangeChange}
                     />
                 </div>
             </label>
@@ -99,7 +112,7 @@ export function FlowPanel({
                         const isSelected = selectedSpecies?.includes(s.name);
                         return (
                             <button
-                                key={s.id}
+                                key={'species-' + s.name}
                                 onClick={() => {
                                     if (isSelected) {
                                         setSelectedSpecies(selectedSpecies.filter((name) => name !== s.name));

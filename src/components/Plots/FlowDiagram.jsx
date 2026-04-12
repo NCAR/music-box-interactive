@@ -5,6 +5,7 @@ import { useSelector } from 'react-redux'
 import { Card, CardContent } from '../ui/card'
 import { Waypoints } from 'lucide-react'
 
+
 /*
     * FlowDiagram Component
     * Visualizes the flow of chemical species and reactions in a diagram format.
@@ -15,8 +16,19 @@ export function FlowDiagram() {
   const [arrowScaling, setArrowScaling] = useState('linear');
   const [arrowWidth, setArrowWidth]     = useState(1);
 
-  const timeValues = Array.from({ length: 1000 }, (_, i) => i * 259);
-  const [timeRange, setTimeRange] = useState({ minIndex: 0, maxIndex: timeValues.length - 1 });
+  const duration = useSelector((state) => state.conditions.basic.duration);
+  const timeStep = useSelector((state) => state.conditions.basic.timeStep);
+  const [timeRange, setTimeRange] = useState({ min: 0, max: duration || 2e5 });
+  const timeValues = Array.from({ length: ((duration || 2e5) - 0) / (timeStep || 1) + 1 }, (_, i) => 0 + i * (timeStep || 1));
+
+  // Create a decimated timeValues array for UI display (limit to ~200 points)
+  const timeValuesForUI = Array.from(
+    { length: Math.min(200, timeValues.length) },
+    (_, i) => timeValues[Math.floor(i * (timeValues.length - 1) / 199)]
+  );
+
+  // const example = useSelector((state) => state);
+  // console.log('FlowPanel example state:', example);
 
   const FLUX_MIN = 0.00004155230486602744;
   const FLUX_MAX = 0.9648828478468641;
@@ -52,7 +64,7 @@ export function FlowDiagram() {
           setArrowScaling={setArrowScaling}
           arrowWidth={arrowWidth}
           setArrowWidth={setArrowWidth}
-          timeValues={timeValues}
+          timeValues={timeValuesForUI}
           range={timeRange}
           setRange={setTimeRange}
           fluxValues={fluxValues}
@@ -71,10 +83,9 @@ export function FlowDiagram() {
               isLogScale:   arrowScaling === 'logarithmic',
               maxArrowWidth: Number(arrowWidth),
           }}
-          // Pass actual time values (not indices) so FlowGraph can filter results rows
           timeRange={{
-              start: timeValues[timeRange.minIndex],
-              end:   timeValues[timeRange.maxIndex],
+              start: timeRange.min,
+              end:   timeRange.max,
           }}
         />
       </div>
