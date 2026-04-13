@@ -1,6 +1,84 @@
 import { MusicBox } from '@ncar/music-box'
 import { buildLocalSimulationPayload } from './payload'
 import { normalizeSimulationResults } from './results'
+import { store } from '../../../redux/store'
+import {
+  setMetadata,
+  setResults,
+  setStatus,
+} from '../../../redux/slices/simulationSlice'
+
+const addProductsToReactions = (reactions) => {
+  // Track the actual new product species names and their corresponding CONC keys
+  const productSpeciesToAdd = []
+  const productConcentrationKeys = []
+  reactions.forEach((reaction) => {
+    let prodName = ''
+    if (typeof reaction.name === 'string' && reaction.name.length > 0) {
+      prodName = reaction.name.replace(/\s+/g, '_').replace(/[^A-Za-z0-9_]/g, '').toUpperCase()
+    } else {
+      prodName = 'REACT_' + Math.random().toString(36).substring(2, 10).toUpperCase()
+    }
+
+    // Handle products
+    if (Array.isArray(reaction.products)) {
+      reaction.products.push({ 'species name': prodName, coefficient: 1 })
+      productSpeciesToAdd.push(prodName)
+      productConcentrationKeys.push(`CONC.${prodName}.mol m-3`)
+    }
+
+    // Handle gas-phase products
+    if (Array.isArray(reaction['gas-phase products'])) {
+      reaction['gas-phase products'].push({ 'species name': prodName, coefficient: 1 })
+      productSpeciesToAdd.push(prodName)
+      productConcentrationKeys.push(`CONC.${prodName}.mol m-3`)
+    }
+
+    // Handle alkoxy products
+    if (Array.isArray(reaction['alkoxy products'])) {
+      const alkoxyProdName = `${prodName}_A`
+      reaction['alkoxy products'].push({ 'species name': alkoxyProdName, coefficient: 1 })
+      productSpeciesToAdd.push(alkoxyProdName)
+      productConcentrationKeys.push(`CONC.${alkoxyProdName}.mol m-3`)
+    }
+
+    // Handle nitrate products
+    if (Array.isArray(reaction['nitrate products'])) {
+      const nitrateProdName = `${prodName}_B`
+      reaction['nitrate products'].push({ 'species name': nitrateProdName, coefficient: 1 })
+      productSpeciesToAdd.push(nitrateProdName)
+      productConcentrationKeys.push(`CONC.${nitrateProdName}.mol m-3`)
+    }
+  })
+
+  return {
+    productSpeciesToAdd,
+    productConcentrationKeys,
+  }
+}
+
+const filterProductConcentrations = (results, excludeConcentrationKeys) => {
+  const excludeSet = new Set(excludeConcentrationKeys)
+  const filteredResults = []
+
+  for (const point of results) {
+    if (!point || typeof point !== 'object' || !point.concentrations) {
+      filteredResults.push(point)
+      continue
+    }
+
+    const filteredConcentrations = {}
+    for (const [key, value] of Object.entries(point.concentrations)) {
+      if (!excludeSet.has(key)) {
+        filteredConcentrations[key] = value
+      }
+    }
+
+    filteredResults.push({ ...point, concentrations: filteredConcentrations })
+  }
+
+  return filteredResults
+}
 
 export const runLocalSimulation = async ({ mechanismData, conditions }) => {
   const {
@@ -15,8 +93,26 @@ export const runLocalSimulation = async ({ mechanismData, conditions }) => {
     throw new Error('No valid results after normalization')
   }
 
+  // Add tracking products to reactions and get concentration keys to exclude
+  const { productConcentrationKeys } = addProductsToReactions(payload.mechanism.reactions)
+  
+  // Filter out product concentration keys from results so flow diagram works correctly
+  const filteredResults = filterProductConcentrations(normalizedPoints, productConcentrationKeys)
+
+  if (filteredResults.length > 0) {
+    store.dispatch(setResults(filteredResults))
+    store.dispatch(setMetadata({
+      mechanism: mechanismLabel,
+      duration: conditions.basic.duration || 0,
+    }))
+    store.dispatch(setStatus('succeeded'))
+  } else {
+    console.error('No valid results after normalization')
+    store.dispatch(setStatus('failed'))
+  }
+
   return {
-    results: normalizedPoints,
+    results: filteredResults,
     metadata: {
       mechanism: mechanismLabel,
       duration: conditions.basic.duration || 0,
