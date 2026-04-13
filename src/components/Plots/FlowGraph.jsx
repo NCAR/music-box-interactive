@@ -28,34 +28,36 @@ function reactionLabel(reaction) {
 /**
  * Compute flux for a reaction over [timeStart, timeEnd].
  * Flux = sum over all time steps in range of (sum of reactant concentrations at that step).
- * Uses state.simulation.results which has shape { columns: [...], data: { "CONC.X.mol m-3": [...] } }
+ * Results is an array of { time: number, concentrations: { "CONC.X.mol m-3": number, ... } }
  */
 function computeFlux(reaction, results, timeStart, timeEnd) {
-    if (!results?.data || !results?.columns) return 0;
+    console.log(`Computing flux for ${reaction.name} over [${timeStart}, ${timeEnd}]`);
 
-    const timeCol = results.data['time.s'];
-    if (!timeCol) return 0;
+    if (!Array.isArray(results)) {
+        console.warn(`Results is not an array for ${reaction.name}`);
+        return 0;
+    }
 
-    // Real reactant species names only
-    const reactantNames = reaction.reactants
-        .map((r) => r['species name'])
-        .filter(isRealSpecies);
-
-    // Map each reactant to its results column key
-    const concKeys = reactantNames.map((name) => {
-        // Column format: "CONC.<name>.mol m-3"
-        return `CONC.${name}.mol m-3`;
-    });
+    // Derive the concentration key the same way addProductsToReactions does
+    const prodName = reaction.name
+        .replace(/\s+/g, '_')
+        .replace(/[^A-Za-z0-9_]/g, '')
+        .toUpperCase();
+    const concKey = `CONC.${prodName}.mol m-3`;
 
     let total = 0;
-    for (let i = 0; i < timeCol.length; i++) {
-        const t = timeCol[i];
+    for (const timeEntry of results) {
+        const t = timeEntry.time;
         if (t < timeStart || t > timeEnd) continue;
-        for (const key of concKeys) {
-            const col = results.data[key];
-            if (col) total += col[i] ?? 0;
+
+        const concentrations = timeEntry.concentrations;
+        if (!concentrations) continue;
+
+        if (concKey in concentrations) {
+            total += concentrations[concKey] ?? 0;
         }
     }
+
     return total;
 }
 
@@ -102,7 +104,7 @@ export function FlowGraph({ selectedSpecies, fluxRange, timeRange }) {
     // Pull reactions and results from Redux
     const reactions = useSelector((state) => state.mechanism.reactions);
     const results   = useSelector((state) => state.simulation.excludedResults);
-    // console.log(results)
+    // console.log('FlowGraph results: ', results);
 
     useEffect(() => {
         if (!selectedSpecies || selectedSpecies.length === 0) return;
@@ -123,7 +125,7 @@ export function FlowGraph({ selectedSpecies, fluxRange, timeRange }) {
 
         // ── 2. Compute flux per reaction ──────────────────────────────────
         const timeStart = timeRange?.start ?? 0;
-        const timeEnd   = timeRange?.end   ?? Infinity;
+        const timeEnd   = timeRange?.end ?? Infinity;
 
         const fluxMap = {};
         for (const rxn of visibleReactions) {
