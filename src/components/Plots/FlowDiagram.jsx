@@ -58,7 +58,7 @@ export function FlowDiagram() {
           setArrowScaling={setArrowScaling}
           arrowWidth={arrowWidth}
           setArrowWidth={setArrowWidth}
-          timeValues={timeValue}
+          timeValues={timeValues}
           range={timeRange}
           setRange={setTimeRange}
           fluxValues={fluxValues}
