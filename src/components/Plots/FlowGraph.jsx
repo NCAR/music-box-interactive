@@ -110,9 +110,11 @@ export function FlowGraph({ selectedSpecies, fluxRange, timeRange }) {
         // ── 1. Filter visible reaction nodes ──────────────────────────────
         // A reaction is visible only when ALL of its real reactants are selected
         const visibleReactions = reactions.filter((rxn) => {
-            const realReactants = rxn.reactants
+            const realReactants = rxn.reactants ? (
+                rxn.reactants
                 .map((r) => r['species name'])
-                .filter(isRealSpecies);
+                .filter(isRealSpecies)
+            ) : [];
             return realReactants.length > 0 && realReactants.every((sp) => selectedSpecies.includes(sp));
         });
 
