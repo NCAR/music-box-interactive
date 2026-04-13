@@ -3,6 +3,7 @@ import { buildLocalSimulationPayload } from './payload'
 import { normalizeSimulationResults } from './results'
 import { store } from '../../../redux/store'
 import {
+  setExcludedResults,
   setMetadata,
   setResults,
   setStatus,
@@ -58,49 +59,104 @@ const addProductsToReactions = (reactions) => {
 }
 
 const filterProductConcentrations = (results, excludeConcentrationKeys) => {
-  const excludeSet = new Set(excludeConcentrationKeys)
-  const filteredResults = []
+    const excludeSet = new Set(excludeConcentrationKeys);
+    const filteredResults = [];
+    const excludedResults = [];
 
-  for (const point of results) {
-    if (!point || typeof point !== 'object' || !point.concentrations) {
-      filteredResults.push(point)
-      continue
-    }
-
-    const filteredConcentrations = {}
-    for (const [key, value] of Object.entries(point.concentrations)) {
-      if (!excludeSet.has(key)) {
-        filteredConcentrations[key] = value
+    for (const point of results) {
+      if (!point || typeof point !== 'object' || !point.concentrations) {
+        filteredResults.push(point);
+        excludedResults.push({});
+        continue;
       }
+
+      const filteredConcentrations = {};
+      const excludedConcentrations = {};
+
+      for (const [key, value] of Object.entries(point.concentrations)) {
+        if (excludeSet.has(key)) {
+          excludedConcentrations[key] = value;
+        } else {
+          filteredConcentrations[key] = value;
+        }
+      }
+
+      filteredResults.push({ ...point, concentrations: filteredConcentrations });
+      excludedResults.push({ time: point.time, concentrations: excludedConcentrations });
     }
 
-    filteredResults.push({ ...point, concentrations: filteredConcentrations })
-  }
+    console.log('Filtered Results:', filteredResults);
+    console.log('Excluded Results:', excludedResults);
 
-  return filteredResults
-}
+    return {
+      filteredResults,
+      excludedResults
+    }
+  }
 
 export const runLocalSimulation = async ({ mechanismData, conditions }) => {
   const {
     payload,
     mechanismLabel,
   } = buildLocalSimulationPayload({ mechanismData, conditions })
+
+  // Add tracking products to reactions and get concentration keys to exclude
+  const {
+    productSpeciesToAdd,
+    productConcentrationKeys,
+  } = addProductsToReactions(payload.mechanism.reactions)
+
+  const species = Array.isArray(payload?.mechanism?.species)
+    ? payload.mechanism.species
+    : []
+
+  productSpeciesToAdd.forEach((prodName) => {
+    if (!species.some((sp) => sp?.name === prodName)) {
+      species.push({ name: prodName, 'molecular weight [kg mol-1]': 0.029 })
+    }
+  })
+
+  payload.mechanism.species = species
+
+  const phases = Array.isArray(payload?.mechanism?.phases)
+    ? payload.mechanism.phases
+    : []
+
+  if (phases.length > 0) {
+    const targetPhase = phases.find((phase) => String(phase?.name || '').toLowerCase() === 'gas') || phases[0]
+    const phaseSpecies = Array.isArray(targetPhase?.species)
+      ? targetPhase.species
+      : []
+
+    productSpeciesToAdd.forEach((prodName) => {
+      const exists = phaseSpecies.some((sp) => (typeof sp === 'string' ? sp : sp?.name) === prodName)
+      if (!exists) {
+        phaseSpecies.push({ name: prodName })
+      }
+    })
+
+    targetPhase.species = phaseSpecies
+    payload.mechanism.phases = phases
+  }
+
   console.log('finalMechanism', payload)
   const rawResults = await MusicBox.fromJson(payload).solve()
+  console.log('rawResults', rawResults)
   const normalizedPoints = normalizeSimulationResults(rawResults)
 
   if (normalizedPoints.length === 0) {
     throw new Error('No valid results after normalization')
   }
 
-  // Add tracking products to reactions and get concentration keys to exclude
-  const { productConcentrationKeys } = addProductsToReactions(payload.mechanism.reactions)
-  
   // Filter out product concentration keys from results so flow diagram works correctly
-  const filteredResults = filterProductConcentrations(normalizedPoints, productConcentrationKeys)
+  const {
+    filteredResults,
+    excludedResults,
+  } = filterProductConcentrations(normalizedPoints, productConcentrationKeys)
 
   if (filteredResults.length > 0) {
     store.dispatch(setResults(filteredResults))
+    store.dispatch(setExcludedResults(excludedResults))
     store.dispatch(setMetadata({
       mechanism: mechanismLabel,
       duration: conditions.basic.duration || 0,
@@ -108,11 +164,13 @@ export const runLocalSimulation = async ({ mechanismData, conditions }) => {
     store.dispatch(setStatus('succeeded'))
   } else {
     console.error('No valid results after normalization')
+    store.dispatch(setExcludedResults([]))
     store.dispatch(setStatus('failed'))
   }
 
   return {
     results: filteredResults,
+    excludedResults,
     metadata: {
       mechanism: mechanismLabel,
       duration: conditions.basic.duration || 0,

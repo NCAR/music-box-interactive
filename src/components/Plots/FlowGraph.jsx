@@ -101,7 +101,8 @@ export function FlowGraph({ selectedSpecies, fluxRange, timeRange }) {
 
     // Pull reactions and results from Redux
     const reactions = useSelector((state) => state.mechanism.reactions);
-    const results   = useSelector((state) => state.simulation.results);
+    const results   = useSelector((state) => state.simulation.excludedResults);
+    // console.log(results)
 
     useEffect(() => {
         if (!selectedSpecies || selectedSpecies.length === 0) return;
