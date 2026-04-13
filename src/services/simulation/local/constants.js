@@ -1,0 +1,2 @@
+export const DEFAULT_TEMPERATURE_K = 298.15
+export const DEFAULT_PRESSURE_PA = 101325
