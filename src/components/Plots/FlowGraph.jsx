@@ -4,18 +4,8 @@ import { useSelector } from 'react-redux'
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
-/**
- * MUSICA products contain internal tracking species with __ in their name
- * (e.g. "O1D__N2__O__N2"). Filter these out so they don't appear in labels
- * or drive edges between reaction nodes.
- */
 const isRealSpecies = (name) => !name.includes('__');
 
-/**
- * Build a human-readable label for a reaction from its reactants/products arrays.
- * Coefficient of 1 is omitted; coefficient > 1 is prepended (e.g. "2O2").
- * Internal MUSICA tracking species (containing "__") are excluded from the label.
- */
 function reactionLabel(reaction) {
     const fmt = (arr) =>
         arr
@@ -25,20 +15,9 @@ function reactionLabel(reaction) {
     return `${fmt(reaction.reactants)} → ${fmt(reaction.products)}`;
 }
 
-/**
- * Compute flux for a reaction over [timeStart, timeEnd].
- * Flux = sum over all time steps in range of (sum of reactant concentrations at that step).
- * Results is an array of { time: number, concentrations: { "CONC.X.mol m-3": number, ... } }
- */
 function computeFlux(reaction, results, timeStart, timeEnd) {
-    console.log(`Computing flux for ${reaction.name} over [${timeStart}, ${timeEnd}]`);
+    if (!Array.isArray(results)) return 0;
 
-    if (!Array.isArray(results)) {
-        console.warn(`Results is not an array for ${reaction.name}`);
-        return 0;
-    }
-
-    // Derive the concentration key the same way addProductsToReactions does
     const prodName = reaction.name
         .replace(/\s+/g, '_')
         .replace(/[^A-Za-z0-9_]/g, '')
@@ -49,75 +28,52 @@ function computeFlux(reaction, results, timeStart, timeEnd) {
     for (const timeEntry of results) {
         const t = timeEntry.time;
         if (t < timeStart || t > timeEnd) continue;
-
         const concentrations = timeEntry.concentrations;
         if (!concentrations) continue;
-
         if (concKey in concentrations) {
             total += concentrations[concKey] ?? 0;
         }
     }
-
     return total;
 }
 
 /**
- * Given all reactions, build directed edges between reaction nodes.
- * An edge A → B exists when:
- *   - A real-species product of reaction A is a real-species reactant of reaction B
- *   - A !== B
- * Returns an array of { source: reactionName, target: reactionName, sharedSpecies: name }
+ * Measure text width using a temporary SVG text element.
+ * Used to size reaction rect nodes to fit their label.
  */
-function buildEdges(reactions) {
-    const edges = [];
-    for (let i = 0; i < reactions.length; i++) {
-        const a = reactions[i];
-        const aProducts = new Set(
-            a.products.map((p) => p['species name']).filter(isRealSpecies)
-        );
-        for (let j = 0; j < reactions.length; j++) {
-            if (i === j) continue;
-            const b = reactions[j];
-            const bReactants = b.reactants
-                .map((r) => r['species name'])
-                .filter(isRealSpecies);
-            for (const sp of bReactants) {
-                if (aProducts.has(sp)) {
-                    edges.push({
-                        source: a.name,
-                        target: b.name,
-                        sharedSpecies: sp,
-                    });
-                }
-            }
-        }
-    }
-    return edges;
+function measureText(text, fontSize = 10) {
+    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    svg.style.visibility = "hidden";
+    svg.style.position = "absolute";
+    document.body.appendChild(svg);
+    const t = document.createElementNS("http://www.w3.org/2000/svg", "text");
+    t.style.fontSize = `${fontSize}px`;
+    t.textContent = text;
+    svg.appendChild(t);
+    const width = t.getBBox().width;
+    document.body.removeChild(svg);
+    return width;
 }
 
 // ─── Component ──────────────────────────────────────────────────────────────
 
 export function FlowGraph({ selectedSpecies, fluxRange, timeRange }) {
     const ref = useRef();
+    const tooltipRef = useRef();
     const [selectedNode, setSelectedNode] = useState(null);
 
-    // Pull reactions and results from Redux
     const reactions = useSelector((state) => state.mechanism.reactions);
     const results   = useSelector((state) => state.simulation.excludedResults);
-    // console.log('FlowGraph results: ', results);
 
     useEffect(() => {
         if (!selectedSpecies || selectedSpecies.length === 0) return;
         if (!reactions || reactions.length === 0) return;
 
-        // ── 1. Filter visible reaction nodes ──────────────────────────────
-        // A reaction is visible only when ALL of its real reactants are selected
+        // ── 1. Filter visible reactions ───────────────────────────────────
         const visibleReactions = reactions.filter((rxn) => {
-            const realReactants = rxn.reactants ? (
-                rxn.reactants
-                .map((r) => r['species name'])
-                .filter(isRealSpecies)
-            ) : [];
+            const realReactants = rxn.reactants
+                ? rxn.reactants.map((r) => r['species name']).filter(isRealSpecies)
+                : [];
             return realReactants.length > 0 && realReactants.every((sp) => selectedSpecies.includes(sp));
         });
 
@@ -132,26 +88,80 @@ export function FlowGraph({ selectedSpecies, fluxRange, timeRange }) {
             fluxMap[rxn.name] = computeFlux(rxn, results, timeStart, timeEnd);
         }
 
-        // ── 3. Build nodes ────────────────────────────────────────────────
-        const nodes = visibleReactions.map((rxn) => ({
-            id:    rxn.name,
-            label: reactionLabel(rxn),
-            flux:  fluxMap[rxn.name],
-        }));
+        // ── 3. Build reaction nodes ───────────────────────────────────────
+        const FONT_SIZE   = 10;
+        const PAD_X       = 12; // horizontal padding inside rect
+        const PAD_Y       = 10; // vertical padding inside rect
+        const NODE_RX     = 8;
+        const SPECIES_R   = 28; // base circle radius — grows with text
 
-        // ── 4. Build directed edges (only between visible reactions) ──────
-        const visibleNames = new Set(visibleReactions.map((r) => r.name));
-        const allEdges = buildEdges(visibleReactions);
-        const links = allEdges.filter(
-            (e) => visibleNames.has(e.source) && visibleNames.has(e.target)
-        );
+        const reactionNodes = visibleReactions.map((rxn) => {
+            const label     = reactionLabel(rxn);
+            const textWidth = measureText(label, FONT_SIZE);
+            const w         = textWidth + PAD_X * 2;
+            const h         = FONT_SIZE + PAD_Y * 2;
+            return {
+                id:    rxn.name,
+                kind:  'reaction',
+                label,
+                flux:  fluxMap[rxn.name],
+                w,
+                h,
+                // half-extents used for edge clipping
+                hw: w / 2,
+                hh: h / 2,
+            };
+        });
 
-        // ── 5. D3 setup ───────────────────────────────────────────────────
+        // ── 4. Collect unique real species involved in visible reactions ───
+        const speciesSet = new Set();
+        for (const rxn of visibleReactions) {
+            rxn.reactants.forEach((r) => { if (isRealSpecies(r['species name'])) speciesSet.add(r['species name']); });
+            rxn.products.forEach((p)  => { if (isRealSpecies(p['species name'])) speciesSet.add(p['species name']); });
+        }
+
+        const speciesNodes = [...speciesSet].map((sp) => {
+            const textWidth = measureText(sp, FONT_SIZE);
+            const r = Math.max(SPECIES_R, textWidth / 2 + 10);
+            return { id: sp, kind: 'species', label: sp, r };
+        });
+
+        const nodes = [...reactionNodes, ...speciesNodes];
+        const nodeById = Object.fromEntries(nodes.map((n) => [n.id, n]));
+
+        // ── 5. Build edges: reaction → product-species, species → reaction ─
+        //   Each edge carries the flux of the reaction it belongs to.
+        //   Deduplicate same source→target pairs: keep the one with highest flux
+        //   so stacked overlapping lines don't make arrows look artificially thick.
+        const linkMap = new Map(); // key: "sourceId||targetId"
+
+        const upsertLink = (sourceId, targetId, flux) => {
+            const key = `${sourceId}||${targetId}`;
+            const existing = linkMap.get(key);
+            if (!existing || flux > existing.flux) {
+                linkMap.set(key, { source: sourceId, target: targetId, flux });
+            }
+        };
+
+        for (const rxn of visibleReactions) {
+            const flux = fluxMap[rxn.name];
+
+            // reactant species → reaction
+            rxn.reactants
+                .filter((r) => isRealSpecies(r['species name']))
+                .forEach((r) => upsertLink(r['species name'], rxn.name, flux));
+
+            // reaction → product species
+            rxn.products
+                .filter((p) => isRealSpecies(p['species name']))
+                .forEach((p) => upsertLink(rxn.name, p['species name'], flux));
+        }
+
+        const links = [...linkMap.values()];
+
+        // ── 6. D3 setup ───────────────────────────────────────────────────
         const width  = 900;
         const height = 800;
-        const NODE_W = 140;
-        const NODE_H = 36;
-        const NODE_RX = 8;
 
         const svg = d3
             .select(ref.current)
@@ -159,7 +169,6 @@ export function FlowGraph({ selectedSpecies, fluxRange, timeRange }) {
             .attr("height", height)
             .attr("viewBox", [0, 0, width, height]);
 
-        // Arrow markers
         svg.selectAll("defs").remove();
         const defs = svg.append("svg:defs");
 
@@ -180,67 +189,135 @@ export function FlowGraph({ selectedSpecies, fluxRange, timeRange }) {
         const g = svg.select("g.graph");
         g.selectAll("*").remove();
 
-        // ── 6. Force simulation ───────────────────────────────────────────
+        // ── 7. Force simulation ───────────────────────────────────────────
         const sim = d3
             .forceSimulation(nodes)
             .force("center", d3.forceCenter(width / 2, height / 2))
-            .force("charge", d3.forceManyBody().strength(-500))
-            .force("collision", d3.forceCollide(90))
+            .force("charge", d3.forceManyBody().strength(-600))
+            .force("collision", d3.forceCollide((d) => d.kind === 'species' ? d.r + 10 : Math.max(d.hw, d.hh) + 20))
             .force(
                 "link",
                 d3.forceLink(links)
                     .id((d) => d.id)
-                    .distance(200)
+                    .distance(160)
             );
 
-        // ── 7. Flux styling helpers ───────────────────────────────────────
-        const isMuted = (d) =>
-            d.flux < fluxRange.start || d.flux > fluxRange.end;
+        // ── 9. Clip edge endpoints to node boundaries ─────────────────────
+        /**
+         * Given a line from (x1,y1) to (x2,y2), return the point on the
+         * boundary of the TARGET node that the arrow should end at.
+         * For reaction rects: clip to rectangle edge.
+         * For species circles: clip to circle perimeter.
+         */
+        function clipToTarget(sx, sy, tx, ty, targetNode) {
+            const dx = tx - sx;
+            const dy = ty - sy;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            if (dist === 0) return { x: tx, y: ty };
+            const ux = dx / dist;
+            const uy = dy / dist;
 
-        const edgeStrokeWidth = (d) => {
-            const f = d.flux ?? 0;
-            if (f < fluxRange.start) return 0.5;
-            if (f > fluxRange.end)   return fluxRange.maxArrowWidth + 0.5;
-            if (fluxRange.isLogScale) {
-                const lo = Math.log(Math.max(fluxRange.start, 1e-30));
-                const hi = Math.log(Math.max(fluxRange.end,   1e-30));
-                if (hi === lo) return 0.5;
-                return ((Math.log(f) - lo) / (hi - lo)) * fluxRange.maxArrowWidth + 0.5;
+            if (targetNode.kind === 'species') {
+                return {
+                    x: tx - ux * targetNode.r,
+                    y: ty - uy * targetNode.r,
+                };
             }
-            const range = fluxRange.end - fluxRange.start;
-            if (range === 0) return 0.5;
-            return ((f - fluxRange.start) / range) * fluxRange.maxArrowWidth + 0.5;
-        };
+            // Reaction rect: find intersection with rectangle border
+            const hw = targetNode.hw;
+            const hh = targetNode.hh;
+            // Scale factor to hit the rect edge
+            const scaleX = ux !== 0 ? hw / Math.abs(ux) : Infinity;
+            const scaleY = uy !== 0 ? hh / Math.abs(uy) : Infinity;
+            const scale  = Math.min(scaleX, scaleY);
+            return {
+                x: tx - ux * scale,
+                y: ty - uy * scale,
+            };
+        }
 
-        // ── 8. Edges ──────────────────────────────────────────────────────
-        // Attach flux to each link from its source node's flux value
-        const nodeFluxById = Object.fromEntries(nodes.map((n) => [n.id, n.flux]));
-        links.forEach((l) => {
-            l.flux = nodeFluxById[typeof l.source === 'object' ? l.source.id : l.source] ?? 0;
-        });
+        function clipToSource(sx, sy, tx, ty, sourceNode) {
+            const dx = tx - sx;
+            const dy = ty - sy;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            if (dist === 0) return { x: sx, y: sy };
+            const ux = dx / dist;
+            const uy = dy / dist;
 
+            if (sourceNode.kind === 'species') {
+                return {
+                    x: sx + ux * sourceNode.r,
+                    y: sy + uy * sourceNode.r,
+                };
+            }
+            const hw = sourceNode.hw;
+            const hh = sourceNode.hh;
+            const scaleX = ux !== 0 ? hw / Math.abs(ux) : Infinity;
+            const scaleY = uy !== 0 ? hh / Math.abs(uy) : Infinity;
+            const scale  = Math.min(scaleX, scaleY);
+            return {
+                x: sx + ux * scale,
+                y: sy + uy * scale,
+            };
+        }
+
+        // ── 10. Tooltip setup ─────────────────────────────────────────────
+        const tooltip = d3.select(tooltipRef.current);
+
+        // ── 11. Edges ─────────────────────────────────────────────────────
         const link = g.selectAll("line.edge")
             .data(links)
             .join("line")
             .attr("class", "edge")
-            .style("stroke", (d) => isMuted(d) ? "#6b7280" : "#2dd4bf")
-            .style("stroke-width", edgeStrokeWidth)
-            .attr("marker-end", (d) => isMuted(d) ? "url(#arrow-muted)" : "url(#arrow)");
+            .style("stroke", "#2dd4bf")
+            .style("stroke-width", 1)
+            .style("cursor", "pointer")
+            .attr("marker-end", "url(#arrow)")
+            .on("mousemove", (event, d) => {
+                tooltip
+                    .style("display", "block")
+                    .style("left",  `${event.offsetX + 12}px`)
+                    .style("top",   `${event.offsetY - 28}px`)
+                    .text(`Flux: ${(d.flux ?? 0).toExponential(3)} mol m⁻³`);
+            })
+            .on("mouseleave", () => tooltip.style("display", "none"));
 
-        // Shared species label on edge midpoint
-        const edgeLabel = g.selectAll("text.edge-label")
-            .data(links)
-            .join("text")
-            .attr("class", "edge-label")
-            .style("font-size", "10px")
-            .style("fill", "#9ca3af")
-            .style("text-anchor", "middle")
-            .style("pointer-events", "none")
-            .text((d) => d.sharedSpecies);
+        // ── 12. Species nodes (circles) ───────────────────────────────────
+        const speciesGroup = g.selectAll("g.species-node")
+            .data(speciesNodes)
+            .join("g")
+            .attr("class", "species-node")
+            .style("cursor", "grab")
+            .call(
+                d3.drag()
+                    .on("start", (event, d) => {
+                        if (!event.active) sim.alphaTarget(0.3).restart();
+                        d.fx = d.x; d.fy = d.y;
+                    })
+                    .on("drag",  (event, d) => { d.fx = event.x; d.fy = event.y; })
+                    .on("end",   (event, d) => {
+                        if (!event.active) sim.alphaTarget(0);
+                        d.fx = null; d.fy = null;
+                    })
+            );
 
-        // ── 9. Reaction nodes (rounded rects + label) ─────────────────────
+        speciesGroup.append("circle")
+            .attr("r", (d) => d.r)
+            .style("fill",         "#1e3a5f")
+            .style("stroke",       "#38bdf8")
+            .style("stroke-width", 0.5);
+
+        speciesGroup.append("text")
+            .attr("text-anchor",       "middle")
+            .attr("dominant-baseline", "middle")
+            .style("font-size",        `${FONT_SIZE}px`)
+            .style("fill",             "#bae6fd")
+            .style("pointer-events",   "none")
+            .text((d) => d.label);
+
+        // ── 13. Reaction nodes (rounded rects) ────────────────────────────
         const nodeGroup = g.selectAll("g.reaction-node")
-            .data(nodes)
+            .data(reactionNodes)
             .join("g")
             .attr("class", "reaction-node")
             .style("cursor", "grab")
@@ -250,8 +327,8 @@ export function FlowGraph({ selectedSpecies, fluxRange, timeRange }) {
                         if (!event.active) sim.alphaTarget(0.3).restart();
                         d.fx = d.x; d.fy = d.y;
                     })
-                    .on("drag", (event, d) => { d.fx = event.x; d.fy = event.y; })
-                    .on("end", (event, d) => {
+                    .on("drag",  (event, d) => { d.fx = event.x; d.fy = event.y; })
+                    .on("end",   (event, d) => {
                         if (!event.active) sim.alphaTarget(0);
                         d.fx = null; d.fy = null;
                     })
@@ -261,57 +338,68 @@ export function FlowGraph({ selectedSpecies, fluxRange, timeRange }) {
                 setSelectedNode((prev) => (prev === d.id ? null : d.id));
             });
 
-        // Node background rect
+            // Rect background
         nodeGroup.append("rect")
-            .attr("width", NODE_W)
-            .attr("height", NODE_H)
-            .attr("rx", NODE_RX)
-            .attr("x", -NODE_W / 2)
-            .attr("y", -NODE_H / 2)
-            .style("fill", "#0d9488")
-            .style("stroke", "#99f6e4")
+            .attr("width",  (d) => d.w)
+            .attr("height", (d) => d.h)
+            .attr("rx",     NODE_RX)
+            .attr("x",      (d) => -d.hw)
+            .attr("y",      (d) => -d.hh)
+            .style("fill",         "#0d9488")
+            .style("stroke",       "#99f6e4")
             .style("stroke-width", 0.5);
 
-        // Reaction equation label (centred inside rect)
+            // Reaction label centered in rect
         nodeGroup.append("text")
-            .attr("class", "node-label")
-            .attr("text-anchor", "middle")
+            .attr("class",             "node-label")
+            .attr("text-anchor",       "middle")
             .attr("dominant-baseline", "middle")
-            .style("font-size", "10px")
-            .style("fill", "#f0fdf4")
-            .style("pointer-events", "none")
+            .style("font-size",        `${FONT_SIZE}px`)
+            .style("fill",             "#f0fdf4")
+            .style("pointer-events",   "none")
             .text((d) => d.label);
 
-        // Flux value text — shown below node only when this node is selected
-        // We use a React-controlled approach: update visibility after each render
+        // Flux label shown below rect on click/select
         nodeGroup.append("text")
-            .attr("class", "flux-label")
-            .attr("text-anchor", "middle")
-            .attr("y", NODE_H / 2 + 14)
-            .style("font-size", "10px")
-            .style("fill", "#5eead4")
+            .attr("class",         "flux-label")
+            .attr("text-anchor",   "middle")
+            .attr("y",             (d) => d.hh + 14)
+            .style("font-size",    `${FONT_SIZE}px`)
+            .style("fill",         "#046b5b")
+            .style("opacity",      0)
             .style("pointer-events", "none")
             .text((d) => `Flux: ${d.flux.toExponential(3)} mol m⁻³`);
 
-        // Deselect when clicking blank SVG area
         svg.on("click", () => setSelectedNode(null));
 
-        // ── 10. Tick ──────────────────────────────────────────────────────
+        // ── 14. Tick ──────────────────────────────────────────────────────
         sim.on("tick", () => {
             link
-                .attr("x1", (d) => d.source.x)
-                .attr("y1", (d) => d.source.y)
-                .attr("x2", (d) => d.target.x)
-                .attr("y2", (d) => d.target.y);
+                .each(function(d) {
+                    const sNode = nodeById[typeof d.source === 'object' ? d.source.id : d.source];
+                    const tNode = nodeById[typeof d.target === 'object' ? d.target.id : d.target];
+                    if (!sNode || !tNode) return;
 
-            edgeLabel
-                .attr("x", (d) => (d.source.x + d.target.x) / 2)
-                .attr("y", (d) => (d.source.y + d.target.y) / 2 - 5);
+                    const sx = d.source.x ?? 0;
+                    const sy = d.source.y ?? 0;
+                    const tx = d.target.x ?? 0;
+                    const ty = d.target.y ?? 0;
 
-            nodeGroup.attr("transform", (d) => `translate(${d.x},${d.y})`);
+                    const srcPt = clipToSource(sx, sy, tx, ty, sNode);
+                    const tgtPt = clipToTarget(sx, sy, tx, ty, tNode);
+
+                    d3.select(this)
+                        .attr("x1", srcPt.x)
+                        .attr("y1", srcPt.y)
+                        .attr("x2", tgtPt.x)
+                        .attr("y2", tgtPt.y);
+                });
+
+            speciesGroup.attr("transform", (d) => `translate(${d.x},${d.y})`);
+            nodeGroup.attr("transform",    (d) => `translate(${d.x},${d.y})`);
         });
 
-        // Zoom
+        // ── 15. Zoom ──────────────────────────────────────────────────────
         const zoom = d3.zoom()
             .scaleExtent([0.05, 4])
             .on("zoom", ({ transform }) => g.attr("transform", transform));
@@ -322,8 +410,7 @@ export function FlowGraph({ selectedSpecies, fluxRange, timeRange }) {
 
     }, [selectedSpecies, fluxRange, timeRange, reactions, results]);
 
-    // Sync selectedNode state → D3 flux label visibility
-    // Runs after every render (selectedNode change) without rebuilding the simulation
+    // Sync selectedNode → D3 flux label visibility & rect highlight
     useEffect(() => {
         const svg = d3.select(ref.current);
         svg.selectAll("g.reaction-node").each(function (d) {
@@ -331,14 +418,44 @@ export function FlowGraph({ selectedSpecies, fluxRange, timeRange }) {
             d3.select(this)
                 .select("text.flux-label")
                 .style("opacity", isActive ? 1 : 0);
-
             d3.select(this)
                 .select("rect")
-                .style("fill",   isActive ? "#0f766e" : "#0d9488")
-                .style("stroke", isActive ? "#2dd4bf" : "#99f6e4")
+                .style("fill",         isActive ? "#0f766e" : "#0d9488")
+                .style("stroke",       isActive ? "#2dd4bf" : "#99f6e4")
                 .style("stroke-width", isActive ? 1.5 : 0.5);
         });
     }, [selectedNode]);
+
+    // ── Flux styling helpers (component scope so the useEffect below
+    //    can close over fluxRange and re-run whenever it changes) ────────────
+    const isMuted = (flux) =>
+        flux < fluxRange.start || flux > fluxRange.end;
+
+    const edgeStrokeWidth = (flux) => {
+        const BASE = 2; // ← tweak this to change minimum line thickness
+        const f = flux ?? 0;
+        if (f < fluxRange.start) return BASE;
+        if (f > fluxRange.end)   return fluxRange.maxArrowWidth + BASE;
+        if (fluxRange.isLogScale) {
+            const lo = Math.log(Math.max(fluxRange.start, 1e-30));
+            const hi = Math.log(Math.max(fluxRange.end,   1e-30));
+            if (hi === lo) return BASE;
+            return ((Math.log(f) - lo) / (hi - lo)) * fluxRange.maxArrowWidth + BASE;
+        }
+        const range = fluxRange.end - fluxRange.start;
+        if (range === 0) return BASE;
+        return ((f - fluxRange.start) / range) * fluxRange.maxArrowWidth + BASE;
+    };
+
+    // Re-applies edge stroke width & color whenever fluxRange changes
+    // without rebuilding the whole simulation.
+    useEffect(() => {
+        d3.select(ref.current)
+            .selectAll("line.edge")
+            .style("stroke",       (d) => isMuted(d.flux) ? "#6b7280" : "#2dd4bf")
+            .style("stroke-width", (d) => edgeStrokeWidth(d.flux))
+            .attr("marker-end",    (d) => isMuted(d.flux) ? "url(#arrow-muted)" : "url(#arrow)");
+    }, [fluxRange]);
 
     if (!selectedSpecies || selectedSpecies.length === 0) {
         return (
@@ -347,7 +464,6 @@ export function FlowGraph({ selectedSpecies, fluxRange, timeRange }) {
             </div>
         );
     }
-
     if (!reactions || reactions.length === 0) {
         return (
             <div className="flex items-center justify-center h-full text-gray-400 text-lg">
@@ -357,8 +473,27 @@ export function FlowGraph({ selectedSpecies, fluxRange, timeRange }) {
     }
 
     return (
-        <svg ref={ref} className="w-full h-full">
-            <g className="graph" />
-        </svg>
+        <div style={{ position: "relative", width: "100%", height: "100%" }}>
+            <svg ref={ref} className="w-full h-full">
+                <g className="graph" />
+            </svg>
+            {/* Edge hover tooltip */}
+            <div
+                ref={tooltipRef}
+                style={{
+                    display:         "none",
+                    position:        "absolute",
+                    pointerEvents:   "none",
+                    background:      "#0f172a",
+                    color:           "#5eead4",
+                    border:          "1px solid #2dd4bf",
+                    borderRadius:    "4px",
+                    padding:         "4px 8px",
+                    fontSize:        "11px",
+                    whiteSpace:      "nowrap",
+                    boxShadow:       "0 2px 8px rgba(0,0,0,0.5)",
+                }}
+            />
+        </div>
     );
 }
