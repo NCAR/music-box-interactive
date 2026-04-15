@@ -22,7 +22,7 @@ export function hydrateInitialConditions(exampleFiles) {
       if (header === 'ENV.temperature.K' && Number.isFinite(value)) nextTemperature = value
       if (header === 'ENV.pressure.Pa' && Number.isFinite(value)) nextPressure = value
       const concentrationMatch = /^CONC\.([^.]+)\./.exec(header)
-      if (concentrationMatch && Number.isFinite(value)) nextConcentrations[concentrationMatch[1].toUpperCase()] = value
+      if (concentrationMatch && Number.isFinite(value)) nextConcentrations[concentrationMatch[1]] = value
       const isTimeColumn = header === 'time.s'
       const isEnvironmentalColumn = header.startsWith('ENV.')
       if (!isTimeColumn && !isEnvironmentalColumn && !concentrationMatch && Number.isFinite(value)) nextRateConstants[header] = value

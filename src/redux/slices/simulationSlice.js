@@ -34,6 +34,7 @@ export const checkSimulationStatus = createAsyncThunk(
 const initialState = {
   status: 'idle', // 'idle' | 'loading' | 'running' | 'succeeded' | 'failed'
   results: null,
+  excludedResults: null,
   environmentalData: null,
   simulationId: null,
   error: null,
@@ -52,6 +53,9 @@ export const simulationSlice = createSlice({
     setResults: (state, action) => {
       state.results = action.payload
     },
+    setExcludedResults: (state, action) => {
+      state.excludedResults = action.payload
+    },
     setMetadata: (state, action) => {
       state.metadata = action.payload
     },
@@ -67,6 +71,7 @@ export const simulationSlice = createSlice({
     clearSimulation: (state) => {
       state.status = 'idle'
       state.results = null
+      state.excludedResults = null
       state.environmentalData = null
       state.simulationId = null
       state.error = null
@@ -84,6 +89,7 @@ export const simulationSlice = createSlice({
       .addCase(runSimulation.fulfilled, (state, action) => {
         state.status = 'succeeded'
         state.results = action.payload.results
+        state.excludedResults = action.payload.excludedResults || null
         state.environmentalData = action.payload.environmentalData || null
         state.simulationId = action.payload.simulationId
         state.metadata = action.payload.metadata
@@ -98,6 +104,7 @@ export const simulationSlice = createSlice({
         if (simulation.status === 'completed') {
           state.status = 'succeeded'
           state.results = simulation.results
+          state.excludedResults = simulation.excludedResults || null
           state.metadata = simulation.parameters
         } else if (simulation.status === 'running') {
           state.status = 'running'
@@ -112,6 +119,7 @@ export const simulationSlice = createSlice({
 export const {
   setStatus,
   setResults,
+  setExcludedResults,
   setMetadata,
   setError,
   setSimulationId,
