@@ -28,9 +28,10 @@ export function FlowPanel({
 
     // Convert time values to indices and back
     const timeValueToIndex = (timeVal) => {
-      if (!timeValues || timeValues.length === 0) return 0;
-      const idx = timeValues.findIndex(v => v >= timeVal);
-      return idx === -1 ? timeValues.length - 1 : idx;
+        if (!timeValues || timeValues.length === 0) return 0;
+        return timeValues.reduce((bestIdx, v, i) =>
+            Math.abs(v - timeVal) < Math.abs(timeValues[bestIdx] - timeVal) ? i : bestIdx, 0
+        );
     };
 
     const indexToTimeValue = (idx) => {
@@ -38,14 +39,19 @@ export function FlowPanel({
     };
 
     // Convert range (time values) to indices for MultiRange
-    const minIdx = timeValueToIndex(range.min);
-    const maxIdx = timeValueToIndex(range.max);
+    const minIdx = timeValueToIndex(range.start);
+    const maxIdx = timeValueToIndex(range.end);
+
+    // console.log('range:', range);
+    // console.log('timeValues first 5:', timeValues?.slice(0, 5));
+    // console.log('minIdx:', minIdx, 'maxIdx:', maxIdx);
 
     const handleTimeRangeChange = (newRange) => {
-      setRange({
-        min: indexToTimeValue(newRange.minIndex),
-        max: indexToTimeValue(newRange.maxIndex),
-      });
+    // console.log('handleTimeRangeChange called with:', newRange);
+    const start = indexToTimeValue(newRange.minIndex);
+    const end = indexToTimeValue(newRange.maxIndex);
+    // console.log('setting range to:', { start, end });
+    setRange({ start, end });
     };
 
     return (
