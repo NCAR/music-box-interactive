@@ -87,7 +87,7 @@ export function InitialConditionsTab() {
 
         const concentrationMatch = /^CONC\.([^.]+)\./.exec(header)
         if (concentrationMatch && Number.isFinite(value)) {
-          nextConcentrations[concentrationMatch[1].toUpperCase()] = value
+          nextConcentrations[concentrationMatch[1]] = value
         }
 
         const isTimeColumn = header === 'time.s'
@@ -141,7 +141,7 @@ export function InitialConditionsTab() {
     }
 
     // Automatically convert species name to uppercase to match mechanism species
-    const normalizedSpecies = newSpecies.trim().toUpperCase()
+    const normalizedSpecies = newSpecies.trim()
 
     const value = parseFloat(newConcentration)
     if (isNaN(value)) {
@@ -338,7 +338,7 @@ export function InitialConditionsTab() {
         <ul className="space-y-0.5 ml-4">
           <li>• Use scientific notation for small values (e.g., 1e-8)</li>
           <li>• Concentrations are in mol/mol (mixing ratio)</li>
-          <li>• Species must exist in the selected mechanism{selectedMechanism ? `: ${selectedMechanism.toUpperCase()}` : ''}</li>
+          <li>• Species must exist in the selected mechanism{selectedMechanism ? `: ${selectedMechanism}` : ''}</li>
         </ul>
       </div>
     </div>
