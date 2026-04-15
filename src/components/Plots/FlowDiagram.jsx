@@ -18,14 +18,8 @@ export function FlowDiagram() {
 
   const duration = useSelector((state) => state.conditions.basic.duration);
   const timeStep = useSelector((state) => state.conditions.basic.timeStep);
-  const [timeRange, setTimeRange] = useState({ min: 0, max: duration || 2e5 });
+  const [timeRange, setTimeRange] = useState({ start: 0, end: duration });
   const timeValues = Array.from({ length: ((duration || 2e5) - 0) / (timeStep || 1) + 1 }, (_, i) => 0 + i * (timeStep || 1));
-
-  // Create a decimated timeValues array for UI display (limit to ~200 points)
-  const timeValuesForUI = Array.from(
-    { length: Math.min(200, timeValues.length) },
-    (_, i) => timeValues[Math.floor(i * (timeValues.length - 1) / 199)]
-  );
 
   // const example = useSelector((state) => state);
   // console.log('FlowPanel example state:', example);
@@ -64,7 +58,7 @@ export function FlowDiagram() {
           setArrowScaling={setArrowScaling}
           arrowWidth={arrowWidth}
           setArrowWidth={setArrowWidth}
-          timeValues={timeValuesForUI}
+          timeValues={timeValues}
           range={timeRange}
           setRange={setTimeRange}
           fluxValues={fluxValues}
@@ -84,8 +78,8 @@ export function FlowDiagram() {
               maxArrowWidth: Number(arrowWidth),
           }}
           timeRange={{
-              start: timeRange.min,
-              end:   timeRange.max,
+              start: timeRange.start,
+              end:   timeRange.end,
           }}
         />
       </div>
