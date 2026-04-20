@@ -172,7 +172,13 @@ export function ExampleLoader() {
     mechanismSpecies.forEach((species) => {
       dispatch(addSpecies({
         name: species.name,
-        molecular_weight_kg_mol: 0.048, // Using default value
+        molecular_weight_kg_mol: species.molecular_weight_kg_mol
+          ?? species['molecular weight [kg mol-1]']
+          ?? 0.048,
+        'diffusion coefficient [m2 s-1]': species['diffusion coefficient [m2 s-1]']
+          ?? species.diffusion_coefficient_m2_s
+          ?? 1e-5,
+        phase: species.phase || 'Gas',
         'is third body': species['is third body'] || false,
         properties: {},
       }));

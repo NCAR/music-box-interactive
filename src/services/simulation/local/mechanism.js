@@ -223,14 +223,18 @@ export const serializeSpecies = (species) => {
     return species
   }
 
-  const serialized = { ...species }
-  const molecularWeight = serialized.molecular_weight_kg_mol
-  delete serialized.id
-  delete serialized.properties
-  delete serialized.molecular_weight_kg_mol
+  const {
+    id,
+    molecular_weight_kg_mol,
+    properties,
+    phase,
+    'diffusion coefficient [m2 s-1]': _uiDiffusion,
+    diffusion_coefficient_m2_s: _legacyDiffusion,
+    ...serialized
+  } = species
 
-  if (serialized['molecular weight [kg mol-1]'] === undefined && molecularWeight !== undefined) {
-    serialized['molecular weight [kg mol-1]'] = molecularWeight
+  if (serialized['molecular weight [kg mol-1]'] === undefined && molecular_weight_kg_mol !== undefined) {
+    serialized['molecular weight [kg mol-1]'] = molecular_weight_kg_mol
   }
 
   return serialized
