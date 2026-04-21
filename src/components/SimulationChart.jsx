@@ -359,12 +359,12 @@ export function SimulationChart({ results, metadata }) {
                 domain={[
                   (dataMin) => {
                     const min = dataMin > 0 ? dataMin / 10 : 1e-20
-                    console.log('Y-axis dataMin:', dataMin, '→ domain min:', min)
+                    // console.log('Y-axis dataMin:', dataMin, '→ domain min:', min)
                     return min
                   },
                   (dataMax) => {
                     const max = dataMax * 10
-                    console.log('Y-axis dataMax:', dataMax, '→ domain max:', max)
+                    // console.log('Y-axis dataMax:', dataMax, '→ domain max:', max)
                     return max
                   }
                 ]}

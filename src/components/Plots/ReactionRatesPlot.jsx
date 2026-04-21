@@ -26,23 +26,23 @@ export function ReactionRatesPlot() {
   // In MICM, photolysis rates are prefixed with "PHOTO." and user-defined with "USER."
   const rateParameters = useMemo(() => {
     if (!simulation.metadata?.rateConstants) {
-      console.log('ReactionRatesPlot: No rateConstants in metadata')
+      // console.log('ReactionRatesPlot: No rateConstants in metadata')
       return []
     }
 
     const allKeys = Object.keys(simulation.metadata.rateConstants)
-    console.log('ReactionRatesPlot: All rate constant keys:', allKeys)
+    // console.log('ReactionRatesPlot: All rate constant keys:', allKeys)
 
     // Filter for PHOTO. and USER. prefixed parameters
     const filtered = allKeys.filter(key => key.startsWith('PHOTO.') || key.startsWith('USER.'))
-    console.log('ReactionRatesPlot: Filtered rate parameters:', filtered)
+    //  console.log('ReactionRatesPlot: Filtered rate parameters:', filtered)
 
     // Log the actual values
     const rateValues = {}
     filtered.forEach(key => {
       rateValues[key] = simulation.metadata.rateConstants[key]
     })
-    console.log('ReactionRatesPlot: Rate parameter values:', rateValues)
+    // console.log('ReactionRatesPlot: Rate parameter values:', rateValues)
 
     return filtered.sort()
   }, [simulation.metadata])
@@ -97,7 +97,7 @@ export function ReactionRatesPlot() {
       .map(param => simulation.metadata.rateConstants[param])
       .filter(val => val !== undefined && val !== null && isFinite(val))
 
-    console.log('ReactionRatesPlot: Displayed rate values:', values)
+    // console.log('ReactionRatesPlot: Displayed rate values:', values)
 
     if (values.length === 0) {
       console.warn('ReactionRatesPlot: No valid rate values found!')
@@ -107,14 +107,14 @@ export function ReactionRatesPlot() {
     const minValue = Math.min(...values)
     const maxValue = Math.max(...values)
 
-    console.log(`ReactionRatesPlot: Value range: ${minValue} to ${maxValue}`)
+    // console.log(`ReactionRatesPlot: Value range: ${minValue} to ${maxValue}`)
 
     // Use linear scale if:
     // 1. Any value is zero or negative
     // 2. All values are very small (< 1e-10)
     // 3. Range is too small for log scale
     if (minValue <= 0) {
-      console.log('ReactionRatesPlot: Using LINEAR scale (values <= 0)')
+      // console.log('ReactionRatesPlot: Using LINEAR scale (values <= 0)')
       return {
         scaleType: 'linear',
         yDomain: [Math.min(0, minValue * 1.1), maxValue * 1.1]
@@ -122,7 +122,7 @@ export function ReactionRatesPlot() {
     }
 
     if (maxValue < 1e-10) {
-      console.log('ReactionRatesPlot: Using LINEAR scale (all values < 1e-10)')
+      // console.log('ReactionRatesPlot: Using LINEAR scale (all values < 1e-10)')
       return {
         scaleType: 'linear',
         yDomain: [0, maxValue * 1.2]
@@ -132,14 +132,14 @@ export function ReactionRatesPlot() {
     // Use log scale for positive values with sufficient range
     const range = maxValue / minValue
     if (range < 10) {
-      console.log('ReactionRatesPlot: Using LINEAR scale (range too small)')
+      // console.log('ReactionRatesPlot: Using LINEAR scale (range too small)')
       return {
         scaleType: 'linear',
         yDomain: [minValue * 0.9, maxValue * 1.1]
       }
     }
 
-    console.log('ReactionRatesPlot: Using LOG scale')
+    // console.log('ReactionRatesPlot: Using LOG scale')
     // For log scale, use values that are powers of 10
     const logMin = Math.floor(Math.log10(minValue))
     const logMax = Math.ceil(Math.log10(maxValue))
