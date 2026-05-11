@@ -136,8 +136,8 @@ export function ReviewTab() {
                   <div className="mb-3">
                     <h6 className="font-bold text-xs xs:text-sm text-gray-300 mb-1">Basic Settings:</h6>
                     <ul className="ml-3 xs:ml-4 space-y-1 text-xs xs:text-sm text-gray-300">
-                      <li><span className="font-semibold">Temperature:</span> <span className='font-medium'>{conditions.basic.temperature} K</span></li>
-                      <li><span className="font-semibold">Pressure:</span> <span className='font-medium'>{conditions.basic.pressure} Pa</span></li>
+                      <li><span className="font-semibold">Temperature:</span> <span className='font-medium'>{conditions.initial.temperature} K</span></li>
+                      <li><span className="font-semibold">Pressure:</span> <span className='font-medium'>{conditions.initial.pressure} Pa</span></li>
                       <li><span className="font-semibold">Duration:</span> <span className='font-medium'>{conditions.basic.duration} s ({(conditions.basic.duration / 3600).toFixed(2)} h)</span></li>
                       <li><span className="font-semibold">Time Step:</span> <span className='font-medium'>{conditions.basic.timeStep} s</span></li>
                     </ul>
