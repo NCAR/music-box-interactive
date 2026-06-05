@@ -10,14 +10,10 @@ export default defineConfig({
     },
   },
   test: {
+    pool: 'vmForks',
     environment: 'jsdom',
     setupFiles: './vitest.setup.js',
     globals: true,
     include: ['__tests__/**/*.test.{js,jsx}'],
-    server: {
-      deps: {
-        inline: ['html-encoding-sniffer', '@exodus/bytes'],
-      },
-    },
   },
 });
