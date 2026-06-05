@@ -10,7 +10,6 @@ export default defineConfig({
     },
   },
   test: {
-    pool: 'vmForks',
     environment: 'jsdom',
     setupFiles: './vitest.setup.js',
     globals: true,

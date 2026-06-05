@@ -32,7 +32,8 @@
     "uuid": "^13.0.0"
   },
   "overrides": {
-    "@ncar/musica": "0.15.0-rc.0"
+    "@ncar/musica": "0.15.0-rc.0",
+    "html-encoding-sniffer": "4.0.0"
   },
   "devDependencies": {
     "@babel/preset-env": "^7.29.2",
