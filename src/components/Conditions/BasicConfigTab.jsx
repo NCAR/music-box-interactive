@@ -62,9 +62,7 @@ export function BasicConfigTab() {
       <Card>
         <CardHeader>
           <CardTitle>Time Step Configuration</CardTitle>
-          <CardDescription>
-            Control the temporal resolution of the simulation
-          </CardDescription>
+          <CardDescription>Control the temporal resolution of the simulation</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
@@ -110,7 +108,9 @@ export function BasicConfigTab() {
         </p>
         <ul className="space-y-0.5 ml-4">
           <li>• Total steps: {Math.floor(basic.duration / basic.timeStep)}</li>
-          <li>• Output points: ~{Math.floor(basic.duration / basic.timeStep / basic.outputFrequency)}</li>
+          <li>
+            • Output points: ~{Math.floor(basic.duration / basic.timeStep / basic.outputFrequency)}
+          </li>
           <li>• Simulation end time: {(basic.duration / 3600).toFixed(2)} hours</li>
         </ul>
       </div>

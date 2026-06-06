@@ -7,12 +7,7 @@ import { Loader2, Play } from 'lucide-react'
  * Compact button to run simulations from any page
  */
 export function RunSimulationButton({ className = '' }) {
-  const {
-    runSimulation,
-    isRunning,
-    isDisabled,
-    tooltip,
-  } = useRunSimulation()
+  const { runSimulation, isRunning, isDisabled, tooltip } = useRunSimulation()
 
   return (
     <Button

@@ -38,9 +38,7 @@ export function InitialConditionsTab() {
       return
     }
 
-    const getValidBlock = (block) => (
-      block?.headers?.length && block?.rows?.length ? block : null
-    )
+    const getValidBlock = (block) => (block?.headers?.length && block?.rows?.length ? block : null)
 
     const initialConditionsBlock = getValidBlock(exampleFiles?.initial_conditions)
     const initialConcentrationsBlock = getValidBlock(exampleFiles?.initial_concentrations)
@@ -49,9 +47,11 @@ export function InitialConditionsTab() {
     const fallbackDataBlock = (exampleFiles?.data || []).find((block) => {
       const headers = block?.headers || []
       const rows = block?.rows || []
-      return rows.length > 0
-        && headers.includes('time.s')
-        && headers.some((header) => typeof header === 'string' && header.startsWith('ENV.'))
+      return (
+        rows.length > 0 &&
+        headers.includes('time.s') &&
+        headers.some((header) => typeof header === 'string' && header.startsWith('ENV.'))
+      )
     })
 
     const blocksToHydrate = [
@@ -92,7 +92,12 @@ export function InitialConditionsTab() {
 
         const isTimeColumn = header === 'time.s'
         const isEnvironmentalColumn = header.startsWith('ENV.')
-        if (!isTimeColumn && !isEnvironmentalColumn && !concentrationMatch && Number.isFinite(value)) {
+        if (
+          !isTimeColumn &&
+          !isEnvironmentalColumn &&
+          !concentrationMatch &&
+          Number.isFinite(value)
+        ) {
           nextRateConstants[header] = value
         }
       })
@@ -222,9 +227,7 @@ export function InitialConditionsTab() {
           </div>
 
           <div>
-            <label className="block text-sm font-semibold text-blue-100 mb-2">
-              Pressure (Pa)
-            </label>
+            <label className="block text-sm font-semibold text-blue-100 mb-2">Pressure (Pa)</label>
             <input
               type="number"
               value={initial.pressure}
@@ -247,9 +250,7 @@ export function InitialConditionsTab() {
       <Card>
         <CardHeader>
           <CardTitle>Species Concentrations</CardTitle>
-          <CardDescription>
-            Set initial concentrations for chemical species
-          </CardDescription>
+          <CardDescription>Set initial concentrations for chemical species</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           {/* Add New Species */}
@@ -338,7 +339,10 @@ export function InitialConditionsTab() {
         <ul className="space-y-0.5 ml-4">
           <li>• Use scientific notation for small values (e.g., 1e-8)</li>
           <li>• Concentrations are in mol/mol (mixing ratio)</li>
-          <li>• Species must exist in the selected mechanism{selectedMechanism ? `: ${selectedMechanism}` : ''}</li>
+          <li>
+            • Species must exist in the selected mechanism
+            {selectedMechanism ? `: ${selectedMechanism}` : ''}
+          </li>
         </ul>
       </div>
     </div>

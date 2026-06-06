@@ -6,7 +6,15 @@ import { Button } from './ui/button'
 import { setCurrentExample, setSelectedMechanism } from '../redux/slices/mechanismSlice'
 
 import { addSpecies, addReaction, setMechanism } from '../redux/slices/mechanismSlice'
-import { setDuration, setTimeStep, setOutputFrequency, setConditions, setExampleFiles, setExampleLoaded, setSourceFile } from '../redux/slices/conditionsSlice'
+import {
+  setDuration,
+  setTimeStep,
+  setOutputFrequency,
+  setConditions,
+  setExampleFiles,
+  setExampleLoaded,
+  setSourceFile,
+} from '../redux/slices/conditionsSlice'
 import { v4 as uuidv4 } from 'uuid'
 
 const API_URL = 'http://localhost:3001/api'
@@ -15,37 +23,36 @@ import { resetMechanism } from '../redux/slices/mechanismSlice'
 import { resetConditions } from '../redux/slices/conditionsSlice'
 import { resetSimulation } from '../redux/slices/simulationSlice'
 
-import { parseCsvToBlock } from '@ncar/music-box';
+import { parseCsvToBlock } from '@ncar/music-box'
 
-
-import chapmanConfig from '@ncar/music-box/examples/chapman/my_config.json' with { type: 'json' };
-import analyticalConfig from '@ncar/music-box/examples/analytical/my_config.json' with { type: 'json' };
-import ts1Config from '@ncar/music-box/examples/ts1/my_config.json' with { type: 'json' };
-import flowTubeConfig from '@ncar/music-box/examples/flow_tube/my_config.json' with { type: 'json' };
-import carbonBond5Config from '@ncar/music-box/examples/carbon_bond_5/my_config.json' with { type: 'json' };
-import chapmanInitialConcentrationsCsv from '@ncar/music-box/examples/chapman/initial_concentrations.csv?raw';
-import chapmanConditionsBoulderCsv from '@ncar/music-box/examples/chapman/conditions_Boulder.csv?raw';
-import ts1InitialConditionsCsv from '@ncar/music-box/examples/ts1/initial_conditions.csv?raw';
-import flowTubeInitialConcentrationsCsv from '@ncar/music-box/examples/flow_tube/initial_concentrations.csv?raw';
-import flowTubeInitialReactionRatesCsv from '@ncar/music-box/examples/flow_tube/initial_reaction_rates.csv?raw';
-import carbonBond5InitialConcentrationsCsv from '@ncar/music-box/examples/carbon_bond_5/initial_concentrations.csv?raw';
-import carbonBond5InitialReactionRatesCsv from '@ncar/music-box/examples/carbon_bond_5/initial_reaction_rates.csv?raw';
-import analyticalInitialConditionsCsv from '@ncar/music-box/examples/analytical/initial_conditions.csv?raw';
+import chapmanConfig from '@ncar/music-box/examples/chapman/my_config.json' with { type: 'json' }
+import analyticalConfig from '@ncar/music-box/examples/analytical/my_config.json' with { type: 'json' }
+import ts1Config from '@ncar/music-box/examples/ts1/my_config.json' with { type: 'json' }
+import flowTubeConfig from '@ncar/music-box/examples/flow_tube/my_config.json' with { type: 'json' }
+import carbonBond5Config from '@ncar/music-box/examples/carbon_bond_5/my_config.json' with { type: 'json' }
+import chapmanInitialConcentrationsCsv from '@ncar/music-box/examples/chapman/initial_concentrations.csv?raw'
+import chapmanConditionsBoulderCsv from '@ncar/music-box/examples/chapman/conditions_Boulder.csv?raw'
+import ts1InitialConditionsCsv from '@ncar/music-box/examples/ts1/initial_conditions.csv?raw'
+import flowTubeInitialConcentrationsCsv from '@ncar/music-box/examples/flow_tube/initial_concentrations.csv?raw'
+import flowTubeInitialReactionRatesCsv from '@ncar/music-box/examples/flow_tube/initial_reaction_rates.csv?raw'
+import carbonBond5InitialConcentrationsCsv from '@ncar/music-box/examples/carbon_bond_5/initial_concentrations.csv?raw'
+import carbonBond5InitialReactionRatesCsv from '@ncar/music-box/examples/carbon_bond_5/initial_reaction_rates.csv?raw'
+import analyticalInitialConditionsCsv from '@ncar/music-box/examples/analytical/initial_conditions.csv?raw'
 
 /**
  * ExampleLoader Component
  * Loads pre-configured example simulations
  */
 export function ExampleLoader() {
-  const navigate = useNavigate();
+  const navigate = useNavigate()
 
   const toExampleCsvJson = (content) => {
     if (typeof content !== 'string' || content.trim().length === 0) {
-      return {};
+      return {}
     }
 
-    return parseCsvToBlock(content);
-  };
+    return parseCsvToBlock(content)
+  }
 
   const buildExampleCsvJson = ({
     initial_conditions = '',
@@ -57,7 +64,7 @@ export function ExampleLoader() {
     initial_concentrations: toExampleCsvJson(initial_concentrations),
     initial_reaction_rates: toExampleCsvJson(initial_reaction_rates),
     boulder: toExampleCsvJson(boulder),
-  });
+  })
 
   const withInlineConditionData = (config, csvContents = []) => {
     const existingData = Array.isArray(config?.conditions?.data) ? config.conditions.data : []
@@ -74,190 +81,204 @@ export function ExampleLoader() {
     }
   }
 
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState(null)
+  const [loading] = useState(false)
+  const [error] = useState(null)
   const dispatch = useDispatch()
 
   const examples = [
     {
-        id: 'analytical',
-        name: 'Analytical Mechanism',
-        description: 'A simple analytical model for demonstration purposes',
-        mechanism_name: analyticalConfig.mechanism.name,
-        csv: buildExampleCsvJson({
-          initial_conditions: analyticalInitialConditionsCsv,
-        }),
-        mechanism: withInlineConditionData(analyticalConfig, [analyticalInitialConditionsCsv]),
+      id: 'analytical',
+      name: 'Analytical Mechanism',
+      description: 'A simple analytical model for demonstration purposes',
+      mechanism_name: analyticalConfig.mechanism.name,
+      csv: buildExampleCsvJson({
+        initial_conditions: analyticalInitialConditionsCsv,
+      }),
+      mechanism: withInlineConditionData(analyticalConfig, [analyticalInitialConditionsCsv]),
     },
     {
-        id: 'chapman',
-        name: 'Chapman Mechanism',
-        description: 'Stratospheric oxygen chemistry with photolysis',
-        mechanism_name: chapmanConfig.mechanism.name,
-        csv: buildExampleCsvJson({
-          initial_concentrations: chapmanInitialConcentrationsCsv,
-          boulder: chapmanConditionsBoulderCsv,
-        }),
-        mechanism: withInlineConditionData(chapmanConfig, [chapmanInitialConcentrationsCsv, chapmanConditionsBoulderCsv]),
+      id: 'chapman',
+      name: 'Chapman Mechanism',
+      description: 'Stratospheric oxygen chemistry with photolysis',
+      mechanism_name: chapmanConfig.mechanism.name,
+      csv: buildExampleCsvJson({
+        initial_concentrations: chapmanInitialConcentrationsCsv,
+        boulder: chapmanConditionsBoulderCsv,
+      }),
+      mechanism: withInlineConditionData(chapmanConfig, [
+        chapmanInitialConcentrationsCsv,
+        chapmanConditionsBoulderCsv,
+      ]),
     },
     {
-        id: 'Flow-Tube Wall Loss',
-        name: 'Flow-Tube Wall Loss',
-        description: 'A simple characterization of wall loss of a-Pinene oxidation products in a flow-tube reactor. ',
-        mechanism_name: flowTubeConfig.mechanism.name,
-        csv: buildExampleCsvJson({
-          initial_concentrations: flowTubeInitialConcentrationsCsv,
-          initial_reaction_rates: flowTubeInitialReactionRatesCsv,
-        }),
-        mechanism: withInlineConditionData(flowTubeConfig, [flowTubeInitialConcentrationsCsv, flowTubeInitialReactionRatesCsv]),
+      id: 'Flow-Tube Wall Loss',
+      name: 'Flow-Tube Wall Loss',
+      description:
+        'A simple characterization of wall loss of a-Pinene oxidation products in a flow-tube reactor. ',
+      mechanism_name: flowTubeConfig.mechanism.name,
+      csv: buildExampleCsvJson({
+        initial_concentrations: flowTubeInitialConcentrationsCsv,
+        initial_reaction_rates: flowTubeInitialReactionRatesCsv,
+      }),
+      mechanism: withInlineConditionData(flowTubeConfig, [
+        flowTubeInitialConcentrationsCsv,
+        flowTubeInitialReactionRatesCsv,
+      ]),
     },
     {
-        id: 'Full Gas-Phase Mechanism',
-        name: 'Full Gas-Phase Mechanism',
-        description: 'A variant of the Carbon Bond 5 chemical mechanism used in the MONARCH global/regional chemical weather prediction system. The description of the modified version of CB-05 used in MONARCH',
-        mechanism_name: carbonBond5Config.mechanism.name,
-        csv: buildExampleCsvJson({
-          initial_concentrations: carbonBond5InitialConcentrationsCsv,
-          initial_reaction_rates: carbonBond5InitialReactionRatesCsv,
-        }),
-        mechanism: withInlineConditionData(carbonBond5Config, [carbonBond5InitialConcentrationsCsv, carbonBond5InitialReactionRatesCsv]),
+      id: 'Full Gas-Phase Mechanism',
+      name: 'Full Gas-Phase Mechanism',
+      description:
+        'A variant of the Carbon Bond 5 chemical mechanism used in the MONARCH global/regional chemical weather prediction system. The description of the modified version of CB-05 used in MONARCH',
+      mechanism_name: carbonBond5Config.mechanism.name,
+      csv: buildExampleCsvJson({
+        initial_concentrations: carbonBond5InitialConcentrationsCsv,
+        initial_reaction_rates: carbonBond5InitialReactionRatesCsv,
+      }),
+      mechanism: withInlineConditionData(carbonBond5Config, [
+        carbonBond5InitialConcentrationsCsv,
+        carbonBond5InitialReactionRatesCsv,
+      ]),
     },
     {
-        id: 'Troposphere-Stratosphere mechanism (TS1)',
-        name: 'Troposphere-Stratosphere mechanism (TS1)',
-        description: 'A comprehensive model of the chemistry in the troposphere and stratosphere. Read about its formulation in this paper.',
-        mechanism_name: ts1Config.mechanism.name,
-        csv: buildExampleCsvJson({
-          initial_conditions: ts1InitialConditionsCsv,
-        }),
-        mechanism: withInlineConditionData(ts1Config, [ts1InitialConditionsCsv]),
+      id: 'Troposphere-Stratosphere mechanism (TS1)',
+      name: 'Troposphere-Stratosphere mechanism (TS1)',
+      description:
+        'A comprehensive model of the chemistry in the troposphere and stratosphere. Read about its formulation in this paper.',
+      mechanism_name: ts1Config.mechanism.name,
+      csv: buildExampleCsvJson({
+        initial_conditions: ts1InitialConditionsCsv,
+      }),
+      mechanism: withInlineConditionData(ts1Config, [ts1InitialConditionsCsv]),
     },
   ]
 
   const reactionJsonToString = (arr = []) => {
     return arr
-      .map(item => {
+      .map((item) => {
         if (typeof item === 'string') {
-          return item.trim().toUpperCase();
+          return item.trim().toUpperCase()
         }
 
         if (!item || typeof item !== 'object') {
-          return "";
+          return ''
         }
 
-        const name = item["species name"]?.trim()?.toUpperCase() ?? "";
-        const coeff = parseFloat(item["coefficient"]);
+        const name = item['species name']?.trim()?.toUpperCase() ?? ''
+        const coeff = parseFloat(item['coefficient'])
 
         if (coeff === 1 || isNaN(coeff)) {
-          return name;
+          return name
         }
 
-        return `${coeff}${name}`;
+        return `${coeff}${name}`
       })
-      .join(" + ");
-  };
-
+      .join(' + ')
+  }
 
   const loadExample = async (example) => {
-    dispatch(resetMechanism());
-    dispatch(resetConditions());
-    dispatch(resetSimulation());
+    dispatch(resetMechanism())
+    dispatch(resetConditions())
+    dispatch(resetSimulation())
 
-    const exampleConfig = example.mechanism;
-    const mechanismConfig = exampleConfig?.mechanism || {};
+    const exampleConfig = example.mechanism
+    const mechanismConfig = exampleConfig?.mechanism || {}
 
-    dispatch(setMechanism(exampleConfig));
+    dispatch(setMechanism(exampleConfig))
 
-    const mechanismSpecies = Array.isArray(mechanismConfig.species) ? mechanismConfig.species : [];
+    const mechanismSpecies = Array.isArray(mechanismConfig.species) ? mechanismConfig.species : []
     mechanismSpecies.forEach((species) => {
-      dispatch(addSpecies({
-        name: species.name,
-        molecular_weight_kg_mol: species.molecular_weight_kg_mol
-          ?? species['molecular weight [kg mol-1]']
-          ?? 0.048,
-        'diffusion coefficient [m2 s-1]': species['diffusion coefficient [m2 s-1]']
-          ?? species.diffusion_coefficient_m2_s
-          ?? 1e-5,
-        phase: species.phase || 'Gas',
-        'is third body': species['is third body'] || false,
-        properties: {},
-      }));
-    });
+      dispatch(
+        addSpecies({
+          name: species.name,
+          molecular_weight_kg_mol:
+            species.molecular_weight_kg_mol ?? species['molecular weight [kg mol-1]'] ?? 0.048,
+          'diffusion coefficient [m2 s-1]':
+            species['diffusion coefficient [m2 s-1]'] ?? species.diffusion_coefficient_m2_s ?? 1e-5,
+          phase: species.phase || 'Gas',
+          'is third body': species['is third body'] || false,
+          properties: {},
+        })
+      )
+    })
 
-    const mechanismReactions = Array.isArray(mechanismConfig.reactions) ? mechanismConfig.reactions : [];
+    const mechanismReactions = Array.isArray(mechanismConfig.reactions)
+      ? mechanismConfig.reactions
+      : []
     mechanismReactions.forEach((reaction) => {
-      const displayReactants = reaction.reactants
-        || reaction['gas-phase species']
-        || [];
-      const displayProducts = reaction.products
-        || reaction['gas-phase products']
-        || reaction['alkoxy products']
-        || [];
+      const displayReactants = reaction.reactants || reaction['gas-phase species'] || []
+      const displayProducts =
+        reaction.products || reaction['gas-phase products'] || reaction['alkoxy products'] || []
 
-      const normalizedReactants = reactionJsonToString(Array.isArray(displayReactants)
-        ? displayReactants
-        : [displayReactants]).toUpperCase();
-      const normalizedProducts = reactionJsonToString(displayProducts ?? []).toUpperCase();
+      const normalizedReactants = reactionJsonToString(
+        Array.isArray(displayReactants) ? displayReactants : [displayReactants]
+      ).toUpperCase()
+      const normalizedProducts = reactionJsonToString(displayProducts ?? []).toUpperCase()
 
       const newReaction = {
         ...reaction,
         id: uuidv4(),
-        "name": (typeof reaction.name === 'string' && reaction.name.trim().length > 0)
-          ? reaction.name
-          : (normalizedProducts
+        name:
+          typeof reaction.name === 'string' && reaction.name.trim().length > 0
+            ? reaction.name
+            : normalizedProducts
               ? `${normalizedReactants} -> ${normalizedProducts}`
-              : `${normalizedReactants} -> (removed)`),
+              : `${normalizedReactants} -> (removed)`,
       }
 
-      dispatch(addReaction(newReaction));
-    });
+      dispatch(addReaction(newReaction))
+    })
 
-    const options = exampleConfig["box model options"] || {};
+    const options = exampleConfig['box model options'] || {}
 
-    if (options["simulation length [day]"] != null) {
-      dispatch(setDuration(options["simulation length [day]"] * 24 * 3600))
-    } else if (options["simulation length [hour]"] != null) {
-      dispatch(setDuration(options["simulation length [hour]"] * 3600))
-    } else if (options["simulation length [hr]"] != null) {
-      dispatch(setDuration(options["simulation length [hr]"] * 3600))
-    } else if (options["simulation length [sec]"] != null) {
-      dispatch(setDuration(options["simulation length [sec]"]))
+    if (options['simulation length [day]'] != null) {
+      dispatch(setDuration(options['simulation length [day]'] * 24 * 3600))
+    } else if (options['simulation length [hour]'] != null) {
+      dispatch(setDuration(options['simulation length [hour]'] * 3600))
+    } else if (options['simulation length [hr]'] != null) {
+      dispatch(setDuration(options['simulation length [hr]'] * 3600))
+    } else if (options['simulation length [sec]'] != null) {
+      dispatch(setDuration(options['simulation length [sec]']))
     }
 
-    if (options["chemistry time step [min]"] != null) {
-      dispatch(setTimeStep(options["chemistry time step [min]"] * 60))
-    } else if (options["chemistry time step [sec]"] != null) {
-      dispatch(setTimeStep(options["chemistry time step [sec]"]))
+    if (options['chemistry time step [min]'] != null) {
+      dispatch(setTimeStep(options['chemistry time step [min]'] * 60))
+    } else if (options['chemistry time step [sec]'] != null) {
+      dispatch(setTimeStep(options['chemistry time step [sec]']))
     }
 
-    if (options["output time step [min]"] != null) {
-      dispatch(setOutputFrequency(options["output time step [min]"] * 60))
-    } else if (options["output time step [sec]"] != null) {
-      dispatch(setOutputFrequency(options["output time step [sec]"]))
+    if (options['output time step [min]'] != null) {
+      dispatch(setOutputFrequency(options['output time step [min]'] * 60))
+    } else if (options['output time step [sec]'] != null) {
+      dispatch(setOutputFrequency(options['output time step [sec]']))
     }
 
-    if (exampleConfig["__source file"] != null) {
-      dispatch(setSourceFile(exampleConfig["__source file"]));
+    if (exampleConfig['__source file'] != null) {
+      dispatch(setSourceFile(exampleConfig['__source file']))
     } else {
-      dispatch(setSourceFile(null));
+      dispatch(setSourceFile(null))
     }
 
-    dispatch(setConditions(exampleConfig.conditions));
-    dispatch(setExampleFiles({
-      ...example.csv,
-      data: exampleConfig.conditions?.data || [],
-    }));
-    dispatch(setCurrentExample({
-      id: example.id,
-      name: example.name,
-      description: example.description,
-      mechanism_name: example.mechanism_name,
-      csv: example.csv,
-    }));
-    dispatch(setSelectedMechanism(example.mechanism_name || example.id || 'custom'));
-    dispatch(setExampleLoaded(false));
+    dispatch(setConditions(exampleConfig.conditions))
+    dispatch(
+      setExampleFiles({
+        ...example.csv,
+        data: exampleConfig.conditions?.data || [],
+      })
+    )
+    dispatch(
+      setCurrentExample({
+        id: example.id,
+        name: example.name,
+        description: example.description,
+        mechanism_name: example.mechanism_name,
+        csv: example.csv,
+      })
+    )
+    dispatch(setSelectedMechanism(example.mechanism_name || example.id || 'custom'))
+    dispatch(setExampleLoaded(false))
 
-    navigate("/mechanism");
+    navigate('/mechanism')
   }
 
   return (

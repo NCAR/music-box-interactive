@@ -1,6 +1,16 @@
 import { useState, useMemo, useEffect } from 'react'
 import { useSelector } from 'react-redux'
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Label } from 'recharts'
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+  Label,
+} from 'recharts'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card'
 import { Button } from '../ui/button'
 import { FlaskConical, AlertCircle, Lightbulb } from 'lucide-react'
@@ -17,9 +27,18 @@ export function ReactionRatesPlot() {
 
   // Generate color palette for reaction rates
   const colors = [
-    '#3b82f6', '#ef4444', '#10b981', '#f59e0b',
-    '#8b5cf6', '#ec4899', '#14b8a6', '#f97316',
-    '#6366f1', '#84cc16', '#06b6d4', '#f43f5e'
+    '#3b82f6',
+    '#ef4444',
+    '#10b981',
+    '#f59e0b',
+    '#8b5cf6',
+    '#ec4899',
+    '#14b8a6',
+    '#f97316',
+    '#6366f1',
+    '#84cc16',
+    '#06b6d4',
+    '#f43f5e',
   ]
 
   // Extract rate constants from initial concentrations (they're set via setUserDefinedRateParameters)
@@ -34,12 +53,12 @@ export function ReactionRatesPlot() {
     // console.log('ReactionRatesPlot: All rate constant keys:', allKeys)
 
     // Filter for PHOTO. and USER. prefixed parameters
-    const filtered = allKeys.filter(key => key.startsWith('PHOTO.') || key.startsWith('USER.'))
+    const filtered = allKeys.filter((key) => key.startsWith('PHOTO.') || key.startsWith('USER.'))
     //  console.log('ReactionRatesPlot: Filtered rate parameters:', filtered)
 
     // Log the actual values
     const rateValues = {}
-    filtered.forEach(key => {
+    filtered.forEach((key) => {
       rateValues[key] = simulation.metadata.rateConstants[key]
     })
     // console.log('ReactionRatesPlot: Rate parameter values:', rateValues)
@@ -60,12 +79,12 @@ export function ReactionRatesPlot() {
   const chartData = useMemo(() => {
     if (!simulation.results || !simulation.metadata?.rateConstants) return []
 
-    return simulation.results.map(result => {
+    return simulation.results.map((result) => {
       const point = {
-        timeSeconds: result.time
+        timeSeconds: result.time,
       }
 
-      rateParameters.forEach(param => {
+      rateParameters.forEach((param) => {
         point[param] = simulation.metadata.rateConstants[param]
       })
 
@@ -75,10 +94,8 @@ export function ReactionRatesPlot() {
 
   // Toggle rate selection
   const toggleRate = (rate) => {
-    setSelectedRates(prev =>
-      prev.includes(rate)
-        ? prev.filter(r => r !== rate)
-        : [...prev, rate]
+    setSelectedRates((prev) =>
+      prev.includes(rate) ? prev.filter((r) => r !== rate) : [...prev, rate]
     )
     setShowAll(false)
   }
@@ -94,8 +111,8 @@ export function ReactionRatesPlot() {
 
     // Get all rate values for displayed rates
     const values = displayRates
-      .map(param => simulation.metadata.rateConstants[param])
-      .filter(val => val !== undefined && val !== null && isFinite(val))
+      .map((param) => simulation.metadata.rateConstants[param])
+      .filter((val) => val !== undefined && val !== null && isFinite(val))
 
     // console.log('ReactionRatesPlot: Displayed rate values:', values)
 
@@ -117,7 +134,7 @@ export function ReactionRatesPlot() {
       // console.log('ReactionRatesPlot: Using LINEAR scale (values <= 0)')
       return {
         scaleType: 'linear',
-        yDomain: [Math.min(0, minValue * 1.1), maxValue * 1.1]
+        yDomain: [Math.min(0, minValue * 1.1), maxValue * 1.1],
       }
     }
 
@@ -125,7 +142,7 @@ export function ReactionRatesPlot() {
       // console.log('ReactionRatesPlot: Using LINEAR scale (all values < 1e-10)')
       return {
         scaleType: 'linear',
-        yDomain: [0, maxValue * 1.2]
+        yDomain: [0, maxValue * 1.2],
       }
     }
 
@@ -135,7 +152,7 @@ export function ReactionRatesPlot() {
       // console.log('ReactionRatesPlot: Using LINEAR scale (range too small)')
       return {
         scaleType: 'linear',
-        yDomain: [minValue * 0.9, maxValue * 1.1]
+        yDomain: [minValue * 0.9, maxValue * 1.1],
       }
     }
 
@@ -145,7 +162,7 @@ export function ReactionRatesPlot() {
     const logMax = Math.ceil(Math.log10(maxValue))
     return {
       scaleType: 'log',
-      yDomain: [Math.pow(10, logMin), Math.pow(10, logMax)]
+      yDomain: [Math.pow(10, logMin), Math.pow(10, logMax)],
     }
   }, [simulation.metadata, rateParameters, displayRates])
 
@@ -176,9 +193,7 @@ export function ReactionRatesPlot() {
       <Card>
         <CardHeader>
           <CardTitle>Reaction Rates</CardTitle>
-          <CardDescription>
-            No rate parameters found in this simulation
-          </CardDescription>
+          <CardDescription>No rate parameters found in this simulation</CardDescription>
         </CardHeader>
 
         <CardContent>
@@ -192,7 +207,9 @@ export function ReactionRatesPlot() {
             <div className="text-xs bg-yellow-50 border border-yellow-200 rounded-lg p-3 max-w-md mx-auto">
               <p className="font-semibold mb-1">Troubleshooting:</p>
               <ul className="text-left space-y-1">
-                <li>• Check if your mechanism config includes PHOTOLYSIS or USER_DEFINED reactions</li>
+                <li>
+                  • Check if your mechanism config includes PHOTOLYSIS or USER_DEFINED reactions
+                </li>
                 <li>• Verify rate constants are set with PHOTO.* or USER.* prefixes</li>
                 <li>• See console for detailed debugging information</li>
               </ul>
@@ -208,8 +225,8 @@ export function ReactionRatesPlot() {
       <CardHeader>
         <CardTitle>Reaction Rate Parameters</CardTitle>
         <CardDescription>
-          {simulation.metadata?.mechanism?.toUpperCase()} mechanism •
-          {rateParameters.length} rate parameter{rateParameters.length !== 1 ? 's' : ''}
+          {simulation.metadata?.mechanism?.toUpperCase()} mechanism •{rateParameters.length} rate
+          parameter{rateParameters.length !== 1 ? 's' : ''}
         </CardDescription>
       </CardHeader>
 
@@ -283,129 +300,147 @@ export function ReactionRatesPlot() {
           ) : (
             <ResponsiveContainer width="100%" height={500}>
               <LineChart data={chartData} margin={{ top: 5, right: 30, left: 100, bottom: 5 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
 
-              <XAxis
-                dataKey="timeSeconds"
-                stroke="#374151"
-                tick={{ fontSize: 12, fill: '#374151' }}
-                type="number"
-              >
-                <Label
-                  value="Time (seconds)"
-                  position="insideBottom"
-                  offset={-5}
-                  style={{ fill: '#1f2937', fontWeight: 600, fontSize: 14 }}
-                />
-              </XAxis>
+                <XAxis
+                  dataKey="timeSeconds"
+                  stroke="#374151"
+                  tick={{ fontSize: 12, fill: '#374151' }}
+                  type="number"
+                >
+                  <Label
+                    value="Time (seconds)"
+                    position="insideBottom"
+                    offset={-5}
+                    style={{ fill: '#1f2937', fontWeight: 600, fontSize: 14 }}
+                  />
+                </XAxis>
 
-              <YAxis
-                scale={scaleType}
-                domain={yDomain}
-                allowDataOverflow={false}
-                stroke="#374151"
-                tick={{ fontSize: 11, fill: '#374151' }}
-                tickFormatter={(value) => {
-                  if (value === 0 || !isFinite(value)) return '0'
-                  if (scaleType === 'log' || Math.abs(value) >= 1000 || Math.abs(value) < 0.01) {
-                    return value.toExponential(0)
-                  }
-                  return value.toFixed(2)
-                }}
-                width={90}
-              >
-                <Label
-                  value="Rate Constant (s⁻¹)"
-                  angle={-90}
-                  position="insideLeft"
-                  offset={15}
-                  style={{ fill: '#1f2937', fontWeight: 600, fontSize: 13, textAnchor: 'middle' }}
-                />
-              </YAxis>
+                <YAxis
+                  scale={scaleType}
+                  domain={yDomain}
+                  allowDataOverflow={false}
+                  stroke="#374151"
+                  tick={{ fontSize: 11, fill: '#374151' }}
+                  tickFormatter={(value) => {
+                    if (value === 0 || !isFinite(value)) return '0'
+                    if (scaleType === 'log' || Math.abs(value) >= 1000 || Math.abs(value) < 0.01) {
+                      return value.toExponential(0)
+                    }
+                    return value.toFixed(2)
+                  }}
+                  width={90}
+                >
+                  <Label
+                    value="Rate Constant (s⁻¹)"
+                    angle={-90}
+                    position="insideLeft"
+                    offset={15}
+                    style={{ fill: '#1f2937', fontWeight: 600, fontSize: 13, textAnchor: 'middle' }}
+                  />
+                </YAxis>
 
-              <Tooltip
-                content={({ active, payload, label }) => {
-                  if (!active || !payload?.length) return null
+                <Tooltip
+                  content={({ active, payload, label }) => {
+                    if (!active || !payload?.length) return null
 
-                  return (
-                    <div className="bg-white border-2 border-gray-800 rounded-lg shadow-xl p-3" style={{ backgroundColor: 'white' }}>
-                      <p className="font-semibold mb-2 text-sm text-gray-900" style={{ color: '#111827' }}>
-                        Time: {label?.toLocaleString()} seconds
-                      </p>
-                      <div className="space-y-1">
-                        {payload.map((entry, idx) => (
-                          <div key={idx} className="flex items-center gap-2 text-xs" style={{ color: '#1f2937' }}>
+                    return (
+                      <div
+                        className="bg-white border-2 border-gray-800 rounded-lg shadow-xl p-3"
+                        style={{ backgroundColor: 'white' }}
+                      >
+                        <p
+                          className="font-semibold mb-2 text-sm text-gray-900"
+                          style={{ color: '#111827' }}
+                        >
+                          Time: {label?.toLocaleString()} seconds
+                        </p>
+                        <div className="space-y-1">
+                          {payload.map((entry, idx) => (
                             <div
-                              className="w-3 h-3 rounded-full flex-shrink-0"
+                              key={idx}
+                              className="flex items-center gap-2 text-xs"
+                              style={{ color: '#1f2937' }}
+                            >
+                              <div
+                                className="w-3 h-3 rounded-full flex-shrink-0"
+                                style={{ backgroundColor: entry.color }}
+                              />
+                              <span
+                                className="font-medium text-gray-900"
+                                style={{ color: '#111827' }}
+                              >
+                                {entry.name}:
+                              </span>
+                              <span
+                                className="font-mono text-gray-900"
+                                style={{ color: '#111827' }}
+                              >
+                                {entry.value?.toExponential(4) || 'N/A'}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )
+                  }}
+                />
+
+                <Legend
+                  wrapperStyle={{
+                    fontSize: '13px',
+                    fontWeight: '500',
+                    paddingTop: '20px',
+                  }}
+                  iconType="line"
+                  content={({ payload }) => {
+                    if (!payload || payload.length === 0) return null
+
+                    return (
+                      <div className="flex flex-wrap justify-center gap-3 px-4">
+                        {payload.map((entry, index) => (
+                          <div
+                            key={`legend-${index}`}
+                            className="flex items-center gap-2 px-3 py-1.5 bg-white border-2 rounded-lg shadow-sm"
+                            style={{ borderColor: entry.color }}
+                          >
+                            <div
+                              className="w-4 h-1 rounded"
                               style={{ backgroundColor: entry.color }}
                             />
-                            <span className="font-medium text-gray-900" style={{ color: '#111827' }}>{entry.name}:</span>
-                            <span className="font-mono text-gray-900" style={{ color: '#111827' }}>
-                              {entry.value?.toExponential(4) || 'N/A'}
+                            <span className="text-sm font-semibold text-gray-900">
+                              {entry.value}
                             </span>
                           </div>
                         ))}
                       </div>
-                    </div>
-                  )
-                }}
-              />
+                    )
+                  }}
+                />
 
-              <Legend
-                wrapperStyle={{
-                  fontSize: '13px',
-                  fontWeight: '500',
-                  paddingTop: '20px'
-                }}
-                iconType="line"
-                content={({ payload }) => {
-                  if (!payload || payload.length === 0) return null
-
+                {displayRates.map((rate) => {
+                  const rateValue = simulation.metadata?.rateConstants?.[rate]
+                  // Only render Line if the rate value is valid
+                  if (rateValue === undefined || rateValue === null || !isFinite(rateValue)) {
+                    console.warn(`Skipping invalid rate ${rate}:`, rateValue)
+                    return null
+                  }
                   return (
-                    <div className="flex flex-wrap justify-center gap-3 px-4">
-                      {payload.map((entry, index) => (
-                        <div
-                          key={`legend-${index}`}
-                          className="flex items-center gap-2 px-3 py-1.5 bg-white border-2 rounded-lg shadow-sm"
-                          style={{ borderColor: entry.color }}
-                        >
-                          <div
-                            className="w-4 h-1 rounded"
-                            style={{ backgroundColor: entry.color }}
-                          />
-                          <span className="text-sm font-semibold text-gray-900">
-                            {entry.value}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
+                    <Line
+                      key={rate}
+                      type="monotone"
+                      dataKey={rate}
+                      stroke={colors[rateParameters.indexOf(rate) % colors.length]}
+                      strokeWidth={3}
+                      dot={false}
+                      name={rate}
+                      connectNulls
+                      isAnimationActive={false}
+                    />
                   )
-                }}
-              />
-
-              {displayRates.map((rate, idx) => {
-                const rateValue = simulation.metadata?.rateConstants?.[rate]
-                // Only render Line if the rate value is valid
-                if (rateValue === undefined || rateValue === null || !isFinite(rateValue)) {
-                  console.warn(`Skipping invalid rate ${rate}:`, rateValue)
-                  return null
-                }
-                return (
-                  <Line
-                    key={rate}
-                    type="monotone"
-                    dataKey={rate}
-                    stroke={colors[rateParameters.indexOf(rate) % colors.length]}
-                    strokeWidth={3}
-                    dot={false}
-                    name={rate}
-                    connectNulls
-                    isAnimationActive={false}
-                  />
-                )
-              })}
-            </LineChart>
-          </ResponsiveContainer>
+                })}
+              </LineChart>
+            </ResponsiveContainer>
           )}
         </div>
 
@@ -416,10 +451,16 @@ export function ReactionRatesPlot() {
             About Reaction Rates:
           </p>
           <ul className="space-y-0.5 ml-4">
-            <li>• <strong>PHOTO.*</strong> = Photolysis reactions (light-dependent)</li>
-            <li>• <strong>USER.*</strong> = User-defined rate parameters</li>
+            <li>
+              • <strong>PHOTO.*</strong> = Photolysis reactions (light-dependent)
+            </li>
+            <li>
+              • <strong>USER.*</strong> = User-defined rate parameters
+            </li>
             <li>• Rate values are constant for this simulation</li>
-            <li>• Y-axis scale: <strong className="text-blue-600">{scaleType.toUpperCase()}</strong></li>
+            <li>
+              • Y-axis scale: <strong className="text-blue-600">{scaleType.toUpperCase()}</strong>
+            </li>
             <li>• Future versions will support time-varying rates</li>
           </ul>
         </div>

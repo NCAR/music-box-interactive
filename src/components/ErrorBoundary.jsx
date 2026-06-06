@@ -12,8 +12,7 @@ class ErrorBoundary extends React.Component {
     this.state = { hasError: false, error: null, errorInfo: null }
   }
 
-  static getDerivedStateFromError(error) {
-    // Update state so the next render will show the fallback UI
+  static getDerivedStateFromError(_error) {
     return { hasError: true }
   }
 
@@ -32,9 +31,7 @@ class ErrorBoundary extends React.Component {
               <div className="flex justify-center mb-3">
                 <AlertCircle className="w-16 h-16 text-red-600" />
               </div>
-              <h3 className="text-lg font-bold text-red-900 mb-2">
-                Oops! Something went wrong
-              </h3>
+              <h3 className="text-lg font-bold text-red-900 mb-2">Oops! Something went wrong</h3>
               <p className="text-sm text-red-700 mb-4">
                 {this.state.error?.message || 'An error occurred while rendering this component'}
               </p>
@@ -44,7 +41,7 @@ class ErrorBoundary extends React.Component {
               >
                 Try Again
               </button>
-              {process.env.NODE_ENV === 'development' && this.state.errorInfo && (
+              {import.meta.env.DEV && this.state.errorInfo && (
                 <details className="mt-4 text-left">
                   <summary className="cursor-pointer text-sm font-semibold text-red-800">
                     Error Details (Development Only)

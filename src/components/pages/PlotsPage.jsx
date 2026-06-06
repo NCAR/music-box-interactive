@@ -15,10 +15,10 @@ export function PlotsPage() {
     { id: 'species', label: 'Chemical Species', Icon: Atom, component: SpeciesPlot },
     { id: 'reactions', label: 'Reaction Rates', Icon: FlaskConical, component: ReactionRatesPlot },
     { id: 'environment', label: 'Environment', Icon: Thermometer, component: EnvironmentPlot },
-    { id: 'Flow Diagram', label: 'Flow Diagram', Icon: Waypoints, component: FlowDiagram }
+    { id: 'Flow Diagram', label: 'Flow Diagram', Icon: Waypoints, component: FlowDiagram },
   ]
 
-  const ActiveComponent = tabs.find(t => t.id === activeTab)?.component
+  const ActiveComponent = tabs.find((t) => t.id === activeTab)?.component
 
   return (
     <div className="space-y-4">

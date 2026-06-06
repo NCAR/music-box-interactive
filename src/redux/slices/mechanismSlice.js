@@ -31,13 +31,13 @@ export const mechanismSlice = createSlice({
       state.species.push(action.payload)
     },
     updateSpecies: (state, action) => {
-      const index = state.species.findIndex(s => s.name === action.payload.name)
+      const index = state.species.findIndex((s) => s.name === action.payload.name)
       if (index !== -1) {
         state.species[index] = action.payload
       }
     },
     removeSpecies: (state, action) => {
-      state.species = state.species.filter(s => s.name !== action.payload)
+      state.species = state.species.filter((s) => s.name !== action.payload)
     },
     setReactions: (state, action) => {
       state.reactions = action.payload
@@ -46,13 +46,13 @@ export const mechanismSlice = createSlice({
       state.reactions.push(action.payload)
     },
     updateReaction: (state, action) => {
-      const index = state.reactions.findIndex(r => r.id === action.payload.id)
+      const index = state.reactions.findIndex((r) => r.id === action.payload.id)
       if (index !== -1) {
         state.reactions[index] = action.payload
       }
     },
     removeReaction: (state, action) => {
-      state.reactions = state.reactions.filter(r => r.id !== action.payload)
+      state.reactions = state.reactions.filter((r) => r.id !== action.payload)
     },
     setLoading: (state, action) => {
       state.loading = action.payload

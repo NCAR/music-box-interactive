@@ -27,7 +27,7 @@ export function EmissionReactionForm({ onAddReaction }) {
       type: 'EMISSION',
       products: [
         {
-          'species name': emissionProduct.toUpperCase(),
+          'species name': products.toUpperCase(),
           coefficient: 1.0,
         },
       ],
@@ -37,7 +37,7 @@ export function EmissionReactionForm({ onAddReaction }) {
 
     onAddReaction(newReaction)
 
-    setEmissionProduct('')
+    setProducts('')
     setEmissionScaling('')
   }
 

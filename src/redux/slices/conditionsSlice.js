@@ -47,8 +47,6 @@ const initialState = {
   exampleLoaded: true,
   source_file: {},
 
-  
-
   // Rate Constants (photolysis rates, etc.)
   rateConstants: {},
 }

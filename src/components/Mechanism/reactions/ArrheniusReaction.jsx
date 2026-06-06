@@ -123,9 +123,7 @@ export function ArrheniusReactionForm({ onAddReaction }) {
           />
         </div>
         <div>
-          <label className="block text-xs font-semibold text-blue-100 mb-1">
-            Parameter B
-          </label>
+          <label className="block text-xs font-semibold text-blue-100 mb-1">Parameter B</label>
           <input
             type="text"
             value={rateB}
@@ -135,9 +133,7 @@ export function ArrheniusReactionForm({ onAddReaction }) {
           />
         </div>
         <div>
-          <label className="block text-xs font-semibold text-blue-100 mb-1">
-            Parameter C
-          </label>
+          <label className="block text-xs font-semibold text-blue-100 mb-1">Parameter C</label>
           <input
             type="text"
             value={rateC}
@@ -147,9 +143,7 @@ export function ArrheniusReactionForm({ onAddReaction }) {
           />
         </div>
         <div>
-          <label className="block text-xs font-semibold text-blue-100 mb-1">
-            Parameter D
-          </label>
+          <label className="block text-xs font-semibold text-blue-100 mb-1">Parameter D</label>
           <input
             type="text"
             value={rateD}
@@ -159,9 +153,7 @@ export function ArrheniusReactionForm({ onAddReaction }) {
           />
         </div>
         <div>
-          <label className="block text-xs font-semibold text-blue-100 mb-1">
-            Parameter E
-          </label>
+          <label className="block text-xs font-semibold text-blue-100 mb-1">Parameter E</label>
           <input
             type="text"
             value={rateE}

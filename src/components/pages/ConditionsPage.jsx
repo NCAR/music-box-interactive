@@ -1,7 +1,12 @@
 import { useState } from 'react'
 import { Card, CardContent } from '../ui/card'
 import { Button } from '../ui/button'
-import { BasicConfigTab, InitialConditionsTab, EvolvingConditionsTab, ReviewTab } from '../Conditions'
+import {
+  BasicConfigTab,
+  InitialConditionsTab,
+  EvolvingConditionsTab,
+  ReviewTab,
+} from '../Conditions'
 import RunSimulationButton from '../RunSimulationButton'
 import NextStepButton from '../NextStepButton'
 
@@ -13,14 +18,32 @@ export function ConditionsPage() {
   const [activeTab, setActiveTab] = useState('basic') // 'basic' | 'initial' | 'evolving' | 'review'
 
   const tabs = [
-    { id: 'basic', label: 'General', component: BasicConfigTab, nextTab: 'initial', nextLabel: 'Next to Initial Conditions' },
-    { id: 'initial', label: 'Initial', component: InitialConditionsTab, nextTab: 'evolving', nextLabel: 'Next to Evolving Conditions' },
-    { id: 'evolving', label: 'Evolving', component: EvolvingConditionsTab, nextTab: 'review', nextLabel: 'Next to Review Configuration' },
+    {
+      id: 'basic',
+      label: 'General',
+      component: BasicConfigTab,
+      nextTab: 'initial',
+      nextLabel: 'Next to Initial Conditions',
+    },
+    {
+      id: 'initial',
+      label: 'Initial',
+      component: InitialConditionsTab,
+      nextTab: 'evolving',
+      nextLabel: 'Next to Evolving Conditions',
+    },
+    {
+      id: 'evolving',
+      label: 'Evolving',
+      component: EvolvingConditionsTab,
+      nextTab: 'review',
+      nextLabel: 'Next to Review Configuration',
+    },
     { id: 'review', label: 'Review', component: ReviewTab },
   ]
 
-  const ActiveComponent = tabs.find(t => t.id === activeTab)?.component
-  const currentTab = tabs.find(t => t.id === activeTab)
+  const ActiveComponent = tabs.find((t) => t.id === activeTab)?.component
+  const currentTab = tabs.find((t) => t.id === activeTab)
 
   return (
     <div className="space-y-4">

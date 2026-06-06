@@ -13,7 +13,9 @@ const normalizeReactionComponents = (components = []) => {
 
 const speciesKey = (species) => {
   if (!species || typeof species !== 'object') return ''
-  return String(species.name || '').trim().toUpperCase()
+  return String(species.name || '')
+    .trim()
+    .toUpperCase()
 }
 
 const mergeDefinedFields = (base, override) => {
@@ -66,7 +68,8 @@ export const reconcileSpeciesWithSource = (speciesList, sourceSpeciesList) => {
 
 const getReactionSides = (reaction) => {
   const reactants = reaction?.reactants || reaction?.['gas-phase species'] || []
-  const products = reaction?.products || reaction?.['gas-phase products'] || reaction?.['alkoxy products'] || []
+  const products =
+    reaction?.products || reaction?.['gas-phase products'] || reaction?.['alkoxy products'] || []
 
   return {
     reactants: Array.isArray(reactants) ? reactants : [reactants],
@@ -93,15 +96,10 @@ const formatReactionComponent = (component) => {
 const toDisplayReactionName = (reaction) => {
   const { reactants, products } = getReactionSides(reaction)
 
-  const reactantStr = reactants
-    .map(formatReactionComponent)
-    .filter(Boolean)
-    .join(' + ') || '∅'
+  const reactantStr = reactants.map(formatReactionComponent).filter(Boolean).join(' + ') || '∅'
 
-  const productStr = products
-    .map(formatReactionComponent)
-    .filter(Boolean)
-    .join(' + ') || '(removed)'
+  const productStr =
+    products.map(formatReactionComponent).filter(Boolean).join(' + ') || '(removed)'
 
   return `${reactantStr} -> ${productStr}`
 }
@@ -178,7 +176,10 @@ export const serializeReaction = (reaction) => {
   delete serialized.lambdaFunction
 
   // Lambda callbacks are registered by label "Lambda.<name>" in MUSICA.
-  if (serialized.type === 'LAMBDA_RATE_CONSTANT' && (!serialized.name || !String(serialized.name).trim())) {
+  if (
+    serialized.type === 'LAMBDA_RATE_CONSTANT' &&
+    (!serialized.name || !String(serialized.name).trim())
+  ) {
     const lhs = Array.isArray(serialized.reactants)
       ? serialized.reactants
           .map((component) => component?.['species name'] || component?.name)
@@ -196,15 +197,23 @@ export const serializeReaction = (reaction) => {
 
   if (serialized.reactants) serialized.reactants = normalizeReactionComponents(serialized.reactants)
   if (serialized.products) serialized.products = normalizeReactionComponents(serialized.products)
-  if (serialized['gas-phase products']) serialized['gas-phase products'] = normalizeReactionComponents(serialized['gas-phase products'])
-  if (serialized['alkoxy products']) serialized['alkoxy products'] = normalizeReactionComponents(serialized['alkoxy products'])
-  if (serialized['nitrate products']) serialized['nitrate products'] = normalizeReactionComponents(serialized['nitrate products'])
+  if (serialized['gas-phase products'])
+    serialized['gas-phase products'] = normalizeReactionComponents(serialized['gas-phase products'])
+  if (serialized['alkoxy products'])
+    serialized['alkoxy products'] = normalizeReactionComponents(serialized['alkoxy products'])
+  if (serialized['nitrate products'])
+    serialized['nitrate products'] = normalizeReactionComponents(serialized['nitrate products'])
 
   // UI surface reactions are authored as reactants/products; v1 expects gas-phase fields.
   if (serialized.type === 'SURFACE') {
-    if (serialized['gas-phase species'] === undefined && Array.isArray(serialized.reactants) && serialized.reactants.length > 0) {
+    if (
+      serialized['gas-phase species'] === undefined &&
+      Array.isArray(serialized.reactants) &&
+      serialized.reactants.length > 0
+    ) {
       const firstReactant = serialized.reactants[0]
-      serialized['gas-phase species'] = firstReactant?.['species name'] || firstReactant?.name || firstReactant
+      serialized['gas-phase species'] =
+        firstReactant?.['species name'] || firstReactant?.name || firstReactant
     }
 
     if (!serialized['gas-phase products'] && Array.isArray(serialized.products)) {
@@ -224,16 +233,19 @@ export const serializeSpecies = (species) => {
   }
 
   const {
-    id,
+    id: _id,
     molecular_weight_kg_mol,
-    properties,
-    phase,
+    properties: _properties,
+    phase: _phase,
     'diffusion coefficient [m2 s-1]': _uiDiffusion,
     diffusion_coefficient_m2_s: _legacyDiffusion,
     ...serialized
   } = species
 
-  if (serialized['molecular weight [kg mol-1]'] === undefined && molecular_weight_kg_mol !== undefined) {
+  if (
+    serialized['molecular weight [kg mol-1]'] === undefined &&
+    molecular_weight_kg_mol !== undefined
+  ) {
     serialized['molecular weight [kg mol-1]'] = molecular_weight_kg_mol
   }
 
@@ -264,10 +276,12 @@ export const buildPhases = (sourceMechanism, species) => {
 }
 
 export const getMechanismLabel = (mechanismData) => {
-  return mechanismData.currentExample?.name
-    || mechanismData.currentExample?.mechanism_name
-    || mechanismData.mechanism?.mechanism?.name
-    || 'local'
+  return (
+    mechanismData.currentExample?.name ||
+    mechanismData.currentExample?.mechanism_name ||
+    mechanismData.mechanism?.mechanism?.name ||
+    'local'
+  )
 }
 
 const extractSpeciesNames = (components) => {

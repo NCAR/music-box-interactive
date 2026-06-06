@@ -5,7 +5,19 @@ import { SpeciesEditor, ReactionEditor } from '../Mechanism'
 import NextStepButton from '../NextStepButton'
 import { useDispatch, useSelector } from 'react-redux'
 import { hydrateInitialConditions, hydrateEvolvingConditions } from '../../utils/hydrateConditions'
-import { setTemperature, setPressure, setConcentrations, setRateConstants, markInitialHydrated, setEvolvingEnabled, setEvolvingTimes, setEvolvingTemperature, setEvolvingPressure, setEvolvingAdditionalSeries, markEvolvingHydrated } from '../../redux/slices/conditionsSlice'
+import {
+  setTemperature,
+  setPressure,
+  setConcentrations,
+  setRateConstants,
+  markInitialHydrated,
+  setEvolvingEnabled,
+  setEvolvingTimes,
+  setEvolvingTemperature,
+  setEvolvingPressure,
+  setEvolvingAdditionalSeries,
+  markEvolvingHydrated,
+} from '../../redux/slices/conditionsSlice'
 
 /**
  * MechanismPage Component
@@ -14,10 +26,10 @@ import { setTemperature, setPressure, setConcentrations, setRateConstants, markI
 export function MechanismPage() {
   const [activeTab, setActiveTab] = useState('species') // 'species' | 'reactions'
   const dispatch = useDispatch()
-  const exampleFiles = useSelector(state => state.conditions.exampleFiles)
-  const hydratedInitialId = useSelector(state => state.conditions.hydration.initialExampleId)
-  const hydratedEvolvingId = useSelector(state => state.conditions.hydration.evolvingExampleId)
-  const currentExample = useSelector(state => state.mechanism.currentExample)
+  const exampleFiles = useSelector((state) => state.conditions.exampleFiles)
+  const hydratedInitialId = useSelector((state) => state.conditions.hydration.initialExampleId)
+  const hydratedEvolvingId = useSelector((state) => state.conditions.hydration.evolvingExampleId)
+  const currentExample = useSelector((state) => state.mechanism.currentExample)
 
   // Hydrate initial and evolving conditions on mount/example change
   useEffect(() => {
@@ -43,12 +55,24 @@ export function MechanismPage() {
   }, [exampleFiles, currentExample, hydratedInitialId, hydratedEvolvingId, dispatch])
 
   const tabs = [
-    { id: 'species', label: 'Species', component: SpeciesEditor, nextTab: 'reactions', nextLabel: 'Next to Add Reactions' },
-    { id: 'reactions', label: 'Reactions', component: ReactionEditor, nextTo: '/conditions', nextLabel: 'Next to Configure Conditions' },
+    {
+      id: 'species',
+      label: 'Species',
+      component: SpeciesEditor,
+      nextTab: 'reactions',
+      nextLabel: 'Next to Add Reactions',
+    },
+    {
+      id: 'reactions',
+      label: 'Reactions',
+      component: ReactionEditor,
+      nextTo: '/conditions',
+      nextLabel: 'Next to Configure Conditions',
+    },
   ]
 
-  const ActiveComponent = tabs.find(t => t.id === activeTab)?.component
-  const currentTab = tabs.find(t => t.id === activeTab)
+  const ActiveComponent = tabs.find((t) => t.id === activeTab)?.component
+  const currentTab = tabs.find((t) => t.id === activeTab)
 
   return (
     <div className="space-y-4">

@@ -35,9 +35,10 @@ export const buildLocalSimulationPayload = ({ mechanismData, conditions }) => {
     sourceSpecies
   ).map(serializeSpecies)
 
-  const reactions = mechanismData.reactions.length > 0
-    ? mechanismData.reactions.map(serializeReaction)
-    : (sourceMechanism.reactions || []).map(serializeReaction)
+  const reactions =
+    mechanismData.reactions.length > 0
+      ? mechanismData.reactions.map(serializeReaction)
+      : (sourceMechanism.reactions || []).map(serializeReaction)
 
   const reconciledReactions = reconcileReactionNamesWithSource(
     reactions,
@@ -56,7 +57,11 @@ export const buildLocalSimulationPayload = ({ mechanismData, conditions }) => {
     conditions: buildSolverConditions(conditions),
     mechanism: {
       ...sourceMechanism,
-      name: sourceMechanism.name || mechanismData.currentExample?.name || mechanismData.currentExample || 'custom',
+      name:
+        sourceMechanism.name ||
+        mechanismData.currentExample?.name ||
+        mechanismData.currentExample ||
+        'custom',
       reactions: reconciledReactions,
       species: toSolverSpecies(species),
       phases,
@@ -64,12 +69,20 @@ export const buildLocalSimulationPayload = ({ mechanismData, conditions }) => {
     },
   }
 
-  if (!payload.mechanism || !Array.isArray(payload.mechanism.species) || !Array.isArray(payload.mechanism.reactions)) {
-    throw new Error('Invalid mechanism payload: expected mechanism.species[] and mechanism.reactions[] before solve()')
+  if (
+    !payload.mechanism ||
+    !Array.isArray(payload.mechanism.species) ||
+    !Array.isArray(payload.mechanism.reactions)
+  ) {
+    throw new Error(
+      'Invalid mechanism payload: expected mechanism.species[] and mechanism.reactions[] before solve()'
+    )
   }
 
   if (!Array.isArray(payload.conditions?.data) || payload.conditions.data.length === 0) {
-    throw new Error('Invalid conditions payload: expected conditions.data[] with at least one block')
+    throw new Error(
+      'Invalid conditions payload: expected conditions.data[] with at least one block'
+    )
   }
 
   validateMechanismPayload(payload.mechanism)

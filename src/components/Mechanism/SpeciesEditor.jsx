@@ -5,7 +5,7 @@ import { Button } from '../ui/button'
 import { addSpecies, updateSpecies, removeSpecies } from '../../redux/slices/mechanismSlice'
 import { useToast } from '@/hooks/use-toast'
 import { Info, Plus, Atom, Lightbulb } from 'lucide-react'
-import { addSpeciesIfValid } from './speciesUtils';
+import { addSpeciesIfValid } from './speciesUtils'
 
 // visual editor for species in the mechanism
 export function SpeciesEditor() {
@@ -23,21 +23,36 @@ export function SpeciesEditor() {
   const filteredSpecies = species
     .filter((sp) => sp.name.toLowerCase().includes(speciesSearch.toLowerCase()))
     .sort((a, b) => {
-      const search = speciesSearch.trim().toLowerCase();
-      if (!search) return 0;
-      const aExact = a.name.toLowerCase() === search;
-      const bExact = b.name.toLowerCase() === search;
-      if (aExact && !bExact) return -1;
-      if (!aExact && bExact) return 1;
+      const search = speciesSearch.trim().toLowerCase()
+      if (!search) return 0
+      const aExact = a.name.toLowerCase() === search
+      const bExact = b.name.toLowerCase() === search
+      if (aExact && !bExact) return -1
+      if (!aExact && bExact) return 1
       // Otherwise, keep original order
-      return 0;
-    });
+      return 0
+    })
 
   // check if predefined mech
   const preDefinedMechanisms = {
-    chapman: { name: 'Chapman', species: 5, reactions: 6, description: 'Stratospheric oxygen chemistry' },
-    ts1: { name: 'TS1', species: 209, reactions: 512, description: '209 species tropospheric mechanism' },
-    analytical: { name: 'Analytical', species: 3, reactions: 3, description: 'Simple test mechanism (A→B→C)' },
+    chapman: {
+      name: 'Chapman',
+      species: 5,
+      reactions: 6,
+      description: 'Stratospheric oxygen chemistry',
+    },
+    ts1: {
+      name: 'TS1',
+      species: 209,
+      reactions: 512,
+      description: '209 species tropospheric mechanism',
+    },
+    analytical: {
+      name: 'Analytical',
+      species: 3,
+      reactions: 3,
+      description: 'Simple test mechanism (A→B→C)',
+    },
   }
   const isPredefined = preDefinedMechanisms[selectedMechanism]
 
@@ -158,10 +173,12 @@ export function SpeciesEditor() {
       return
     }
 
-    dispatch(updateSpecies({
-      ...existingSpecies,
-      phase: phaseValue || 'Gas',
-    }))
+    dispatch(
+      updateSpecies({
+        ...existingSpecies,
+        phase: phaseValue || 'Gas',
+      })
+    )
   }
 
   return (
@@ -171,9 +188,7 @@ export function SpeciesEditor() {
         <Card className="border-2 border-white/20">
           <CardHeader>
             <CardTitle>Using Pre-defined Mechanism: {isPredefined.name}</CardTitle>
-            <CardDescription>
-              {isPredefined.description}
-            </CardDescription>
+            <CardDescription>{isPredefined.description}</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-2 gap-4 mb-4">
@@ -221,8 +236,8 @@ export function SpeciesEditor() {
                 Extending Pre-defined Mechanism
               </p>
               <p className="text-blue-700 text-xs">
-                You can add custom species to the {isPredefined.name} mechanism.
-                This allows you to extend the mechanism with additional species for specialized simulations.
+                You can add custom species to the {isPredefined.name} mechanism. This allows you to
+                extend the mechanism with additional species for specialized simulations.
               </p>
             </div>
           )}
@@ -283,9 +298,15 @@ export function SpeciesEditor() {
                   onChange={(e) => setNewSpeciesPhase(e.target.value)}
                   className="w-full px-3 py-2 border-2 border-white/30 bg-white/10 text-white rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
                 >
-                  <option value="Gas" className="text-black">Gas</option>
-                  <option value="Aqueous" className="text-black">Aqueous</option>
-                  <option value="Surface" className="text-black">Surface</option>
+                  <option value="Gas" className="text-black">
+                    Gas
+                  </option>
+                  <option value="Aqueous" className="text-black">
+                    Aqueous
+                  </option>
+                  <option value="Surface" className="text-black">
+                    Surface
+                  </option>
                 </select>
               </div>
             </div>
@@ -312,7 +333,7 @@ export function SpeciesEditor() {
             <input
               type="text"
               value={speciesSearch}
-              onChange={e => setSpeciesSearch(e.target.value)}
+              onChange={(e) => setSpeciesSearch(e.target.value)}
               placeholder="Search species by name"
               className="w-full mb-3 px-3 py-2 border-2 border-white/30 bg-white/10 text-white placeholder:text-gray-400 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
             />
@@ -338,9 +359,7 @@ export function SpeciesEditor() {
                   <p className="text-blue-100 font-medium text-sm mb-1">
                     {isPredefined.species} pre-configured + {species.length} custom species
                   </p>
-                  <p className="text-xs text-gray-400">
-                    Custom species shown below
-                  </p>
+                  <p className="text-xs text-gray-400">Custom species shown below</p>
                 </div>
                 <div className="space-y-2 max-h-96 overflow-y-auto">
                   {filteredSpecies.length === 0 ? (
@@ -355,15 +374,23 @@ export function SpeciesEditor() {
                           <div className="flex flex-wrap items-center gap-2 mb-1">
                             <h5 className="font-semibold text-sm">{sp.name}</h5>
                             <div className="flex items-center gap-1">
-                              <span className="text-[11px] uppercase tracking-wide text-blue-100">Phase</span>
+                              <span className="text-[11px] uppercase tracking-wide text-blue-100">
+                                Phase
+                              </span>
                               <select
                                 value={sp.phase || 'Gas'}
                                 onChange={(e) => handlePhaseSave(sp.name, e.target.value)}
                                 className="rounded-md border border-white/20 bg-white/10 px-2 py-1 text-[11px] font-semibold uppercase tracking-wide text-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-600"
                               >
-                                <option value="Gas" className="text-black">Gas</option>
-                                <option value="Aqueous" className="text-black">Aqueous</option>
-                                <option value="Surface" className="text-black">Surface</option>
+                                <option value="Gas" className="text-black">
+                                  Gas
+                                </option>
+                                <option value="Aqueous" className="text-black">
+                                  Aqueous
+                                </option>
+                                <option value="Surface" className="text-black">
+                                  Surface
+                                </option>
                               </select>
                             </div>
                           </div>
@@ -377,7 +404,9 @@ export function SpeciesEditor() {
                             <input
                               type="text"
                               defaultValue={sp['diffusion coefficient [m2 s-1]'] ?? ''}
-                              onBlur={(e) => handleDiffusionCoefficientSave(sp.name, e.target.value)}
+                              onBlur={(e) =>
+                                handleDiffusionCoefficientSave(sp.name, e.target.value)
+                              }
                               onKeyDown={(e) => {
                                 if (e.key === 'Enter') {
                                   e.currentTarget.blur()
@@ -420,15 +449,23 @@ export function SpeciesEditor() {
                         <div className="flex flex-wrap items-center gap-2 mb-1">
                           <h5 className="font-semibold text-sm">{sp.name}</h5>
                           <div className="flex items-center gap-1">
-                            <span className="text-[11px] uppercase tracking-wide text-blue-100">Phase</span>
+                            <span className="text-[11px] uppercase tracking-wide text-blue-100">
+                              Phase
+                            </span>
                             <select
                               value={sp.phase || 'Gas'}
                               onChange={(e) => handlePhaseSave(sp.name, e.target.value)}
                               className="rounded-md border border-white/20 bg-white/10 px-2 py-1 text-[11px] font-semibold uppercase tracking-wide text-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-600"
                             >
-                              <option value="Gas" className="text-black">Gas</option>
-                              <option value="Aqueous" className="text-black">Aqueous</option>
-                              <option value="Surface" className="text-black">Surface</option>
+                              <option value="Gas" className="text-black">
+                                Gas
+                              </option>
+                              <option value="Aqueous" className="text-black">
+                                Aqueous
+                              </option>
+                              <option value="Surface" className="text-black">
+                                Surface
+                              </option>
                             </select>
                           </div>
                         </div>

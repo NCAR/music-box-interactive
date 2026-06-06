@@ -3,7 +3,7 @@ import { Provider } from 'react-redux';
 import { configureStore } from '@reduxjs/toolkit';
 import mechanismReducer, { setMechanism, setCurrentExample, addSpecies, addReaction } from '../src/redux/slices/mechanismSlice';
 import conditionsReducer, { setConditions, setDuration, setTimeStep, setOutputFrequency, setExampleFiles, setExampleLoaded, setSourceFile } from '../src/redux/slices/conditionsSlice';
-import simulationReducer, { setResults, setStatus, setMetadata } from '../src/redux/slices/simulationSlice';
+import simulationReducer from '../src/redux/slices/simulationSlice';
 import { render, fireEvent, waitFor, screen } from '@testing-library/react';
 
 import { RunSimulationButton } from '../src/components/RunSimulationButton';

@@ -13,7 +13,7 @@ import {
   setSpecies,
   setReactions,
   setCurrentExample,
-  setMechanism
+  setMechanism,
 } from '../../redux/slices/mechanismSlice'
 import {
   resetConditions,
@@ -25,7 +25,7 @@ import {
   setConcentrations,
   loadConditions,
   setConditions,
-  setExampleLoaded
+  setExampleLoaded,
 } from '../../redux/slices/conditionsSlice'
 import { useToast } from '@/hooks/use-toast'
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert'
@@ -37,7 +37,6 @@ export function DashboardPage() {
   const navigate = useNavigate()
   const { toast } = useToast()
   const fileInputRef = useRef(null)
-  const [uploadError, setUploadError] = useState(null)
   const [showConfirmation, setShowConfirmation] = useState(false)
   const [showExamples, setShowExamples] = useState(false)
   const [showSimulationStatus, setShowSimulationStatus] = useState(false)
@@ -73,7 +72,9 @@ export function DashboardPage() {
 
         // validate config file
         if (!config.mechanism || !config.conditions) {
-          throw new Error('Invalid configuration file format. Must contain mechanism and conditions.')
+          throw new Error(
+            'Invalid configuration file format. Must contain mechanism and conditions.'
+          )
         }
 
         // load mechanism config
@@ -83,16 +84,16 @@ export function DashboardPage() {
 
         if (config.mechanism.species && Array.isArray(config.mechanism.species)) {
           // normalize to uppercase
-          const normalizedSpecies = config.mechanism.species.map(sp => ({
+          const normalizedSpecies = config.mechanism.species.map((sp) => ({
             ...sp,
-            name: sp.name.toUpperCase()
+            name: sp.name.toUpperCase(),
           }))
           dispatch(setSpecies(normalizedSpecies))
         }
 
         if (config.mechanism.reactions && Array.isArray(config.mechanism.reactions)) {
           // Add ids for UI operations, but preserve all mechanism keys losslessly.
-          const reactionsWithIds = config.mechanism.reactions.map(reaction => ({
+          const reactionsWithIds = config.mechanism.reactions.map((reaction) => ({
             ...reaction,
             id: reaction.id || uuidv4(),
           }))
@@ -103,11 +104,13 @@ export function DashboardPage() {
         dispatch(setMechanism(config))
 
         // mark as uploaded config
-        dispatch(setCurrentExample({
-          id: 'uploaded',
-          name: `Uploaded: ${file.name}`,
-          description: 'Custom configuration uploaded from file'
-        }))
+        dispatch(
+          setCurrentExample({
+            id: 'uploaded',
+            name: `Uploaded: ${file.name}`,
+            description: 'Custom configuration uploaded from file',
+          })
+        )
 
         // load conditions
         if (config.conditions.basic) {
@@ -142,9 +145,11 @@ export function DashboardPage() {
         // load evolving conditions if present
         if (config.conditions.evolving) {
           // merge in evolving conditions
-          dispatch(loadConditions({
-            evolving: config.conditions.evolving
-          }))
+          dispatch(
+            loadConditions({
+              evolving: config.conditions.evolving,
+            })
+          )
         }
 
         // Preserve source conditions object for solver input.
@@ -165,7 +170,8 @@ export function DashboardPage() {
       } catch (err) {
         toast({
           title: 'Failed to Load Configuration',
-          description: err.message || 'Failed to load configuration file. Please check the file format.',
+          description:
+            err.message || 'Failed to load configuration file. Please check the file format.',
           variant: 'destructive',
         })
       }
@@ -178,7 +184,9 @@ export function DashboardPage() {
       {/* Welcome Section */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg xs:text-xl sm:text-2xl">MusicBox Interactive Dashboard</CardTitle>
+          <CardTitle className="text-lg xs:text-xl sm:text-2xl">
+            MusicBox Interactive Dashboard
+          </CardTitle>
           <CardDescription className="text-sm xs:text-base text-white-200 italic">
             Atmospheric Chemistry Simulation Platform powered by MUSICA/MICM
           </CardDescription>
@@ -223,7 +231,9 @@ export function DashboardPage() {
             <Rocket className="w-5 h-5 xs:w-6 xs:h-6" />
             Getting Started
           </CardTitle>
-          <CardDescription className="text-white italic text-sm xs:text-base">Choose how you want to start using MusicBox</CardDescription>
+          <CardDescription className="text-white italic text-sm xs:text-base">
+            Choose how you want to start using MusicBox
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
           <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-3 gap-3">
@@ -279,7 +289,8 @@ export function DashboardPage() {
               </div>
               <h4 className="font-bold mb-2 text-sm xs:text-base">Select Example</h4>
               <p className="text-xs text-gray-200 mb-3 italic">
-                Choose from pre-configured examples (Chapman, TS1, Full Configuration) to get started quickly.
+                Choose from pre-configured examples (Chapman, TS1, Full Configuration) to get
+                started quickly.
               </p>
               <Button
                 variant="glass"
@@ -291,7 +302,9 @@ export function DashboardPage() {
                   if (newShowState) {
                     // Scroll to examples section after a short delay to allow rendering
                     setTimeout(() => {
-                      document.getElementById('example-section')?.scrollIntoView({ behavior: 'smooth' })
+                      document
+                        .getElementById('example-section')
+                        ?.scrollIntoView({ behavior: 'smooth' })
                     }, 100)
                   }
                 }}
@@ -329,7 +342,10 @@ export function DashboardPage() {
         </Alert>
       )}
       {showConfirmation && (
-        <div className="fixed inset-0 bg-black/50 z-40" onClick={() => setShowConfirmation(false)} />
+        <div
+          className="fixed inset-0 bg-black/50 z-40"
+          onClick={() => setShowConfirmation(false)}
+        />
       )}
 
       {/* Current Example Indicator */}
@@ -344,7 +360,6 @@ export function DashboardPage() {
           <ExampleLoader />
         </div>
       )}
-
     </div>
   )
 }

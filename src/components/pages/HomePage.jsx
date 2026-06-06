@@ -17,12 +17,27 @@ function HomePage({ onNavigate }) {
               </h1>
             </div>
             <div className="flex items-center space-x-2 xs:space-x-4 sm:space-x-6 md:space-x-8">
-              <button onClick={() => onNavigate('home')} className="text-[#35577D] font-bold border-b-2 border-[#35577D] text-xs xs:text-sm sm:text-base">Home</button>
-              <button onClick={() => onNavigate('about')} className="text-[#141E30] font-bold hover:text-[#35577D] text-xs xs:text-sm sm:text-base">About</button>
+              <button
+                onClick={() => onNavigate('home')}
+                className="text-[#35577D] font-bold border-b-2 border-[#35577D] text-xs xs:text-sm sm:text-base"
+              >
+                Home
+              </button>
+              <button
+                onClick={() => onNavigate('about')}
+                className="text-[#141E30] font-bold hover:text-[#35577D] text-xs xs:text-sm sm:text-base"
+              >
+                About
+              </button>
               {/* <a href="#model" className="text-gray-700 font-bold hover:text-blue-900">Model</a> */}
               {/* <a href="#data" className="text-gray-700 font-bold hover:text-blue-900">Data</a> */}
               {/* <a href="#documentation" className="text-[#141E30] font-bold hover:text-[#35577D]">Documentation</a> */}
-              <button onClick={() => onNavigate('contact')} className="text-[#141E30] font-bold hover:text-[#35577D] text-xs xs:text-sm sm:text-base">Contact</button>
+              <button
+                onClick={() => onNavigate('contact')}
+                className="text-[#141E30] font-bold hover:text-[#35577D] text-xs xs:text-sm sm:text-base"
+              >
+                Contact
+              </button>
             </div>
           </div>
         </div>
@@ -87,18 +102,28 @@ function HomePage({ onNavigate }) {
                       {/* Dual Icon Container with Vertical Bar */}
                       <div className="mx-auto mb-3 xs:mb-4 flex items-center justify-center gap-2 xs:gap-3 sm:gap-4">
                         <div className="w-12 h-12 xs:w-16 xs:h-16 sm:w-20 sm:h-20 rounded-lg backdrop-blur-sm bg-gradient-to-br bg-white/5 border border-white/50 flex items-center justify-center shadow-lg p-2 xs:p-2.5 sm:p-3">
-                          <img src="/icons/analysis.png" alt="Analysis" className="w-full h-full object-contain" />
+                          <img
+                            src="/icons/analysis.png"
+                            alt="Analysis"
+                            className="w-full h-full object-contain"
+                          />
                         </div>
                         {/* Vertical Bar */}
                         <div className="w-0.5 xs:w-1 h-12 xs:h-16 sm:h-20 bg-white/30 rounded-full"></div>
                         <div className="w-12 h-12 xs:w-16 xs:h-16 sm:w-20 sm:h-20 rounded-lg backdrop-blur-sm bg-white/5 border border-white/40 flex items-center justify-center shadow-lg p-2 xs:p-2.5 sm:p-3">
-                          <img src="/icons/project-management.png" alt="Project Management" className="w-full h-full object-contain" />
+                          <img
+                            src="/icons/project-management.png"
+                            alt="Project Management"
+                            className="w-full h-full object-contain"
+                          />
                         </div>
                       </div>
-                      <h3 className="text-base xs:text-lg sm:text-xl md:text-2xl font-bold mb-2 xs:mb-3 mt-1 xs:mt-2 text-white">Interactive Modeling Tools</h3>
+                      <h3 className="text-base xs:text-lg sm:text-xl md:text-2xl font-bold mb-2 xs:mb-3 mt-1 xs:mt-2 text-white">
+                        Interactive Modeling Tools
+                      </h3>
                       <p className="text-xs xs:text-sm sm:text-base leading-relaxed text-white/90 mb-3 xs:mb-4 flex-grow">
-                        Simulate chamber experiments, recreate field observations, or evaluate new chemistry systems
-                        with our intuitive web-based interface
+                        Simulate chamber experiments, recreate field observations, or evaluate new
+                        chemistry systems with our intuitive web-based interface
                       </p>
                     </div>
                   </div>
@@ -110,12 +135,18 @@ function HomePage({ onNavigate }) {
                     <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent opacity-50"></div>
                     <div className="relative p-4 xs:p-6 sm:p-8 text-center flex flex-col h-full">
                       <div className="mx-auto mb-4 xs:mb-5 sm:mb-6 w-12 h-12 xs:w-16 xs:h-16 sm:w-20 sm:h-20 rounded-lg backdrop-blur-sm bg-gradient-to-br bg-white/5 border border-white/50 flex items-center justify-center shadow-lg p-2 xs:p-2.5 sm:p-3">
-                        <img src="/icons/database-storage.png" alt="Database" className="w-full h-full object-contain" />
+                        <img
+                          src="/icons/database-storage.png"
+                          alt="Database"
+                          className="w-full h-full object-contain"
+                        />
                       </div>
-                      <h3 className="text-base xs:text-lg sm:text-xl md:text-2xl font-bold mb-2 xs:mb-3 text-white">Comprehensive Data Archives</h3>
+                      <h3 className="text-base xs:text-lg sm:text-xl md:text-2xl font-bold mb-2 xs:mb-3 text-white">
+                        Comprehensive Data Archives
+                      </h3>
                       <p className="text-xs xs:text-sm sm:text-base leading-relaxed text-white/90 mb-3 xs:mb-4 flex-grow">
-                        Access NCAR-validated mechanisms including TS1 (209 species), Chapman, and custom
-                        configurations for your research needs
+                        Access NCAR-validated mechanisms including TS1 (209 species), Chapman, and
+                        custom configurations for your research needs
                       </p>
                     </div>
                   </div>
@@ -127,12 +158,18 @@ function HomePage({ onNavigate }) {
                     <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent opacity-50"></div>
                     <div className="relative p-4 xs:p-6 sm:p-8 text-center flex flex-col h-full">
                       <div className="mx-auto mb-4 xs:mb-5 sm:mb-6 w-12 h-12 xs:w-16 xs:h-16 sm:w-20 sm:h-20 rounded-lg backdrop-blur-sm bg-gradient-to-br bg-white/5 border border-white/50 flex items-center justify-center shadow-lg p-2 xs:p-2.5 sm:p-3">
-                        <img src="/icons/ai-research.png" alt="AI Research" className="w-full h-full object-contain" />
+                        <img
+                          src="/icons/ai-research.png"
+                          alt="AI Research"
+                          className="w-full h-full object-contain"
+                        />
                       </div>
-                      <h3 className="text-base xs:text-lg sm:text-xl md:text-2xl font-bold mb-2 xs:mb-3 text-white">Collaborative Research Environment</h3>
+                      <h3 className="text-base xs:text-lg sm:text-xl md:text-2xl font-bold mb-2 xs:mb-3 text-white">
+                        Collaborative Research Environment
+                      </h3>
                       <p className="text-xs xs:text-sm sm:text-base leading-relaxed text-white/90 mb-3 xs:mb-4 flex-grow">
-                        Share your chemical systems with the community for use in participating models
-                        and advance atmospheric science together
+                        Share your chemical systems with the community for use in participating
+                        models and advance atmospheric science together
                       </p>
                     </div>
                   </div>
@@ -153,7 +190,7 @@ function HomePage({ onNavigate }) {
                 src="/logos/NSF-NCAR.png"
                 alt="NSF-NCAR"
                 className="h-16 xs:h-20 sm:h-24 object-contain"
-                onError={(e) => e.target.style.display='none'}
+                onError={(e) => (e.target.style.display = 'none')}
               />
             </div>
 

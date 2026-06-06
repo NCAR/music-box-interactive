@@ -51,7 +51,18 @@ export function TernaryChemicalActivationReactionForm({ onAddReaction }) {
     const parsedFc = parseOptionalNumber(fc)
     const parsedN = parseOptionalNumber(nValue)
 
-    if ([parsedK0A, parsedK0B, parsedK0C, parsedKinfA, parsedKinfB, parsedKinfC, parsedFc, parsedN].some((entry) => entry.invalid)) {
+    if (
+      [
+        parsedK0A,
+        parsedK0B,
+        parsedK0C,
+        parsedKinfA,
+        parsedKinfB,
+        parsedKinfC,
+        parsedFc,
+        parsedN,
+      ].some((entry) => entry.invalid)
+    ) {
       setError('All kinetic parameters must be valid numbers when provided')
       setTimeout(() => setError(null), 3000)
       return
@@ -153,7 +164,9 @@ export function TernaryChemicalActivationReactionForm({ onAddReaction }) {
           />
         </div>
         <div>
-          <label className="block text-xs font-semibold text-blue-100 mb-1">kinf_A (optional)</label>
+          <label className="block text-xs font-semibold text-blue-100 mb-1">
+            kinf_A (optional)
+          </label>
           <input
             type="text"
             value={kinfA}
@@ -163,7 +176,9 @@ export function TernaryChemicalActivationReactionForm({ onAddReaction }) {
           />
         </div>
         <div>
-          <label className="block text-xs font-semibold text-blue-100 mb-1">kinf_B (optional)</label>
+          <label className="block text-xs font-semibold text-blue-100 mb-1">
+            kinf_B (optional)
+          </label>
           <input
             type="text"
             value={kinfB}
@@ -173,7 +188,9 @@ export function TernaryChemicalActivationReactionForm({ onAddReaction }) {
           />
         </div>
         <div>
-          <label className="block text-xs font-semibold text-blue-100 mb-1">kinf_C (optional)</label>
+          <label className="block text-xs font-semibold text-blue-100 mb-1">
+            kinf_C (optional)
+          </label>
           <input
             type="text"
             value={kinfC}

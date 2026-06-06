@@ -23,7 +23,9 @@ export function SurfaceReactionForm({ onAddReaction }) {
     }
 
     const hasReactionProbability = reactionProbability.trim().length > 0
-    const reactionProbabilityValue = hasReactionProbability ? parseFloat(reactionProbability) : undefined
+    const reactionProbabilityValue = hasReactionProbability
+      ? parseFloat(reactionProbability)
+      : undefined
 
     if (hasReactionProbability && Number.isNaN(reactionProbabilityValue)) {
       setError('Reaction probability must be a valid number')

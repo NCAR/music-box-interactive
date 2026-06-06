@@ -1,26 +1,22 @@
-import {
-  DEFAULT_PRESSURE_PA,
-  DEFAULT_TEMPERATURE_K,
-} from './constants'
+import { DEFAULT_PRESSURE_PA, DEFAULT_TEMPERATURE_K } from './constants'
 
 const hasUiConditionState = (conditions) => {
   const evolving = conditions?.evolving || {}
 
   return (
-    Object.keys(conditions?.initial?.concentrations || {}).length > 0
-    || Object.keys(conditions?.rateConstants || {}).length > 0
-    || evolving.enabled === true
-    || (Array.isArray(evolving.times) && evolving.times.length > 0)
-    || (Array.isArray(evolving.temperature) && evolving.temperature.length > 0)
-    || (Array.isArray(evolving.pressure) && evolving.pressure.length > 0)
-    || Object.keys(evolving.additionalSeries || {}).length > 0
+    Object.keys(conditions?.initial?.concentrations || {}).length > 0 ||
+    Object.keys(conditions?.rateConstants || {}).length > 0 ||
+    evolving.enabled === true ||
+    (Array.isArray(evolving.times) && evolving.times.length > 0) ||
+    (Array.isArray(evolving.temperature) && evolving.temperature.length > 0) ||
+    (Array.isArray(evolving.pressure) && evolving.pressure.length > 0) ||
+    Object.keys(evolving.additionalSeries || {}).length > 0
   )
 }
 
 const hasHydratedUiState = (conditions) => {
   return Boolean(
-    conditions?.hydration?.initialExampleId
-    || conditions?.hydration?.evolvingExampleId
+    conditions?.hydration?.initialExampleId || conditions?.hydration?.evolvingExampleId
   )
 }
 
@@ -55,23 +51,18 @@ export const buildSolverConditions = (conditions) => {
   const rateConstants = { ...(conditions.rateConstants || {}) }
 
   const evolvingFromUi = conditions.evolving || {}
-  const uiHasEvolvingState = (
-    evolvingFromUi.enabled === true
-    || (Array.isArray(evolvingFromUi.times) && evolvingFromUi.times.length > 0)
-    || (Array.isArray(evolvingFromUi.temperature) && evolvingFromUi.temperature.length > 0)
-    || (Array.isArray(evolvingFromUi.pressure) && evolvingFromUi.pressure.length > 0)
-    || Object.keys(evolvingFromUi.additionalSeries || {}).length > 0
-  )
-  const evolving = uiHasEvolvingState ? evolvingFromUi : (source.evolving || {})
+  const uiHasEvolvingState =
+    evolvingFromUi.enabled === true ||
+    (Array.isArray(evolvingFromUi.times) && evolvingFromUi.times.length > 0) ||
+    (Array.isArray(evolvingFromUi.temperature) && evolvingFromUi.temperature.length > 0) ||
+    (Array.isArray(evolvingFromUi.pressure) && evolvingFromUi.pressure.length > 0) ||
+    Object.keys(evolvingFromUi.additionalSeries || {}).length > 0
+  const evolving = uiHasEvolvingState ? evolvingFromUi : source.evolving || {}
   const additionalSeries = evolving.additionalSeries || {}
   const dataBlocks = []
 
   const initialHeaders = ['time.s', 'ENV.temperature.K', 'ENV.pressure.Pa']
-  const initialRow = [
-    0,
-    initial.temperature,
-    initial.pressure,
-  ]
+  const initialRow = [0, initial.temperature, initial.pressure]
 
   Object.entries(initial.concentrations || {}).forEach(([species, value]) => {
     if (isFiniteNumber(value)) {

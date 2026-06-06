@@ -123,5 +123,3 @@ export function LambdaRateReactionForm({ onAddReaction }) {
     </div>
   )
 }
-
-

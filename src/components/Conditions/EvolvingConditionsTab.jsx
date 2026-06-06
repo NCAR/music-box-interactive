@@ -59,14 +59,15 @@ export function EvolvingConditionsTab() {
     const fallbackDataBlock = (exampleFiles?.data || []).find((block) => {
       const headers = block?.headers || []
       const rows = block?.rows || []
-      return rows.length > 0
-        && headers.includes('time.s')
-        && headers.includes('ENV.pressure.Pa')
-        && headers.includes('ENV.temperature.K')
+      return (
+        rows.length > 0 &&
+        headers.includes('time.s') &&
+        headers.includes('ENV.pressure.Pa') &&
+        headers.includes('ENV.temperature.K')
+      )
     })
-    const evolvingBlock = boulderBlock?.headers?.length && boulderBlock?.rows?.length
-      ? boulderBlock
-      : fallbackDataBlock
+    const evolvingBlock =
+      boulderBlock?.headers?.length && boulderBlock?.rows?.length ? boulderBlock : fallbackDataBlock
     const hasEvolvingRows = evolvingBlock?.headers?.length && evolvingBlock?.rows?.length
 
     if (!hasEvolvingRows) {
@@ -90,8 +91,9 @@ export function EvolvingConditionsTab() {
         temperature: row[temperatureIndex],
         row,
       }))
-      .filter(({ time, pressure, temperature }) =>
-        Number.isFinite(time) && Number.isFinite(pressure) && Number.isFinite(temperature)
+      .filter(
+        ({ time, pressure, temperature }) =>
+          Number.isFinite(time) && Number.isFinite(pressure) && Number.isFinite(temperature)
       )
       .sort((a, b) => a.time - b.time)
 
@@ -100,8 +102,9 @@ export function EvolvingConditionsTab() {
       return
     }
 
-    const additionalHeaders = evolvingBlock.headers.filter((header) =>
-      header !== 'time.s' && header !== 'ENV.pressure.Pa' && header !== 'ENV.temperature.K'
+    const additionalHeaders = evolvingBlock.headers.filter(
+      (header) =>
+        header !== 'time.s' && header !== 'ENV.pressure.Pa' && header !== 'ENV.temperature.K'
     )
 
     const additionalSeries = Object.fromEntries(
@@ -124,7 +127,10 @@ export function EvolvingConditionsTab() {
 
   // validation for time point coverage
   const hasTimeAtZero = evolving.times && evolving.times.includes(0)
-  const hasTimeAtEnd = evolving.times && evolving.times.length > 0 && evolving.times[evolving.times.length - 1] >= basicConditions.duration
+  const hasTimeAtEnd =
+    evolving.times &&
+    evolving.times.length > 0 &&
+    evolving.times[evolving.times.length - 1] >= basicConditions.duration
   const needsMorePoints = evolving.enabled && (!evolving.times || evolving.times.length === 0)
 
   const handleToggleEvolving = () => {
@@ -265,12 +271,14 @@ export function EvolvingConditionsTab() {
     const insertIndex = newTimes.indexOf(basicConditions.duration)
 
     // use last temp/pressure or initial
-    const lastTemp = evolving.temperature.length > 0
-      ? evolving.temperature[evolving.temperature.length - 1]
-      : initialConditions.temperature
-    const lastPress = evolving.pressure.length > 0
-      ? evolving.pressure[evolving.pressure.length - 1]
-      : initialConditions.pressure
+    const lastTemp =
+      evolving.temperature.length > 0
+        ? evolving.temperature[evolving.temperature.length - 1]
+        : initialConditions.temperature
+    const lastPress =
+      evolving.pressure.length > 0
+        ? evolving.pressure[evolving.pressure.length - 1]
+        : initialConditions.pressure
 
     const newTemps = [...evolving.temperature]
     newTemps.splice(insertIndex, 0, lastTemp)
@@ -299,7 +307,7 @@ export function EvolvingConditionsTab() {
     reader.onload = (e) => {
       try {
         const text = e.target?.result
-        const lines = text.split('\n').filter(line => line.trim())
+        const lines = text.split('\n').filter((line) => line.trim())
 
         // skip header if present
         const dataLines = lines[0].toLowerCase().includes('time') ? lines.slice(1) : lines
@@ -308,8 +316,8 @@ export function EvolvingConditionsTab() {
         const temps = []
         const presses = []
 
-        dataLines.forEach((line, index) => {
-          const values = line.split(',').map(v => v.trim())
+        dataLines.forEach((line) => {
+          const values = line.split(',').map((v) => v.trim())
           if (values.length >= 3) {
             const time = parseFloat(values[0])
             const temp = parseFloat(values[1])
@@ -333,12 +341,13 @@ export function EvolvingConditionsTab() {
         }
 
         // sort by time
-        const sorted = times.map((t, i) => ({ time: t, temp: temps[i], press: presses[i] }))
+        const sorted = times
+          .map((t, i) => ({ time: t, temp: temps[i], press: presses[i] }))
           .sort((a, b) => a.time - b.time)
 
-        dispatch(setEvolvingTimes(sorted.map(s => s.time)))
-        dispatch(setEvolvingTemperature(sorted.map(s => s.temp)))
-        dispatch(setEvolvingPressure(sorted.map(s => s.press)))
+        dispatch(setEvolvingTimes(sorted.map((s) => s.time)))
+        dispatch(setEvolvingTemperature(sorted.map((s) => s.temp)))
+        dispatch(setEvolvingPressure(sorted.map((s) => s.press)))
         dispatch(setEvolvingAdditionalSeries({}))
 
         toast({
@@ -371,9 +380,9 @@ export function EvolvingConditionsTab() {
 
     // create csv content
     const header = 'time,temperature,pressure\n'
-    const rows = evolving.times.map((time, i) =>
-      `${time},${evolving.temperature[i]},${evolving.pressure[i]}`
-    ).join('\n')
+    const rows = evolving.times
+      .map((time, i) => `${time},${evolving.temperature[i]},${evolving.pressure[i]}`)
+      .join('\n')
 
     const csvContent = header + rows
 
@@ -441,9 +450,12 @@ export function EvolvingConditionsTab() {
                   <option value="cubic">Cubic - Smooth curves (future feature)</option>
                 </select>
                 <p className="text-xs text-gray-400 mt-2">
-                  {evolving.interpolationMethod === 'linear' && 'Values are interpolated linearly between time points'}
-                  {evolving.interpolationMethod === 'step' && 'Values change abruptly at each time point'}
-                  {evolving.interpolationMethod === 'cubic' && 'Cubic spline interpolation (not yet implemented - defaults to linear)'}
+                  {evolving.interpolationMethod === 'linear' &&
+                    'Values are interpolated linearly between time points'}
+                  {evolving.interpolationMethod === 'step' &&
+                    'Values change abruptly at each time point'}
+                  {evolving.interpolationMethod === 'cubic' &&
+                    'Cubic spline interpolation (not yet implemented - defaults to linear)'}
                 </p>
               </div>
 
@@ -540,7 +552,8 @@ export function EvolvingConditionsTab() {
                       <div className="flex-1">
                         <p className="text-sm font-semibold text-yellow-100">Missing Start Point</p>
                         <p className="text-xs text-yellow-200 mt-1">
-                          Consider adding a time point at t=0s to define initial environmental conditions
+                          Consider adding a time point at t=0s to define initial environmental
+                          conditions
                         </p>
                         <Button
                           variant="glass"
@@ -559,7 +572,8 @@ export function EvolvingConditionsTab() {
                       <div className="flex-1">
                         <p className="text-sm font-semibold text-yellow-100">Incomplete Coverage</p>
                         <p className="text-xs text-yellow-200 mt-1">
-                          No time point at simulation end (t={basicConditions.duration}s). Conditions will be extrapolated.
+                          No time point at simulation end (t={basicConditions.duration}s).
+                          Conditions will be extrapolated.
                         </p>
                         <Button
                           variant="glass"
@@ -579,9 +593,12 @@ export function EvolvingConditionsTab() {
                 <div className="bg-orange-900/20 border border-orange-400/50 rounded-lg p-3 flex items-start gap-3">
                   <AlertCircle className="w-5 h-5 text-orange-400 flex-shrink-0 mt-0.5" />
                   <div className="flex-1">
-                    <p className="text-sm font-semibold text-orange-100">No Time Points Configured</p>
+                    <p className="text-sm font-semibold text-orange-100">
+                      No Time Points Configured
+                    </p>
                     <p className="text-xs text-orange-200 mt-1">
-                      Evolving conditions are enabled but no time points have been added. Add at least one time point to use this feature.
+                      Evolving conditions are enabled but no time points have been added. Add at
+                      least one time point to use this feature.
                     </p>
                   </div>
                 </div>

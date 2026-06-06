@@ -16,7 +16,7 @@ function App() {
   const handleNavigate = (page) => {
     // If navigating to app, increment the key to force a fresh mount
     if (page === 'app') {
-      setAppMountKey(prev => prev + 1)
+      setAppMountKey((prev) => prev + 1)
     }
     setCurrentPage(page)
   }

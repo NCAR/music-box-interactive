@@ -89,9 +89,7 @@ export function BranchedReactionForm({ onAddReaction }) {
       )}
 
       <div>
-        <label className="block text-xs font-semibold text-blue-100 mb-1">
-          Reactants
-        </label>
+        <label className="block text-xs font-semibold text-blue-100 mb-1">Reactants</label>
         <input
           type="text"
           value={reactants}
@@ -102,9 +100,7 @@ export function BranchedReactionForm({ onAddReaction }) {
       </div>
 
       <div>
-        <label className="block text-xs font-semibold text-blue-100 mb-1">
-          Alkoxy Products
-        </label>
+        <label className="block text-xs font-semibold text-blue-100 mb-1">Alkoxy Products</label>
         <input
           type="text"
           value={alkoxyProducts}
@@ -115,9 +111,7 @@ export function BranchedReactionForm({ onAddReaction }) {
       </div>
 
       <div>
-        <label className="block text-xs font-semibold text-blue-100 mb-1">
-          Nitrate Products
-        </label>
+        <label className="block text-xs font-semibold text-blue-100 mb-1">Nitrate Products</label>
         <input
           type="text"
           value={nitrateProducts}
