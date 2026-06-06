@@ -45,7 +45,7 @@ jobs:
         tags: |
           hub.k8s.ucar.edu/musicbox/frontend:${{ env.SHORT_SHA }}
           hub.k8s.ucar.edu/musicbox/frontend:${{ github.ref_name }}
-        file: repo/Dockerfile`
+        file: repo/Dockerfile
         context: repo/
 
     - name: Sync kustomization manifests to deploy branch
