@@ -13,7 +13,7 @@ jobs:
 
     steps:
     - name: Check out repository code
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
 
     - name: Use Node.js
       uses: actions/setup-node@v4
@@ -21,9 +21,7 @@ jobs:
         node-version: 21
 
     - name: Install dependencies
-      working-directory: ./frontend
       run: npm install
 
     - name: Run tests
-      working-directory: ./frontend
       run: npm run test
