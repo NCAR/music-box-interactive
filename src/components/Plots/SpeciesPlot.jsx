@@ -28,10 +28,7 @@ export function SpeciesPlot() {
 
   return (
     <ErrorBoundary>
-      <SimulationChart
-        results={simulation.results}
-        metadata={simulation.metadata}
-      />
+      <SimulationChart results={simulation.results} metadata={simulation.metadata} />
     </ErrorBoundary>
   )
 }

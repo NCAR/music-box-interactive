@@ -1,9 +1,19 @@
 import { useSelector } from 'react-redux'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card'
 import { Button } from '../ui/button'
-import { ClipboardList, Microscope, Settings, FlaskConical, Download, Copy, CheckCircle2, XCircle, AlertCircle, Lightbulb } from 'lucide-react'
+import {
+  ClipboardList,
+  Microscope,
+  Settings,
+  FlaskConical,
+  Download,
+  Copy,
+  CheckCircle2,
+  XCircle,
+  AlertCircle,
+  Lightbulb,
+} from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
-import RunSimulationButton from '../RunSimulationButton'
 
 /**
  * ReviewTab Component
@@ -54,7 +64,7 @@ export function ReviewTab() {
         title: 'Copied to Clipboard!',
         description: 'Configuration has been copied to your clipboard.',
       })
-    } catch (error) {
+    } catch (_error) {
       toast({
         title: 'Copy Failed',
         description: 'Failed to copy configuration to clipboard.',
@@ -80,7 +90,9 @@ export function ReviewTab() {
           {/* Summary Statistics */}
           <div className="grid grid-cols-2 xs:grid-cols-2 sm:grid-cols-4 gap-2 xs:gap-3">
             <div className="bg-white/5 backdrop-blur-lg border border-white/20 rounded-lg p-2 xs:p-3">
-              <div className="text-xs xs:text-sm text-white-600 font-semibold truncate">Mechanism</div>
+              <div className="text-xs xs:text-sm text-white-600 font-semibold truncate">
+                Mechanism
+              </div>
               <div className="text-sm xs:text-base sm:text-lg font-bold text-red-600/70 truncate">
                 {mechanism.selectedMechanism ? mechanism.selectedMechanism.toUpperCase() : 'NONE'}
               </div>
@@ -107,10 +119,11 @@ export function ReviewTab() {
 
           {/* Configuration Preview - List Format with Columns */}
           <div>
-            <h4 className="font-semibold text-sm xs:text-base sm:text-lg mb-2 xs:mb-3">Configuration Data</h4>
+            <h4 className="font-semibold text-sm xs:text-base sm:text-lg mb-2 xs:mb-3">
+              Configuration Data
+            </h4>
             <div className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-lg p-2 xs:p-3 sm:p-4 max-h-96 overflow-auto">
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 xs:gap-4">
-
                 {/* Column 1: Mechanism Section */}
                 <div className="sm:border-r border-white/20 sm:pr-4 pb-3 sm:pb-0 border-b sm:border-b-0">
                   <h5 className="font-semibold text-cyan-600 text-sm xs:text-base mb-2 flex items-center gap-2">
@@ -118,10 +131,22 @@ export function ReviewTab() {
                     Mechanism
                   </h5>
                   <ul className="ml-3 xs:ml-4 space-y-1 text-xs xs:text-sm text-gray-300">
-                    <li><span className="font-semibold">Name:</span> <span className='font-medium'>{mechanism.selectedMechanism || 'custom'}</span></li>
-                    <li><span className="font-semibold">Species Count:</span> <span className='font-medium'>{mechanism.species.length}</span></li>
-                    <li><span className="font-semibold">Reactions Count:</span> <span className='font-medium'>{mechanism.reactions.length}</span></li>
-                    <li><span className="font-semibold">Phases:</span> <span className='font-medium'>{mechanism.phases?.length || 0}</span></li>
+                    <li>
+                      <span className="font-semibold">Name:</span>{' '}
+                      <span className="font-medium">{mechanism.selectedMechanism || 'custom'}</span>
+                    </li>
+                    <li>
+                      <span className="font-semibold">Species Count:</span>{' '}
+                      <span className="font-medium">{mechanism.species.length}</span>
+                    </li>
+                    <li>
+                      <span className="font-semibold">Reactions Count:</span>{' '}
+                      <span className="font-medium">{mechanism.reactions.length}</span>
+                    </li>
+                    <li>
+                      <span className="font-semibold">Phases:</span>{' '}
+                      <span className="font-medium">{mechanism.phases?.length || 0}</span>
+                    </li>
                   </ul>
                 </div>
 
@@ -134,12 +159,29 @@ export function ReviewTab() {
 
                   {/* Basic Conditions */}
                   <div className="mb-3">
-                    <h6 className="font-bold text-xs xs:text-sm text-gray-300 mb-1">Basic Settings:</h6>
+                    <h6 className="font-bold text-xs xs:text-sm text-gray-300 mb-1">
+                      Basic Settings:
+                    </h6>
                     <ul className="ml-3 xs:ml-4 space-y-1 text-xs xs:text-sm text-gray-300">
-                      <li><span className="font-semibold">Temperature:</span> <span className='font-medium'>{conditions.initial.temperature} K</span></li>
-                      <li><span className="font-semibold">Pressure:</span> <span className='font-medium'>{conditions.initial.pressure} Pa</span></li>
-                      <li><span className="font-semibold">Duration:</span> <span className='font-medium'>{conditions.basic.duration} s ({(conditions.basic.duration / 3600).toFixed(2)} h)</span></li>
-                      <li><span className="font-semibold">Time Step:</span> <span className='font-medium'>{conditions.basic.timeStep} s</span></li>
+                      <li>
+                        <span className="font-semibold">Temperature:</span>{' '}
+                        <span className="font-medium">{conditions.initial.temperature} K</span>
+                      </li>
+                      <li>
+                        <span className="font-semibold">Pressure:</span>{' '}
+                        <span className="font-medium">{conditions.initial.pressure} Pa</span>
+                      </li>
+                      <li>
+                        <span className="font-semibold">Duration:</span>{' '}
+                        <span className="font-medium">
+                          {conditions.basic.duration} s (
+                          {(conditions.basic.duration / 3600).toFixed(2)} h)
+                        </span>
+                      </li>
+                      <li>
+                        <span className="font-semibold">Time Step:</span>{' '}
+                        <span className="font-medium">{conditions.basic.timeStep} s</span>
+                      </li>
                     </ul>
                   </div>
 
@@ -150,7 +192,8 @@ export function ReviewTab() {
                       <ul className="ml-3 xs:ml-4 space-y-1 text-xs xs:text-sm text-gray-300">
                         {Object.entries(conditions.evolving).map(([key, value]) => (
                           <li key={key}>
-                            <span className="font-semibold">{key}:</span> <span className='font-medium'>{JSON.stringify(value)}</span>
+                            <span className="font-semibold">{key}:</span>{' '}
+                            <span className="font-medium">{JSON.stringify(value)}</span>
                           </li>
                         ))}
                       </ul>
@@ -170,7 +213,8 @@ export function ReviewTab() {
                       {Object.keys(conditions.initial.concentrations).length > 0 ? (
                         Object.entries(conditions.initial.concentrations).map(([species, conc]) => (
                           <li key={species}>
-                            <span className="font-semibold">{species}:</span> <span className='font-medium'>{conc}</span>
+                            <span className="font-semibold">{species}:</span>{' '}
+                            <span className="font-medium">{conc}</span>
                           </li>
                         ))
                       ) : (
@@ -181,14 +225,23 @@ export function ReviewTab() {
 
                   {/* Metadata Section */}
                   <div className="border-t border-white/20 pt-2 xs:pt-3">
-                    <h5 className="font-semibold text-white-600 text-sm xs:text-base mb-2">Metadata</h5>
+                    <h5 className="font-semibold text-white-600 text-sm xs:text-base mb-2">
+                      Metadata
+                    </h5>
                     <ul className="ml-3 xs:ml-4 space-y-1 text-xs xs:text-sm text-gray-300">
-                      <li><span className="font-semibold">Version:</span> <span className='font-medium'>{configuration.metadata.version}</span></li>
-                      <li><span className="font-semibold">Created:</span> <span className='font-medium'>{new Date(configuration.metadata.created).toLocaleString()}</span></li>
+                      <li>
+                        <span className="font-semibold">Version:</span>{' '}
+                        <span className="font-medium">{configuration.metadata.version}</span>
+                      </li>
+                      <li>
+                        <span className="font-semibold">Created:</span>{' '}
+                        <span className="font-medium">
+                          {new Date(configuration.metadata.created).toLocaleString()}
+                        </span>
+                      </li>
                     </ul>
                   </div>
                 </div>
-
               </div>
             </div>
           </div>
@@ -218,32 +271,64 @@ export function ReviewTab() {
       {/* Configuration Checklist */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            Configuration Checklist
-          </CardTitle>
-          <CardDescription className="italic">Ensure your configuration is completed</CardDescription>
+          <CardTitle className="flex items-center gap-2">Configuration Checklist</CardTitle>
+          <CardDescription className="italic">
+            Ensure your configuration is completed
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-2 text-md">
-            <div className={`flex items-center gap-2 ${mechanism.selectedMechanism ? 'text-green-400' : 'text-red-500'}`}>
-              {mechanism.selectedMechanism ? <CheckCircle2 className="w-4 h-4" /> : <XCircle className="w-4 h-4" />}
+            <div
+              className={`flex items-center gap-2 ${mechanism.selectedMechanism ? 'text-green-400' : 'text-red-500'}`}
+            >
+              {mechanism.selectedMechanism ? (
+                <CheckCircle2 className="w-4 h-4" />
+              ) : (
+                <XCircle className="w-4 h-4" />
+              )}
               <span>Mechanism selected: {mechanism.selectedMechanism || 'None'}</span>
             </div>
-            <div className={`flex items-center gap-2 ${mechanism.species.length > 0 ? 'text-green-400' : 'text-yellow-400'}`}>
-              {mechanism.species.length > 0 ? <CheckCircle2 className="w-4 h-4" /> : <AlertCircle className="w-4 h-4" />}
+            <div
+              className={`flex items-center gap-2 ${mechanism.species.length > 0 ? 'text-green-400' : 'text-yellow-400'}`}
+            >
+              {mechanism.species.length > 0 ? (
+                <CheckCircle2 className="w-4 h-4" />
+              ) : (
+                <AlertCircle className="w-4 h-4" />
+              )}
               <span>Species defined: {mechanism.species.length}</span>
             </div>
-            <div className={`flex items-center gap-2 ${mechanism.reactions.length > 0 ? 'text-green-400' : 'text-red-500'}`}>
-              {mechanism.reactions.length > 0 ? <CheckCircle2 className="w-4 h-4" /> : <XCircle className="w-4 h-4" />}
+            <div
+              className={`flex items-center gap-2 ${mechanism.reactions.length > 0 ? 'text-green-400' : 'text-red-500'}`}
+            >
+              {mechanism.reactions.length > 0 ? (
+                <CheckCircle2 className="w-4 h-4" />
+              ) : (
+                <XCircle className="w-4 h-4" />
+              )}
               <span>Reactions defined: {mechanism.reactions.length}</span>
             </div>
-            <div className={`flex items-center gap-2 ${conditions.basic.duration > 0 ? 'text-green-400' : 'text-red-500'}`}>
-              {conditions.basic.duration > 0 ? <CheckCircle2 className="w-4 h-4" /> : <XCircle className="w-4 h-4" />}
+            <div
+              className={`flex items-center gap-2 ${conditions.basic.duration > 0 ? 'text-green-400' : 'text-red-500'}`}
+            >
+              {conditions.basic.duration > 0 ? (
+                <CheckCircle2 className="w-4 h-4" />
+              ) : (
+                <XCircle className="w-4 h-4" />
+              )}
               <span>Duration set: {(conditions.basic.duration / 3600).toFixed(1)} hours</span>
             </div>
-            <div className={`flex items-center gap-2 ${Object.keys(conditions.initial.concentrations).length > 0 ? 'text-green-400' : 'text-yellow-400'}`}>
-              {Object.keys(conditions.initial.concentrations).length > 0 ? <CheckCircle2 className="w-4 h-4" /> : <AlertCircle className="w-4 h-4" />}
-              <span>Initial concentrations: {Object.keys(conditions.initial.concentrations).length}</span>
+            <div
+              className={`flex items-center gap-2 ${Object.keys(conditions.initial.concentrations).length > 0 ? 'text-green-400' : 'text-yellow-400'}`}
+            >
+              {Object.keys(conditions.initial.concentrations).length > 0 ? (
+                <CheckCircle2 className="w-4 h-4" />
+              ) : (
+                <AlertCircle className="w-4 h-4" />
+              )}
+              <span>
+                Initial concentrations: {Object.keys(conditions.initial.concentrations).length}
+              </span>
             </div>
           </div>
         </CardContent>

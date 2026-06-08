@@ -65,9 +65,11 @@ export const reactionRegistry = [
     type: 'LAMBDA_RATE',
     label: 'Lambda Rate',
     component: LambdaRateReactionForm,
-  }
+  },
 ]
 
 export const getReactionDefinition = (reactionType) => {
-  return reactionRegistry.find((definition) => definition.type === reactionType) || reactionRegistry[0]
+  return (
+    reactionRegistry.find((definition) => definition.type === reactionType) || reactionRegistry[0]
+  )
 }

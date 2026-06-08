@@ -1,6 +1,15 @@
 import { useMemo } from 'react'
 import { useSelector } from 'react-redux'
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+} from 'recharts'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card'
 import { Thermometer, Info } from 'lucide-react'
 
@@ -35,7 +44,8 @@ export function EnvironmentPlot() {
     }))
   }, [simulation.results, simulation.environmentalData, conditions])
 
-  const hasEvolvingConditions = simulation.environmentalData && simulation.environmentalData.length > 0
+  const hasEvolvingConditions =
+    simulation.environmentalData && simulation.environmentalData.length > 0
 
   if (!simulation.results || simulation.status !== 'succeeded') {
     return (
@@ -66,12 +76,22 @@ export function EnvironmentPlot() {
               <CartesianGrid strokeDasharray="3 3" stroke="#FFFFFF" />
               <XAxis
                 dataKey="timeHours"
-                label={{ value: 'Time (hours)', position: 'insideBottom', offset: -5, style: { fill: '#FFFFFF', fontWeight: 400 } }}
+                label={{
+                  value: 'Time (hours)',
+                  position: 'insideBottom',
+                  offset: -5,
+                  style: { fill: '#FFFFFF', fontWeight: 400 },
+                }}
                 stroke="#FFFFFF"
                 tick={{ fontSize: 12, fill: '#FFFFFF' }}
               />
               <YAxis
-                label={{ value: 'Temperature (K)', angle: -90, position: 'insideLeft', style: { fill: '#FFFFFF', fontWeight: 400 } }}
+                label={{
+                  value: 'Temperature (K)',
+                  angle: -90,
+                  position: 'insideLeft',
+                  style: { fill: '#FFFFFF', fontWeight: 400 },
+                }}
                 stroke="#FFFFFF"
                 tick={{ fontSize: 12, fill: '#FFFFFF' }}
               />
@@ -108,12 +128,22 @@ export function EnvironmentPlot() {
               <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
               <XAxis
                 dataKey="timeHours"
-                label={{ value: 'Time (hours)', position: 'insideBottom', offset: -5, style: { fill: '#FFFFFF', fontWeight: 400 } }}
+                label={{
+                  value: 'Time (hours)',
+                  position: 'insideBottom',
+                  offset: -5,
+                  style: { fill: '#FFFFFF', fontWeight: 400 },
+                }}
                 stroke="#FFFFFF"
                 tick={{ fontSize: 12, fill: '#FFFFFF' }}
               />
               <YAxis
-                label={{ value: 'Pressure (Pa)', angle: -90, position: 'insideLeft', style: { fill: '#FFFFFF', fontWeight: 400 } }}
+                label={{
+                  value: 'Pressure (Pa)',
+                  angle: -90,
+                  position: 'insideLeft',
+                  style: { fill: '#FFFFFF', fontWeight: 400 },
+                }}
                 stroke="#FFFFFF"
                 tick={{ fontSize: 12, fill: '#FFFFFF' }}
               />
@@ -138,22 +168,43 @@ export function EnvironmentPlot() {
         </CardContent>
       </Card>
 
-      <div className={`border rounded-lg p-3 text-xs ${hasEvolvingConditions ? 'bg-green-900/20 border-green-400/50' : 'bg-blue-900/20 border-blue-400/50'}`}>
-        <p className={`font-semibold mb-1 flex items-center gap-2 ${hasEvolvingConditions ? 'text-green-100' : 'text-blue-100'}`}>
+      <div
+        className={`border rounded-lg p-3 text-xs ${hasEvolvingConditions ? 'bg-green-900/20 border-green-400/50' : 'bg-blue-900/20 border-blue-400/50'}`}
+      >
+        <p
+          className={`font-semibold mb-1 flex items-center gap-2 ${hasEvolvingConditions ? 'text-green-100' : 'text-blue-100'}`}
+        >
           <Info className="w-4 h-4" />
           Environmental Conditions:
         </p>
         {hasEvolvingConditions ? (
           <ul className="space-y-0.5 ml-4 text-gray-300">
-            <li>• <strong>Evolving conditions enabled</strong> - Temperature and pressure vary over time</li>
-            <li>• Temperature range: {Math.min(...envData.map(d => d.temperature)).toFixed(2)} - {Math.max(...envData.map(d => d.temperature)).toFixed(2)} K</li>
-            <li>• Pressure range: {Math.min(...envData.map(d => d.pressure)).toFixed(0)} - {Math.max(...envData.map(d => d.pressure)).toFixed(0)} Pa</li>
-            <li>• Interpolation method: {simulation.metadata?.evolvingConditions ? 'Enabled' : 'N/A'}</li>
+            <li>
+              • <strong>Evolving conditions enabled</strong> - Temperature and pressure vary over
+              time
+            </li>
+            <li>
+              • Temperature range: {Math.min(...envData.map((d) => d.temperature)).toFixed(2)} -{' '}
+              {Math.max(...envData.map((d) => d.temperature)).toFixed(2)} K
+            </li>
+            <li>
+              • Pressure range: {Math.min(...envData.map((d) => d.pressure)).toFixed(0)} -{' '}
+              {Math.max(...envData.map((d) => d.pressure)).toFixed(0)} Pa
+            </li>
+            <li>
+              • Interpolation method: {simulation.metadata?.evolvingConditions ? 'Enabled' : 'N/A'}
+            </li>
           </ul>
         ) : (
           <ul className="space-y-0.5 ml-4 text-gray-300">
-            <li>• Temperature: {conditions.initial.temperature} K ({(conditions.initial.temperature - 273.15).toFixed(2)}°C) - Constant</li>
-            <li>• Pressure: {conditions.initial.pressure} Pa ({(conditions.initial.pressure / 101325).toFixed(4)} atm) - Constant</li>
+            <li>
+              • Temperature: {conditions.initial.temperature} K (
+              {(conditions.initial.temperature - 273.15).toFixed(2)}°C) - Constant
+            </li>
+            <li>
+              • Pressure: {conditions.initial.pressure} Pa (
+              {(conditions.initial.pressure / 101325).toFixed(4)} atm) - Constant
+            </li>
             <li>• Environmental conditions remain constant throughout simulation</li>
           </ul>
         )}

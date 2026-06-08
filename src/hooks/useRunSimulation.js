@@ -1,12 +1,7 @@
 import { useCallback } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { useNavigate } from 'react-router-dom'
-import {
-  setError,
-  setMetadata,
-  setResults,
-  setStatus,
-} from '../redux/slices/simulationSlice'
+import { setError, setMetadata, setResults, setStatus } from '../redux/slices/simulationSlice'
 import { toast } from '@/hooks/use-toast'
 import { runLocalSimulation } from '../services/simulation/localSolver'
 
@@ -21,12 +16,18 @@ export function useRunSimulation() {
   const conditions = useSelector((state) => state.conditions)
 
   const sourceMechanism = mechanismData.mechanism?.mechanism || {}
-  const payloadSpeciesCount = mechanismData.species.length > 0
-    ? mechanismData.species.length
-    : Array.isArray(sourceMechanism.species) ? sourceMechanism.species.length : 0
-  const payloadReactionCount = mechanismData.reactions.length > 0
-    ? mechanismData.reactions.length
-    : Array.isArray(sourceMechanism.reactions) ? sourceMechanism.reactions.length : 0
+  const payloadSpeciesCount =
+    mechanismData.species.length > 0
+      ? mechanismData.species.length
+      : Array.isArray(sourceMechanism.species)
+        ? sourceMechanism.species.length
+        : 0
+  const payloadReactionCount =
+    mechanismData.reactions.length > 0
+      ? mechanismData.reactions.length
+      : Array.isArray(sourceMechanism.reactions)
+        ? sourceMechanism.reactions.length
+        : 0
   const hasValidMechanism = payloadSpeciesCount > 0 && payloadReactionCount > 0
 
   const isPredefinedMechanism = mechanism && mechanism !== 'custom'

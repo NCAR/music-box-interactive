@@ -1,7 +1,7 @@
 // Frontend API Client for MUSICA Backend
 // Provides methods to interact with the Express backend
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001/api'
 
 /**
  * Generic fetch wrapper with error handling
@@ -14,18 +14,18 @@ async function fetchAPI(endpoint, options = {}) {
         ...options.headers,
       },
       ...options,
-    });
+    })
 
-    const data = await response.json();
+    const data = await response.json()
 
     if (!response.ok) {
-      throw new Error(data.error || `HTTP error! status: ${response.status}`);
+      throw new Error(data.error || `HTTP error! status: ${response.status}`)
     }
 
-    return data;
+    return data
   } catch (error) {
-    console.error(`API Error (${endpoint}):`, error);
-    throw error;
+    console.error(`API Error (${endpoint}):`, error)
+    throw error
   }
 }
 
@@ -38,7 +38,7 @@ export const api = {
    * @returns {Promise<Object>} { status, timestamp }
    */
   async getHealth() {
-    return fetchAPI('/health');
+    return fetchAPI('/health')
   },
 
   /**
@@ -46,7 +46,7 @@ export const api = {
    * @returns {Promise<Object>} { success, mechanisms: [{id, name, description, species, reactions}] }
    */
   async getMechanisms() {
-    return fetchAPI('/mechanisms');
+    return fetchAPI('/mechanisms')
   },
 
   /**
@@ -55,7 +55,7 @@ export const api = {
    * @returns {Promise<Object>} { success, mechanism: {...} }
    */
   async getMechanism(mechanismId) {
-    return fetchAPI(`/mechanisms/${mechanismId}`);
+    return fetchAPI(`/mechanisms/${mechanismId}`)
   },
 
   /**
@@ -64,7 +64,7 @@ export const api = {
    * @returns {Promise<Object>} { success, mechanism, species: [...] }
    */
   async getSpecies(mechanismId) {
-    return fetchAPI(`/mechanisms/${mechanismId}/species`);
+    return fetchAPI(`/mechanisms/${mechanismId}/species`)
   },
 
   /**
@@ -84,7 +84,7 @@ export const api = {
     return fetchAPI('/simulation/run', {
       method: 'POST',
       body: JSON.stringify(config),
-    });
+    })
   },
 
   /**
@@ -93,7 +93,7 @@ export const api = {
    * @returns {Promise<Object>} { success, simulation: {...} }
    */
   async getSimulation(simulationId) {
-    return fetchAPI(`/simulation/${simulationId}`);
+    return fetchAPI(`/simulation/${simulationId}`)
   },
 
   /**
@@ -101,7 +101,7 @@ export const api = {
    * @returns {Promise<Object>} { success, simulations: [...], count }
    */
   async listSimulations() {
-    return fetchAPI('/simulation');
+    return fetchAPI('/simulation')
   },
 
   /**
@@ -112,9 +112,9 @@ export const api = {
   async deleteSimulation(simulationId) {
     return fetchAPI(`/simulation/${simulationId}`, {
       method: 'DELETE',
-    });
+    })
   },
-};
+}
 
 /**
  * Helper function to format simulation results for charts
@@ -123,22 +123,22 @@ export const api = {
  */
 export function formatSimulationData(results) {
   if (!results || !Array.isArray(results)) {
-    return [];
+    return []
   }
 
   return results.map((result) => {
-    const { time, concentrations } = result;
+    const { time, concentrations } = result
 
     // Flatten concentrations for easier charting
-    const dataPoint = { time };
+    const dataPoint = { time }
 
     for (const [species, values] of Object.entries(concentrations)) {
       // Take first value if array (for single grid cell)
-      dataPoint[species] = Array.isArray(values) ? values[0] : values;
+      dataPoint[species] = Array.isArray(values) ? values[0] : values
     }
 
-    return dataPoint;
-  });
+    return dataPoint
+  })
 }
 
 /**
@@ -165,9 +165,9 @@ export function getDefaultConcentrations(mechanismId) {
       B: 0.0,
       C: 0.0,
     },
-  };
+  }
 
-  return defaults[mechanismId] || {};
+  return defaults[mechanismId] || {}
 }
 
 /**
@@ -182,13 +182,13 @@ export function getDefaultRateConstants(mechanismId) {
       'PHOTO.jO3->O': 1.15e-5,
       'PHOTO.jO3->O1D': 6.61e-9,
     },
-  };
+  }
 
-  return defaults[mechanismId] || {};
+  return defaults[mechanismId] || {}
 }
 
 // Alias for backward compatibility
-export const getDefaultPhotolysisRates = getDefaultRateConstants;
+export const getDefaultPhotolysisRates = getDefaultRateConstants
 
 /**
  * Helper function to export simulation results as CSV
@@ -197,37 +197,37 @@ export const getDefaultPhotolysisRates = getDefaultRateConstants;
  */
 export function exportToCSV(results, filename = 'simulation_results.csv') {
   if (!results || results.length === 0) {
-    console.error('No results to export');
-    return;
+    console.error('No results to export')
+    return
   }
 
   // Get all species names from first result
-  const firstResult = results[0];
-  const species = Object.keys(firstResult).filter((key) => key !== 'time');
+  const firstResult = results[0]
+  const species = Object.keys(firstResult).filter((key) => key !== 'time')
 
   // Create CSV header
-  const header = ['time', ...species].join(',');
+  const header = ['time', ...species].join(',')
 
   // Create CSV rows
   const rows = results.map((result) => {
-    const values = [result.time];
+    const values = [result.time]
     species.forEach((sp) => {
-      values.push(result[sp] || 0);
-    });
-    return values.join(',');
-  });
+      values.push(result[sp] || 0)
+    })
+    return values.join(',')
+  })
 
   // Combine header and rows
-  const csv = [header, ...rows].join('\n');
+  const csv = [header, ...rows].join('\n')
 
   // Create download link
-  const blob = new Blob([csv], { type: 'text/csv' });
-  const url = window.URL.createObjectURL(blob);
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = filename;
-  link.click();
-  window.URL.revokeObjectURL(url);
+  const blob = new Blob([csv], { type: 'text/csv' })
+  const url = window.URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = filename
+  link.click()
+  window.URL.revokeObjectURL(url)
 }
 
 /**
@@ -237,18 +237,18 @@ export function exportToCSV(results, filename = 'simulation_results.csv') {
  */
 export function exportToJSON(results, filename = 'simulation_results.json') {
   if (!results || results.length === 0) {
-    console.error('No results to export');
-    return;
+    console.error('No results to export')
+    return
   }
 
-  const json = JSON.stringify(results, null, 2);
-  const blob = new Blob([json], { type: 'application/json' });
-  const url = window.URL.createObjectURL(blob);
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = filename;
-  link.click();
-  window.URL.revokeObjectURL(url);
+  const json = JSON.stringify(results, null, 2)
+  const blob = new Blob([json], { type: 'application/json' })
+  const url = window.URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = filename
+  link.click()
+  window.URL.revokeObjectURL(url)
 }
 
-export default api;
+export default api

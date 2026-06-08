@@ -40,6 +40,7 @@ function AppContent({ onNavigate }) {
         navigate('/', { replace: true })
       }
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   // Handle exit app - reset all Redux state and session before navigating home
@@ -66,7 +67,7 @@ function AppContent({ onNavigate }) {
         {/* Responsive container with proper padding for mobile */}
         <div className="container mx-auto px-2 xs:px-3 sm:px-6 lg:px-8 py-3 xs:py-4 sm:py-6 lg:py-8 pt-14 xs:pt-16 lg:pt-6">
           <Routes>
-            <Route path="/" element={<DashboardPage  />} />
+            <Route path="/" element={<DashboardPage />} />
             <Route path="/guide" element={<GuidePage />} />
             <Route path="/mechanism" element={<MechanismPage />} />
             <Route path="/conditions" element={<ConditionsPage />} />

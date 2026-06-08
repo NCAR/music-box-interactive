@@ -16,7 +16,10 @@ const addProductsToReactions = (reactions) => {
   reactions.forEach((reaction) => {
     let prodName = ''
     if (typeof reaction.name === 'string' && reaction.name.length > 0) {
-      prodName = reaction.name.replace(/\s+/g, '_').replace(/[^A-Za-z0-9_]/g, '').toUpperCase()
+      prodName = reaction.name
+        .replace(/\s+/g, '_')
+        .replace(/[^A-Za-z0-9_]/g, '')
+        .toUpperCase()
     } else {
       prodName = 'REACT_' + Math.random().toString(36).substring(2, 10).toUpperCase()
     }
@@ -59,56 +62,50 @@ const addProductsToReactions = (reactions) => {
 }
 
 const filterProductConcentrations = (results, excludeConcentrationKeys) => {
-    const excludeSet = new Set(excludeConcentrationKeys);
-    const filteredResults = [];
-    const excludedResults = [];
+  const excludeSet = new Set(excludeConcentrationKeys)
+  const filteredResults = []
+  const excludedResults = []
 
-    for (const point of results) {
-      if (!point || typeof point !== 'object' || !point.concentrations) {
-        filteredResults.push(point);
-        excludedResults.push({});
-        continue;
-      }
-
-      const filteredConcentrations = {};
-      const excludedConcentrations = {};
-
-      for (const [key, value] of Object.entries(point.concentrations)) {
-        if (excludeSet.has(key)) {
-          excludedConcentrations[key] = value;
-        } else {
-          filteredConcentrations[key] = value;
-        }
-      }
-
-      filteredResults.push({ ...point, concentrations: filteredConcentrations });
-      excludedResults.push({ time: point.time, concentrations: excludedConcentrations });
+  for (const point of results) {
+    if (!point || typeof point !== 'object' || !point.concentrations) {
+      filteredResults.push(point)
+      excludedResults.push({})
+      continue
     }
 
-    // console.log('Filtered Results:', filteredResults);
-    // console.log('Excluded Results:', excludedResults);
+    const filteredConcentrations = {}
+    const excludedConcentrations = {}
 
-    return {
-      filteredResults,
-      excludedResults
+    for (const [key, value] of Object.entries(point.concentrations)) {
+      if (excludeSet.has(key)) {
+        excludedConcentrations[key] = value
+      } else {
+        filteredConcentrations[key] = value
+      }
     }
+
+    filteredResults.push({ ...point, concentrations: filteredConcentrations })
+    excludedResults.push({ time: point.time, concentrations: excludedConcentrations })
   }
 
+  // console.log('Filtered Results:', filteredResults);
+  // console.log('Excluded Results:', excludedResults);
+
+  return {
+    filteredResults,
+    excludedResults,
+  }
+}
+
 export const runLocalSimulation = async ({ mechanismData, conditions }) => {
-  const {
-    payload,
-    mechanismLabel,
-  } = buildLocalSimulationPayload({ mechanismData, conditions })
+  const { payload, mechanismLabel } = buildLocalSimulationPayload({ mechanismData, conditions })
 
   // Add tracking products to reactions and get concentration keys to exclude
-  const {
-    productSpeciesToAdd,
-    productConcentrationKeys,
-  } = addProductsToReactions(payload.mechanism.reactions)
+  const { productSpeciesToAdd, productConcentrationKeys } = addProductsToReactions(
+    payload.mechanism.reactions
+  )
 
-  const species = Array.isArray(payload?.mechanism?.species)
-    ? payload.mechanism.species
-    : []
+  const species = Array.isArray(payload?.mechanism?.species) ? payload.mechanism.species : []
 
   productSpeciesToAdd.forEach((prodName) => {
     if (!species.some((sp) => sp?.name === prodName)) {
@@ -118,18 +115,17 @@ export const runLocalSimulation = async ({ mechanismData, conditions }) => {
 
   payload.mechanism.species = species
 
-  const phases = Array.isArray(payload?.mechanism?.phases)
-    ? payload.mechanism.phases
-    : []
+  const phases = Array.isArray(payload?.mechanism?.phases) ? payload.mechanism.phases : []
 
   if (phases.length > 0) {
-    const targetPhase = phases.find((phase) => String(phase?.name || '').toLowerCase() === 'gas') || phases[0]
-    const phaseSpecies = Array.isArray(targetPhase?.species)
-      ? targetPhase.species
-      : []
+    const targetPhase =
+      phases.find((phase) => String(phase?.name || '').toLowerCase() === 'gas') || phases[0]
+    const phaseSpecies = Array.isArray(targetPhase?.species) ? targetPhase.species : []
 
     productSpeciesToAdd.forEach((prodName) => {
-      const exists = phaseSpecies.some((sp) => (typeof sp === 'string' ? sp : sp?.name) === prodName)
+      const exists = phaseSpecies.some(
+        (sp) => (typeof sp === 'string' ? sp : sp?.name) === prodName
+      )
       if (!exists) {
         phaseSpecies.push({ name: prodName })
       }
@@ -149,18 +145,20 @@ export const runLocalSimulation = async ({ mechanismData, conditions }) => {
   }
 
   // Filter out product concentration keys from results so flow diagram works correctly
-  const {
-    filteredResults,
-    excludedResults,
-  } = filterProductConcentrations(normalizedPoints, productConcentrationKeys)
+  const { filteredResults, excludedResults } = filterProductConcentrations(
+    normalizedPoints,
+    productConcentrationKeys
+  )
 
   if (filteredResults.length > 0) {
     store.dispatch(setResults(filteredResults))
     store.dispatch(setExcludedResults(excludedResults))
-    store.dispatch(setMetadata({
-      mechanism: mechanismLabel,
-      duration: conditions.basic.duration || 0,
-    }))
+    store.dispatch(
+      setMetadata({
+        mechanism: mechanismLabel,
+        duration: conditions.basic.duration || 0,
+      })
+    )
     store.dispatch(setStatus('succeeded'))
   } else {
     console.error('No valid results after normalization')

@@ -1,5 +1,15 @@
 import { useState, useMemo, useEffect } from 'react'
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Label } from 'recharts'
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+  Label,
+} from 'recharts'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card'
 import { Button } from './ui/button'
 import { BarChart3, Atom, AlertCircle, Lightbulb } from 'lucide-react'
@@ -13,33 +23,45 @@ import { BarChart3, Atom, AlertCircle, Lightbulb } from 'lucide-react'
  * @param {Object} props.metadata - Simulation metadata (mechanism, duration, etc.)
  */
 export function SimulationChart({ results, metadata }) {
-    const [speciesSearch, setSpeciesSearch] = useState("");
+  const [speciesSearch, setSpeciesSearch] = useState('')
   const [selectedSpecies, setSelectedSpecies] = useState([])
   const [showAll, setShowAll] = useState(false)
   const [initialized, setInitialized] = useState(false)
 
   // Generate color palette for species
   const colors = [
-    '#3b82f6', '#ef4444', '#10b981', '#f59e0b',
-    '#8b5cf6', '#ec4899', '#14b8a6', '#f97316',
-    '#6366f1', '#84cc16', '#06b6d4', '#f43f5e',
-    '#a855f7', '#22c55e', '#eab308', '#64748b'
+    '#3b82f6',
+    '#ef4444',
+    '#10b981',
+    '#f59e0b',
+    '#8b5cf6',
+    '#ec4899',
+    '#14b8a6',
+    '#f97316',
+    '#6366f1',
+    '#84cc16',
+    '#06b6d4',
+    '#f43f5e',
+    '#a855f7',
+    '#22c55e',
+    '#eab308',
+    '#64748b',
   ]
 
   // Extract all species, do not filter by value (show even if all zero)
   const allSpecies = useMemo(() => {
-    if (!Array.isArray(results) || results.length === 0) return [];
-    const firstPoint = results[0];
-    let speciesNames = [];
+    if (!Array.isArray(results) || results.length === 0) return []
+    const firstPoint = results[0]
+    let speciesNames = []
     if (firstPoint?.concentrations && typeof firstPoint.concentrations === 'object') {
-      speciesNames = Object.keys(firstPoint.concentrations);
+      speciesNames = Object.keys(firstPoint.concentrations)
     } else {
       speciesNames = Object.keys(firstPoint).filter(
-        key => key !== 'time' && key !== 'timestamp' && key !== 'date' && key !== 'concentrations'
-      );
+        (key) => key !== 'time' && key !== 'timestamp' && key !== 'date' && key !== 'concentrations'
+      )
     }
-    return speciesNames;
-  }, [results]);
+    return speciesNames
+  }, [results])
 
   // Reset initialization when results change
   useEffect(() => {
@@ -50,7 +72,7 @@ export function SimulationChart({ results, metadata }) {
   // No auto-selection: leave all species unselected by default
   useEffect(() => {
     if (!initialized && allSpecies.length > 0 && selectedSpecies.length === 0) {
-      setInitialized(true);
+      setInitialized(true)
     }
   }, [allSpecies, results, selectedSpecies.length, initialized])
 
@@ -60,17 +82,18 @@ export function SimulationChart({ results, metadata }) {
 
     const MIN_VALUE = 1e-20
 
-    return results.map(result => {
+    return results.map((result) => {
       const time = result.time ?? result.timestamp ?? result.date ?? 0
       const point = {
-        timeSeconds: time
+        timeSeconds: time,
       }
 
-      const source = (result?.concentrations && typeof result.concentrations === 'object')
-        ? result.concentrations
-        : result
+      const source =
+        result?.concentrations && typeof result.concentrations === 'object'
+          ? result.concentrations
+          : result
 
-      allSpecies.forEach(species => {
+      allSpecies.forEach((species) => {
         let value = source[species]
 
         // CRITICAL FIX: MICM returns arrays (for multi-cell support), extract first element
@@ -91,7 +114,7 @@ export function SimulationChart({ results, metadata }) {
   }, [results, allSpecies])
 
   // Calculate Y-axis domain for log scale
-  const yAxisDomain = useMemo(() => {
+  const _yAxisDomain = useMemo(() => {
     if (!chartData.length) return [1e-20, 1]
 
     const displaySpecies = showAll ? allSpecies : selectedSpecies
@@ -102,8 +125,8 @@ export function SimulationChart({ results, metadata }) {
     let minValue = Infinity
     let maxValue = -Infinity
 
-    chartData.forEach(point => {
-      displaySpecies.forEach(sp => {
+    chartData.forEach((point) => {
+      displaySpecies.forEach((sp) => {
         const value = point[sp]
         if (value > 1e-20) {
           minValue = Math.min(minValue, value)
@@ -135,10 +158,10 @@ export function SimulationChart({ results, metadata }) {
   }, [chartData, allSpecies, selectedSpecies, showAll])
 
   // Calculate X-axis domain dynamically
-  const xAxisDomain = useMemo(() => {
+  const _xAxisDomain = useMemo(() => {
     if (!chartData.length) return [0, 1]
 
-    const times = chartData.map(point => point.timeSeconds).filter(t => isFinite(t))
+    const times = chartData.map((point) => point.timeSeconds).filter((t) => isFinite(t))
 
     // Handle case where no valid times exist
     if (times.length === 0) return [0, 1]
@@ -161,29 +184,28 @@ export function SimulationChart({ results, metadata }) {
 
   // Toggle species selection
   const toggleSpecies = (species) => {
-    setSelectedSpecies(prev =>
-      prev.includes(species)
-        ? prev.filter(s => s !== species)
-        : [...prev, species]
+    setSelectedSpecies((prev) =>
+      prev.includes(species) ? prev.filter((s) => s !== species) : [...prev, species]
     )
     setShowAll(false)
   }
 
   const displaySpecies = showAll ? allSpecies : selectedSpecies
 
-  // Debug: log display species whenever it changes
-  useEffect(() => {
-    // console.log('=== Chart Display Debug ===')
-    // console.log('Total species:', allSpecies.length, allSpecies)
-    // console.log('Selected species:', selectedSpecies.length, selectedSpecies)
-    // console.log('Show all?:', showAll)
-    // console.log('Actually displaying:', displaySpecies.length, displaySpecies)
-    // console.log('Data points:', chartData.length)
-    // if (chartData.length > 0 && displaySpecies.length > 0) {
-    //   console.log('Sample data point 0:', chartData[0])
-    //   console.log('Sample data point last:', chartData[chartData.length - 1])
-    // }
-  }, [displaySpecies, allSpecies, selectedSpecies, showAll, chartData])
+  // Filter and sort species for the filter UI
+  const filteredSpecies = useMemo(() => {
+    const search = speciesSearch.trim().toLowerCase()
+    if (!search) return allSpecies
+    return allSpecies
+      .filter((sp) => sp.toLowerCase().includes(search))
+      .sort((a, b) => {
+        const aExact = a.toLowerCase() === search
+        const bExact = b.toLowerCase() === search
+        if (aExact && !bExact) return -1
+        if (!aExact && bExact) return 1
+        return 0
+      })
+  }, [allSpecies, speciesSearch])
 
   // Validation checks
   if (!results || results.length === 0) {
@@ -229,30 +251,16 @@ export function SimulationChart({ results, metadata }) {
     )
   }
 
-  // Filter and sort species for the filter UI
-  const filteredSpecies = useMemo(() => {
-    const search = speciesSearch.trim().toLowerCase();
-    if (!search) return allSpecies;
-    return allSpecies
-      .filter((sp) => sp.toLowerCase().includes(search))
-      .sort((a, b) => {
-        const aExact = a.toLowerCase() === search;
-        const bExact = b.toLowerCase() === search;
-        if (aExact && !bExact) return -1;
-        if (!aExact && bExact) return 1;
-        return 0;
-      });
-  }, [allSpecies, speciesSearch]);
-
   return (
     <Card>
       <CardHeader>
         <div>
-          <CardTitle className="text-base xs:text-lg sm:text-xl">Concentration Profiles (Log Scale)</CardTitle>
+          <CardTitle className="text-base xs:text-lg sm:text-xl">
+            Concentration Profiles (Log Scale)
+          </CardTitle>
           <CardDescription className="text-xs xs:text-sm">
-            {metadata?.mechanism?.toUpperCase()} mechanism •
-            {metadata?.duration?.toLocaleString()} seconds •
-            {results.length} data points
+            {metadata?.mechanism?.toUpperCase()} mechanism •{metadata?.duration?.toLocaleString()}{' '}
+            seconds •{results.length} data points
           </CardDescription>
         </div>
       </CardHeader>
@@ -266,8 +274,9 @@ export function SimulationChart({ results, metadata }) {
               Limited Data Points
             </p>
             <p className="text-yellow-700 text-xs">
-              This simulation produced only {results.length} data point{results.length > 1 ? 's' : ''}.
-              For better visualization, consider increasing the simulation duration or decreasing the time step.
+              This simulation produced only {results.length} data point
+              {results.length > 1 ? 's' : ''}. For better visualization, consider increasing the
+              simulation duration or decreasing the time step.
             </p>
           </div>
         )}
@@ -276,13 +285,15 @@ export function SimulationChart({ results, metadata }) {
         <div className="border rounded-lg p-2 xs:p-3 sm:p-4 bg-gray-50">
           <div className="flex flex-col xs:flex-row items-start xs:items-center justify-between gap-2 xs:gap-0 mb-3">
             <div className="flex items-center gap-3 w-full xs:w-auto">
-              <h4 className="font-semibold text-xs xs:text-sm text-gray-900 mr-4">Species Filter ({displaySpecies.length} selected)</h4>
+              <h4 className="font-semibold text-xs xs:text-sm text-gray-900 mr-4">
+                Species Filter ({displaySpecies.length} selected)
+              </h4>
               <Button
                 variant="default"
                 size="sm"
                 onClick={() => {
-                  setShowAll(false);
-                  setSelectedSpecies(filteredSpecies);
+                  setShowAll(false)
+                  setSelectedSpecies(filteredSpecies)
                 }}
                 className="rounded-lg text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white shadow"
               >
@@ -292,8 +303,8 @@ export function SimulationChart({ results, metadata }) {
                 variant="destructive"
                 size="sm"
                 onClick={() => {
-                  setShowAll(false);
-                  setSelectedSpecies([]);
+                  setShowAll(false)
+                  setSelectedSpecies([])
                 }}
                 className="rounded-lg text-xs font-bold bg-red-600 hover:bg-red-700 text-white shadow"
               >
@@ -306,13 +317,13 @@ export function SimulationChart({ results, metadata }) {
           <input
             type="text"
             value={speciesSearch}
-            onChange={e => setSpeciesSearch(e.target.value)}
+            onChange={(e) => setSpeciesSearch(e.target.value)}
             placeholder="Search species"
             className="w-full mb-3 px-3 py-2 border-2 border-gray-300 bg-white text-gray-800 placeholder:text-gray-400 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
           />
 
           <div className="flex flex-wrap gap-1.5 xs:gap-2 max-h-32 overflow-y-auto">
-            {filteredSpecies.map((species, idx) => (
+            {filteredSpecies.map((species) => (
               <button
                 key={species}
                 onClick={() => toggleSpecies(species)}
@@ -366,7 +377,7 @@ export function SimulationChart({ results, metadata }) {
                     const max = dataMax * 10
                     // console.log('Y-axis dataMax:', dataMax, '→ domain max:', max)
                     return max
-                  }
+                  },
                 ]}
                 stroke="#374151"
                 tick={{ fontSize: 8, fill: '#374151' }}
@@ -383,25 +394,46 @@ export function SimulationChart({ results, metadata }) {
                   if (!active || !payload?.length) return null
 
                   return (
-                    <div className="bg-white border-2 border-gray-800 rounded-lg shadow-xl p-2" style={{ backgroundColor: 'white' }}>
-                      <p className="font-semibold mb-1 text-xs text-gray-900" style={{ color: '#111827' }}>
+                    <div
+                      className="bg-white border-2 border-gray-800 rounded-lg shadow-xl p-2"
+                      style={{ backgroundColor: 'white' }}
+                    >
+                      <p
+                        className="font-semibold mb-1 text-xs text-gray-900"
+                        style={{ color: '#111827' }}
+                      >
                         Time: {label?.toLocaleString()} s
                       </p>
                       <div className="space-y-0.5">
                         {payload.map((entry, idx) => {
-                          const numValue = typeof entry.value === 'number' ? entry.value : parseFloat(entry.value)
+                          const numValue =
+                            typeof entry.value === 'number' ? entry.value : parseFloat(entry.value)
                           const isValidNumber = !isNaN(numValue) && isFinite(numValue)
 
                           return (
-                            <div key={idx} className="flex items-center gap-1.5 text-xs" style={{ color: '#1f2937' }}>
+                            <div
+                              key={idx}
+                              className="flex items-center gap-1.5 text-xs"
+                              style={{ color: '#1f2937' }}
+                            >
                               <div
                                 className="w-2 h-2 rounded-full flex-shrink-0"
                                 style={{ backgroundColor: entry.color }}
                               />
-                              <span className="font-medium text-gray-900" style={{ color: '#111827' }}>{entry.name}:</span>
-                              <span className="font-mono text-gray-900 text-xs" style={{ color: '#111827' }}>
+                              <span
+                                className="font-medium text-gray-900"
+                                style={{ color: '#111827' }}
+                              >
+                                {entry.name}:
+                              </span>
+                              <span
+                                className="font-mono text-gray-900 text-xs"
+                                style={{ color: '#111827' }}
+                              >
                                 {isValidNumber
-                                  ? (numValue < 1e-19 ? '0.00e+00' : numValue.toExponential(2))
+                                  ? numValue < 1e-19
+                                    ? '0.00e+00'
+                                    : numValue.toExponential(2)
                                   : 'N/A'}
                               </span>
                             </div>
@@ -413,9 +445,12 @@ export function SimulationChart({ results, metadata }) {
                 }}
               />
 
-              <Legend wrapperStyle={{ fontSize: '11px', fontWeight: '500', paddingTop: '10px' }} iconType="line" />
+              <Legend
+                wrapperStyle={{ fontSize: '11px', fontWeight: '500', paddingTop: '10px' }}
+                iconType="line"
+              />
 
-              {displaySpecies.map((species, idx) => (
+              {displaySpecies.map((species) => (
                 <Line
                   key={species}
                   type="monotone"
@@ -463,7 +498,7 @@ export function SimulationChart({ results, metadata }) {
                     const max = dataMax * 10
                     // console.log('Y-axis dataMax:', dataMax, '→ domain max:', max)
                     return max
-                  }
+                  },
                 ]}
                 stroke="#374151"
                 tick={{ fontSize: 11, fill: '#374151' }}
@@ -488,26 +523,47 @@ export function SimulationChart({ results, metadata }) {
                   if (!active || !payload?.length) return null
 
                   return (
-                    <div className="bg-white border-2 border-gray-800 rounded-lg shadow-xl p-3" style={{ backgroundColor: 'white' }}>
-                      <p className="font-semibold mb-2 text-sm text-gray-900" style={{ color: '#111827' }}>
+                    <div
+                      className="bg-white border-2 border-gray-800 rounded-lg shadow-xl p-3"
+                      style={{ backgroundColor: 'white' }}
+                    >
+                      <p
+                        className="font-semibold mb-2 text-sm text-gray-900"
+                        style={{ color: '#111827' }}
+                      >
                         Time: {label?.toLocaleString()} seconds
                       </p>
                       <div className="space-y-1">
                         {payload.map((entry, idx) => {
                           // Convert value to number and validate
-                          const numValue = typeof entry.value === 'number' ? entry.value : parseFloat(entry.value)
+                          const numValue =
+                            typeof entry.value === 'number' ? entry.value : parseFloat(entry.value)
                           const isValidNumber = !isNaN(numValue) && isFinite(numValue)
 
                           return (
-                            <div key={idx} className="flex items-center gap-2 text-xs" style={{ color: '#1f2937' }}>
+                            <div
+                              key={idx}
+                              className="flex items-center gap-2 text-xs"
+                              style={{ color: '#1f2937' }}
+                            >
                               <div
                                 className="w-3 h-3 rounded-full flex-shrink-0"
                                 style={{ backgroundColor: entry.color }}
                               />
-                              <span className="font-medium text-gray-900" style={{ color: '#111827' }}>{entry.name}:</span>
-                              <span className="font-mono text-gray-900" style={{ color: '#111827' }}>
+                              <span
+                                className="font-medium text-gray-900"
+                                style={{ color: '#111827' }}
+                              >
+                                {entry.name}:
+                              </span>
+                              <span
+                                className="font-mono text-gray-900"
+                                style={{ color: '#111827' }}
+                              >
                                 {isValidNumber
-                                  ? (numValue < 1e-19 ? '0.0000e+00' : numValue.toExponential(4))
+                                  ? numValue < 1e-19
+                                    ? '0.0000e+00'
+                                    : numValue.toExponential(4)
                                   : 'N/A'}
                               </span>
                             </div>
@@ -523,14 +579,17 @@ export function SimulationChart({ results, metadata }) {
                 wrapperStyle={{
                   fontSize: '13px',
                   fontWeight: '500',
-                  paddingTop: '20px'
+                  paddingTop: '20px',
                 }}
                 iconType="line"
                 content={({ payload }) => {
                   if (!payload || payload.length === 0) return null
 
                   return (
-                    <div className="flex flex-wrap justify-center gap-3 px-4" style={{ maxHeight: '200px', overflowY: 'auto' }}>
+                    <div
+                      className="flex flex-wrap justify-center gap-3 px-4"
+                      style={{ maxHeight: '200px', overflowY: 'auto' }}
+                    >
                       {payload.map((entry, index) => (
                         <div
                           key={`legend-${index}`}
@@ -541,9 +600,7 @@ export function SimulationChart({ results, metadata }) {
                             className="w-4 h-1 rounded"
                             style={{ backgroundColor: entry.color }}
                           />
-                          <span className="text-sm font-semibold text-gray-900">
-                            {entry.value}
-                          </span>
+                          <span className="text-sm font-semibold text-gray-900">{entry.value}</span>
                         </div>
                       ))}
                     </div>
@@ -551,7 +608,7 @@ export function SimulationChart({ results, metadata }) {
                 }}
               />
 
-              {displaySpecies.map((species, idx) => (
+              {displaySpecies.map((species) => (
                 <Line
                   key={species}
                   type="monotone"
@@ -575,9 +632,16 @@ export function SimulationChart({ results, metadata }) {
             Chart Controls:
           </p>
           <ul className="space-y-0.5 ml-4">
-            <li>• Chart displays concentrations on <strong>logarithmic scale</strong> with dynamic axes</li>
-            <li>• Click species badges to <strong>show/hide</strong> individual species</li>
-            <li>• Use <strong>Show All</strong> to display all species simultaneously</li>
+            <li>
+              • Chart displays concentrations on <strong>logarithmic scale</strong> with dynamic
+              axes
+            </li>
+            <li>
+              • Click species badges to <strong>show/hide</strong> individual species
+            </li>
+            <li>
+              • Use <strong>Show All</strong> to display all species simultaneously
+            </li>
             <li>• Hover over the chart for detailed concentration values</li>
           </ul>
         </div>

@@ -25,15 +25,16 @@ export function GuidePage() {
         </CardHeader>
         <CardContent className="space-y-3 text-sm">
           <p>
-            MusicBox Interactive is a web-based platform for atmospheric chemistry modeling powered by
+            MusicBox Interactive is a web-based platform for atmospheric chemistry modeling powered
+            by
             <strong> MUSICA (Multi-Scale Infrastructure for Chemistry and Aerosols)</strong> and
             <strong> MICM (Modular Integrated Chemistry Module)</strong>.
           </p>
-          <p>
-            This application allows you to:
-          </p>
+          <p>This application allows you to:</p>
           <ul className="list-disc list-inside ml-4 space-y-1">
-            <li>Select from pre-configured chemical mechanisms (Chapman, TS1, Full Configuration)</li>
+            <li>
+              Select from pre-configured chemical mechanisms (Chapman, TS1, Full Configuration)
+            </li>
             <li>Define custom chemical species and reactions</li>
             <li>Configure atmospheric conditions and initial concentrations</li>
             <li>Run simulations and visualize concentration profiles over time</li>
@@ -46,7 +47,9 @@ export function GuidePage() {
       <Card>
         <CardHeader>
           <CardTitle>Step-by-Step Workflow</CardTitle>
-          <CardDescription className="text-white/80">Follow these steps to run your first simulation</CardDescription>
+          <CardDescription className="text-white/80">
+            Follow these steps to run your first simulation
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="relative space-y-8">
@@ -60,13 +63,19 @@ export function GuidePage() {
               </div>
               <div className="flex-1">
                 <h3 className="font-bold text-lg mb-2">Start from Dashboard</h3>
-                <p className="text-sm text-gray-300 mb-2">
-                  Choose one of three options to begin:
-                </p>
+                <p className="text-sm text-gray-300 mb-2">Choose one of three options to begin:</p>
                 <ul className="list-disc list-inside ml-4 space-y-1 text-sm text-gray-300">
-                  <li><strong>Browse Examples:</strong> Load a pre-configured mechanism (Chapman, TS1, or Full Configuration)</li>
-                  <li><strong>Start from Scratch:</strong> Build a custom mechanism from the ground up</li>
-                  <li><strong>Load Configuration:</strong> Upload a previously saved configuration file (.json)</li>
+                  <li>
+                    <strong>Browse Examples:</strong> Load a pre-configured mechanism (Chapman, TS1,
+                    or Full Configuration)
+                  </li>
+                  <li>
+                    <strong>Start from Scratch:</strong> Build a custom mechanism from the ground up
+                  </li>
+                  <li>
+                    <strong>Load Configuration:</strong> Upload a previously saved configuration
+                    file (.json)
+                  </li>
                 </ul>
               </div>
             </div>
@@ -79,14 +88,22 @@ export function GuidePage() {
               <div className="flex-1">
                 <h3 className="font-bold text-lg mb-2">Define Your Mechanism</h3>
                 <p className="text-sm text-gray-300 mb-2">
-                  Navigate to the <strong>Mechanism</strong> page to configure chemical species and reactions:
+                  Navigate to the <strong>Mechanism</strong> page to configure chemical species and
+                  reactions:
                 </p>
                 <ul className="list-disc list-inside ml-4 space-y-1 text-sm text-gray-300">
-                  <li><strong>Species Tab:</strong> Add chemical species with properties (molecular weight, diffusion coefficient, etc.)</li>
-                  <li><strong>Reactions Tab:</strong> Define chemical reactions with rate constants and reaction types (ARRHENIUS, PHOTOLYSIS, TROE, etc.)</li>
+                  <li>
+                    <strong>Species Tab:</strong> Add chemical species with properties (molecular
+                    weight, diffusion coefficient, etc.)
+                  </li>
+                  <li>
+                    <strong>Reactions Tab:</strong> Define chemical reactions with rate constants
+                    and reaction types (ARRHENIUS, PHOTOLYSIS, TROE, etc.)
+                  </li>
                 </ul>
                 <div className="mt-2 p-3 bg-white/0 backdrop-blur-lg border border-white/20 rounded-lg text-xs text-gray-300 w-fit">
-                  <strong>Tip:</strong> If you loaded an example, species and reactions are already configured!
+                  <strong>Tip:</strong> If you loaded an example, species and reactions are already
+                  configured!
                 </div>
               </div>
             </div>
@@ -102,10 +119,20 @@ export function GuidePage() {
                   Navigate to the <strong>Conditions</strong> page and complete each tab:
                 </p>
                 <ul className="list-disc list-inside ml-4 space-y-1 text-sm text-gray-300">
-                  <li><strong>General Tab:</strong> Set temperature, pressure, simulation duration, and time step</li>
-                  <li><strong>Initial Tab:</strong> Define initial concentrations for each species</li>
-                  <li><strong>Evolving Tab:</strong> (Optional) Configure time-varying conditions like temperature or emissions</li>
-                  <li><strong>Review Tab:</strong> Review your complete configuration before running</li>
+                  <li>
+                    <strong>General Tab:</strong> Set temperature, pressure, simulation duration,
+                    and time step
+                  </li>
+                  <li>
+                    <strong>Initial Tab:</strong> Define initial concentrations for each species
+                  </li>
+                  <li>
+                    <strong>Evolving Tab:</strong> (Optional) Configure time-varying conditions like
+                    temperature or emissions
+                  </li>
+                  <li>
+                    <strong>Review Tab:</strong> Review your complete configuration before running
+                  </li>
                 </ul>
               </div>
             </div>
@@ -118,7 +145,8 @@ export function GuidePage() {
               <div className="flex-1">
                 <h3 className="font-bold text-lg mb-2">Run Simulation</h3>
                 <p className="text-sm text-gray-300 mb-2">
-                  In the <strong>Review</strong> tab under Conditions, click the <strong>Run Simulation</strong> button:
+                  In the <strong>Review</strong> tab under Conditions, click the{' '}
+                  <strong>Run Simulation</strong> button:
                 </p>
                 <ul className="list-disc list-inside ml-4 space-y-1 text-sm text-gray-300">
                   <li>Review your configuration checklist to ensure all required fields are set</li>
@@ -171,9 +199,7 @@ export function GuidePage() {
 
             <div className="p-4 bg-white/0 backdrop-blur-lg border border-white/20 rounded-lg">
               <h4 className="font-bold mb-2 underline decoration-clone">TS1 Mechanism</h4>
-              <p className="text-xs text-white-200 mb-2">
-                Tropospheric chemistry with 210 species
-              </p>
+              <p className="text-xs text-white-200 mb-2">Tropospheric chemistry with 210 species</p>
               <ul className="text-xs text-white-200 space-y-1">
                 <li>210 species</li>
                 <li>534 reactions (ARRHENIUS, TROE)</li>
@@ -183,9 +209,7 @@ export function GuidePage() {
 
             <div className="p-4 bg-white/0 backdrop-blur-lg border border-white/20 rounded-lg">
               <h4 className="font-bold mb-2 underline decoration-clone">Full Configuration</h4>
-              <p className="text-xs text-white-200 mb-2">
-                Test mechanism with all reaction types
-              </p>
+              <p className="text-xs text-white-200 mb-2">Test mechanism with all reaction types</p>
               <ul className="text-xs text-white-200 space-y-1">
                 <li>10 species</li>
                 <li>11 reaction types demonstrated</li>
@@ -206,31 +230,36 @@ export function GuidePage() {
             <div className="flex gap-3">
               <Lightbulb className="w-6 h-6 flex-shrink-0" />
               <div className="text-gray-300">
-                <strong>Use Scientific Notation:</strong> For concentrations and rate constants, use scientific notation (e.g., 1.5e-8) for better precision
+                <strong>Use Scientific Notation:</strong> For concentrations and rate constants, use
+                scientific notation (e.g., 1.5e-8) for better precision
               </div>
             </div>
             <div className="flex gap-3">
               <Save className="w-6 h-6 flex-shrink-0" />
               <div className="text-gray-300">
-                <strong>Save Your Work:</strong> Download your configuration from the Review tab before running simulations, so you can reload it later
+                <strong>Save Your Work:</strong> Download your configuration from the Review tab
+                before running simulations, so you can reload it later
               </div>
             </div>
             <div className="flex gap-3">
               <Timer className="w-6 h-6 flex-shrink-0" />
               <div className="text-gray-300">
-                <strong>Start Small:</strong> For initial tests, use shorter simulation times and larger time steps to ensure everything works correctly
+                <strong>Start Small:</strong> For initial tests, use shorter simulation times and
+                larger time steps to ensure everything works correctly
               </div>
             </div>
             <div className="flex gap-3">
               <BarChart3 className="w-6 h-6 flex-shrink-0" />
               <div className="text-gray-300">
-                <strong>Review Configuration:</strong> Always check the configuration checklist in the Review tab before running to ensure all required fields are complete
+                <strong>Review Configuration:</strong> Always check the configuration checklist in
+                the Review tab before running to ensure all required fields are complete
               </div>
             </div>
             <div className="flex gap-3">
               <RotateCw className="w-6 h-6 flex-shrink-0" />
               <div className="text-gray-300">
-                <strong>Experiment:</strong> Try different mechanisms, modify parameters, and see how results change - that's the best way to learn!
+                <strong>Experiment:</strong> Try different mechanisms, modify parameters, and see
+                how results change - that's the best way to learn!
               </div>
             </div>
           </div>

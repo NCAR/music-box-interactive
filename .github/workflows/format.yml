@@ -1,0 +1,39 @@
+name: Format JavaScript
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  format:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - uses: actions/setup-node@v4
+      with:
+        node-version: 21
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Format with Prettier
+      run: npm run format
+
+    - name: Check for changes
+      id: check-changes
+      run: git diff --exit-code
+      continue-on-error: true
+
+    - name: Create Pull Request
+      if: steps.check-changes.outcome != 'success'
+      uses: peter-evans/create-pull-request@v6
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        commit-message: "Auto-format JavaScript with Prettier"
+        title: "Auto-format JavaScript with Prettier"
+        body: "Automated PR applying Prettier formatting to src files."
+        branch: auto-format-js

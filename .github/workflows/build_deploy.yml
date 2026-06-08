@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
   push:
     branches:
-      - TAMU_Capstone_2026_UI
+      - development
     tags:
       - "v[0-9]+.[0-9].[0-9]"
 
