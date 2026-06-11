@@ -32,7 +32,9 @@ services:
       - ./backend/.env
     depends_on:
       rabbitmq:
-        condition: service_healthy
+        # start-only: the consumer retries until the broker is reachable, and
+        # gating on health is fragile in CI where the broker may exit early.
+        condition: service_started
       api-server:
         condition: service_healthy
     restart: on-failure
