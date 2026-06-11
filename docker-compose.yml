@@ -12,9 +12,15 @@ services:
     env_file:
       - ./backend/.env
     volumes:
-      - db-data:/music-box-interactive/interactive
+      - db-data:/music-box-interactive/interactive/db-data
       - partmc-data:/music-box-interactive/interactive/partmc-volume
-    command: ["python3", "-u", "interactive/manage.py", "runserver_plus", "0.0.0.0:8000"]
+    command: ["sh", "-c", "python3 interactive/manage.py migrate --noinput && python3 -u interactive/manage.py runserver_plus 0.0.0.0:8000"]
+    healthcheck:
+      test: ["CMD", "python3", "interactive/manage.py", "migrate", "--check"]
+      interval: 5s
+      timeout: 10s
+      retries: 12
+      start_period: 30s
   model-runner:
     build: 
       context: .
@@ -25,7 +31,10 @@ services:
     env_file:
       - ./backend/.env
     depends_on:
-      - rabbitmq
+      rabbitmq:
+        condition: service_healthy
+      api-server:
+        condition: service_healthy
     restart: on-failure
     deploy:
       mode: replicated
@@ -34,7 +43,7 @@ services:
       - seccomp:unconfined
     volumes:
       - partmc-data:/partmc/partmc-volume
-      - db-data:/music-box-interactive/interactive
+      - db-data:/music-box-interactive/interactive/db-data
     command: ["python3", "-u", "/music-box-interactive/interactive/rabbit_mq_model_runner.py"]
   rabbitmq:
     container_name: 'rabbitmq'
@@ -49,7 +58,8 @@ services:
       test: rabbitmq-diagnostics -q ping
       interval: 5s
       timeout: 15s
-      retries: 1
+      retries: 5
+      start_period: 30s
 
   frontend:
     container_name: frontend
@@ -59,7 +69,7 @@ services:
     ports:
       - "5173:5173"
     working_dir: /MusicBoxInteractiveFrontend
-    command: ["vite", "--host"]
+    command: ["npm", "run", "dev", "--", "--host"]
 volumes:
   db-data:
   partmc-data:

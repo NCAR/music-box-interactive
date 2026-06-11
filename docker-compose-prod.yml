@@ -9,12 +9,18 @@ services:
       - 8000:8000
     env_file:
       - /home/shared/.env
-    command: ["python3", "-u", "interactive/manage.py", "runserver_plus", "--cert-file", "/certificates/acom.ucar.edu.crt", "--key-file", "/certificates/acom.ucar.edu.key", "0.0.0.0:8000"]
+    command: ["sh", "-c", "python3 interactive/manage.py migrate --noinput && python3 -u interactive/manage.py runserver_plus --cert-file /certificates/acom.ucar.edu.crt --key-file /certificates/acom.ucar.edu.key 0.0.0.0:8000"]
     volumes:
-      - db-data:/music-box-interactive/interactive
+      - db-data:/music-box-interactive/interactive/db-data
       - /etc/pki/:/certificates
     network_mode: "host"
     restart: on-failure
+    healthcheck:
+      test: ["CMD", "python3", "interactive/manage.py", "migrate", "--check"]
+      interval: 5s
+      timeout: 10s
+      retries: 12
+      start_period: 30s
     logging:
       driver: "json-file"
       options:
@@ -28,12 +34,15 @@ services:
     env_file:
       - /home/shared/.env
     restart: on-failure
+    depends_on:
+      api-server:
+        condition: service_healthy
     deploy:
       mode: replicated
       replicas: 6
     command: ["python3", "-u", "/music-box-interactive/interactive/rabbit_mq_model_runner.py"]
     volumes:
-      - db-data:/music-box-interactive/interactive
+      - db-data:/music-box-interactive/interactive/db-data
     network_mode: "host"
     logging:
       driver: "json-file"

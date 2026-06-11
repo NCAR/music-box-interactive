@@ -3,9 +3,8 @@
 **/*.DS_Store
 .vscode
 backend/interactive/db.sqlite3
-backend/interactive/api/migrations/*
-!backend/interactive/api/migrations/__init__.py
-!backend/interactive/api/migrations/.gitkeep
+backend/interactive/db-data/
+backend/interactive/api/migrations/__pycache__/
 node_modules
 frontend/dist/*
 frontend/package-lock.json
