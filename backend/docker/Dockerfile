@@ -33,9 +33,13 @@ RUN if [ "$INSTALL_PyPartMC" = "true" ]; then \
 # API Server stage
 FROM base AS api-server
 
-# Run Django setup commands
-RUN python3 interactive/manage.py makemigrations
-RUN python3 interactive/manage.py migrate
+# The Django system checks run by collectstatic open a DB cursor, so the
+# database directory must exist at build time.
+RUN mkdir -p interactive/db-data
+
+# Collect static files into STATIC_ROOT (/static/, outside the db-data volume).
+# Database migrations are NOT run here: the database lives in the db-data volume
+# and is migrated at container startup so every deploy applies pending migrations.
 RUN python3 interactive/manage.py collectstatic --noinput
 
 # Model Runner stage

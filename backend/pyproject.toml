@@ -25,7 +25,7 @@ dependencies = [
   "scipy>=1.7",
   "setuptools>=70.0",
   "Werkzeug>=2.0",
-  "acom_music_box>=2.11.0"
+  "acom_music_box>=2.11.0,<3"
 ]
 
 [project.optional-dependencies]

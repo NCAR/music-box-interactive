@@ -89,7 +89,7 @@ def get_configuration_as_json(file_path):
                 conditions = json.load(contents)
 
             # since the conditions object gets sent to the server, delete irrelevant information
-            del conditions["initial conditions"]
+            conditions.pop("initial conditions", None)
 
             conditions["chemical species"] = {
                 f"{species}": {
