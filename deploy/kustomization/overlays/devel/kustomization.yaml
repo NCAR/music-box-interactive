@@ -2,9 +2,12 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
 images:
+- name: hub.k8s.ucar.edu/musicbox/backend
+  newName: hub.k8s.ucar.edu/musicbox/backend
+  newTag: eec636e
 - name: hub.k8s.ucar.edu/musicbox/frontend
   newName: hub.k8s.ucar.edu/musicbox/frontend
-  newTag: a1834e4
+  newTag: eec636e
 
 namePrefix: devel-
 
