@@ -4,10 +4,10 @@ kind: Kustomization
 images:
 - name: hub.k8s.ucar.edu/musicbox/backend
   newName: hub.k8s.ucar.edu/musicbox/backend
-  newTag: eec636e
+  newTag: "9943050"
 - name: hub.k8s.ucar.edu/musicbox/frontend
   newName: hub.k8s.ucar.edu/musicbox/frontend
-  newTag: eec636e
+  newTag: "9943050"
 
 namePrefix: devel-
 
