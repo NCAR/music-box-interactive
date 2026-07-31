@@ -7,4 +7,3 @@ backend/interactive/db-data/
 backend/interactive/api/migrations/__pycache__/
 node_modules
 frontend/dist/*
-frontend/package-lock.json

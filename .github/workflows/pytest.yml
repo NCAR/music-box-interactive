@@ -17,11 +17,10 @@ jobs:
         options: --privileged
 
     steps:
-    
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v5
 
       - name: Run docker-compose
-        uses: hoverkraft-tech/compose-action@v2.0.1
+        uses: hoverkraft-tech/compose-action@v3.0.0
         with:
           compose-file: "./docker-compose.yml"
       
@@ -32,7 +31,6 @@ jobs:
           cd interactive &&
           python manage.py makemigrations &&
           python manage.py migrate"
-
 
       - name: Run pytest
         working-directory: ./backend

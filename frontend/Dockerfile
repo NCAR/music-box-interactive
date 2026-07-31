@@ -1,17 +1,15 @@
 # Use Node.js base image
-FROM node:24-bullseye AS base
-
-# Copy project files into the container
-COPY . MusicBoxInteractiveFrontend/
+FROM node:24-bookworm AS base
 
 # Set working directory
 WORKDIR /MusicBoxInteractiveFrontend
 
-# Clean host-specific folders that may cause issues
-RUN rm -rf node_modules package-lock.json
+# Install dependencies from the lockfile
+COPY package*.json ./
+RUN npm ci
 
-# Install dependencies
-RUN npm install
+# Copy project files into the container
+COPY . .
 
 # Build the project
 RUN npm run build
