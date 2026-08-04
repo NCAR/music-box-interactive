@@ -313,7 +313,7 @@ export function SpeciesEditor() {
 
             <Button
               onClick={handleAddSpecies}
-              variant="apple"
+              variant="powder"
               size="default"
               className="mt-3 rounded-2xl"
             >

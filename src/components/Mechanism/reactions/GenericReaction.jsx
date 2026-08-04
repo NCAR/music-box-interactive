@@ -69,7 +69,7 @@ export function GenericReactionForm({ onAddReaction, reactionType }) {
         />
       </div>
 
-      <Button onClick={handleAdd} variant="apple" size="default" className="rounded-2xl">
+      <Button onClick={handleAdd} variant="powder" size="default" className="rounded-2xl">
         Add Reaction
       </Button>
     </div>

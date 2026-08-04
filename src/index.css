@@ -3,6 +3,23 @@
 @tailwind utilities;
 
 @layer base {
+  :root {
+    /* Gmail / Material 3 color tokens */
+    --color-primary: #0b57d0;
+    --color-primary-hover: #0842a0;
+    --color-primary-container: #d3e3fd;
+    --color-compose: #c2e7ff;
+    --color-compose-foreground: #001d35;
+    --color-surface: #ffffff;
+    --color-surface-alt: #f6f8fc;
+    --color-surface-hover: #f1f3f4;
+    --color-border: #dadce0;
+    --color-ink: #1f1f1f;
+    --color-muted: #5f6368;
+    --color-danger: #d93025;
+    --color-danger-hover: #b3261e;
+    --color-danger-container: #fce8e6;
+  }
   * {
     border-color: #e5e7eb;
   }

@@ -13,19 +13,19 @@ export function RunSimulationButton({ className = '' }) {
     <Button
       onClick={runSimulation}
       disabled={isDisabled}
-      variant="apple"
+      variant="powder"
       size="lg"
-      className={`rounded-2xl mt-2 mb-2 ${className}`}
+      className={`mt-2 mb-2 ${className}`}
       title={tooltip}
     >
       {isRunning ? (
         <>
-          <Loader2 className="w-full h-4 mr-2 animate-spin" />
+          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
           Running...
         </>
       ) : (
         <>
-          <Play className="w-full h-4 mr-2" />
+          <Play className="w-4 h-4 mr-2" />
           Run Simulation
         </>
       )}
