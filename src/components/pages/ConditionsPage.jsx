@@ -60,7 +60,7 @@ export function ConditionsPage() {
                   onClick={() => setActiveTab(tab.id)}
                   className={`rounded-2xl text-xs xs:text-sm sm:text-base px-2.5 xs:px-3 sm:px-4 py-1.5 xs:py-2 whitespace-nowrap flex-shrink-0 ${
                     activeTab === tab.id
-                      ? 'bg-primary-container text-[#041e49] font-semibold'
+                      ? 'border border-border bg-transparent text-primary'
                       : 'bg-transparent text-muted hover:bg-surface-hover hover:text-ink'
                   }`}
                 >
