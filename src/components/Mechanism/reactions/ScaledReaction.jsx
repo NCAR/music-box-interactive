@@ -93,7 +93,7 @@ export function ScaledReactionForm({ onAddReaction, reactionType, allowEmptyProd
         />
       </div>
 
-      <Button onClick={handleAdd} variant="powder" size="default" className="rounded-2xl">
+      <Button onClick={handleAdd} variant="secondary" size="default" className="rounded-2xl">
         Add Reaction
       </Button>
     </div>

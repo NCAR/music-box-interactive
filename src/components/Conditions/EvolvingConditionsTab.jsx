@@ -535,7 +535,7 @@ export function EvolvingConditionsTab() {
                 </div>
                 <Button
                   onClick={handleAddTimePoint}
-                  variant="powder"
+                  variant="secondary"
                   size="default"
                   className="w-full mt-3 rounded-2xl"
                 >

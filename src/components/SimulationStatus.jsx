@@ -104,7 +104,7 @@ export function SimulationStatus() {
           {/* <Button
             onClick={handleRunSimulation}
             disabled={simulation.status === 'running' || !mechanism || !currentExample || isSubmitting}
-            variant="powder"
+            variant="default"
             size="default"
             className="rounded-2xl"
             title={!mechanism || !currentExample ? 'Please select an example to run simulation' : ''}

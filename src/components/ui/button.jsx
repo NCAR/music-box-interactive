@@ -5,7 +5,7 @@ const Button = React.forwardRef(
   ({ className, variant = 'glass', size = 'default', ...props }, ref) => {
     const variants = {
       default:
-        'bg-primary text-white hover:bg-primary-hover shadow-sm transition-colors duration-200',
+        'bg-primary text-white hover:bg-primary-hover shadow-sm transition-colors duration-200 rounded-full',
       outline:
         'border border-border bg-transparent text-ink hover:bg-surface-hover transition-colors duration-200',
       ghost: 'text-ink hover:bg-surface-hover transition-colors duration-200',
@@ -14,8 +14,8 @@ const Button = React.forwardRef(
         'bg-surface-alt border border-border text-ink hover:bg-surface-hover transition-colors duration-200',
       destructive:
         'bg-danger text-white hover:bg-danger-hover shadow-sm transition-colors duration-200',
-      powder:
-        'bg-compose text-compose-foreground hover:bg-[#b3dcf5] font-bold shadow-sm hover:shadow transition-colors duration-200 rounded-full',
+      secondary:
+        'bg-secondary text-secondary-foreground hover:bg-[#b3dcf5] font-bold shadow-sm hover:shadow transition-colors duration-200 rounded-full',
     }
 
     const sizes = {
