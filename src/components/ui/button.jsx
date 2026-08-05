@@ -4,7 +4,7 @@ import { cn } from '../../lib/utils'
 const Button = React.forwardRef(
   ({ className, variant = 'glass', size = 'default', ...props }, ref) => {
     const variants = {
-      default:
+      primary:
         'bg-primary text-white hover:bg-primary-hover shadow-sm transition-colors duration-200 rounded-full',
       outline:
         'border border-border bg-transparent text-ink hover:bg-surface-hover transition-colors duration-200',
