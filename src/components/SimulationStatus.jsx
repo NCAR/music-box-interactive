@@ -10,8 +10,6 @@ import {
   CheckCircle2,
   XCircle,
   HelpCircle,
-  Loader2,
-  Play,
   BarChart3,
   Lightbulb,
 } from 'lucide-react'
