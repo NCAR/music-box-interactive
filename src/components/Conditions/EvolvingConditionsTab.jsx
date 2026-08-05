@@ -411,12 +411,12 @@ export function EvolvingConditionsTab() {
           <div className="flex items-center justify-between">
             <div>
               <CardTitle>Evolving Conditions</CardTitle>
-              <CardDescription className="text-white-500 italic mt-1">
+              <CardDescription className="italic mt-1">
                 Define time-varying temperature and pressure
               </CardDescription>
             </div>
             <Button
-              variant={evolving.enabled ? 'default' : 'glass'}
+              variant={evolving.enabled ? 'primary' : 'glass'}
               onClick={handleToggleEvolving}
               className="rounded-2xl"
             >
