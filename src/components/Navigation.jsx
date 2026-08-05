@@ -90,7 +90,7 @@ export function Navigation({ onBackToHome = null }) {
                 className={({ isActive }) =>
                   `flex items-center space-x-3 px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl font-medium text-sm sm:text-base transition-all duration-300 ${
                     isActive
-                      ? 'bg-primary-container text-[#041e49] font-semibold'
+                      ? 'bg-location text-location-foreground font-semibold'
                       : 'text-ink hover:bg-surface-hover'
                   }`
                 }
@@ -124,7 +124,7 @@ export function Navigation({ onBackToHome = null }) {
                 className={({ isActive }) =>
                   `flex items-center space-x-3 px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl font-medium text-sm sm:text-base transition-all duration-300 ${
                     isActive
-                      ? 'bg-primary-container text-[#041e49] font-semibold'
+                      ? 'bg-location text-location-foreground font-semibold'
                       : 'text-ink hover:bg-surface-hover'
                   }`
                 }
@@ -144,7 +144,7 @@ export function Navigation({ onBackToHome = null }) {
                 closeMobileMenu()
                 onBackToHome()
               }}
-              className="w-full px-4 py-2.5 sm:py-3 rounded-full font-medium text-sm sm:text-base bg-transparent text-danger hover:bg-danger-container transition-colors duration-200 flex items-center justify-center space-x-2"
+              className="w-full px-4 py-2.5 sm:py-3 rounded-full font-medium text-sm sm:text-base bg-transparent text-danger hover:bg-caution transition-colors duration-200 flex items-center justify-center space-x-2"
             >
               <ArrowLeft className="w-5 h-5" />
               <span>Exit App</span>

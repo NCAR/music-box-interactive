@@ -416,7 +416,7 @@ export function EvolvingConditionsTab() {
               </CardDescription>
             </div>
             <Button
-              variant={evolving.enabled ? 'primary' : 'glass'}
+              variant={evolving.enabled ? 'action' : 'glass'}
               onClick={handleToggleEvolving}
               className="rounded-2xl"
             >
@@ -535,7 +535,7 @@ export function EvolvingConditionsTab() {
                 </div>
                 <Button
                   onClick={handleAddTimePoint}
-                  variant="secondary"
+                  variant="assist"
                   size="default"
                   className="w-full mt-3 rounded-2xl"
                 >

@@ -13,7 +13,7 @@ export function RunSimulationButton({ className = '' }) {
     <Button
       onClick={runSimulation}
       disabled={isDisabled}
-      variant="primary"
+      variant="action"
       size="lg"
       className={`mt-2 mb-2 ${className}`}
       title={tooltip}

@@ -96,7 +96,7 @@ export function SurfaceReactionForm({ onAddReaction }) {
         />
       </div>
 
-      <Button onClick={handleAdd} variant="secondary" size="default" className="rounded-2xl">
+      <Button onClick={handleAdd} variant="assist" size="default" className="rounded-2xl">
         Add Reaction
       </Button>
     </div>

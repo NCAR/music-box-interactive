@@ -88,7 +88,7 @@ export function MechanismPage() {
                   onClick={() => setActiveTab(tab.id)}
                   className={`rounded-2xl text-xs xs:text-sm sm:text-base px-3 xs:px-4 sm:px-6 py-1.5 xs:py-2 whitespace-nowrap flex-shrink-0 ${
                     activeTab === tab.id
-                      ? 'border border-border bg-transparent text-primary'
+                      ? 'border border-border bg-transparent text-action'
                       : 'bg-transparent text-muted hover:bg-surface-hover hover:text-ink'
                   }`}
                 >

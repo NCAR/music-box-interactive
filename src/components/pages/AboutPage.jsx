@@ -428,7 +428,7 @@ function AboutPage({ onNavigate }) {
                     </p>
                   </div>
                   <Button
-                    variant="secondary"
+                    variant="assist"
                     size="default"
                     className="rounded-2xl text-xs xs:text-sm sm:text-base"
                   >
@@ -461,7 +461,7 @@ function AboutPage({ onNavigate }) {
                     </p>
                   </div>
                   <Button
-                    variant="secondary"
+                    variant="assist"
                     size="default"
                     className="rounded-2xl text-xs xs:text-sm sm:text-base mt-2 xs:mt-3 sm:mt-4"
                   >

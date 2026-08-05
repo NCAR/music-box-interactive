@@ -289,7 +289,7 @@ export function SimulationChart({ results, metadata }) {
                 Species Filter ({displaySpecies.length} selected)
               </h4>
               <Button
-                variant="primary"
+                variant="action"
                 size="sm"
                 onClick={() => {
                   setShowAll(false)

@@ -104,7 +104,7 @@ export function SimulationStatus() {
           {/* <Button
             onClick={handleRunSimulation}
             disabled={simulation.status === 'running' || !mechanism || !currentExample || isSubmitting}
-            variant="primary"
+            variant="action"
             size="default"
             className="rounded-2xl"
             title={!mechanism || !currentExample ? 'Please select an example to run simulation' : ''}
@@ -199,7 +199,7 @@ export function SimulationStatus() {
           )}
 
           {simulation.status === 'failed' && simulation.error && (
-            <div className="mt-4 p-3 bg-danger-container border border-red-200 rounded text-sm">
+            <div className="mt-4 p-3 bg-caution border border-red-200 rounded text-sm">
               <strong className="text-danger">Error Details:</strong>
               <pre className="mt-2 text-xs overflow-auto text-ink">
                 {JSON.stringify(simulation.error, null, 2)}
