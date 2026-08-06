@@ -54,11 +54,7 @@ function AppContent({ onNavigate }) {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-bl from-[#141E30] via-[#1f2f45] to-[#35577D] relative">
-      {/* Liquid glass background effects */}
-      <div className="fixed inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-[#35577D]/30 via-transparent to-transparent pointer-events-none"></div>
-      <div className="fixed inset-0 bg-[radial-gradient(ellipse_at_bottom_left,_var(--tw-gradient-stops))] from-[#141E30]/40 via-transparent to-transparent pointer-events-none"></div>
-
+    <div className="min-h-screen bg-surface-alt relative">
       {/* Responsive sidebar navigation */}
       <Navigation onBackToHome={handleExitApp} />
 

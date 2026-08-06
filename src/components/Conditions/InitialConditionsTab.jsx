@@ -285,7 +285,7 @@ export function InitialConditionsTab() {
 
             <Button
               onClick={handleAddSpecies}
-              variant="apple"
+              variant="assist"
               size="default"
               className="mt-3 rounded-2xl"
             >

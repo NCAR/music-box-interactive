@@ -52,13 +52,17 @@ export function ConditionsPage() {
         <CardContent className="pt-4 xs:pt-5 sm:pt-6">
           <div className="space-y-3 xs:space-y-4">
             {/* Tab Navigation */}
-            <div className="flex gap-1.5 xs:gap-2 border-b border-white/20 pb-2 overflow-x-auto">
+            <div className="flex gap-1.5 xs:gap-2 border-b border-border pb-2 overflow-x-auto">
               {tabs.map((tab) => (
                 <Button
                   key={tab.id}
-                  variant={activeTab === tab.id ? 'default' : 'outline'}
+                  variant="ghost"
                   onClick={() => setActiveTab(tab.id)}
-                  className="rounded-2xl text-xs xs:text-sm sm:text-base px-2.5 xs:px-3 sm:px-4 py-1.5 xs:py-2 whitespace-nowrap flex-shrink-0"
+                  className={`rounded-2xl text-xs xs:text-sm sm:text-base px-2.5 xs:px-3 sm:px-4 py-1.5 xs:py-2 whitespace-nowrap flex-shrink-0 ${
+                    activeTab === tab.id
+                      ? 'border border-border bg-transparent text-action'
+                      : 'bg-transparent text-muted hover:bg-surface-hover hover:text-ink'
+                  }`}
                 >
                   {tab.label}
                 </Button>

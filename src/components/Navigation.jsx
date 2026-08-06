@@ -25,7 +25,7 @@ export function Navigation({ onBackToHome = null }) {
       {/* Mobile Hamburger/Close Button with Animation and Position Transition */}
       <button
         onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-        className={`lg:hidden fixed z-50 p-2 rounded-lg bg-white/10 backdrop-blur-lg border border-white/30 text-white shadow-[0_8px_32px_0_rgba(31,38,135,0.37)] opacity-70 hover:opacity-100 transition-all duration-300 ${
+        className={`lg:hidden fixed z-50 p-2 rounded-lg bg-surface border border-border text-ink shadow-sm opacity-90 hover:opacity-100 transition-all duration-300 ${
           isMobileMenuOpen
             ? 'top-4 left-[200px] xs:left-[216px] sm:left-[232px] md:left-[240px]'
             : 'top-4 left-4'
@@ -36,19 +36,19 @@ export function Navigation({ onBackToHome = null }) {
         <div className="w-4 h-4 flex flex-col justify-center items-center relative">
           {/* Top Line */}
           <span
-            className={`block w-4 h-0.5 bg-white rounded-full transition-all duration-400 ease-in-out absolute ${
+            className={`block w-4 h-0.5 bg-ink rounded-full transition-all duration-400 ease-in-out absolute ${
               isMobileMenuOpen ? 'rotate-45' : '-translate-y-2'
             }`}
           ></span>
           {/* Middle Line */}
           <span
-            className={`block w-4 h-0.5 bg-white rounded-full transition-all duration-300 ease-in-out absolute ${
+            className={`block w-4 h-0.5 bg-ink rounded-full transition-all duration-300 ease-in-out absolute ${
               isMobileMenuOpen ? 'opacity-0 scale-0' : 'opacity-100 scale-100'
             }`}
           ></span>
           {/* Bottom Line */}
           <span
-            className={`block w-4 h-0.5 bg-white rounded-full transition-all duration-400 ease-in-out absolute ${
+            className={`block w-4 h-0.5 bg-ink rounded-full transition-all duration-400 ease-in-out absolute ${
               isMobileMenuOpen ? '-rotate-45' : 'translate-y-2'
             }`}
           ></span>
@@ -63,16 +63,16 @@ export function Navigation({ onBackToHome = null }) {
       {/* Sidebar Navigation */}
       <nav
         className={`
-        fixed left-0 top-0 h-screen bg-gradient-to-b from-[#141E30] to-[#35577D] text-white shadow-2xl flex flex-col z-40
+        fixed left-0 top-0 h-screen bg-surface text-ink border-r border-border shadow-sm flex flex-col z-40
         w-[240px] xs:w-[256px] sm:w-[272px] md:w-[280px] lg:w-64
         transition-transform duration-300 ease-in-out
         ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
       `}
       >
         {/* Logo Section */}
-        <div className="p-4 sm:p-5 md:p-6 border-b border-[#35577D]">
+        <div className="p-4 sm:p-5 md:p-6 border-b border-border">
           <h1 className="text-lg sm:text-xl md:text-2xl font-bold">MusicBox Interactive</h1>
-          <p className="text-xs sm:text-sm md:text-base text-blue-200 mt-1 sm:mt-2">
+          <p className="text-xs sm:text-sm md:text-base text-muted mt-1 sm:mt-2">
             Atmospheric Chemistry Simulation
           </p>
         </div>
@@ -90,8 +90,8 @@ export function Navigation({ onBackToHome = null }) {
                 className={({ isActive }) =>
                   `flex items-center space-x-3 px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl font-medium text-sm sm:text-base transition-all duration-300 ${
                     isActive
-                      ? 'bg-white/20 backdrop-blur-lg border border-white/30 text-white shadow-[0_8px_32px_0_rgba(255,255,255,0.1)] hover:bg-white/30'
-                      : 'bg-white/5 backdrop-blur-sm border border-white/10 hover:bg-white/15 hover:border-white/20 hover:shadow-[0_4px_16px_0_rgba(255,255,255,0.05)]'
+                      ? 'bg-location text-location-foreground font-semibold'
+                      : 'text-ink hover:bg-surface-hover'
                   }`
                 }
               >
@@ -102,7 +102,7 @@ export function Navigation({ onBackToHome = null }) {
           })}
 
           {/* Separator Line */}
-          <div className="border-t border-white/20 my-3 sm:my-4"></div>
+          <div className="border-t border-border my-3 sm:my-4"></div>
 
           {/* Run Simulation Button */}
           <div className="px-1 sm:px-2">
@@ -110,7 +110,7 @@ export function Navigation({ onBackToHome = null }) {
           </div>
 
           {/* Separator Line */}
-          <div className="border-t border-white/20 my-3 sm:my-4"></div>
+          <div className="border-t border-border my-3 sm:my-4"></div>
 
           {/* Results Link */}
           {navLinks.slice(4).map((link) => {
@@ -124,8 +124,8 @@ export function Navigation({ onBackToHome = null }) {
                 className={({ isActive }) =>
                   `flex items-center space-x-3 px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl font-medium text-sm sm:text-base transition-all duration-300 ${
                     isActive
-                      ? 'bg-white/20 backdrop-blur-lg border border-white/30 text-white shadow-[0_8px_32px_0_rgba(255,255,255,0.1)] hover:bg-white/30'
-                      : 'bg-white/5 backdrop-blur-sm border border-white/10 hover:bg-white/15 hover:border-white/20 hover:shadow-[0_4px_16px_0_rgba(255,255,255,0.05)]'
+                      ? 'bg-location text-location-foreground font-semibold'
+                      : 'text-ink hover:bg-surface-hover'
                   }`
                 }
               >
@@ -138,14 +138,13 @@ export function Navigation({ onBackToHome = null }) {
 
         {/* Exit Button */}
         {onBackToHome && (
-          <div className="p-3 sm:p-4 border-t border-white/10">
+          <div className="p-3 sm:p-4 border-t border-border">
             <button
               onClick={() => {
                 closeMobileMenu()
                 onBackToHome()
               }}
-              className="w-full px-4 py-2.5 sm:py-3 rounded-xl font-medium text-sm sm:text-base bg-red-500/10
-             backdrop-blur-lg border border-red-400/60 hover:bg-red-500/40 hover:border-red-500 text-white transition-all duration-300 shadow-[0_8px_32px_0_rgba(239,68,68,0.2)] hover:shadow-[0_8px_32px_0_rgba(239,68,68,0.4)] flex items-center justify-center space-x-2"
+              className="w-full px-4 py-2.5 sm:py-3 rounded-full font-medium text-sm sm:text-base bg-transparent text-danger hover:bg-caution transition-colors duration-200 flex items-center justify-center space-x-2"
             >
               <ArrowLeft className="w-5 h-5" />
               <span>Exit App</span>

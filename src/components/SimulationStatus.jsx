@@ -10,8 +10,6 @@ import {
   CheckCircle2,
   XCircle,
   HelpCircle,
-  Loader2,
-  Play,
   BarChart3,
   Lightbulb,
 } from 'lucide-react'
@@ -96,7 +94,7 @@ export function SimulationStatus() {
         <div className="flex items-center justify-between">
           <div>
             <CardTitle>Simulation Status</CardTitle>
-            <CardDescription className="text-white italic">
+            <CardDescription className="text-muted italic">
               Monitor your simulation execution
             </CardDescription>
           </div>
@@ -104,7 +102,7 @@ export function SimulationStatus() {
           {/* <Button
             onClick={handleRunSimulation}
             disabled={simulation.status === 'running' || !mechanism || !currentExample || isSubmitting}
-            variant="apple"
+            variant="action"
             size="default"
             className="rounded-2xl"
             title={!mechanism || !currentExample ? 'Please select an example to run simulation' : ''}
@@ -126,43 +124,43 @@ export function SimulationStatus() {
 
       <CardContent>
         <div
-          className={`p-6 rounded-lg border-2 bg-white/0 backdrop-blur-lg ${
+          className={`p-6 rounded-lg border-2 bg-surface-alt ${
             status.color === 'green'
-              ? 'border-green-400/50'
+              ? 'border-green-300'
               : status.color === 'blue'
-                ? 'border-blue-400/50'
+                ? 'border-blue-300'
                 : status.color === 'red'
-                  ? 'border-red-400/50'
+                  ? 'border-red-300'
                   : status.color === 'orange'
-                    ? 'border-orange-400/50'
-                    : 'border-white/20'
+                    ? 'border-orange-300'
+                    : 'border-border'
           }`}
         >
           <div className="flex items-center gap-3 mb-3">
             <status.Icon
               className={`w-10 h-10 ${
                 status.color === 'green'
-                  ? 'text-green-400'
+                  ? 'text-green-600'
                   : status.color === 'blue'
-                    ? 'text-blue-400'
+                    ? 'text-blue-600'
                     : status.color === 'red'
-                      ? 'text-red-400'
+                      ? 'text-red-600'
                       : status.color === 'orange'
-                        ? 'text-orange-400'
-                        : 'text-gray-400'
+                        ? 'text-orange-600'
+                        : 'text-muted'
               }`}
             />
             <div>
-              <h3 className="font-semibold text-lg text-white">{status.title}</h3>
-              <p className="text-sm text-gray-300">{status.message}</p>
+              <h3 className="font-semibold text-lg text-ink">{status.title}</h3>
+              <p className="text-sm text-muted">{status.message}</p>
             </div>
           </div>
 
           {simulation.status === 'running' && (
             <div className="mt-4">
               <div className="flex items-center gap-2">
-                <div className="animate-spin h-5 w-5 border-2 border-blue-400 border-t-transparent rounded-full"></div>
-                <span className="text-sm text-gray-300">
+                <div className="animate-spin h-5 w-5 border-2 border-blue-500 border-t-transparent rounded-full"></div>
+                <span className="text-sm text-muted">
                   Processing... (render #{renderCount.current})
                 </span>
               </div>
@@ -171,16 +169,16 @@ export function SimulationStatus() {
 
           {simulation.status === 'succeeded' && simulation.metadata && (
             <div className="mt-4 space-y-2">
-              <p className="text-sm text-white-300">
-                <strong className="text-white font-semibold">Mechanism:</strong>{' '}
+              <p className="text-sm text-muted">
+                <strong className="text-ink font-semibold">Mechanism:</strong>{' '}
                 {simulation.metadata.mechanism?.toUpperCase()}
               </p>
-              <p className="text-sm text-gray-300">
-                <strong className="text-white font-semibold">Duration:</strong>{' '}
+              <p className="text-sm text-muted">
+                <strong className="text-ink font-semibold">Duration:</strong>{' '}
                 {simulation.metadata.duration}s
               </p>
-              <p className="text-sm text-gray-300">
-                <strong className="text-white font-semibold">Output Points:</strong>{' '}
+              <p className="text-sm text-muted">
+                <strong className="text-ink font-semibold">Output Points:</strong>{' '}
                 {simulation.metadata.outputPoints}
               </p>
 
@@ -199,9 +197,9 @@ export function SimulationStatus() {
           )}
 
           {simulation.status === 'failed' && simulation.error && (
-            <div className="mt-4 p-3 bg-red-900/20 backdrop-blur-lg border border-red-400/30 rounded text-sm">
-              <strong className="text-red-400">Error Details:</strong>
-              <pre className="mt-2 text-xs overflow-auto text-gray-300">
+            <div className="mt-4 p-3 bg-caution border border-red-200 rounded text-sm">
+              <strong className="text-danger">Error Details:</strong>
+              <pre className="mt-2 text-xs overflow-auto text-ink">
                 {JSON.stringify(simulation.error, null, 2)}
               </pre>
             </div>
@@ -210,35 +208,35 @@ export function SimulationStatus() {
           {/* Show loaded example info when in idle state */}
           {simulation.status === 'idle' && currentExample && currentExample.id && (
             <div className="mt-4 space-y-2">
-              <p className="text-sm text-gray-300">
-                <strong className="text-white font-semibold">Example:</strong> {currentExample.name}
+              <p className="text-sm text-muted">
+                <strong className="text-ink font-semibold">Example:</strong> {currentExample.name}
               </p>
               {currentExample.description && (
-                <p className="text-xs text-gray-400 italic">{currentExample.description}</p>
+                <p className="text-xs text-muted italic">{currentExample.description}</p>
               )}
-              <p className="text-sm text-gray-300">
-                <strong className="text-white font-semibold">Mechanism:</strong>{' '}
+              <p className="text-sm text-muted">
+                <strong className="text-ink font-semibold">Mechanism:</strong>{' '}
                 {mechanism?.toUpperCase()}
               </p>
-              <p className="text-sm text-gray-300">
-                <strong className="text-white font-semibold">Duration:</strong>{' '}
+              <p className="text-sm text-muted">
+                <strong className="text-ink font-semibold">Duration:</strong>{' '}
                 {conditions.basic.duration}s
               </p>
-              <p className="text-sm text-gray-300">
-                <strong className="text-white font-semibold">Temperature:</strong>{' '}
+              <p className="text-sm text-muted">
+                <strong className="text-ink font-semibold">Temperature:</strong>{' '}
                 {conditions.initial.temperature}K
               </p>
-              <p className="text-sm text-gray-300">
-                <strong className="text-white font-semibold">Pressure:</strong>{' '}
+              <p className="text-sm text-muted">
+                <strong className="text-ink font-semibold">Pressure:</strong>{' '}
                 {conditions.initial.pressure}Pa
               </p>
-              <p className="text-sm text-gray-300">
-                <strong className="text-white font-semibold">Species:</strong>{' '}
+              <p className="text-sm text-muted">
+                <strong className="text-ink font-semibold">Species:</strong>{' '}
                 {Object.keys(conditions.initial.concentrations || {}).length}
               </p>
               {conditions.rateConstants && Object.keys(conditions.rateConstants).length > 0 && (
-                <p className="text-sm text-gray-300">
-                  <strong className="text-white font-semibold">Rate Constants:</strong>{' '}
+                <p className="text-sm text-muted">
+                  <strong className="text-ink font-semibold">Rate Constants:</strong>{' '}
                   {Object.keys(conditions.rateConstants).length}
                 </p>
               )}
@@ -247,7 +245,7 @@ export function SimulationStatus() {
         </div>
 
         {simulation.status === 'idle' && !currentExample && (
-          <div className="mt-4 bg-white/0 backdrop-blur-lg border border-white/20 rounded-lg p-3 text-xs text-white-300">
+          <div className="mt-4 bg-surface-alt border border-border rounded-lg p-3 text-xs text-muted">
             <p className="font-semibold mb-1 flex items-center gap-2">
               <Lightbulb className="w-4 h-4" />
               Before running:
