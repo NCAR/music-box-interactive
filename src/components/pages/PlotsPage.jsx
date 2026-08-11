@@ -31,9 +31,13 @@ export function PlotsPage() {
               return (
                 <Button
                   key={tab.id}
-                  variant={activeTab === tab.id ? 'action' : 'outline'}
+                  variant="ghost"
                   onClick={() => setActiveTab(tab.id)}
-                  className="rounded-2xl text-xs xs:text-sm sm:text-base px-3 xs:px-4 py-2 whitespace-nowrap flex-shrink-0"
+                  className={`rounded-2xl text-xs xs:text-sm sm:text-base px-3 xs:px-4 py-2 whitespace-nowrap flex-shrink-0 ${
+                    activeTab === tab.id
+                      ? 'border border-border bg-transparent text-action'
+                      : 'bg-transparent text-muted hover:bg-surface-hover hover:text-ink'
+                  }`}
                 >
                   <IconComponent className="w-4 h-4 xs:w-5 xs:h-5 mr-1.5 xs:mr-2" />
                   <span className="hidden xs:inline">{tab.label}</span>
