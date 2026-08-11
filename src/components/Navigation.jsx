@@ -71,9 +71,13 @@ export function Navigation({ onBackToHome = null }) {
       >
         {/* Logo Section */}
         <div className="p-4 sm:p-5 md:p-6 border-b border-border">
-          <h1 className="text-lg sm:text-xl md:text-2xl font-bold">MusicBox Interactive</h1>
-          <p className="text-xs sm:text-sm md:text-base text-muted mt-1 sm:mt-2">
-            Atmospheric Chemistry Simulation
+          <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-right">MUSIC BOX</h1>
+          <p className="text-xs sm:text-sm md:text-base text-muted mt-1 sm:mt-2 text-right">
+            Atmospheric
+            <br />
+            Chemistry
+            <br />
+            Simulation
           </p>
         </div>
 
