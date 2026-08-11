@@ -12,7 +12,7 @@ export function PlotsPage() {
   const [activeTab, setActiveTab] = useState('species') // 'species' | 'reactions' | 'environment'
 
   const tabs = [
-    { id: 'species', label: 'Chemical Species', Icon: Atom, component: SpeciesPlot },
+    { id: 'species', label: 'Species', Icon: Atom, component: SpeciesPlot },
     { id: 'reactions', label: 'Reaction Rates', Icon: FlaskConical, component: ReactionRatesPlot },
     { id: 'environment', label: 'Environment', Icon: Thermometer, component: EnvironmentPlot },
     { id: 'Flow Diagram', label: 'Flow Diagram', Icon: Waypoints, component: FlowDiagram },

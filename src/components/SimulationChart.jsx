@@ -207,6 +207,10 @@ export function SimulationChart({ results, metadata }) {
       })
   }, [allSpecies, speciesSearch])
 
+  const allFilteredSelected =
+    filteredSpecies.length > 0 && filteredSpecies.every((sp) => displaySpecies.includes(sp))
+  const noneSelected = displaySpecies.length === 0
+
   // Validation checks
   if (!results || results.length === 0) {
     return (
@@ -289,24 +293,24 @@ export function SimulationChart({ results, metadata }) {
                 Species Filter ({displaySpecies.length} selected)
               </h4>
               <Button
-                variant="action"
+                variant={allFilteredSelected ? 'assist' : 'outline'}
                 size="sm"
                 onClick={() => {
                   setShowAll(false)
                   setSelectedSpecies(filteredSpecies)
                 }}
-                className="rounded-lg text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white shadow"
+                className="rounded-lg text-xs font-bold"
               >
                 Select All
               </Button>
               <Button
-                variant="destructive"
+                variant={noneSelected ? 'assist' : 'outline'}
                 size="sm"
                 onClick={() => {
                   setShowAll(false)
                   setSelectedSpecies([])
                 }}
-                className="rounded-lg text-xs font-bold bg-red-600 hover:bg-red-700 text-white shadow"
+                className="rounded-lg text-xs font-bold"
               >
                 Deselect All
               </Button>
