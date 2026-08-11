@@ -1,0 +1,40 @@
+name: Auto Close Issue on Development Merge
+
+on:
+  pull_request_target:
+    types:
+      - closed
+    branches:
+      - development
+
+permissions:
+  issues: write
+  pull-requests: read
+
+jobs:
+  close-issues:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Find and close linked issue
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          BASE_REF: ${{ github.event.pull_request.base.ref }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          echo "$PR_BODY" \
+            | grep -Eio '(close[sd]?|fix(e[sd])?|resolve[sd]?) #[0-9]+' \
+            | grep -Eo '#[0-9]+' \
+            | tr -d '#' \
+            | sort -u \
+            | while read issue; do
+                echo "Closing issue #$issue"
+
+                gh issue close "$issue" \
+                  --repo "$REPO" \
+                  --reason completed \
+                  --comment "Automatically closed by PR #$PR_NUMBER merged into branch $BASE_REF."
+              done
