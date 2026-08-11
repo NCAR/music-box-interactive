@@ -24,8 +24,8 @@ export function PlotsPage() {
     <div className="space-y-4">
       {/* Tab Navigation */}
       <Card>
-        <CardContent className="pt-4 xs:pt-5 sm:pt-6">
-          <div className="flex flex-col xs:flex-row gap-2 border-b pb-2 overflow-x-auto">
+        <CardContent className="pt-3 pb-3 xs:pt-4 xs:pb-4 sm:pt-4 sm:pb-4">
+          <div className="flex flex-col xs:flex-row gap-2 overflow-x-auto">
             {tabs.map((tab) => {
               const IconComponent = tab.Icon
               return (
@@ -33,7 +33,7 @@ export function PlotsPage() {
                   key={tab.id}
                   variant="ghost"
                   onClick={() => setActiveTab(tab.id)}
-                  className={`rounded-2xl text-xs xs:text-sm sm:text-base px-3 xs:px-4 py-2 whitespace-nowrap flex-shrink-0 ${
+                  className={`rounded-2xl text-xs xs:text-sm sm:text-base px-3 xs:px-4 py-1 xs:py-1.5 whitespace-nowrap flex-shrink-0 ${
                     activeTab === tab.id
                       ? 'border border-border bg-transparent text-action'
                       : 'bg-transparent text-muted hover:bg-surface-hover hover:text-ink'
