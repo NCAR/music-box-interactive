@@ -4,13 +4,18 @@
 
 @layer base {
   :root {
-    --color-action: #0b57d0;
-    --color-action-hover: #0842a0;
-    --color-location: #d3e3fd;
-    --color-location-foreground: #041e49;
-    --color-assist: #c2e7ff;
-    --color-assist-hover: #b3dcf5;
-    --color-assist-foreground: #001d35;
+    /*
+    * This palette is derived from the NCAR color palette. It retains the core colors
+    * (blue, light blue, white, light gray, yellow, and orange) while adjusting
+    * saturation and lightness for a more visually appealing UI.
+    */
+    --color-action: #008BDC;
+    --color-action-hover: #0078BD;
+    --color-location: #FDF6D3;
+    --color-location-foreground: #493E04;
+    --color-assist: #FFE0C2;
+    --color-assist-hover: #F5D4B3;
+    --color-assist-foreground: #351A00;
     --color-surface: #ffffff;
     --color-surface-alt: #f6f8fc;
     --color-surface-hover: #f1f3f4;
