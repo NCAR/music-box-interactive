@@ -7,7 +7,6 @@ import {
   EvolvingConditionsTab,
   ReviewTab,
 } from '../Conditions'
-import RunSimulationButton from '../RunSimulationButton'
 
 /**
  * ConditionsPage Component
@@ -48,13 +47,6 @@ export function ConditionsPage() {
                 </Button>
               ))}
             </div>
-
-            {/* Run Simulation Button (review tab only) */}
-            {activeTab === 'review' && (
-              <div className="flex justify-end">
-                <RunSimulationButton className="w-full xs:w-auto" />
-              </div>
-            )}
           </div>
         </CardContent>
       </Card>

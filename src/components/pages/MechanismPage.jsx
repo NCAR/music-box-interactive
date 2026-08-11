@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react'
 import { Card, CardContent } from '../ui/card'
 import { Button } from '../ui/button'
 import { SpeciesEditor, ReactionEditor } from '../Mechanism'
-import NextStepButton from '../NextStepButton'
 import { useDispatch, useSelector } from 'react-redux'
 import { hydrateInitialConditions, hydrateEvolvingConditions } from '../../utils/hydrateConditions'
 import {
@@ -56,17 +55,10 @@ export function MechanismPage() {
 
   const tabs = [
     { id: 'species', label: 'Species', component: SpeciesEditor },
-    {
-      id: 'reactions',
-      label: 'Reactions',
-      component: ReactionEditor,
-      nextTo: '/conditions',
-      nextLabel: 'Next to Configure Conditions',
-    },
+    { id: 'reactions', label: 'Reactions', component: ReactionEditor},
   ]
 
   const ActiveComponent = tabs.find((t) => t.id === activeTab)?.component
-  const currentTab = tabs.find((t) => t.id === activeTab)
 
   return (
     <div className="space-y-4">
@@ -90,15 +82,6 @@ export function MechanismPage() {
                 </Button>
               ))}
             </div>
-
-            {/* Next button: Reactions tab -> Conditions page */}
-            {currentTab?.nextTo && (
-              <NextStepButton
-                to={currentTab.nextTo}
-                label={currentTab.nextLabel}
-                className="w-full xs:w-auto"
-              />
-            )}
           </div>
         </CardContent>
       </Card>
