@@ -55,13 +55,7 @@ export function MechanismPage() {
   }, [exampleFiles, currentExample, hydratedInitialId, hydratedEvolvingId, dispatch])
 
   const tabs = [
-    {
-      id: 'species',
-      label: 'Species',
-      component: SpeciesEditor,
-      nextTab: 'reactions',
-      nextLabel: 'Next to Add Reactions',
-    },
+    { id: 'species', label: 'Species', component: SpeciesEditor },
     {
       id: 'reactions',
       label: 'Reactions',
@@ -97,17 +91,11 @@ export function MechanismPage() {
               ))}
             </div>
 
-            {/* Next button: Species tab -> Reactions tab, Reactions tab -> Conditions page */}
-            {currentTab?.nextTab ? (
+            {/* Next button: Reactions tab -> Conditions page */}
+            {currentTab?.nextTo && (
               <NextStepButton
-                onClick={() => setActiveTab(currentTab.nextTab)}
+                to={currentTab.nextTo}
                 label={currentTab.nextLabel}
-                className="w-full xs:w-auto"
-              />
-            ) : (
-              <NextStepButton
-                to={currentTab?.nextTo}
-                label={currentTab?.nextLabel || 'Next Step'}
                 className="w-full xs:w-auto"
               />
             )}

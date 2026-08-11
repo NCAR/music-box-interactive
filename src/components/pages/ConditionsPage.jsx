@@ -8,7 +8,6 @@ import {
   ReviewTab,
 } from '../Conditions'
 import RunSimulationButton from '../RunSimulationButton'
-import NextStepButton from '../NextStepButton'
 
 /**
  * ConditionsPage Component
@@ -18,32 +17,13 @@ export function ConditionsPage() {
   const [activeTab, setActiveTab] = useState('basic') // 'basic' | 'initial' | 'evolving' | 'review'
 
   const tabs = [
-    {
-      id: 'basic',
-      label: 'General',
-      component: BasicConfigTab,
-      nextTab: 'initial',
-      nextLabel: 'Next to Initial Conditions',
-    },
-    {
-      id: 'initial',
-      label: 'Initial',
-      component: InitialConditionsTab,
-      nextTab: 'evolving',
-      nextLabel: 'Next to Evolving Conditions',
-    },
-    {
-      id: 'evolving',
-      label: 'Evolving',
-      component: EvolvingConditionsTab,
-      nextTab: 'review',
-      nextLabel: 'Next to Review Configuration',
-    },
+    { id: 'basic', label: 'General', component: BasicConfigTab },
+    { id: 'initial', label: 'Initial', component: InitialConditionsTab },
+    { id: 'evolving', label: 'Evolving', component: EvolvingConditionsTab },
     { id: 'review', label: 'Review', component: ReviewTab },
   ]
 
   const ActiveComponent = tabs.find((t) => t.id === activeTab)?.component
-  const currentTab = tabs.find((t) => t.id === activeTab)
 
   return (
     <div className="space-y-4">
@@ -69,18 +49,12 @@ export function ConditionsPage() {
               ))}
             </div>
 
-            {/* Next Step Button (non-review tabs) or Run Simulation Button (review tab) */}
-            <div className="flex justify-end">
-              {activeTab !== 'review' ? (
-                <NextStepButton
-                  onClick={() => setActiveTab(currentTab?.nextTab)}
-                  label={currentTab?.nextLabel || 'Next Step'}
-                  className="w-full xs:w-auto"
-                />
-              ) : (
+            {/* Run Simulation Button (review tab only) */}
+            {activeTab === 'review' && (
+              <div className="flex justify-end">
                 <RunSimulationButton className="w-full xs:w-auto" />
-              )}
-            </div>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>
