@@ -18,7 +18,6 @@ import { getSpeciesDisplayName } from './Plots/speciesFormat'
 // X-axis time unit options: seconds are converted by dividing by `divisor`
 const TIME_UNITS = [
   { id: 'seconds', label: 'Seconds', axisLabel: 'Time (s)', suffix: 's', divisor: 1 },
-  { id: 'minutes', label: 'Minutes', axisLabel: 'Time (min)', suffix: 'min', divisor: 60 },
   { id: 'hours', label: 'Hours', axisLabel: 'Time (hr)', suffix: 'hr', divisor: 3600 },
 ]
 
@@ -123,6 +122,20 @@ export function SimulationChart({ results, metadata }) {
       return point
     })
   }, [results, allSpecies, timeUnit.divisor])
+
+  // Fixed-percentage padding so the axis bounds stay visually consistent across time units
+  // (Recharts' 'auto' domain picks "nice" round numbers whose padding ratio varies with magnitude)
+  const timeDomain = useMemo(() => {
+    const times = chartData.map((point) => point.timeSeconds).filter((t) => isFinite(t))
+    if (times.length === 0) return [0, 1]
+
+    const minTime = Math.min(...times)
+    const maxTime = Math.max(...times)
+    if (minTime === maxTime) return [Math.max(0, minTime - 1), maxTime + 1]
+
+    const padding = (maxTime - minTime) * 0.05
+    return [Math.max(0, minTime - padding), maxTime + padding]
+  }, [chartData])
 
   // Toggle species selection
   const toggleSpecies = (species) => {
@@ -313,7 +326,7 @@ export function SimulationChart({ results, metadata }) {
 
               <XAxis
                 dataKey="timeSeconds"
-                domain={['auto', 'auto']}
+                domain={timeDomain}
                 stroke="#374151"
                 tick={{ fontSize: 10, fill: '#374151' }}
                 type="number"
@@ -427,7 +440,7 @@ export function SimulationChart({ results, metadata }) {
 
               <XAxis
                 dataKey="timeSeconds"
-                domain={['auto', 'auto']}
+                domain={timeDomain}
                 stroke="#374151"
                 tick={{ fontSize: 12, fill: '#374151' }}
                 type="number"
