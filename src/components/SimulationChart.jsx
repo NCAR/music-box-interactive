@@ -10,7 +10,7 @@ import {
   ResponsiveContainer,
   Label,
 } from 'recharts'
-import { Card, CardContent, CardDescription, CardTitle } from './ui/card'
+import { Card, CardContent, CardDescription } from './ui/card'
 import { BarChart3, Atom, AlertCircle, Lightbulb, ChevronDown, Check } from 'lucide-react'
 import { getSpeciesDisplayName } from './Plots/speciesFormat'
 import { useClickOutside } from '../hooks/useClickOutside'
@@ -719,12 +719,13 @@ export function SimulationChart({ results, metadata }) {
         </div>
 
         <div>
-          <CardTitle className="text-base xs:text-lg sm:text-xl">
-            Concentration Profiles (Log Scale)
-          </CardTitle>
           <CardDescription className="text-xs xs:text-sm">
-            {metadata?.mechanism?.toUpperCase()} mechanism •{metadata?.duration?.toLocaleString()}{' '}
-            seconds •{results.length} data points
+            {metadata?.mechanism?.toUpperCase()} {"\u00A0"}{"\u00A0"} mechanism
+            <br />
+            {metadata?.duration?.toLocaleString()}  seconds
+            {metadata?.duration != null && `   |   ${(metadata.duration / 3600).toFixed(2)}  hours`}
+            <br />
+            {results.length}&nbsp;&nbsp;data points
           </CardDescription>
         </div>
 
