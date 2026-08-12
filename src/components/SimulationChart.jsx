@@ -10,7 +10,7 @@ import {
   ResponsiveContainer,
   Label,
 } from 'recharts'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card'
+import { Card, CardContent, CardDescription, CardTitle } from './ui/card'
 import { Button } from './ui/button'
 import { BarChart3, Atom, AlertCircle, Lightbulb } from 'lucide-react'
 import { getSpeciesDisplayName } from './Plots/speciesFormat'
@@ -25,7 +25,7 @@ const TIME_UNITS = [
 // solver output); other units require a conversion function (e.g. ppb needs the
 // ideal gas law with per-point temperature/pressure) that isn't implemented yet.
 const PLOT_UNITS = [
-  { id: 'mol_m3', label: 'mol/m³', axisLabel: 'Concentration (mol m⁻³)', supported: true },
+  { id: 'mol_m3', label: 'mol m-3', axisLabel: 'Concentration (mol m⁻³)', supported: true },
   { id: 'ppb', label: 'ppb', axisLabel: 'Concentration (ppb)', supported: false },
 ]
 
@@ -251,18 +251,6 @@ export function SimulationChart({ results, metadata }) {
 
   return (
     <Card>
-      <CardHeader>
-        <div>
-          <CardTitle className="text-base xs:text-lg sm:text-xl">
-            Concentration Profiles (Log Scale)
-          </CardTitle>
-          <CardDescription className="text-xs xs:text-sm">
-            {metadata?.mechanism?.toUpperCase()} mechanism •{metadata?.duration?.toLocaleString()}{' '}
-            seconds •{results.length} data points
-          </CardDescription>
-        </div>
-      </CardHeader>
-
       <CardContent className="space-y-3 xs:space-y-4">
         {/* Warning for insufficient data points */}
         {results.length < 3 && (
@@ -339,7 +327,7 @@ export function SimulationChart({ results, metadata }) {
         {/* Plot Unit / Time Unit Selectors */}
         <div className="flex flex-wrap items-center gap-4 xs:gap-6">
           <div className="flex items-center gap-2 xs:gap-3">
-            <h4 className="font-semibold text-xs xs:text-sm text-gray-900">Plot Unit:</h4>
+            <h4 className="font-semibold text-xs xs:text-sm text-gray-900">Plot unit:</h4>
             <select
               value={plotUnitId}
               onChange={(e) => setPlotUnitId(e.target.value)}
@@ -360,7 +348,7 @@ export function SimulationChart({ results, metadata }) {
           </div>
 
           <div className="flex items-center gap-2 xs:gap-3">
-            <h4 className="font-semibold text-xs xs:text-sm text-gray-900">Time Unit:</h4>
+            <h4 className="font-semibold text-xs xs:text-sm text-gray-900">Time unit:</h4>
             <select
               value={timeUnitId}
               onChange={(e) => setTimeUnitId(e.target.value)}
@@ -642,6 +630,16 @@ export function SimulationChart({ results, metadata }) {
               ))}
             </LineChart>
           </ResponsiveContainer>
+        </div>
+
+        <div>
+          <CardTitle className="text-base xs:text-lg sm:text-xl">
+            Concentration Profiles (Log Scale)
+          </CardTitle>
+          <CardDescription className="text-xs xs:text-sm">
+            {metadata?.mechanism?.toUpperCase()} mechanism •{metadata?.duration?.toLocaleString()}{' '}
+            seconds •{results.length} data points
+          </CardDescription>
         </div>
 
         {/* Info Box */}
