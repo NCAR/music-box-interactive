@@ -21,6 +21,14 @@ const TIME_UNITS = [
   { id: 'hours', label: 'Hours', axisLabel: 'Time (hr)', suffix: 'hr', divisor: 3600 },
 ]
 
+// Round x up to the nearest "nice" number (1, 2, 5, or 10 times a power of 10)
+function niceNumber(x) {
+  const exponent = Math.floor(Math.log10(x))
+  const fraction = x / 10 ** exponent
+  const niceFraction = fraction <= 1 ? 1 : fraction <= 2 ? 2 : fraction <= 5 ? 5 : 10
+  return niceFraction * 10 ** exponent
+}
+
 /**
  * SimulationChart Component
  * Displays atmospheric chemistry concentration data with interactive controls
@@ -136,6 +144,28 @@ export function SimulationChart({ results, metadata }) {
     const padding = (maxTime - minTime) * 0.05
     return [Math.max(0, minTime - padding), maxTime + padding]
   }, [chartData])
+
+  // For Hours, pick a "nice" step (always a multiple of 0.5 hr) that yields roughly
+  // TARGET_HOUR_TICKS gridlines regardless of simulation length, instead of always
+  // stepping by 0.5 hr (which gets cluttered on long runs) or Recharts' auto step
+  // (which picks arbitrary, non-0.5-hr-aligned values).
+  const HOUR_TICK_STEP = 0.5
+  const TARGET_HOUR_TICKS = 5
+  const xAxisTicks = useMemo(() => {
+    if (timeUnit.id !== 'hours') return undefined
+
+    const maxDomain = timeDomain[1]
+    if (maxDomain <= 0) return [0]
+
+    const rawStep = maxDomain / TARGET_HOUR_TICKS
+    const step = Math.ceil(niceNumber(rawStep) / HOUR_TICK_STEP) * HOUR_TICK_STEP
+
+    const ticks = []
+    for (let t = 0; t <= maxDomain + 1e-9; t += step) {
+      ticks.push(Math.round(t * 1000) / 1000)
+    }
+    return ticks
+  }, [timeUnit.id, timeDomain])
 
   // Toggle species selection
   const toggleSpecies = (species) => {
@@ -327,6 +357,7 @@ export function SimulationChart({ results, metadata }) {
               <XAxis
                 dataKey="timeSeconds"
                 domain={timeDomain}
+                ticks={xAxisTicks}
                 stroke="#374151"
                 tick={{ fontSize: 10, fill: '#374151' }}
                 type="number"
@@ -441,6 +472,7 @@ export function SimulationChart({ results, metadata }) {
               <XAxis
                 dataKey="timeSeconds"
                 domain={timeDomain}
+                ticks={xAxisTicks}
                 stroke="#374151"
                 tick={{ fontSize: 12, fill: '#374151' }}
                 type="number"
