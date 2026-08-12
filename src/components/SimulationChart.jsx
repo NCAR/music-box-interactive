@@ -501,7 +501,7 @@ export function SimulationChart({ results, metadata }) {
                 width={70}
               >
                 <Label
-                  value="Concentration (mol mol⁻¹)"
+                  value="Concentration (mol m-3)"
                   angle={-90}
                   position="insideLeft"
                   offset={10}
