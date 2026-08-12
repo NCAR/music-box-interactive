@@ -21,6 +21,14 @@ const TIME_UNITS = [
   { id: 'hours', label: 'Hours', axisLabel: 'Time (hr)', suffix: 'hr', divisor: 3600 },
 ]
 
+// Y-axis concentration unit options. Results are stored in mol/m^3 (the native
+// solver output); other units require a conversion function (e.g. ppb needs the
+// ideal gas law with per-point temperature/pressure) that isn't implemented yet.
+const PLOT_UNITS = [
+  { id: 'mol_m3', label: 'mol/m³', axisLabel: 'Concentration (mol m⁻³)', supported: true },
+  { id: 'ppb', label: 'ppb', axisLabel: 'Concentration (ppb)', supported: false },
+]
+
 // Round x up to the nearest "nice" number (1, 2, 5, or 10 times a power of 10)
 function niceNumber(x) {
   const exponent = Math.floor(Math.log10(x))
@@ -42,8 +50,10 @@ export function SimulationChart({ results, metadata }) {
   const [selectedSpecies, setSelectedSpecies] = useState([])
   const [initialized, setInitialized] = useState(false)
   const [timeUnitId, setTimeUnitId] = useState('seconds')
+  const [plotUnitId, setPlotUnitId] = useState('mol_m3')
 
   const timeUnit = TIME_UNITS.find((u) => u.id === timeUnitId) ?? TIME_UNITS[0]
+  const plotUnit = PLOT_UNITS.find((u) => u.id === plotUnitId) ?? PLOT_UNITS[0]
 
   // Color palette for species
   const colors = [
@@ -326,25 +336,42 @@ export function SimulationChart({ results, metadata }) {
           </div>
         </div>
 
-        {/* Time Unit Selector */}
-        <div className="flex items-center gap-2 xs:gap-3">
-          <h4 className="font-semibold text-xs xs:text-sm text-gray-900">Time Unit:</h4>
-          <div className="flex gap-1.5 xs:gap-2">
-            {TIME_UNITS.map((unit) => (
-              <Button
-                key={unit.id}
-                variant="ghost"
-                size="sm"
-                onClick={() => setTimeUnitId(unit.id)}
-                className={`rounded-lg text-xs font-bold ${
-                  timeUnitId === unit.id
-                    ? 'border border-border bg-transparent text-action'
-                    : 'bg-transparent text-muted hover:bg-surface-hover hover:text-ink'
-                }`}
-              >
-                {unit.label}
-              </Button>
-            ))}
+        {/* Plot Unit / Time Unit Selectors */}
+        <div className="flex flex-wrap items-center gap-4 xs:gap-6">
+          <div className="flex items-center gap-2 xs:gap-3">
+            <h4 className="font-semibold text-xs xs:text-sm text-gray-900">Plot Unit:</h4>
+            <select
+              value={plotUnitId}
+              onChange={(e) => setPlotUnitId(e.target.value)}
+              className="border border-gray-300 bg-white text-gray-800 rounded-lg text-xs font-bold px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-600"
+            >
+              {PLOT_UNITS.map((unit) => (
+                <option
+                  key={unit.id}
+                  value={unit.id}
+                  disabled={!unit.supported}
+                  title={!unit.supported ? 'Conversion not yet supported' : undefined}
+                >
+                  {unit.label}
+                  {!unit.supported ? ' (coming soon)' : ''}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="flex items-center gap-2 xs:gap-3">
+            <h4 className="font-semibold text-xs xs:text-sm text-gray-900">Time Unit:</h4>
+            <select
+              value={timeUnitId}
+              onChange={(e) => setTimeUnitId(e.target.value)}
+              className="border border-gray-300 bg-white text-gray-800 rounded-lg text-xs font-bold px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-600"
+            >
+              {TIME_UNITS.map((unit) => (
+                <option key={unit.id} value={unit.id}>
+                  {unit.label}
+                </option>
+              ))}
+            </select>
           </div>
         </div>
 
@@ -501,7 +528,7 @@ export function SimulationChart({ results, metadata }) {
                 width={70}
               >
                 <Label
-                  value="Concentration (mol m-3)"
+                  value={plotUnit.axisLabel}
                   angle={-90}
                   position="insideLeft"
                   offset={10}
