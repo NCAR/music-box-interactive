@@ -61,7 +61,7 @@ function AppContent({ onNavigate }) {
       {/* Main content area with responsive left margin for sidebar */}
       <div className="min-h-screen relative z-10 lg:ml-64 transition-all duration-300">
         {/* Responsive container with proper padding for mobile */}
-        <div className="container mx-auto px-2 xs:px-3 sm:px-6 lg:px-8 py-3 xs:py-4 sm:py-6 lg:py-8 pt-14 xs:pt-16 lg:pt-6">
+        <div className="max-w-7xl mx-auto px-2 xs:px-3 sm:px-6 lg:px-8 py-3 xs:py-4 sm:py-6 lg:py-8 pt-14 xs:pt-16 lg:pt-6">
           <Routes>
             <Route path="/" element={<DashboardPage />} />
             <Route path="/guide" element={<GuidePage />} />
