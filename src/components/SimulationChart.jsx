@@ -11,7 +11,6 @@ import {
   Label,
 } from 'recharts'
 import { Card, CardContent, CardDescription, CardTitle } from './ui/card'
-import { Button } from './ui/button'
 import { BarChart3, Atom, AlertCircle, Lightbulb, ChevronDown, Check } from 'lucide-react'
 import { getSpeciesDisplayName } from './Plots/speciesFormat'
 import { useClickOutside } from '../hooks/useClickOutside'
@@ -54,16 +53,20 @@ export function SimulationChart({ results, metadata }) {
   const [plotUnitId, setPlotUnitId] = useState('mol_m3')
   const [plotUnitMenuOpen, setPlotUnitMenuOpen] = useState(false)
   const [timeUnitMenuOpen, setTimeUnitMenuOpen] = useState(false)
+  const [selectAllMenuOpen, setSelectAllMenuOpen] = useState(false)
   const plotUnitMenuRef = useRef(null)
   const timeUnitMenuRef = useRef(null)
+  const selectAllMenuRef = useRef(null)
 
   const timeUnit = TIME_UNITS.find((u) => u.id === timeUnitId) ?? TIME_UNITS[0]
   const plotUnit = PLOT_UNITS.find((u) => u.id === plotUnitId) ?? PLOT_UNITS[0]
 
   const closePlotUnitMenu = useCallback(() => setPlotUnitMenuOpen(false), [])
   const closeTimeUnitMenu = useCallback(() => setTimeUnitMenuOpen(false), [])
+  const closeSelectAllMenu = useCallback(() => setSelectAllMenuOpen(false), [])
   useClickOutside(plotUnitMenuRef, closePlotUnitMenu, plotUnitMenuOpen)
   useClickOutside(timeUnitMenuRef, closeTimeUnitMenu, timeUnitMenuOpen)
+  useClickOutside(selectAllMenuRef, closeSelectAllMenu, selectAllMenuOpen)
 
   // Color palette for species
   const colors = [
@@ -214,6 +217,11 @@ export function SimulationChart({ results, metadata }) {
   const allFilteredSelected =
     filteredSpecies.length > 0 && filteredSpecies.every((sp) => displaySpecies.includes(sp))
   const noneSelected = displaySpecies.length === 0
+  const selectAllStatusLabel = allFilteredSelected
+    ? 'All selected'
+    : noneSelected
+      ? 'None selected'
+      : 'Selection'
 
   // Validation checks
   if (!results || results.length === 0) {
@@ -281,36 +289,140 @@ export function SimulationChart({ results, metadata }) {
         <div className="border rounded-lg p-2 xs:p-3 sm:p-4 bg-gray-50">
           <div className="flex flex-col xs:flex-row items-start xs:items-center justify-between gap-2 xs:gap-0 mb-3">
             <div className="flex items-center gap-3 w-full xs:w-auto">
-              <h4 className="font-semibold text-xs xs:text-sm text-gray-900 mr-4">
+              <div className="relative" ref={selectAllMenuRef}>
+                <button
+                  type="button"
+                  onClick={() => setSelectAllMenuOpen((open) => !open)}
+                  className="flex items-center gap-1.5 border border-gray-300 bg-white text-gray-800 rounded-lg text-xs font-bold px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-600"
+                >
+                  {selectAllStatusLabel}
+                  <ChevronDown className="w-3.5 h-3.5" />
+                </button>
+
+                {selectAllMenuOpen && (
+                  <div className="absolute z-10 mt-1 min-w-[9rem] bg-white border border-gray-300 rounded-lg shadow-lg py-1">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedSpecies(filteredSpecies)
+                        setSelectAllMenuOpen(false)
+                      }}
+                      className="w-full flex items-center gap-2 text-left text-xs font-bold px-3 py-1.5 text-gray-800 hover:bg-gray-100"
+                    >
+                      <Check
+                        className={`w-3.5 h-3.5 flex-shrink-0 ${
+                          allFilteredSelected ? 'opacity-100' : 'opacity-0'
+                        }`}
+                      />
+                      Select all
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedSpecies([])
+                        setSelectAllMenuOpen(false)
+                      }}
+                      className="w-full flex items-center gap-2 text-left text-xs font-bold px-3 py-1.5 text-gray-800 hover:bg-gray-100"
+                    >
+                      <Check
+                        className={`w-3.5 h-3.5 flex-shrink-0 ${
+                          noneSelected ? 'opacity-100' : 'opacity-0'
+                        }`}
+                      />
+                      Deselect all
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* Search bar for species filter */}
+              <input
+                type="text"
+                value={speciesSearch}
+                onChange={(e) => setSpeciesSearch(e.target.value)}
+                placeholder="Search species"
+                className="flex-1 max-w-xs px-3 py-2 border-2 border-gray-300 bg-white text-gray-800 placeholder:text-gray-400 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
+              />
+
+              <h4 className="font-semibold text-xs xs:text-sm text-gray-900">
                 ({displaySpecies.length} selected)
               </h4>
-              <Button
-                variant={allFilteredSelected ? 'assist' : 'outline'}
-                size="sm"
-                onClick={() => setSelectedSpecies(filteredSpecies)}
-                className="rounded-lg text-xs font-bold"
-              >
-                Select All
-              </Button>
-              <Button
-                variant={noneSelected ? 'assist' : 'outline'}
-                size="sm"
-                onClick={() => setSelectedSpecies([])}
-                className="rounded-lg text-xs font-bold"
-              >
-                Deselect All
-              </Button>
+
+              <div className="relative" ref={plotUnitMenuRef}>
+                <button
+                  type="button"
+                  onClick={() => setPlotUnitMenuOpen((open) => !open)}
+                  className="flex items-center gap-1.5 border border-gray-300 bg-white text-gray-800 rounded-lg text-xs font-bold px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-600"
+                >
+                  {plotUnit.label}
+                  <ChevronDown className="w-3.5 h-3.5" />
+                </button>
+
+                {plotUnitMenuOpen && (
+                  <div className="absolute z-10 mt-1 min-w-[9rem] bg-white border border-gray-300 rounded-lg shadow-lg py-1">
+                    {PLOT_UNITS.map((unit) => (
+                      <button
+                        key={unit.id}
+                        type="button"
+                        disabled={!unit.supported}
+                        title={!unit.supported ? 'Conversion not yet supported' : undefined}
+                        onClick={() => {
+                          setPlotUnitId(unit.id)
+                          setPlotUnitMenuOpen(false)
+                        }}
+                        className={`w-full flex items-center gap-2 text-left text-xs font-bold px-3 py-1.5 ${
+                          unit.supported
+                            ? 'text-gray-800 hover:bg-gray-100'
+                            : 'text-gray-400 cursor-not-allowed'
+                        }`}
+                      >
+                        <Check
+                          className={`w-3.5 h-3.5 flex-shrink-0 ${
+                            plotUnitId === unit.id ? 'opacity-100' : 'opacity-0'
+                          }`}
+                        />
+                        {unit.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="relative" ref={timeUnitMenuRef}>
+                <button
+                  type="button"
+                  onClick={() => setTimeUnitMenuOpen((open) => !open)}
+                  className="flex items-center gap-1.5 border border-gray-300 bg-white text-gray-800 rounded-lg text-xs font-bold px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-600"
+                >
+                  {timeUnit.label}
+                  <ChevronDown className="w-3.5 h-3.5" />
+                </button>
+
+                {timeUnitMenuOpen && (
+                  <div className="absolute z-10 mt-1 min-w-[9rem] bg-white border border-gray-300 rounded-lg shadow-lg py-1">
+                    {TIME_UNITS.map((unit) => (
+                      <button
+                        key={unit.id}
+                        type="button"
+                        onClick={() => {
+                          setTimeUnitId(unit.id)
+                          setTimeUnitMenuOpen(false)
+                        }}
+                        className="w-full flex items-center gap-2 text-left text-xs font-bold px-3 py-1.5 text-gray-800 hover:bg-gray-100"
+                      >
+                        <Check
+                          className={`w-3.5 h-3.5 flex-shrink-0 ${
+                            timeUnitId === unit.id ? 'opacity-100' : 'opacity-0'
+                          }`}
+                        />
+                        {unit.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
-
-          {/* Search bar for species filter */}
-          <input
-            type="text"
-            value={speciesSearch}
-            onChange={(e) => setSpeciesSearch(e.target.value)}
-            placeholder="Search species"
-            className="w-1/2 mb-3 px-3 py-2 border-2 border-gray-300 bg-white text-gray-800 placeholder:text-gray-400 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
-          />
 
           <div className="flex flex-wrap gap-1.5 xs:gap-2 max-h-32 overflow-y-auto">
             {filteredSpecies.map((species) => (
@@ -331,83 +443,6 @@ export function SimulationChart({ results, metadata }) {
                 {getSpeciesDisplayName(species)}
               </button>
             ))}
-          </div>
-        </div>
-
-        {/* Plot Unit / Time Unit Selectors */}
-        <div className="flex flex-wrap items-center gap-4 xs:gap-6">
-          <div className="relative" ref={plotUnitMenuRef}>
-            <button
-              type="button"
-              onClick={() => setPlotUnitMenuOpen((open) => !open)}
-              className="flex items-center gap-1.5 border border-gray-300 bg-white text-gray-800 rounded-lg text-xs font-bold px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-600"
-            >
-              {plotUnit.label}
-              <ChevronDown className="w-3.5 h-3.5" />
-            </button>
-
-            {plotUnitMenuOpen && (
-              <div className="absolute z-10 mt-1 min-w-[9rem] bg-white border border-gray-300 rounded-lg shadow-lg py-1">
-                {PLOT_UNITS.map((unit) => (
-                  <button
-                    key={unit.id}
-                    type="button"
-                    disabled={!unit.supported}
-                    title={!unit.supported ? 'Conversion not yet supported' : undefined}
-                    onClick={() => {
-                      setPlotUnitId(unit.id)
-                      setPlotUnitMenuOpen(false)
-                    }}
-                    className={`w-full flex items-center gap-2 text-left text-xs font-bold px-3 py-1.5 ${
-                      unit.supported
-                        ? 'text-gray-800 hover:bg-gray-100'
-                        : 'text-gray-400 cursor-not-allowed'
-                    }`}
-                  >
-                    <Check
-                      className={`w-3.5 h-3.5 flex-shrink-0 ${
-                        plotUnitId === unit.id ? 'opacity-100' : 'opacity-0'
-                      }`}
-                    />
-                    {unit.label}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-
-          <div className="relative" ref={timeUnitMenuRef}>
-            <button
-              type="button"
-              onClick={() => setTimeUnitMenuOpen((open) => !open)}
-              className="flex items-center gap-1.5 border border-gray-300 bg-white text-gray-800 rounded-lg text-xs font-bold px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-600"
-            >
-              {timeUnit.label}
-              <ChevronDown className="w-3.5 h-3.5" />
-            </button>
-
-            {timeUnitMenuOpen && (
-              <div className="absolute z-10 mt-1 min-w-[9rem] bg-white border border-gray-300 rounded-lg shadow-lg py-1">
-                {TIME_UNITS.map((unit) => (
-                  <button
-                    key={unit.id}
-                    type="button"
-                    onClick={() => {
-                      setTimeUnitId(unit.id)
-                      setTimeUnitMenuOpen(false)
-                    }}
-                    className="w-full flex items-center gap-2 text-left text-xs font-bold px-3 py-1.5 text-gray-800 hover:bg-gray-100"
-                  >
-                    <Check
-                      className={`w-3.5 h-3.5 flex-shrink-0 ${
-                        timeUnitId === unit.id ? 'opacity-100' : 'opacity-0'
-                      }`}
-                    />
-                    {unit.label}
-                  </button>
-                ))}
-              </div>
-            )}
           </div>
         </div>
 
