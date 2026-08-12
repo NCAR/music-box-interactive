@@ -15,6 +15,13 @@ import { Button } from './ui/button'
 import { BarChart3, Atom, AlertCircle, Lightbulb } from 'lucide-react'
 import { getSpeciesDisplayName } from './Plots/speciesFormat'
 
+// X-axis time unit options: seconds are converted by dividing by `divisor`
+const TIME_UNITS = [
+  { id: 'seconds', label: 'Seconds', axisLabel: 'Time (s)', suffix: 's', divisor: 1 },
+  { id: 'minutes', label: 'Minutes', axisLabel: 'Time (min)', suffix: 'min', divisor: 60 },
+  { id: 'hours', label: 'Hours', axisLabel: 'Time (hr)', suffix: 'hr', divisor: 3600 },
+]
+
 /**
  * SimulationChart Component
  * Displays atmospheric chemistry concentration data with interactive controls
@@ -27,6 +34,9 @@ export function SimulationChart({ results, metadata }) {
   const [speciesSearch, setSpeciesSearch] = useState('')
   const [selectedSpecies, setSelectedSpecies] = useState([])
   const [initialized, setInitialized] = useState(false)
+  const [timeUnitId, setTimeUnitId] = useState('seconds')
+
+  const timeUnit = TIME_UNITS.find((u) => u.id === timeUnitId) ?? TIME_UNITS[0]
 
   // Color palette for species
   const colors = [
@@ -86,7 +96,7 @@ export function SimulationChart({ results, metadata }) {
     return results.map((result) => {
       const time = result.time ?? result.timestamp ?? result.date ?? 0
       const point = {
-        timeSeconds: time,
+        timeSeconds: time / timeUnit.divisor,
       }
 
       const source =
@@ -112,7 +122,7 @@ export function SimulationChart({ results, metadata }) {
 
       return point
     })
-  }, [results, allSpecies])
+  }, [results, allSpecies, timeUnit.divisor])
 
   // Toggle species selection
   const toggleSpecies = (species) => {
@@ -128,10 +138,10 @@ export function SimulationChart({ results, metadata }) {
     const search = speciesSearch.trim().toLowerCase()
     if (!search) return allSpecies
     return allSpecies
-      .filter((sp) => sp.toLowerCase().includes(search))
+      .filter((sp) => getSpeciesDisplayName(sp).toLowerCase().includes(search))
       .sort((a, b) => {
-        const aExact = a.toLowerCase() === search
-        const bExact = b.toLowerCase() === search
+        const aExact = getSpeciesDisplayName(a).toLowerCase() === search
+        const bExact = getSpeciesDisplayName(b).toLowerCase() === search
         if (aExact && !bExact) return -1
         if (!aExact && bExact) return 1
         return 0
@@ -273,6 +283,28 @@ export function SimulationChart({ results, metadata }) {
           </div>
         </div>
 
+        {/* Time Unit Selector */}
+        <div className="flex items-center gap-2 xs:gap-3">
+          <h4 className="font-semibold text-xs xs:text-sm text-gray-900">Time Unit:</h4>
+          <div className="flex gap-1.5 xs:gap-2">
+            {TIME_UNITS.map((unit) => (
+              <Button
+                key={unit.id}
+                variant="ghost"
+                size="sm"
+                onClick={() => setTimeUnitId(unit.id)}
+                className={`rounded-lg text-xs font-bold ${
+                  timeUnitId === unit.id
+                    ? 'border border-border bg-transparent text-action'
+                    : 'bg-transparent text-muted hover:bg-surface-hover hover:text-ink'
+                }`}
+              >
+                {unit.label}
+              </Button>
+            ))}
+          </div>
+        </div>
+
         {/* Chart */}
         <div className="border rounded-lg p-2 xs:p-3 sm:p-4 bg-white">
           <ResponsiveContainer width="100%" height={400} className="xs:hidden">
@@ -287,7 +319,7 @@ export function SimulationChart({ results, metadata }) {
                 type="number"
               >
                 <Label
-                  value="Time (s)"
+                  value={timeUnit.axisLabel}
                   position="insideBottom"
                   offset={-5}
                   style={{ fill: '#1f2937', fontWeight: 600, fontSize: 11 }}
@@ -323,7 +355,8 @@ export function SimulationChart({ results, metadata }) {
                         className="font-semibold mb-1 text-xs text-gray-900"
                         style={{ color: '#111827' }}
                       >
-                        Time: {label?.toLocaleString()} s
+                        Time: {timeUnit.divisor === 1 ? label?.toLocaleString() : label?.toFixed(2)}{' '}
+                        {timeUnit.suffix}
                       </p>
                       <div className="space-y-0.5">
                         {payload.map((entry, idx) => {
@@ -400,7 +433,7 @@ export function SimulationChart({ results, metadata }) {
                 type="number"
               >
                 <Label
-                  value="Time (seconds)"
+                  value={timeUnit.axisLabel}
                   position="insideBottom"
                   offset={-5}
                   style={{ fill: '#1f2937', fontWeight: 600, fontSize: 14 }}
@@ -444,7 +477,8 @@ export function SimulationChart({ results, metadata }) {
                         className="font-semibold mb-2 text-sm text-gray-900"
                         style={{ color: '#111827' }}
                       >
-                        Time: {label?.toLocaleString()} seconds
+                        Time: {timeUnit.divisor === 1 ? label?.toLocaleString() : label?.toFixed(2)}{' '}
+                        {timeUnit.label.toLowerCase()}
                       </p>
                       <div className="space-y-1">
                         {payload.map((entry, idx) => {
