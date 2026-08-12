@@ -286,7 +286,7 @@ export function SimulationChart({ results, metadata }) {
         )}
 
         {/* Species Filter */}
-        <div className="border rounded-lg p-2 xs:p-3 sm:p-4 bg-gray-50">
+        <div className="border rounded-lg p-2 xs:p-3 sm:p-4 bg-gray-50 mt-2 xs:mt-3 sm:mt-4">
           <div className="flex flex-col xs:flex-row items-start xs:items-center justify-between gap-2 xs:gap-0 mb-3">
             <div className="flex flex-wrap items-center justify-between gap-3 w-full">
               <div className="flex items-center border border-gray-300 rounded-lg divide-x divide-gray-300 bg-white">
@@ -567,7 +567,7 @@ export function SimulationChart({ results, metadata }) {
 
           {/* Larger chart for bigger screens */}
           <ResponsiveContainer width="100%" height={600} className="hidden xs:block">
-            <LineChart data={chartData} margin={{ top: 5, right: 30, left: 80, bottom: 5 }}>
+            <LineChart data={chartData} margin={{ top: 5, right: 30, left: 30, bottom: 5 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
 
               <XAxis
