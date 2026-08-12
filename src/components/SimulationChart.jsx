@@ -13,6 +13,7 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card'
 import { Button } from './ui/button'
 import { BarChart3, Atom, AlertCircle, Lightbulb } from 'lucide-react'
+import { getSpeciesDisplayName } from './Plots/speciesFormat'
 
 /**
  * SimulationChart Component
@@ -28,7 +29,7 @@ export function SimulationChart({ results, metadata }) {
   const [showAll, setShowAll] = useState(false)
   const [initialized, setInitialized] = useState(false)
 
-  // Generate color palette for species
+  // Color palette for species
   const colors = [
     '#3b82f6',
     '#ef4444',
@@ -112,75 +113,6 @@ export function SimulationChart({ results, metadata }) {
       return point
     })
   }, [results, allSpecies])
-
-  // Calculate Y-axis domain for log scale
-  const _yAxisDomain = useMemo(() => {
-    if (!chartData.length) return [1e-20, 1]
-
-    const displaySpecies = showAll ? allSpecies : selectedSpecies
-
-    // Handle empty displaySpecies
-    if (displaySpecies.length === 0) return [1e-20, 1]
-
-    let minValue = Infinity
-    let maxValue = -Infinity
-
-    chartData.forEach((point) => {
-      displaySpecies.forEach((sp) => {
-        const value = point[sp]
-        if (value > 1e-20) {
-          minValue = Math.min(minValue, value)
-          maxValue = Math.max(maxValue, value)
-        }
-      })
-    })
-
-    // Handle edge case where no valid values were found
-    if (!isFinite(minValue) || !isFinite(maxValue)) {
-      return [1e-20, 1]
-    }
-
-    // Ensure min < max with more padding for better visibility
-    if (minValue >= maxValue) {
-      return [minValue / 100, minValue * 100]
-    }
-
-    // Add extra padding for better line visibility (3 orders of magnitude instead of 1)
-    const domain = [minValue / 1000, maxValue * 1000]
-    // console.log('Y-axis domain:', {
-    //   minValue: minValue.toExponential(2),
-    //   maxValue: maxValue.toExponential(2),
-    //   domainMin: domain[0].toExponential(2),
-    //   domainMax: domain[1].toExponential(2),
-    //   displaySpecies: showAll ? 'all' : selectedSpecies.join(', ')
-    // })
-    return domain
-  }, [chartData, allSpecies, selectedSpecies, showAll])
-
-  // Calculate X-axis domain dynamically
-  const _xAxisDomain = useMemo(() => {
-    if (!chartData.length) return [0, 1]
-
-    const times = chartData.map((point) => point.timeSeconds).filter((t) => isFinite(t))
-
-    // Handle case where no valid times exist
-    if (times.length === 0) return [0, 1]
-
-    const minTime = Math.min(...times)
-    const maxTime = Math.max(...times)
-
-    // Validate the time values
-    if (!isFinite(minTime) || !isFinite(maxTime)) {
-      return [0, 1]
-    }
-
-    // Add padding if min and max are the same (single point or all points at same time)
-    if (minTime === maxTime) {
-      return [Math.max(0, minTime - 1), maxTime + 1]
-    }
-
-    return [minTime, maxTime]
-  }, [chartData])
 
   // Toggle species selection
   const toggleSpecies = (species) => {
@@ -342,7 +274,7 @@ export function SimulationChart({ results, metadata }) {
                     : {}
                 }
               >
-                {species}
+                {getSpeciesDisplayName(species)}
               </button>
             ))}
           </div>
@@ -372,16 +304,8 @@ export function SimulationChart({ results, metadata }) {
               <YAxis
                 scale="log"
                 domain={[
-                  (dataMin) => {
-                    const min = dataMin > 0 ? dataMin / 10 : 1e-20
-                    // console.log('Y-axis dataMin:', dataMin, '→ domain min:', min)
-                    return min
-                  },
-                  (dataMax) => {
-                    const max = dataMax * 10
-                    // console.log('Y-axis dataMax:', dataMax, '→ domain max:', max)
-                    return max
-                  },
+                  (dataMin) => (dataMin > 0 ? dataMin / 10 : 1e-20),
+                  (dataMax) => dataMax * 10,
                 ]}
                 stroke="#374151"
                 tick={{ fontSize: 8, fill: '#374151' }}
@@ -462,7 +386,7 @@ export function SimulationChart({ results, metadata }) {
                   stroke={colors[allSpecies.indexOf(species) % colors.length]}
                   strokeWidth={2}
                   dot={results.length <= 10 ? { r: 3 } : false}
-                  name={species}
+                  name={getSpeciesDisplayName(species)}
                   connectNulls
                   isAnimationActive={false}
                 />
@@ -493,16 +417,8 @@ export function SimulationChart({ results, metadata }) {
               <YAxis
                 scale="log"
                 domain={[
-                  (dataMin) => {
-                    const min = dataMin > 0 ? dataMin / 10 : 1e-20
-                    // console.log('Y-axis dataMin:', dataMin, '→ domain min:', min)
-                    return min
-                  },
-                  (dataMax) => {
-                    const max = dataMax * 10
-                    // console.log('Y-axis dataMax:', dataMax, '→ domain max:', max)
-                    return max
-                  },
+                  (dataMin) => (dataMin > 0 ? dataMin / 10 : 1e-20),
+                  (dataMax) => dataMax * 10,
                 ]}
                 stroke="#374151"
                 tick={{ fontSize: 11, fill: '#374151' }}
@@ -620,7 +536,7 @@ export function SimulationChart({ results, metadata }) {
                   stroke={colors[allSpecies.indexOf(species) % colors.length]}
                   strokeWidth={3}
                   dot={results.length <= 10 ? { r: 4 } : false}
-                  name={species}
+                  name={getSpeciesDisplayName(species)}
                   connectNulls
                   isAnimationActive={false}
                 />
