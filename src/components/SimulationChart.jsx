@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo, useEffect, useRef, useCallback } from 'react'
 import {
   LineChart,
   Line,
@@ -12,8 +12,9 @@ import {
 } from 'recharts'
 import { Card, CardContent, CardDescription, CardTitle } from './ui/card'
 import { Button } from './ui/button'
-import { BarChart3, Atom, AlertCircle, Lightbulb } from 'lucide-react'
+import { BarChart3, Atom, AlertCircle, Lightbulb, ChevronDown, Check } from 'lucide-react'
 import { getSpeciesDisplayName } from './Plots/speciesFormat'
+import { useClickOutside } from '../hooks/useClickOutside'
 
 // X-axis time unit options: seconds are converted by dividing by `divisor`
 const TIME_UNITS = [
@@ -25,7 +26,7 @@ const TIME_UNITS = [
 // solver output); other units require a conversion function (e.g. ppb needs the
 // ideal gas law with per-point temperature/pressure) that isn't implemented yet.
 const PLOT_UNITS = [
-  { id: 'mol_m3', label: 'mol m-3', axisLabel: 'Concentration (mol m⁻³)', supported: true },
+  { id: 'mol_m3', label: 'mol m-3', axisLabel: 'Concentration (mol m-3)', supported: true },
   { id: 'ppb', label: 'ppb', axisLabel: 'Concentration (ppb)', supported: false },
 ]
 
@@ -51,9 +52,18 @@ export function SimulationChart({ results, metadata }) {
   const [initialized, setInitialized] = useState(false)
   const [timeUnitId, setTimeUnitId] = useState('seconds')
   const [plotUnitId, setPlotUnitId] = useState('mol_m3')
+  const [plotUnitMenuOpen, setPlotUnitMenuOpen] = useState(false)
+  const [timeUnitMenuOpen, setTimeUnitMenuOpen] = useState(false)
+  const plotUnitMenuRef = useRef(null)
+  const timeUnitMenuRef = useRef(null)
 
   const timeUnit = TIME_UNITS.find((u) => u.id === timeUnitId) ?? TIME_UNITS[0]
   const plotUnit = PLOT_UNITS.find((u) => u.id === plotUnitId) ?? PLOT_UNITS[0]
+
+  const closePlotUnitMenu = useCallback(() => setPlotUnitMenuOpen(false), [])
+  const closeTimeUnitMenu = useCallback(() => setTimeUnitMenuOpen(false), [])
+  useClickOutside(plotUnitMenuRef, closePlotUnitMenu, plotUnitMenuOpen)
+  useClickOutside(timeUnitMenuRef, closeTimeUnitMenu, timeUnitMenuOpen)
 
   // Color palette for species
   const colors = [
@@ -326,40 +336,78 @@ export function SimulationChart({ results, metadata }) {
 
         {/* Plot Unit / Time Unit Selectors */}
         <div className="flex flex-wrap items-center gap-4 xs:gap-6">
-          <div className="flex items-center gap-2 xs:gap-3">
-            <h4 className="font-semibold text-xs xs:text-sm text-gray-900">Plot unit:</h4>
-            <select
-              value={plotUnitId}
-              onChange={(e) => setPlotUnitId(e.target.value)}
-              className="border border-gray-300 bg-white text-gray-800 rounded-lg text-xs font-bold px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-600"
+          <div className="relative" ref={plotUnitMenuRef}>
+            <button
+              type="button"
+              onClick={() => setPlotUnitMenuOpen((open) => !open)}
+              className="flex items-center gap-1.5 border border-gray-300 bg-white text-gray-800 rounded-lg text-xs font-bold px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-600"
             >
-              {PLOT_UNITS.map((unit) => (
-                <option
-                  key={unit.id}
-                  value={unit.id}
-                  disabled={!unit.supported}
-                  title={!unit.supported ? 'Conversion not yet supported' : undefined}
-                >
-                  {unit.label}
-                  {!unit.supported ? ' (coming soon)' : ''}
-                </option>
-              ))}
-            </select>
+              {plotUnit.label}
+              <ChevronDown className="w-3.5 h-3.5" />
+            </button>
+
+            {plotUnitMenuOpen && (
+              <div className="absolute z-10 mt-1 min-w-[9rem] bg-white border border-gray-300 rounded-lg shadow-lg py-1">
+                {PLOT_UNITS.map((unit) => (
+                  <button
+                    key={unit.id}
+                    type="button"
+                    disabled={!unit.supported}
+                    title={!unit.supported ? 'Conversion not yet supported' : undefined}
+                    onClick={() => {
+                      setPlotUnitId(unit.id)
+                      setPlotUnitMenuOpen(false)
+                    }}
+                    className={`w-full flex items-center gap-2 text-left text-xs font-bold px-3 py-1.5 ${
+                      unit.supported
+                        ? 'text-gray-800 hover:bg-gray-100'
+                        : 'text-gray-400 cursor-not-allowed'
+                    }`}
+                  >
+                    <Check
+                      className={`w-3.5 h-3.5 flex-shrink-0 ${
+                        plotUnitId === unit.id ? 'opacity-100' : 'opacity-0'
+                      }`}
+                    />
+                    {unit.label}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
-          <div className="flex items-center gap-2 xs:gap-3">
-            <h4 className="font-semibold text-xs xs:text-sm text-gray-900">Time unit:</h4>
-            <select
-              value={timeUnitId}
-              onChange={(e) => setTimeUnitId(e.target.value)}
-              className="border border-gray-300 bg-white text-gray-800 rounded-lg text-xs font-bold px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-600"
+          <div className="relative" ref={timeUnitMenuRef}>
+            <button
+              type="button"
+              onClick={() => setTimeUnitMenuOpen((open) => !open)}
+              className="flex items-center gap-1.5 border border-gray-300 bg-white text-gray-800 rounded-lg text-xs font-bold px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-600"
             >
-              {TIME_UNITS.map((unit) => (
-                <option key={unit.id} value={unit.id}>
-                  {unit.label}
-                </option>
-              ))}
-            </select>
+              {timeUnit.label}
+              <ChevronDown className="w-3.5 h-3.5" />
+            </button>
+
+            {timeUnitMenuOpen && (
+              <div className="absolute z-10 mt-1 min-w-[9rem] bg-white border border-gray-300 rounded-lg shadow-lg py-1">
+                {TIME_UNITS.map((unit) => (
+                  <button
+                    key={unit.id}
+                    type="button"
+                    onClick={() => {
+                      setTimeUnitId(unit.id)
+                      setTimeUnitMenuOpen(false)
+                    }}
+                    className="w-full flex items-center gap-2 text-left text-xs font-bold px-3 py-1.5 text-gray-800 hover:bg-gray-100"
+                  >
+                    <Check
+                      className={`w-3.5 h-3.5 flex-shrink-0 ${
+                        timeUnitId === unit.id ? 'opacity-100' : 'opacity-0'
+                      }`}
+                    />
+                    {unit.label}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         </div>
 
