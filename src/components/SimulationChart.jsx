@@ -718,14 +718,24 @@ export function SimulationChart({ results, metadata }) {
           </ResponsiveContainer>
         </div>
 
-        <div>
+        {/* Summary Box */}
+        <div className="text-xs text-gray-600 bg-blue-50 border border-blue-200 rounded-lg p-3">
           <CardDescription className="text-xs xs:text-sm">
-            {metadata?.mechanism?.toUpperCase()} {"\u00A0"}{"\u00A0"} mechanism
+            • {metadata?.mechanism?.toUpperCase()}
+            {metadata?.mechanism &&
+              !metadata.mechanism.toLowerCase().includes('mechanism') && (
+                <>{"\u00A0"}mechanism</>
+              )}
             <br />
-            {metadata?.duration?.toLocaleString()}  seconds
-            {metadata?.duration != null && `   |   ${(metadata.duration / 3600).toFixed(2)}  hours`}
+            • {metadata?.duration?.toLocaleString()} {"\u00A0"}seconds
+            {metadata?.duration != null && (
+              <>
+                {"\u00A0"}{"\u00A0"}|{"\u00A0"}{"\u00A0"}
+                {(metadata.duration / 3600).toFixed(1)} {"\u00A0"}hours
+              </>
+            )}
             <br />
-            {results.length}&nbsp;&nbsp;data points
+            • {results.length} {"\u00A0"}data points
           </CardDescription>
         </div>
 
