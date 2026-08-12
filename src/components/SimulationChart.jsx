@@ -282,7 +282,7 @@ export function SimulationChart({ results, metadata }) {
           <div className="flex flex-col xs:flex-row items-start xs:items-center justify-between gap-2 xs:gap-0 mb-3">
             <div className="flex items-center gap-3 w-full xs:w-auto">
               <h4 className="font-semibold text-xs xs:text-sm text-gray-900 mr-4">
-                Species Filter ({displaySpecies.length} selected)
+                ({displaySpecies.length} selected)
               </h4>
               <Button
                 variant={allFilteredSelected ? 'assist' : 'outline'}
@@ -309,7 +309,7 @@ export function SimulationChart({ results, metadata }) {
             value={speciesSearch}
             onChange={(e) => setSpeciesSearch(e.target.value)}
             placeholder="Search species"
-            className="w-full mb-3 px-3 py-2 border-2 border-gray-300 bg-white text-gray-800 placeholder:text-gray-400 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
+            className="w-1/2 mb-3 px-3 py-2 border-2 border-gray-300 bg-white text-gray-800 placeholder:text-gray-400 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
           />
 
           <div className="flex flex-wrap gap-1.5 xs:gap-2 max-h-32 overflow-y-auto">
