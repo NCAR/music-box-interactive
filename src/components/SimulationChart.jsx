@@ -720,7 +720,11 @@ export function SimulationChart({ results, metadata }) {
 
         {/* Summary Box */}
         <div className="text-xs text-gray-600 bg-blue-50 border border-blue-200 rounded-lg p-3">
-          <CardDescription className="text-xs xs:text-sm">
+          <p className="font-semibold text-sm mb-1 flex items-center gap-2">
+            <BarChart3 className="w-4 h-4" />
+            Summary:
+          </p>
+          <CardDescription className="text-sm ml-4">
             • {metadata?.mechanism?.toUpperCase()}
             {metadata?.mechanism &&
               !metadata.mechanism.toLowerCase().includes('mechanism') && (
@@ -740,7 +744,7 @@ export function SimulationChart({ results, metadata }) {
         </div>
 
         {/* Info Box */}
-        <div className="text-xs text-gray-600 bg-blue-50 border border-blue-200 rounded-lg p-3">
+        <div className="text-xs text-gray-600 bg-gray-50 border border-gray-200 rounded-lg p-3">
           <p className="font-semibold mb-1 flex items-center gap-2">
             <Lightbulb className="w-4 h-4" />
             Chart Controls:
