@@ -288,16 +288,16 @@ export function SimulationChart({ results, metadata }) {
         {/* Species Filter */}
         <div className="border rounded-lg p-2 xs:p-3 sm:p-4 bg-gray-50">
           <div className="flex flex-col xs:flex-row items-start xs:items-center justify-between gap-2 xs:gap-0 mb-3">
-            <div className="flex items-center gap-3 w-full xs:w-auto">
+            <div className="flex flex-wrap items-center justify-between gap-3 w-full">
               <div className="flex items-center border border-gray-300 rounded-lg divide-x divide-gray-300 bg-white">
                 <div className="relative" ref={selectAllMenuRef}>
                   <button
                     type="button"
                     onClick={() => setSelectAllMenuOpen((open) => !open)}
-                    className="flex items-center gap-1.5 text-gray-800 rounded-l-lg text-xs font-bold px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-600"
+                    className="flex items-center justify-between gap-1 w-32 h-8 text-gray-800 rounded-l-lg text-xs font-bold px-2 focus:outline-none focus:ring-2 focus:ring-blue-600"
                   >
                     {selectAllStatusLabel}
-                    <ChevronDown className="w-3.5 h-3.5" />
+                    <ChevronDown className="w-3.5 h-3.5 flex-shrink-0" />
                   </button>
 
                   {selectAllMenuOpen && (
@@ -342,23 +342,19 @@ export function SimulationChart({ results, metadata }) {
                   value={speciesSearch}
                   onChange={(e) => setSpeciesSearch(e.target.value)}
                   placeholder="Search species"
-                  className="flex-1 max-w-xs px-3 py-2 text-gray-800 placeholder:text-gray-400 rounded-r-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
+                  className="w-[30rem] h-8 px-3 text-gray-800 placeholder:text-gray-400 rounded-r-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
                 />
               </div>
-
-              <h4 className="font-semibold text-xs xs:text-sm text-gray-900">
-                ({displaySpecies.length} selected)
-              </h4>
 
               <div className="flex items-center border border-gray-300 rounded-lg divide-x divide-gray-300 bg-white">
                 <div className="relative" ref={plotUnitMenuRef}>
                   <button
                     type="button"
                     onClick={() => setPlotUnitMenuOpen((open) => !open)}
-                    className="flex items-center gap-1.5 text-gray-800 rounded-l-lg text-xs font-bold px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-600"
+                    className="flex items-center justify-between gap-1 w-24 h-8 text-gray-800 rounded-l-lg text-xs font-bold px-2 focus:outline-none focus:ring-2 focus:ring-blue-600"
                   >
                     {plotUnit.label}
-                    <ChevronDown className="w-3.5 h-3.5" />
+                    <ChevronDown className="w-3.5 h-3.5 flex-shrink-0" />
                   </button>
 
                   {plotUnitMenuOpen && (
@@ -395,10 +391,10 @@ export function SimulationChart({ results, metadata }) {
                   <button
                     type="button"
                     onClick={() => setTimeUnitMenuOpen((open) => !open)}
-                    className="flex items-center gap-1.5 text-gray-800 rounded-r-lg text-xs font-bold px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-600"
+                    className="flex items-center justify-between gap-1 w-24 h-8 text-gray-800 rounded-r-lg text-xs font-bold px-2 focus:outline-none focus:ring-2 focus:ring-blue-600"
                   >
                     {timeUnit.label}
-                    <ChevronDown className="w-3.5 h-3.5" />
+                    <ChevronDown className="w-3.5 h-3.5 flex-shrink-0" />
                   </button>
 
                   {timeUnitMenuOpen && (
@@ -428,7 +424,10 @@ export function SimulationChart({ results, metadata }) {
             </div>
           </div>
 
-          <div className="flex flex-wrap gap-1.5 xs:gap-2 max-h-32 overflow-y-auto">
+          <div className="flex flex-wrap items-center gap-1.5 xs:gap-2 max-h-32 overflow-y-auto">
+            <h4 className="font-semibold text-xs xs:text-sm text-gray-900 mr-1">
+              {displaySpecies.length} selected
+            </h4>
             {filteredSpecies.map((species) => (
               <button
                 key={species}
