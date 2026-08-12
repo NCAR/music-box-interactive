@@ -26,7 +26,6 @@ import { getSpeciesDisplayName } from './Plots/speciesFormat'
 export function SimulationChart({ results, metadata }) {
   const [speciesSearch, setSpeciesSearch] = useState('')
   const [selectedSpecies, setSelectedSpecies] = useState([])
-  const [showAll, setShowAll] = useState(false)
   const [initialized, setInitialized] = useState(false)
 
   // Color palette for species
@@ -70,9 +69,10 @@ export function SimulationChart({ results, metadata }) {
     setSelectedSpecies([])
   }, [results])
 
-  // No auto-selection: leave all species unselected by default
+  // Select all species by default
   useEffect(() => {
     if (!initialized && allSpecies.length > 0 && selectedSpecies.length === 0) {
+      setSelectedSpecies(allSpecies)
       setInitialized(true)
     }
   }, [allSpecies, results, selectedSpecies.length, initialized])
@@ -119,10 +119,9 @@ export function SimulationChart({ results, metadata }) {
     setSelectedSpecies((prev) =>
       prev.includes(species) ? prev.filter((s) => s !== species) : [...prev, species]
     )
-    setShowAll(false)
   }
 
-  const displaySpecies = showAll ? allSpecies : selectedSpecies
+  const displaySpecies = selectedSpecies
 
   // Filter and sort species for the filter UI
   const filteredSpecies = useMemo(() => {
@@ -227,10 +226,7 @@ export function SimulationChart({ results, metadata }) {
               <Button
                 variant={allFilteredSelected ? 'assist' : 'outline'}
                 size="sm"
-                onClick={() => {
-                  setShowAll(false)
-                  setSelectedSpecies(filteredSpecies)
-                }}
+                onClick={() => setSelectedSpecies(filteredSpecies)}
                 className="rounded-lg text-xs font-bold"
               >
                 Select All
@@ -238,10 +234,7 @@ export function SimulationChart({ results, metadata }) {
               <Button
                 variant={noneSelected ? 'assist' : 'outline'}
                 size="sm"
-                onClick={() => {
-                  setShowAll(false)
-                  setSelectedSpecies([])
-                }}
+                onClick={() => setSelectedSpecies([])}
                 className="rounded-lg text-xs font-bold"
               >
                 Deselect All
