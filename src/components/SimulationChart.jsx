@@ -10,26 +10,24 @@ import {
   ResponsiveContainer,
   Label,
 } from 'recharts'
-import { Card, CardContent, CardDescription } from './ui/card'
 import { BarChart3, Atom, AlertCircle, Lightbulb, ChevronDown, Check } from 'lucide-react'
+import { Card, CardContent, CardDescription } from './ui/card'
 import { getSpeciesDisplayName } from './Plots/speciesFormat'
 import { useClickOutside } from '../hooks/useClickOutside'
 
-// X-axis time unit options: seconds are converted by dividing by `divisor`
+// X-axis time unit options
 const TIME_UNITS = [
   { id: 'seconds', label: 'Seconds', axisLabel: 'Time (s)', suffix: 's', divisor: 1 },
   { id: 'hours', label: 'Hours', axisLabel: 'Time (hr)', suffix: 'hr', divisor: 3600 },
 ]
 
-// Y-axis concentration unit options. Results are stored in mol/m^3 (the native
-// solver output); other units require a conversion function (e.g. ppb needs the
-// ideal gas law with per-point temperature/pressure) that isn't implemented yet.
+// Y-axis concentration unit options
 const PLOT_UNITS = [
   { id: 'mol_m3', label: 'mol m-3', axisLabel: 'Concentration (mol m-3)', supported: true },
   { id: 'ppb', label: 'ppb', axisLabel: 'Concentration (ppb)', supported: false },
 ]
 
-// Round x up to the nearest "nice" number (1, 2, 5, or 10 times a power of 10)
+// Round a value up to a human-friendly scale (1, 2, 5, or 10 times a power of 10)
 function niceNumber(x) {
   const exponent = Math.floor(Math.log10(x))
   const fraction = x / 10 ** exponent
@@ -154,8 +152,9 @@ export function SimulationChart({ results, metadata }) {
     })
   }, [results, allSpecies, timeUnit.divisor])
 
-  // Fixed-percentage padding so the axis bounds stay visually consistent across time units
-  // (Recharts' 'auto' domain picks "nice" round numbers whose padding ratio varies with magnitude)
+  // Keep axis bounds visually consistent across time units.
+  // Recharts' "auto" domain varies padding based on magnitude.
+
   const timeDomain = useMemo(() => {
     const times = chartData.map((point) => point.timeSeconds).filter((t) => isFinite(t))
     if (times.length === 0) return [0, 1]
@@ -168,10 +167,7 @@ export function SimulationChart({ results, metadata }) {
     return [Math.max(0, minTime - padding), maxTime + padding]
   }, [chartData])
 
-  // For Hours, pick a "nice" step (always a multiple of 0.5 hr) that yields roughly
-  // TARGET_HOUR_TICKS gridlines regardless of simulation length, instead of always
-  // stepping by 0.5 hr (which gets cluttered on long runs) or Recharts' auto step
-  // (which picks arbitrary, non-0.5-hr-aligned values).
+  // Use a reader-friendly step (in 0.5-hour increments) for gridlines.
   const HOUR_TICK_STEP = 0.5
   const TARGET_HOUR_TICKS = 5
   const xAxisTicks = useMemo(() => {
@@ -218,10 +214,10 @@ export function SimulationChart({ results, metadata }) {
     filteredSpecies.length > 0 && filteredSpecies.every((sp) => displaySpecies.includes(sp))
   const noneSelected = displaySpecies.length === 0
   const selectAllStatusLabel = allFilteredSelected
-    ? 'All selected'
+    ? 'Select all'
     : noneSelected
-      ? 'None selected'
-      : 'Selection'
+      ? 'Deselect all'
+      : 'Custom'
 
   // Validation checks
   if (!results || results.length === 0) {
