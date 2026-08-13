@@ -35,14 +35,14 @@ function niceNumber(x) {
   return niceFraction * 10 ** exponent
 }
 
-// How many items to show before collapsing the rest behind "+N others"
+// Number of items to show before collapsing the rest into "+N others"
 const SPECIES_CHIP_VISIBLE = 25
 const LEGEND_VISIBLE_COMPACT = 6
 const LEGEND_VISIBLE = 25
 const TOOLTIP_VISIBLE_COMPACT = 6
 const TOOLTIP_VISIBLE = 25
 
-// Legend entries, capped with an "+N others" overlay for the rest (informational only)
+// Legend entries, with overflow shown in a "+N others" overlay.
 function ChartLegendContent({ payload, maxVisible, compact }) {
   const [open, setOpen] = useState(false)
   const overflowRef = useRef(null)
@@ -97,8 +97,8 @@ function ChartLegendContent({ payload, maxVisible, compact }) {
   )
 }
 
-// Tooltip entries, sorted by value and capped with a plain "+N more" note
-// (no click target here since a hover tooltip vanishes on mouse-out)
+// Tooltip entries sorted by value, with overflow shown as a "+N more" note.
+// No interaction since the tooltip disappears on mouse-out.
 function ChartTooltipContent({ active, payload, timeLabel, maxVisible, compact }) {
   if (!active || !payload?.length) return null
 
