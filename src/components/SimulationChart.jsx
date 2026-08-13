@@ -328,7 +328,7 @@ export function SimulationChart({ results, metadata }) {
     const search = speciesSearch.trim().toLowerCase()
     if (!search) return allSpecies
     return allSpecies
-      .filter((sp) => getSpeciesDisplayName(sp).toLowerCase().includes(search))
+      .filter((sp) => getSpeciesDisplayName(sp).toLowerCase().startsWith(search))
       .sort((a, b) => {
         const aExact = getSpeciesDisplayName(a).toLowerCase() === search
         const bExact = getSpeciesDisplayName(b).toLowerCase() === search
