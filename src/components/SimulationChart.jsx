@@ -555,8 +555,8 @@ export function SimulationChart({ results, metadata }) {
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-1.5 xs:gap-2">
-            <h4 className="font-semibold text-xs xs:text-sm text-gray-900 mr-1">
+          <div className="flex flex-wrap items-center gap-1.5 xs:gap-2 pl-2">
+            <h4 className="font-semibold text-xs xs:text-sm text-gray-500 mr-1">
               {displaySpecies.length} selected
             </h4>
             {visibleFilteredSpecies.map((species) => (
