@@ -484,6 +484,7 @@ export function SimulationChart({ results, metadata }) {
               />
 
               <Tooltip
+                wrapperStyle={{ zIndex: 10 }}
                 content={({ active, payload, label }) => {
                   if (!active || !payload?.length) return null
 
@@ -607,6 +608,7 @@ export function SimulationChart({ results, metadata }) {
               </YAxis>
 
               <Tooltip
+                wrapperStyle={{ zIndex: 10 }}
                 content={({ active, payload, label }) => {
                   if (!active || !payload?.length) return null
 
