@@ -10,7 +10,7 @@ import {
   ResponsiveContainer,
   Label,
 } from 'recharts'
-import { BarChart3, Atom, AlertCircle, Lightbulb, ChevronDown, Check } from 'lucide-react'
+import { BarChart3, Atom, AlertCircle, ChevronDown, Check } from 'lucide-react'
 import { Card, CardContent, CardDescription } from './ui/card'
 import { getSpeciesDisplayName } from './Plots/speciesFormat'
 import { useClickOutside } from '../hooks/useClickOutside'
@@ -715,7 +715,7 @@ export function SimulationChart({ results, metadata }) {
         </div>
 
         {/* Summary Box */}
-        <div className="text-xs text-gray-600 bg-blue-50 border border-blue-200 rounded-lg p-3">
+        <div className="text-xs text-gray-600 bg-blue-50/40 border border-blue-200 rounded-lg p-3">
           <p className="font-semibold text-sm mb-1 flex items-center gap-2">
             <BarChart3 className="w-4 h-4" />
             Summary:
@@ -737,27 +737,6 @@ export function SimulationChart({ results, metadata }) {
             <br />
             • {results.length} {"\u00A0"}data points
           </CardDescription>
-        </div>
-
-        {/* Info Box */}
-        <div className="text-xs text-gray-600 bg-gray-50 border border-gray-200 rounded-lg p-3">
-          <p className="font-semibold mb-1 flex items-center gap-2">
-            <Lightbulb className="w-4 h-4" />
-            Chart Controls:
-          </p>
-          <ul className="space-y-0.5 ml-4">
-            <li>
-              • Chart displays concentrations on <strong>logarithmic scale</strong> with dynamic
-              axes
-            </li>
-            <li>
-              • Click species badges to <strong>show/hide</strong> individual species
-            </li>
-            <li>
-              • Use <strong>Show All</strong> to display all species simultaneously
-            </li>
-            <li>• Hover over the chart for detailed concentration values</li>
-          </ul>
         </div>
       </CardContent>
     </Card>
