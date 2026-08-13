@@ -447,7 +447,7 @@ export function SimulationChart({ results, metadata }) {
 
         {/* Chart */}
         <div className="border rounded-lg p-2 xs:p-3 sm:p-4 bg-white">
-          <ResponsiveContainer width="100%" height={400} className="xs:hidden">
+          <ResponsiveContainer width="100%" height={450} className="xs:hidden">
             <LineChart data={chartData} margin={{ top: 5, right: 5, left: 5, bottom: 5 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
 
@@ -542,7 +542,7 @@ export function SimulationChart({ results, metadata }) {
               />
 
               <Legend
-                wrapperStyle={{ fontSize: '11px', fontWeight: '500', paddingTop: '10px' }}
+                wrapperStyle={{ fontSize: '10px', fontWeight: '500', paddingTop: '16px' }}
                 iconType="line"
               />
 
@@ -563,7 +563,7 @@ export function SimulationChart({ results, metadata }) {
           </ResponsiveContainer>
 
           {/* Larger chart for bigger screens */}
-          <ResponsiveContainer width="100%" height={600} className="hidden xs:block">
+          <ResponsiveContainer width="100%" height={680} className="hidden xs:block">
             <LineChart data={chartData} margin={{ top: 5, right: 30, left: 30, bottom: 5 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
 
@@ -668,7 +668,7 @@ export function SimulationChart({ results, metadata }) {
 
               <Legend
                 wrapperStyle={{
-                  fontSize: '13px',
+                  fontSize: '11px',
                   fontWeight: '500',
                   paddingTop: '20px',
                 }}
@@ -678,20 +678,20 @@ export function SimulationChart({ results, metadata }) {
 
                   return (
                     <div
-                      className="flex flex-wrap justify-center gap-3 px-4"
-                      style={{ maxHeight: '200px', overflowY: 'auto' }}
+                      className="flex flex-wrap justify-center gap-1.5 px-4"
+                      style={{ maxHeight: '120px', overflowY: 'auto' }}
                     >
                       {payload.map((entry, index) => (
                         <div
                           key={`legend-${index}`}
-                          className="flex items-center gap-2 px-3 py-1.5 bg-white border-2 rounded-lg shadow-sm"
+                          className="flex items-center gap-1.5 px-2 py-0.5 bg-white border rounded-lg shadow-sm"
                           style={{ borderColor: entry.color }}
                         >
                           <div
-                            className="w-4 h-1 rounded"
+                            className="w-3 h-1 rounded"
                             style={{ backgroundColor: entry.color }}
                           />
-                          <span className="text-sm font-semibold text-gray-900">{entry.value}</span>
+                          <span className="text-xs font-semibold text-gray-900">{entry.value}</span>
                         </div>
                       ))}
                     </div>
