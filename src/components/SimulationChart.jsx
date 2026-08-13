@@ -421,7 +421,8 @@ export function SimulationChart({ results, metadata }) {
                   <button
                     type="button"
                     onClick={() => setSelectAllMenuOpen((open) => !open)}
-                    className="flex items-center justify-between gap-1 w-32 h-8 text-gray-800 rounded-l-lg text-xs font-bold px-2 focus:outline-none focus:ring-2 focus:ring-blue-600"
+                    className={`flex items-center justify-between gap-1 w-32 h-8 bg-blue-100/50 text-gray-900 rounded-l-lg
+                      text-xs font-bold px-2.5 focus:outline-none focus:ring-2 focus:ring-blue-600 transition-colors duration-200`}
                   >
                     {selectAllStatusLabel}
                     <ChevronDown className="w-3.5 h-3.5 flex-shrink-0" />
@@ -481,7 +482,8 @@ export function SimulationChart({ results, metadata }) {
                   <button
                     type="button"
                     onClick={() => setPlotUnitMenuOpen((open) => !open)}
-                    className="flex items-center justify-between gap-1 w-24 h-8 text-gray-800 rounded-l-lg text-xs font-bold px-2 focus:outline-none focus:ring-2 focus:ring-blue-600"
+                    className={`flex items-center justify-between gap-1 w-24 h-8 bg-blue-100/50 text-gray-800 rounded-l-lg text-xs
+                      font-bold px-2.5 focus:outline-none focus:ring-2 focus:ring-blue-600 transition-colors duration-200`}
                   >
                     {plotUnit.label}
                     <ChevronDown className="w-3.5 h-3.5 flex-shrink-0" />
@@ -521,7 +523,8 @@ export function SimulationChart({ results, metadata }) {
                   <button
                     type="button"
                     onClick={() => setTimeUnitMenuOpen((open) => !open)}
-                    className="flex items-center justify-between gap-1 w-24 h-8 text-gray-800 rounded-r-lg text-xs font-bold px-2 focus:outline-none focus:ring-2 focus:ring-blue-600"
+                    className={`flex items-center justify-between gap-1 w-24 h-8 bg-blue-100/50 text-gray-800 rounded-r-lg
+                      text-xs font-bold px-2.5 focus:outline-none focus:ring-2 focus:ring-blue-600 transition-colors duration-200`}
                   >
                     {timeUnit.label}
                     <ChevronDown className="w-3.5 h-3.5 flex-shrink-0" />
