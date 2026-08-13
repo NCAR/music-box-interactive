@@ -36,11 +36,11 @@ function niceNumber(x) {
 }
 
 // How many items to show before collapsing the rest behind "+N others"
-const SPECIES_CHIP_VISIBLE = 15
+const SPECIES_CHIP_VISIBLE = 25
 const LEGEND_VISIBLE_COMPACT = 6
-const LEGEND_VISIBLE = 10
-const TOOLTIP_VISIBLE_COMPACT = 4
-const TOOLTIP_VISIBLE = 6
+const LEGEND_VISIBLE = 25
+const TOOLTIP_VISIBLE_COMPACT = 6
+const TOOLTIP_VISIBLE = 25
 
 // Legend entries, capped with an "+N others" overlay for the rest (informational only)
 function ChartLegendContent({ payload, maxVisible, compact }) {
@@ -116,8 +116,7 @@ function ChartTooltipContent({ active, payload, timeLabel, maxVisible, compact }
       style={{ backgroundColor: 'white' }}
     >
       <p
-        className={`font-semibold text-gray-900 ${compact ? 'mb-1 text-xs' : 'mb-2 text-sm'}`}
-        style={{ color: '#111827' }}
+        className={`text-gray-500 ${compact ? 'mb-1 text-[10px]' : 'mb-2 text-xs'}`}
       >
         Time: {timeLabel}
       </p>
@@ -153,7 +152,7 @@ function ChartTooltipContent({ active, payload, timeLabel, maxVisible, compact }
           )
         })}
         {overflowCount > 0 && (
-          <p className="text-[11px] text-gray-500 italic pt-0.5">+{overflowCount} more species</p>
+          <p className="text-xs text-gray-500 italic pt-0.5 pl-1">+{overflowCount} more species</p>
         )}
       </div>
     </div>
@@ -555,7 +554,7 @@ export function SimulationChart({ results, metadata }) {
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-1.5 xs:gap-2 pl-2">
+          <div className="flex flex-wrap items-center gap-1.5 xs:gap-2 pl-2 lg:max-w-[calc(100%-13rem)]">
             <h4 className="font-semibold text-xs xs:text-sm text-gray-500 mr-1">
               {displaySpecies.length} selected
             </h4>
