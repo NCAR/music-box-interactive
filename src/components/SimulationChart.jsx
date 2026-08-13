@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo, useEffect, useRef, useCallback } from 'react'
 import {
   LineChart,
   Line,
@@ -10,10 +10,30 @@ import {
   ResponsiveContainer,
   Label,
 } from 'recharts'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card'
-import { Button } from './ui/button'
-import { BarChart3, Atom, AlertCircle, Lightbulb } from 'lucide-react'
+import { BarChart3, Atom, AlertCircle, ChevronDown, Check } from 'lucide-react'
+import { Card, CardContent, CardDescription } from './ui/card'
 import { getSpeciesDisplayName } from './Plots/speciesFormat'
+import { useClickOutside } from '../hooks/useClickOutside'
+
+// X-axis time unit options
+const TIME_UNITS = [
+  { id: 'seconds', label: 'Seconds', axisLabel: 'Time (s)', suffix: 's', divisor: 1 },
+  { id: 'hours', label: 'Hours', axisLabel: 'Time (hr)', suffix: 'hr', divisor: 3600 },
+]
+
+// Y-axis concentration unit options
+const PLOT_UNITS = [
+  { id: 'mol_m3', label: 'mol m-3', axisLabel: 'Concentration (mol m-3)', supported: true },
+  { id: 'ppb', label: 'ppb', axisLabel: 'Concentration (ppb)', supported: false },
+]
+
+// Round a value up to a human-friendly scale (1, 2, 5, or 10 times a power of 10)
+function niceNumber(x) {
+  const exponent = Math.floor(Math.log10(x))
+  const fraction = x / 10 ** exponent
+  const niceFraction = fraction <= 1 ? 1 : fraction <= 2 ? 2 : fraction <= 5 ? 5 : 10
+  return niceFraction * 10 ** exponent
+}
 
 /**
  * SimulationChart Component
@@ -27,6 +47,24 @@ export function SimulationChart({ results, metadata }) {
   const [speciesSearch, setSpeciesSearch] = useState('')
   const [selectedSpecies, setSelectedSpecies] = useState([])
   const [initialized, setInitialized] = useState(false)
+  const [timeUnitId, setTimeUnitId] = useState('seconds')
+  const [plotUnitId, setPlotUnitId] = useState('mol_m3')
+  const [plotUnitMenuOpen, setPlotUnitMenuOpen] = useState(false)
+  const [timeUnitMenuOpen, setTimeUnitMenuOpen] = useState(false)
+  const [selectAllMenuOpen, setSelectAllMenuOpen] = useState(false)
+  const plotUnitMenuRef = useRef(null)
+  const timeUnitMenuRef = useRef(null)
+  const selectAllMenuRef = useRef(null)
+
+  const timeUnit = TIME_UNITS.find((u) => u.id === timeUnitId) ?? TIME_UNITS[0]
+  const plotUnit = PLOT_UNITS.find((u) => u.id === plotUnitId) ?? PLOT_UNITS[0]
+
+  const closePlotUnitMenu = useCallback(() => setPlotUnitMenuOpen(false), [])
+  const closeTimeUnitMenu = useCallback(() => setTimeUnitMenuOpen(false), [])
+  const closeSelectAllMenu = useCallback(() => setSelectAllMenuOpen(false), [])
+  useClickOutside(plotUnitMenuRef, closePlotUnitMenu, plotUnitMenuOpen)
+  useClickOutside(timeUnitMenuRef, closeTimeUnitMenu, timeUnitMenuOpen)
+  useClickOutside(selectAllMenuRef, closeSelectAllMenu, selectAllMenuOpen)
 
   // Color palette for species
   const colors = [
@@ -86,7 +124,7 @@ export function SimulationChart({ results, metadata }) {
     return results.map((result) => {
       const time = result.time ?? result.timestamp ?? result.date ?? 0
       const point = {
-        timeSeconds: time,
+        timeSeconds: time / timeUnit.divisor,
       }
 
       const source =
@@ -112,7 +150,41 @@ export function SimulationChart({ results, metadata }) {
 
       return point
     })
-  }, [results, allSpecies])
+  }, [results, allSpecies, timeUnit.divisor])
+
+  // Keep axis bounds visually consistent across time units.
+  // Recharts' "auto" domain varies padding based on magnitude.
+
+  const timeDomain = useMemo(() => {
+    const times = chartData.map((point) => point.timeSeconds).filter((t) => isFinite(t))
+    if (times.length === 0) return [0, 1]
+
+    const minTime = Math.min(...times)
+    const maxTime = Math.max(...times)
+    if (minTime === maxTime) return [Math.max(0, minTime - 1), maxTime + 1]
+
+    const padding = (maxTime - minTime) * 0.05
+    return [Math.max(0, minTime - padding), maxTime + padding]
+  }, [chartData])
+
+  // Use a reader-friendly step (in 0.5-hour increments) for gridlines.
+  const HOUR_TICK_STEP = 0.5
+  const TARGET_HOUR_TICKS = 5
+  const xAxisTicks = useMemo(() => {
+    if (timeUnit.id !== 'hours') return undefined
+
+    const maxDomain = timeDomain[1]
+    if (maxDomain <= 0) return [0]
+
+    const rawStep = maxDomain / TARGET_HOUR_TICKS
+    const step = Math.ceil(niceNumber(rawStep) / HOUR_TICK_STEP) * HOUR_TICK_STEP
+
+    const ticks = []
+    for (let t = 0; t <= maxDomain + 1e-9; t += step) {
+      ticks.push(Math.round(t * 1000) / 1000)
+    }
+    return ticks
+  }, [timeUnit.id, timeDomain])
 
   // Toggle species selection
   const toggleSpecies = (species) => {
@@ -128,10 +200,10 @@ export function SimulationChart({ results, metadata }) {
     const search = speciesSearch.trim().toLowerCase()
     if (!search) return allSpecies
     return allSpecies
-      .filter((sp) => sp.toLowerCase().includes(search))
+      .filter((sp) => getSpeciesDisplayName(sp).toLowerCase().includes(search))
       .sort((a, b) => {
-        const aExact = a.toLowerCase() === search
-        const bExact = b.toLowerCase() === search
+        const aExact = getSpeciesDisplayName(a).toLowerCase() === search
+        const bExact = getSpeciesDisplayName(b).toLowerCase() === search
         if (aExact && !bExact) return -1
         if (!aExact && bExact) return 1
         return 0
@@ -141,6 +213,11 @@ export function SimulationChart({ results, metadata }) {
   const allFilteredSelected =
     filteredSpecies.length > 0 && filteredSpecies.every((sp) => displaySpecies.includes(sp))
   const noneSelected = displaySpecies.length === 0
+  const selectAllStatusLabel = allFilteredSelected
+    ? 'Select all'
+    : noneSelected
+      ? 'Deselect all'
+      : 'Custom'
 
   // Validation checks
   if (!results || results.length === 0) {
@@ -188,18 +265,6 @@ export function SimulationChart({ results, metadata }) {
 
   return (
     <Card>
-      <CardHeader>
-        <div>
-          <CardTitle className="text-base xs:text-lg sm:text-xl">
-            Concentration Profiles (Log Scale)
-          </CardTitle>
-          <CardDescription className="text-xs xs:text-sm">
-            {metadata?.mechanism?.toUpperCase()} mechanism •{metadata?.duration?.toLocaleString()}{' '}
-            seconds •{results.length} data points
-          </CardDescription>
-        </div>
-      </CardHeader>
-
       <CardContent className="space-y-3 xs:space-y-4">
         {/* Warning for insufficient data points */}
         {results.length < 3 && (
@@ -217,41 +282,148 @@ export function SimulationChart({ results, metadata }) {
         )}
 
         {/* Species Filter */}
-        <div className="border rounded-lg p-2 xs:p-3 sm:p-4 bg-gray-50">
+        <div className="rounded-lg p-2 xs:p-3 sm:p-4 bg-gray-50 mt-2 xs:mt-3 sm:mt-4">
           <div className="flex flex-col xs:flex-row items-start xs:items-center justify-between gap-2 xs:gap-0 mb-3">
-            <div className="flex items-center gap-3 w-full xs:w-auto">
-              <h4 className="font-semibold text-xs xs:text-sm text-gray-900 mr-4">
-                Species Filter ({displaySpecies.length} selected)
-              </h4>
-              <Button
-                variant={allFilteredSelected ? 'assist' : 'outline'}
-                size="sm"
-                onClick={() => setSelectedSpecies(filteredSpecies)}
-                className="rounded-lg text-xs font-bold"
-              >
-                Select All
-              </Button>
-              <Button
-                variant={noneSelected ? 'assist' : 'outline'}
-                size="sm"
-                onClick={() => setSelectedSpecies([])}
-                className="rounded-lg text-xs font-bold"
-              >
-                Deselect All
-              </Button>
+            <div className="flex flex-wrap items-center justify-between gap-3 w-full">
+              <div className="flex items-center border border-gray-300 rounded-lg divide-x divide-gray-300 bg-white">
+                <div className="relative" ref={selectAllMenuRef}>
+                  <button
+                    type="button"
+                    onClick={() => setSelectAllMenuOpen((open) => !open)}
+                    className="flex items-center justify-between gap-1 w-32 h-8 text-gray-800 rounded-l-lg text-xs font-bold px-2 focus:outline-none focus:ring-2 focus:ring-blue-600"
+                  >
+                    {selectAllStatusLabel}
+                    <ChevronDown className="w-3.5 h-3.5 flex-shrink-0" />
+                  </button>
+
+                  {selectAllMenuOpen && (
+                    <div className="absolute z-10 mt-1 min-w-[9rem] bg-white border border-gray-300 rounded-lg shadow-lg py-1">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSelectedSpecies(filteredSpecies)
+                          setSelectAllMenuOpen(false)
+                        }}
+                        className="w-full flex items-center gap-2 text-left text-xs font-bold px-3 py-1.5 text-gray-800 hover:bg-gray-100"
+                      >
+                        <Check
+                          className={`w-3.5 h-3.5 flex-shrink-0 ${
+                            allFilteredSelected ? 'opacity-100' : 'opacity-0'
+                          }`}
+                        />
+                        Select all
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSelectedSpecies([])
+                          setSelectAllMenuOpen(false)
+                        }}
+                        className="w-full flex items-center gap-2 text-left text-xs font-bold px-3 py-1.5 text-gray-800 hover:bg-gray-100"
+                      >
+                        <Check
+                          className={`w-3.5 h-3.5 flex-shrink-0 ${
+                            noneSelected ? 'opacity-100' : 'opacity-0'
+                          }`}
+                        />
+                        Deselect all
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                {/* Search bar for species filter */}
+                <input
+                  type="text"
+                  value={speciesSearch}
+                  onChange={(e) => setSpeciesSearch(e.target.value)}
+                  placeholder="Search species"
+                  className="w-[30rem] h-8 px-3 text-gray-800 placeholder:text-gray-400 rounded-r-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
+                />
+              </div>
+
+              <div className="flex items-center border border-gray-300 rounded-lg divide-x divide-gray-300 bg-white">
+                <div className="relative" ref={plotUnitMenuRef}>
+                  <button
+                    type="button"
+                    onClick={() => setPlotUnitMenuOpen((open) => !open)}
+                    className="flex items-center justify-between gap-1 w-24 h-8 text-gray-800 rounded-l-lg text-xs font-bold px-2 focus:outline-none focus:ring-2 focus:ring-blue-600"
+                  >
+                    {plotUnit.label}
+                    <ChevronDown className="w-3.5 h-3.5 flex-shrink-0" />
+                  </button>
+
+                  {plotUnitMenuOpen && (
+                    <div className="absolute z-10 mt-1 min-w-[9rem] bg-white border border-gray-300 rounded-lg shadow-lg py-1">
+                      {PLOT_UNITS.map((unit) => (
+                        <button
+                          key={unit.id}
+                          type="button"
+                          disabled={!unit.supported}
+                          title={!unit.supported ? 'Conversion not yet supported' : undefined}
+                          onClick={() => {
+                            setPlotUnitId(unit.id)
+                            setPlotUnitMenuOpen(false)
+                          }}
+                          className={`w-full flex items-center gap-2 text-left text-xs font-bold px-3 py-1.5 ${
+                            unit.supported
+                              ? 'text-gray-800 hover:bg-gray-100'
+                              : 'text-gray-400 cursor-not-allowed'
+                          }`}
+                        >
+                          <Check
+                            className={`w-3.5 h-3.5 flex-shrink-0 ${
+                              plotUnitId === unit.id ? 'opacity-100' : 'opacity-0'
+                            }`}
+                          />
+                          {unit.label}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <div className="relative" ref={timeUnitMenuRef}>
+                  <button
+                    type="button"
+                    onClick={() => setTimeUnitMenuOpen((open) => !open)}
+                    className="flex items-center justify-between gap-1 w-24 h-8 text-gray-800 rounded-r-lg text-xs font-bold px-2 focus:outline-none focus:ring-2 focus:ring-blue-600"
+                  >
+                    {timeUnit.label}
+                    <ChevronDown className="w-3.5 h-3.5 flex-shrink-0" />
+                  </button>
+
+                  {timeUnitMenuOpen && (
+                    <div className="absolute z-10 mt-1 min-w-[9rem] bg-white border border-gray-300 rounded-lg shadow-lg py-1">
+                      {TIME_UNITS.map((unit) => (
+                        <button
+                          key={unit.id}
+                          type="button"
+                          onClick={() => {
+                            setTimeUnitId(unit.id)
+                            setTimeUnitMenuOpen(false)
+                          }}
+                          className="w-full flex items-center gap-2 text-left text-xs font-bold px-3 py-1.5 text-gray-800 hover:bg-gray-100"
+                        >
+                          <Check
+                            className={`w-3.5 h-3.5 flex-shrink-0 ${
+                              timeUnitId === unit.id ? 'opacity-100' : 'opacity-0'
+                            }`}
+                          />
+                          {unit.label}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
 
-          {/* Search bar for species filter */}
-          <input
-            type="text"
-            value={speciesSearch}
-            onChange={(e) => setSpeciesSearch(e.target.value)}
-            placeholder="Search species"
-            className="w-full mb-3 px-3 py-2 border-2 border-gray-300 bg-white text-gray-800 placeholder:text-gray-400 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
-          />
-
-          <div className="flex flex-wrap gap-1.5 xs:gap-2 max-h-32 overflow-y-auto">
+          <div className="flex flex-wrap items-center gap-1.5 xs:gap-2 max-h-32 overflow-y-auto">
+            <h4 className="font-semibold text-xs xs:text-sm text-gray-900 mr-1">
+              {displaySpecies.length} selected
+            </h4>
             {filteredSpecies.map((species) => (
               <button
                 key={species}
@@ -281,13 +453,14 @@ export function SimulationChart({ results, metadata }) {
 
               <XAxis
                 dataKey="timeSeconds"
-                domain={['auto', 'auto']}
+                domain={timeDomain}
+                ticks={xAxisTicks}
                 stroke="#374151"
                 tick={{ fontSize: 10, fill: '#374151' }}
                 type="number"
               >
                 <Label
-                  value="Time (s)"
+                  value={timeUnit.axisLabel}
                   position="insideBottom"
                   offset={-5}
                   style={{ fill: '#1f2937', fontWeight: 600, fontSize: 11 }}
@@ -323,7 +496,8 @@ export function SimulationChart({ results, metadata }) {
                         className="font-semibold mb-1 text-xs text-gray-900"
                         style={{ color: '#111827' }}
                       >
-                        Time: {label?.toLocaleString()} s
+                        Time: {timeUnit.divisor === 1 ? label?.toLocaleString() : label?.toFixed(2)}{' '}
+                        {timeUnit.suffix}
                       </p>
                       <div className="space-y-0.5">
                         {payload.map((entry, idx) => {
@@ -389,18 +563,19 @@ export function SimulationChart({ results, metadata }) {
 
           {/* Larger chart for bigger screens */}
           <ResponsiveContainer width="100%" height={600} className="hidden xs:block">
-            <LineChart data={chartData} margin={{ top: 5, right: 30, left: 80, bottom: 5 }}>
+            <LineChart data={chartData} margin={{ top: 5, right: 30, left: 30, bottom: 5 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
 
               <XAxis
                 dataKey="timeSeconds"
-                domain={['auto', 'auto']}
+                domain={timeDomain}
+                ticks={xAxisTicks}
                 stroke="#374151"
                 tick={{ fontSize: 12, fill: '#374151' }}
                 type="number"
               >
                 <Label
-                  value="Time (seconds)"
+                  value={timeUnit.axisLabel}
                   position="insideBottom"
                   offset={-5}
                   style={{ fill: '#1f2937', fontWeight: 600, fontSize: 14 }}
@@ -423,7 +598,7 @@ export function SimulationChart({ results, metadata }) {
                 width={70}
               >
                 <Label
-                  value="Concentration (mol mol⁻¹)"
+                  value={plotUnit.axisLabel}
                   angle={-90}
                   position="insideLeft"
                   offset={10}
@@ -444,7 +619,8 @@ export function SimulationChart({ results, metadata }) {
                         className="font-semibold mb-2 text-sm text-gray-900"
                         style={{ color: '#111827' }}
                       >
-                        Time: {label?.toLocaleString()} seconds
+                        Time: {timeUnit.divisor === 1 ? label?.toLocaleString() : label?.toFixed(2)}{' '}
+                        {timeUnit.label.toLowerCase()}
                       </p>
                       <div className="space-y-1">
                         {payload.map((entry, idx) => {
@@ -538,25 +714,29 @@ export function SimulationChart({ results, metadata }) {
           </ResponsiveContainer>
         </div>
 
-        {/* Info Box */}
-        <div className="text-xs text-gray-600 bg-blue-50 border border-blue-200 rounded-lg p-3">
-          <p className="font-semibold mb-1 flex items-center gap-2">
-            <Lightbulb className="w-4 h-4" />
-            Chart Controls:
+        {/* Summary Box */}
+        <div className="text-xs text-gray-600 bg-blue-50/40 border border-blue-200 rounded-lg p-3">
+          <p className="font-semibold text-sm mb-1 flex items-center gap-2">
+            <BarChart3 className="w-4 h-4" />
+            Summary:
           </p>
-          <ul className="space-y-0.5 ml-4">
-            <li>
-              • Chart displays concentrations on <strong>logarithmic scale</strong> with dynamic
-              axes
-            </li>
-            <li>
-              • Click species badges to <strong>show/hide</strong> individual species
-            </li>
-            <li>
-              • Use <strong>Show All</strong> to display all species simultaneously
-            </li>
-            <li>• Hover over the chart for detailed concentration values</li>
-          </ul>
+          <CardDescription className="text-sm ml-4">
+            • {metadata?.mechanism?.toUpperCase()}
+            {metadata?.mechanism &&
+              !metadata.mechanism.toLowerCase().includes('mechanism') && (
+                <>{"\u00A0"}mechanism</>
+              )}
+            <br />
+            • {metadata?.duration?.toLocaleString()} {"\u00A0"}seconds
+            {metadata?.duration != null && (
+              <>
+                {"\u00A0"}{"\u00A0"}|{"\u00A0"}{"\u00A0"}
+                {(metadata.duration / 3600).toFixed(1)} {"\u00A0"}hours
+              </>
+            )}
+            <br />
+            • {results.length} {"\u00A0"}data points
+          </CardDescription>
         </div>
       </CardContent>
     </Card>

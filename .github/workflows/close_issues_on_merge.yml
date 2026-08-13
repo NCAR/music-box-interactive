@@ -36,5 +36,5 @@ jobs:
                 gh issue close "$issue" \
                   --repo "$REPO" \
                   --reason completed \
-                  --comment "Automatically closed by PR #$PR_NUMBER merged into branch $BASE_REF."
+                  --comment "Automatically closed by PR #$PR_NUMBER merged into $BASE_REF branch."
               done
