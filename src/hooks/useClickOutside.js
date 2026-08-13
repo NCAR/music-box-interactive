@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 
-// Calls onOutsideClick when a mousedown happens outside the element ref points to.
-// Pass `active` to only attach the listener while something (a dropdown) is open.
+// Calls onOutsideClick when mousedown occurs outside the element.
+// Only attaches the listener when active (e.g., when a dropdown is open).
 export function useClickOutside(ref, onOutsideClick, active = true) {
   useEffect(() => {
     if (!active) return
