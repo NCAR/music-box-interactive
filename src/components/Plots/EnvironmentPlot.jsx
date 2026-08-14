@@ -21,7 +21,7 @@ export function EnvironmentPlot() {
   const simulation = useSelector((state) => state.simulation)
   const conditions = useSelector((state) => state.conditions)
 
-  // Evolving temperature/pressure points actually fed to the solver, sorted for step interpolation
+  // Evolving temperature and pressure points fed to the solver, sorted for step interpolation
   const evolvingPoints = useMemo(() => {
     const times = conditions.evolving?.times
     if (!Array.isArray(times) || times.length === 0) return []
