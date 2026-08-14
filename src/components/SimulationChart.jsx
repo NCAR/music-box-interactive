@@ -35,6 +35,130 @@ function niceNumber(x) {
   return niceFraction * 10 ** exponent
 }
 
+// Number of items to show before collapsing the rest into "+N others"
+const SPECIES_CHIP_VISIBLE = 25
+const LEGEND_VISIBLE_COMPACT = 6
+const LEGEND_VISIBLE = 25
+const TOOLTIP_VISIBLE_COMPACT = 6
+const TOOLTIP_VISIBLE = 25
+
+// Legend entries, with overflow shown in a "+N others" overlay.
+function ChartLegendContent({ payload, maxVisible, compact }) {
+  const [open, setOpen] = useState(false)
+  const overflowRef = useRef(null)
+  const closeOverflow = useCallback(() => setOpen(false), [])
+  useClickOutside(overflowRef, closeOverflow, open)
+
+  if (!payload || payload.length === 0) return null
+
+  const visible = payload.slice(0, maxVisible)
+  const overflow = payload.slice(maxVisible)
+  const itemClass = `flex items-center gap-1.5 px-2 py-0.5 bg-white border rounded-lg shadow-sm ${
+    compact ? 'text-[10px]' : 'text-xs'
+  }`
+
+  return (
+    <div className="flex flex-wrap justify-center items-center gap-1.5 px-4">
+      {visible.map((entry, index) => (
+        <div key={`legend-${index}`} className={itemClass} style={{ borderColor: entry.color }}>
+          <div className="w-3 h-1 rounded flex-shrink-0" style={{ backgroundColor: entry.color }} />
+          <span className="font-semibold text-gray-900">{entry.value}</span>
+        </div>
+      ))}
+      {overflow.length > 0 && (
+        <div className="relative" ref={overflowRef}>
+          <button
+            type="button"
+            onClick={() => setOpen((o) => !o)}
+            className={`${itemClass} font-semibold text-gray-700 hover:bg-gray-50`}
+            style={{ borderColor: '#d1d5db' }}
+          >
+            +{overflow.length} others
+          </button>
+          {open && (
+            <div className="absolute z-20 bottom-full mb-1 left-1/2 -translate-x-1/2 w-56 max-h-64 overflow-y-auto bg-white border border-gray-300 rounded-lg shadow-lg py-1">
+              {overflow.map((entry, index) => (
+                <div
+                  key={`legend-overflow-${index}`}
+                  className="flex items-center gap-2 px-3 py-1.5 text-xs text-gray-900"
+                >
+                  <div
+                    className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+                    style={{ backgroundColor: entry.color }}
+                  />
+                  <span className="truncate">{entry.value}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// Tooltip entries sorted by value, with overflow shown as a "+N more" note.
+// No interaction since the tooltip disappears on mouse-out.
+function ChartTooltipContent({ active, payload, timeLabel, maxVisible, compact }) {
+  if (!active || !payload?.length) return null
+
+  const sorted = [...payload].sort((a, b) => {
+    const av = typeof a.value === 'number' ? a.value : parseFloat(a.value)
+    const bv = typeof b.value === 'number' ? b.value : parseFloat(b.value)
+    return (isFinite(bv) ? bv : -Infinity) - (isFinite(av) ? av : -Infinity)
+  })
+  const visible = sorted.slice(0, maxVisible)
+  const overflowCount = sorted.length - visible.length
+
+  return (
+    <div
+      className={`bg-white border-2 border-gray-800 rounded-lg shadow-xl ${compact ? 'p-2' : 'p-3'}`}
+      style={{ backgroundColor: 'white' }}
+    >
+      <p
+        className={`text-gray-500 ${compact ? 'mb-1 text-[10px]' : 'mb-2 text-xs'}`}
+      >
+        Time: {timeLabel}
+      </p>
+      <div className={compact ? 'space-y-0.5' : 'space-y-1'}>
+        {visible.map((entry, idx) => {
+          const numValue =
+            typeof entry.value === 'number' ? entry.value : parseFloat(entry.value)
+          const isValidNumber = !isNaN(numValue) && isFinite(numValue)
+
+          return (
+            <div
+              key={idx}
+              className={`flex items-center text-xs ${compact ? 'gap-1.5' : 'gap-2'}`}
+              style={{ color: '#1f2937' }}
+            >
+              <div
+                className={`${compact ? 'w-2 h-2' : 'w-3 h-3'} rounded-full flex-shrink-0`}
+                style={{ backgroundColor: entry.color }}
+              />
+              <span className="font-medium text-gray-900" style={{ color: '#111827' }}>
+                {entry.name}:
+              </span>
+              <span className="font-mono text-gray-900" style={{ color: '#111827' }}>
+                {isValidNumber
+                  ? numValue < 1e-19
+                    ? compact
+                      ? '0.00e+00'
+                      : '0.0000e+00'
+                    : numValue.toExponential(compact ? 2 : 4)
+                  : 'N/A'}
+              </span>
+            </div>
+          )
+        })}
+        {overflowCount > 0 && (
+          <p className="text-xs text-gray-500 italic pt-0.5 pl-1">+{overflowCount} more species</p>
+        )}
+      </div>
+    </div>
+  )
+}
+
 /**
  * SimulationChart Component
  * Displays atmospheric chemistry concentration data with interactive controls
@@ -52,9 +176,11 @@ export function SimulationChart({ results, metadata }) {
   const [plotUnitMenuOpen, setPlotUnitMenuOpen] = useState(false)
   const [timeUnitMenuOpen, setTimeUnitMenuOpen] = useState(false)
   const [selectAllMenuOpen, setSelectAllMenuOpen] = useState(false)
+  const [speciesOverflowOpen, setSpeciesOverflowOpen] = useState(false)
   const plotUnitMenuRef = useRef(null)
   const timeUnitMenuRef = useRef(null)
   const selectAllMenuRef = useRef(null)
+  const speciesOverflowRef = useRef(null)
 
   const timeUnit = TIME_UNITS.find((u) => u.id === timeUnitId) ?? TIME_UNITS[0]
   const plotUnit = PLOT_UNITS.find((u) => u.id === plotUnitId) ?? PLOT_UNITS[0]
@@ -62,9 +188,11 @@ export function SimulationChart({ results, metadata }) {
   const closePlotUnitMenu = useCallback(() => setPlotUnitMenuOpen(false), [])
   const closeTimeUnitMenu = useCallback(() => setTimeUnitMenuOpen(false), [])
   const closeSelectAllMenu = useCallback(() => setSelectAllMenuOpen(false), [])
+  const closeSpeciesOverflow = useCallback(() => setSpeciesOverflowOpen(false), [])
   useClickOutside(plotUnitMenuRef, closePlotUnitMenu, plotUnitMenuOpen)
   useClickOutside(timeUnitMenuRef, closeTimeUnitMenu, timeUnitMenuOpen)
   useClickOutside(selectAllMenuRef, closeSelectAllMenu, selectAllMenuOpen)
+  useClickOutside(speciesOverflowRef, closeSpeciesOverflow, speciesOverflowOpen)
 
   // Color palette for species
   const colors = [
@@ -200,7 +328,7 @@ export function SimulationChart({ results, metadata }) {
     const search = speciesSearch.trim().toLowerCase()
     if (!search) return allSpecies
     return allSpecies
-      .filter((sp) => getSpeciesDisplayName(sp).toLowerCase().includes(search))
+      .filter((sp) => getSpeciesDisplayName(sp).toLowerCase().startsWith(search))
       .sort((a, b) => {
         const aExact = getSpeciesDisplayName(a).toLowerCase() === search
         const bExact = getSpeciesDisplayName(b).toLowerCase() === search
@@ -209,6 +337,9 @@ export function SimulationChart({ results, metadata }) {
         return 0
       })
   }, [allSpecies, speciesSearch])
+
+  const visibleFilteredSpecies = filteredSpecies.slice(0, SPECIES_CHIP_VISIBLE)
+  const overflowFilteredSpecies = filteredSpecies.slice(SPECIES_CHIP_VISIBLE)
 
   const allFilteredSelected =
     filteredSpecies.length > 0 && filteredSpecies.every((sp) => displaySpecies.includes(sp))
@@ -290,7 +421,8 @@ export function SimulationChart({ results, metadata }) {
                   <button
                     type="button"
                     onClick={() => setSelectAllMenuOpen((open) => !open)}
-                    className="flex items-center justify-between gap-1 w-32 h-8 text-gray-800 rounded-l-lg text-xs font-bold px-2 focus:outline-none focus:ring-2 focus:ring-blue-600"
+                    className={`flex items-center justify-between gap-1 w-32 h-8 bg-blue-100/50 text-gray-900 rounded-l-lg
+                      text-xs font-bold px-2.5 focus:outline-none focus:ring-2 focus:ring-blue-600 transition-colors duration-200`}
                   >
                     {selectAllStatusLabel}
                     <ChevronDown className="w-3.5 h-3.5 flex-shrink-0" />
@@ -336,7 +468,10 @@ export function SimulationChart({ results, metadata }) {
                 <input
                   type="text"
                   value={speciesSearch}
-                  onChange={(e) => setSpeciesSearch(e.target.value)}
+                  onChange={(e) => {
+                    setSpeciesSearch(e.target.value)
+                    setSpeciesOverflowOpen(false)
+                  }}
                   placeholder="Search species"
                   className="w-[30rem] h-8 px-3 text-gray-800 placeholder:text-gray-400 rounded-r-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
                 />
@@ -347,7 +482,8 @@ export function SimulationChart({ results, metadata }) {
                   <button
                     type="button"
                     onClick={() => setPlotUnitMenuOpen((open) => !open)}
-                    className="flex items-center justify-between gap-1 w-24 h-8 text-gray-800 rounded-l-lg text-xs font-bold px-2 focus:outline-none focus:ring-2 focus:ring-blue-600"
+                    className={`flex items-center justify-between gap-1 w-24 h-8 bg-blue-100/50 text-gray-800 rounded-l-lg text-xs
+                      font-bold px-2.5 focus:outline-none focus:ring-2 focus:ring-blue-600 transition-colors duration-200`}
                   >
                     {plotUnit.label}
                     <ChevronDown className="w-3.5 h-3.5 flex-shrink-0" />
@@ -387,7 +523,8 @@ export function SimulationChart({ results, metadata }) {
                   <button
                     type="button"
                     onClick={() => setTimeUnitMenuOpen((open) => !open)}
-                    className="flex items-center justify-between gap-1 w-24 h-8 text-gray-800 rounded-r-lg text-xs font-bold px-2 focus:outline-none focus:ring-2 focus:ring-blue-600"
+                    className={`flex items-center justify-between gap-1 w-24 h-8 bg-blue-100/50 text-gray-800 rounded-r-lg
+                      text-xs font-bold px-2.5 focus:outline-none focus:ring-2 focus:ring-blue-600 transition-colors duration-200`}
                   >
                     {timeUnit.label}
                     <ChevronDown className="w-3.5 h-3.5 flex-shrink-0" />
@@ -420,11 +557,11 @@ export function SimulationChart({ results, metadata }) {
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-1.5 xs:gap-2 max-h-32 overflow-y-auto">
-            <h4 className="font-semibold text-xs xs:text-sm text-gray-900 mr-1">
+          <div className="flex flex-wrap items-center gap-1.5 xs:gap-2 pl-2 lg:max-w-[calc(100%-13rem)]">
+            <h4 className="font-semibold text-xs xs:text-sm text-gray-500 mr-1">
               {displaySpecies.length} selected
             </h4>
-            {filteredSpecies.map((species) => (
+            {visibleFilteredSpecies.map((species) => (
               <button
                 key={species}
                 onClick={() => toggleSpecies(species)}
@@ -442,12 +579,51 @@ export function SimulationChart({ results, metadata }) {
                 {getSpeciesDisplayName(species)}
               </button>
             ))}
+            {overflowFilteredSpecies.length > 0 && (
+              <div className="relative" ref={speciesOverflowRef}>
+                <button
+                  type="button"
+                  onClick={() => setSpeciesOverflowOpen((open) => !open)}
+                  className="px-2 xs:px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700 border border-gray-300 hover:bg-gray-200 transition-all"
+                >
+                  +{overflowFilteredSpecies.length} others
+                </button>
+
+                {speciesOverflowOpen && (
+                  <div className="absolute z-20 mt-1 w-56 max-h-64 overflow-y-auto bg-white border border-gray-300 rounded-lg shadow-lg py-1">
+                    {overflowFilteredSpecies.map((species) => (
+                      <button
+                        key={species}
+                        type="button"
+                        onClick={() => toggleSpecies(species)}
+                        className="w-full flex items-center gap-2 text-left text-xs font-medium px-3 py-1.5 hover:bg-gray-100 text-gray-800"
+                      >
+                        <span
+                          className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+                          style={{
+                            backgroundColor: displaySpecies.includes(species)
+                              ? colors[allSpecies.indexOf(species) % colors.length]
+                              : '#d1d5db',
+                          }}
+                        />
+                        <span className="flex-1 truncate">{getSpeciesDisplayName(species)}</span>
+                        <Check
+                          className={`w-3.5 h-3.5 flex-shrink-0 ${
+                            displaySpecies.includes(species) ? 'opacity-100' : 'opacity-0'
+                          }`}
+                        />
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
 
         {/* Chart */}
         <div className="border rounded-lg p-2 xs:p-3 sm:p-4 bg-white">
-          <ResponsiveContainer width="100%" height={400} className="xs:hidden">
+          <ResponsiveContainer width="100%" height={450} className="xs:hidden">
             <LineChart data={chartData} margin={{ top: 5, right: 5, left: 5, bottom: 5 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
 
@@ -484,65 +660,23 @@ export function SimulationChart({ results, metadata }) {
               />
 
               <Tooltip
-                content={({ active, payload, label }) => {
-                  if (!active || !payload?.length) return null
-
-                  return (
-                    <div
-                      className="bg-white border-2 border-gray-800 rounded-lg shadow-xl p-2"
-                      style={{ backgroundColor: 'white' }}
-                    >
-                      <p
-                        className="font-semibold mb-1 text-xs text-gray-900"
-                        style={{ color: '#111827' }}
-                      >
-                        Time: {timeUnit.divisor === 1 ? label?.toLocaleString() : label?.toFixed(2)}{' '}
-                        {timeUnit.suffix}
-                      </p>
-                      <div className="space-y-0.5">
-                        {payload.map((entry, idx) => {
-                          const numValue =
-                            typeof entry.value === 'number' ? entry.value : parseFloat(entry.value)
-                          const isValidNumber = !isNaN(numValue) && isFinite(numValue)
-
-                          return (
-                            <div
-                              key={idx}
-                              className="flex items-center gap-1.5 text-xs"
-                              style={{ color: '#1f2937' }}
-                            >
-                              <div
-                                className="w-2 h-2 rounded-full flex-shrink-0"
-                                style={{ backgroundColor: entry.color }}
-                              />
-                              <span
-                                className="font-medium text-gray-900"
-                                style={{ color: '#111827' }}
-                              >
-                                {entry.name}:
-                              </span>
-                              <span
-                                className="font-mono text-gray-900 text-xs"
-                                style={{ color: '#111827' }}
-                              >
-                                {isValidNumber
-                                  ? numValue < 1e-19
-                                    ? '0.00e+00'
-                                    : numValue.toExponential(2)
-                                  : 'N/A'}
-                              </span>
-                            </div>
-                          )
-                        })}
-                      </div>
-                    </div>
-                  )
-                }}
+                wrapperStyle={{ zIndex: 10 }}
+                content={({ active, payload, label }) => (
+                  <ChartTooltipContent
+                    active={active}
+                    payload={payload}
+                    timeLabel={`${
+                      timeUnit.divisor === 1 ? label?.toLocaleString() : label?.toFixed(2)
+                    } ${timeUnit.suffix}`}
+                    maxVisible={TOOLTIP_VISIBLE_COMPACT}
+                    compact
+                  />
+                )}
               />
 
               <Legend
-                wrapperStyle={{ fontSize: '11px', fontWeight: '500', paddingTop: '10px' }}
-                iconType="line"
+                wrapperStyle={{ paddingTop: '16px' }}
+                content={<ChartLegendContent maxVisible={LEGEND_VISIBLE_COMPACT} compact />}
               />
 
               {displaySpecies.map((species) => (
@@ -562,7 +696,7 @@ export function SimulationChart({ results, metadata }) {
           </ResponsiveContainer>
 
           {/* Larger chart for bigger screens */}
-          <ResponsiveContainer width="100%" height={600} className="hidden xs:block">
+          <ResponsiveContainer width="100%" height={680} className="hidden xs:block">
             <LineChart data={chartData} margin={{ top: 5, right: 30, left: 30, bottom: 5 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
 
@@ -607,94 +741,22 @@ export function SimulationChart({ results, metadata }) {
               </YAxis>
 
               <Tooltip
-                content={({ active, payload, label }) => {
-                  if (!active || !payload?.length) return null
-
-                  return (
-                    <div
-                      className="bg-white border-2 border-gray-800 rounded-lg shadow-xl p-3"
-                      style={{ backgroundColor: 'white' }}
-                    >
-                      <p
-                        className="font-semibold mb-2 text-sm text-gray-900"
-                        style={{ color: '#111827' }}
-                      >
-                        Time: {timeUnit.divisor === 1 ? label?.toLocaleString() : label?.toFixed(2)}{' '}
-                        {timeUnit.label.toLowerCase()}
-                      </p>
-                      <div className="space-y-1">
-                        {payload.map((entry, idx) => {
-                          // Convert value to number and validate
-                          const numValue =
-                            typeof entry.value === 'number' ? entry.value : parseFloat(entry.value)
-                          const isValidNumber = !isNaN(numValue) && isFinite(numValue)
-
-                          return (
-                            <div
-                              key={idx}
-                              className="flex items-center gap-2 text-xs"
-                              style={{ color: '#1f2937' }}
-                            >
-                              <div
-                                className="w-3 h-3 rounded-full flex-shrink-0"
-                                style={{ backgroundColor: entry.color }}
-                              />
-                              <span
-                                className="font-medium text-gray-900"
-                                style={{ color: '#111827' }}
-                              >
-                                {entry.name}:
-                              </span>
-                              <span
-                                className="font-mono text-gray-900"
-                                style={{ color: '#111827' }}
-                              >
-                                {isValidNumber
-                                  ? numValue < 1e-19
-                                    ? '0.0000e+00'
-                                    : numValue.toExponential(4)
-                                  : 'N/A'}
-                              </span>
-                            </div>
-                          )
-                        })}
-                      </div>
-                    </div>
-                  )
-                }}
+                wrapperStyle={{ zIndex: 10 }}
+                content={({ active, payload, label }) => (
+                  <ChartTooltipContent
+                    active={active}
+                    payload={payload}
+                    timeLabel={`${
+                      timeUnit.divisor === 1 ? label?.toLocaleString() : label?.toFixed(2)
+                    } ${timeUnit.label.toLowerCase()}`}
+                    maxVisible={TOOLTIP_VISIBLE}
+                  />
+                )}
               />
 
               <Legend
-                wrapperStyle={{
-                  fontSize: '13px',
-                  fontWeight: '500',
-                  paddingTop: '20px',
-                }}
-                iconType="line"
-                content={({ payload }) => {
-                  if (!payload || payload.length === 0) return null
-
-                  return (
-                    <div
-                      className="flex flex-wrap justify-center gap-3 px-4"
-                      style={{ maxHeight: '200px', overflowY: 'auto' }}
-                    >
-                      {payload.map((entry, index) => (
-                        <div
-                          key={`legend-${index}`}
-                          className="flex items-center gap-2 px-3 py-1.5 bg-white border-2 rounded-lg shadow-sm"
-                          style={{ borderColor: entry.color }}
-                        >
-                          <div
-                            className="w-4 h-1 rounded"
-                            style={{ backgroundColor: entry.color }}
-                          />
-                          <span className="text-sm font-semibold text-gray-900">{entry.value}</span>
-                        </div>
-                      ))}
-                    </div>
-                  )
-                }}
+                wrapperStyle={{ paddingTop: '20px' }}
+                content={<ChartLegendContent maxVisible={LEGEND_VISIBLE} />}
               />
 
               {displaySpecies.map((species) => (
