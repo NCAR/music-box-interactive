@@ -12,9 +12,11 @@ import { Waypoints } from 'lucide-react'
  */
 
 export function FlowDiagram() {
-  const [arrowScaling, setArrowScaling] = useState('linear')
-  const [arrowWidth, setArrowWidth] = useState(1)
+  const [arrowScaling, setArrowScaling] = useState('logarithmic')
   const [layoutMode, setLayoutMode] = useState('force')
+
+  // Fixed spread between the thinnest and thickest flux edges (BASE=2px up to MAX_ARROW_WIDTH+2px)
+  const MAX_ARROW_WIDTH = 4
 
   const duration = useSelector((state) => state.conditions.basic.duration)
   const timeStep = useSelector((state) => state.conditions.basic.timeStep)
@@ -55,33 +57,29 @@ export function FlowDiagram() {
   }
 
   return (
-    <div className="flex h-full min-h-screen w-full gap-4">
-      <div className="w-[30%] h-full">
-        <FlowPanel
-          arrowScaling={arrowScaling}
-          setArrowScaling={setArrowScaling}
-          arrowWidth={arrowWidth}
-          setArrowWidth={setArrowWidth}
-          timeValues={timeValues}
-          range={timeRange}
-          setRange={setTimeRange}
-          fluxValues={fluxValues}
-          fluxRange={fluxRange}
-          setFluxRange={setFluxRange}
-          selectedSpecies={selectedSpecies}
-          setSelectedSpecies={setSelectedSpecies}
-          layoutMode={layoutMode}
-          setLayoutMode={setLayoutMode}
-        />
-      </div>
-      <div className="w-[70%] h-[50%] bg-white">
+    <div className="flex flex-col h-full min-h-screen w-full gap-4">
+      <FlowPanel
+        arrowScaling={arrowScaling}
+        setArrowScaling={setArrowScaling}
+        timeValues={timeValues}
+        range={timeRange}
+        setRange={setTimeRange}
+        fluxValues={fluxValues}
+        fluxRange={fluxRange}
+        setFluxRange={setFluxRange}
+        selectedSpecies={selectedSpecies}
+        setSelectedSpecies={setSelectedSpecies}
+        layoutMode={layoutMode}
+        setLayoutMode={setLayoutMode}
+      />
+      <div className="w-full flex-1 min-h-[32rem] bg-white">
         <FlowGraph
           selectedSpecies={selectedSpecies}
           fluxRange={{
             start: fluxValues[fluxRange.minIndex],
             end: fluxValues[fluxRange.maxIndex],
             isLogScale: arrowScaling === 'logarithmic',
-            maxArrowWidth: Number(arrowWidth),
+            maxArrowWidth: MAX_ARROW_WIDTH,
           }}
           timeRange={{
             start: timeRange.start,
