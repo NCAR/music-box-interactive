@@ -19,23 +19,14 @@ export function FlowDiagram() {
   const MAX_ARROW_WIDTH = 4
 
   const duration = useSelector((state) => state.conditions.basic.duration)
-  const timeStep = useSelector((state) => state.conditions.basic.timeStep)
   const [timeRange, setTimeRange] = useState({ start: 0, end: duration })
-  const timeValues = Array.from(
-    { length: ((duration || 2e5) - 0) / (timeStep || 1) + 1 },
-    (_, i) => 0 + i * (timeStep || 1)
-  )
 
   // const example = useSelector((state) => state);
   // console.log('FlowPanel example state:', example);
 
   const FLUX_MIN = 0.00004155230486602744
   const FLUX_MAX = 0.9648828478468641
-  const fluxValues = Array.from(
-    { length: 1000 },
-    (_, i) => FLUX_MIN + (i / 999) * (FLUX_MAX - FLUX_MIN)
-  )
-  const [fluxRange, setFluxRange] = useState({ minIndex: 0, maxIndex: fluxValues.length - 1 })
+  const [fluxRange, setFluxRange] = useState({ start: FLUX_MIN, end: FLUX_MAX })
 
   const [selectedSpecies, setSelectedSpecies] = useState([])
 
@@ -62,10 +53,8 @@ export function FlowDiagram() {
         <FlowPanel
           arrowScaling={arrowScaling}
           setArrowScaling={setArrowScaling}
-          timeValues={timeValues}
           range={timeRange}
           setRange={setTimeRange}
-          fluxValues={fluxValues}
           fluxRange={fluxRange}
           setFluxRange={setFluxRange}
           selectedSpecies={selectedSpecies}
@@ -77,8 +66,8 @@ export function FlowDiagram() {
           <FlowGraph
             selectedSpecies={selectedSpecies}
             fluxRange={{
-              start: fluxValues[fluxRange.minIndex],
-              end: fluxValues[fluxRange.maxIndex],
+              start: fluxRange.start,
+              end: fluxRange.end,
               isLogScale: arrowScaling === 'logarithmic',
               maxArrowWidth: MAX_ARROW_WIDTH,
             }}

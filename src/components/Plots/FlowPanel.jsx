@@ -1,5 +1,4 @@
 import { useState, useRef, useCallback, useMemo, useEffect } from 'react'
-import { MultiRange } from '../ui/multirange'
 import { useSelector } from 'react-redux'
 import { ChevronDown, Check } from 'lucide-react'
 import { useClickOutside } from '../../hooks/useClickOutside'
@@ -17,23 +16,68 @@ const ARROW_SCALING_OPTIONS = [
   { id: 'logarithmic', label: 'Logarithmic' },
 ]
 
+const TIME_RANGE_UNITS = [
+  { id: 'seconds', label: 'Seconds', divisor: 1 },
+  { id: 'hours', label: 'Hours', divisor: 3600 },
+]
+
+// Flux is always stored in mol m-3; ppb needs the ideal gas law with per-point
+// temperature/pressure to convert, which isn't implemented yet (same as the
+// Plot Unit dropdown in the Species tab).
+const FLUX_UNITS = [
+  { id: 'mol_m3', label: 'mol m-3', divisor: 1, supported: true },
+  { id: 'ppb', label: 'ppb', divisor: 1, supported: false },
+]
+
+// A number input for one end of a range, displayed/edited in the currently
+// selected unit but always committed back in the range's base unit
+// (seconds for Time Range, mol m-3 for Flux Range).
+function RangeBoundInput({ value, divisor, onCommit, className }) {
+  const displayValue = value / divisor
+  const [draft, setDraft] = useState(String(displayValue))
+
+  useEffect(() => {
+    setDraft(String(displayValue))
+  }, [displayValue])
+
+  const commit = () => {
+    const parsed = parseFloat(draft)
+    if (!isNaN(parsed)) onCommit(parsed * divisor)
+    else setDraft(String(displayValue))
+  }
+
+  return (
+    <input
+      type="number"
+      value={draft}
+      onChange={(e) => setDraft(e.target.value)}
+      onBlur={commit}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter') commit()
+      }}
+      className={
+        className ??
+        'w-20 h-8 px-2 bg-white text-gray-900 rounded border text-sm focus:outline-none focus:ring-2 focus:ring-blue-600'
+      }
+    />
+  )
+}
+
 /*
  * FlowPanel Component
  * Creates a control panel that allows for customization of flow visualizations
  * Features include:
  *   - Arrow Width Scaling (linear or logarithmic)
- *   - Time Range(s) Selection w/slider
- *   - Flux Range Slider (in mol m-3)
+ *   - Time Range selection (seconds or hours)
+ *   - Flux Range selection (in mol m-3)
  *   - Species Selection Dropdown
  */
 
 export function FlowPanel({
   arrowScaling,
   setArrowScaling,
-  timeValues,
   range,
   setRange,
-  fluxValues,
   fluxRange,
   setFluxRange,
   selectedSpecies,
@@ -60,18 +104,31 @@ export function FlowPanel({
   const [speciesOverflowOpen, setSpeciesOverflowOpen] = useState(false)
   const [layoutMenuOpen, setLayoutMenuOpen] = useState(false)
   const [arrowScalingMenuOpen, setArrowScalingMenuOpen] = useState(false)
+  const [timeRangeUnitId, setTimeRangeUnitId] = useState('seconds')
+  const [timeRangeUnitMenuOpen, setTimeRangeUnitMenuOpen] = useState(false)
+  const [fluxRangeUnitId, setFluxRangeUnitId] = useState('mol_m3')
+  const [fluxRangeUnitMenuOpen, setFluxRangeUnitMenuOpen] = useState(false)
   const selectAllMenuRef = useRef(null)
   const speciesOverflowRef = useRef(null)
   const layoutMenuRef = useRef(null)
   const arrowScalingMenuRef = useRef(null)
+  const timeRangeUnitMenuRef = useRef(null)
+  const fluxRangeUnitMenuRef = useRef(null)
   const closeSelectAllMenu = useCallback(() => setSelectAllMenuOpen(false), [])
   const closeSpeciesOverflow = useCallback(() => setSpeciesOverflowOpen(false), [])
   const closeLayoutMenu = useCallback(() => setLayoutMenuOpen(false), [])
   const closeArrowScalingMenu = useCallback(() => setArrowScalingMenuOpen(false), [])
+  const closeTimeRangeUnitMenu = useCallback(() => setTimeRangeUnitMenuOpen(false), [])
+  const closeFluxRangeUnitMenu = useCallback(() => setFluxRangeUnitMenuOpen(false), [])
   useClickOutside(selectAllMenuRef, closeSelectAllMenu, selectAllMenuOpen)
   useClickOutside(speciesOverflowRef, closeSpeciesOverflow, speciesOverflowOpen)
   useClickOutside(layoutMenuRef, closeLayoutMenu, layoutMenuOpen)
   useClickOutside(arrowScalingMenuRef, closeArrowScalingMenu, arrowScalingMenuOpen)
+  useClickOutside(timeRangeUnitMenuRef, closeTimeRangeUnitMenu, timeRangeUnitMenuOpen)
+  useClickOutside(fluxRangeUnitMenuRef, closeFluxRangeUnitMenu, fluxRangeUnitMenuOpen)
+
+  const timeRangeUnit = TIME_RANGE_UNITS.find((u) => u.id === timeRangeUnitId) ?? TIME_RANGE_UNITS[0]
+  const fluxRangeUnit = FLUX_UNITS.find((u) => u.id === fluxRangeUnitId) ?? FLUX_UNITS[0]
 
   const layoutOption = LAYOUT_OPTIONS.find((o) => o.id === layoutMode) ?? LAYOUT_OPTIONS[0]
   const arrowScalingOption =
@@ -111,36 +168,6 @@ export function FlowPanel({
     : noneSelected
       ? 'Deselect all'
       : 'Custom'
-
-  // Convert time values to indices and back
-  const timeValueToIndex = (timeVal) => {
-    if (!timeValues || timeValues.length === 0) return 0
-    return timeValues.reduce(
-      (bestIdx, v, i) =>
-        Math.abs(v - timeVal) < Math.abs(timeValues[bestIdx] - timeVal) ? i : bestIdx,
-      0
-    )
-  }
-
-  const indexToTimeValue = (idx) => {
-    return timeValues[Math.max(0, Math.min(idx, timeValues.length - 1))] || 0
-  }
-
-  // Convert range (time values) to indices for MultiRange
-  const minIdx = timeValueToIndex(range.start)
-  const maxIdx = timeValueToIndex(range.end)
-
-  // console.log('range:', range);
-  // console.log('timeValues first 5:', timeValues?.slice(0, 5));
-  // console.log('minIdx:', minIdx, 'maxIdx:', maxIdx);
-
-  const handleTimeRangeChange = (newRange) => {
-    // console.log('handleTimeRangeChange called with:', newRange);
-    const start = indexToTimeValue(newRange.minIndex)
-    const end = indexToTimeValue(newRange.maxIndex)
-    // console.log('setting range to:', { start, end });
-    setRange({ start, end })
-  }
 
   return (
     <div className="flex flex-wrap items-start gap-4 p-2 xs:p-3 sm:p-4 w-full rounded-lg bg-gray-50 text-gray-900 mt-2 xs:mt-3 sm:mt-4">
@@ -340,30 +367,112 @@ export function FlowPanel({
       </label>
 
       {/* Time Range */}
-      <label className="flex flex-col gap-1 text-xs xs:text-sm font-semibold w-64">
-        Time Range [s]:
-        <div className="w-full font-normal">
-          <MultiRange
-            values={timeValues}
-            minIndex={minIdx}
-            maxIndex={maxIdx}
-            onChange={handleTimeRangeChange}
+      <div className="flex items-center gap-2 text-xs xs:text-sm font-semibold">
+        <div className="flex items-center border border-gray-300 rounded-lg divide-x divide-gray-300 bg-white">
+          <div className="relative" ref={timeRangeUnitMenuRef}>
+            <button
+              type="button"
+              onClick={() => setTimeRangeUnitMenuOpen((open) => !open)}
+              className="flex items-center justify-between gap-1 w-24 h-8 bg-white text-gray-900 rounded-l-lg text-xs font-bold px-2.5 focus:outline-none focus:ring-2 focus:ring-blue-600"
+            >
+              {timeRangeUnit.label}
+              <ChevronDown className="w-3.5 h-3.5 flex-shrink-0" />
+            </button>
+
+            {timeRangeUnitMenuOpen && (
+              <div className="absolute z-10 mt-1 min-w-[8rem] bg-white border border-gray-300 rounded-lg shadow-lg py-1">
+                {TIME_RANGE_UNITS.map((unit) => (
+                  <button
+                    key={unit.id}
+                    type="button"
+                    onClick={() => {
+                      setTimeRangeUnitId(unit.id)
+                      setTimeRangeUnitMenuOpen(false)
+                    }}
+                    className="w-full flex items-center gap-2 text-left text-xs font-bold px-3 py-1.5 text-gray-800 hover:bg-gray-100"
+                  >
+                    <Check
+                      className={`w-3.5 h-3.5 flex-shrink-0 ${
+                        timeRangeUnitId === unit.id ? 'opacity-100' : 'opacity-0'
+                      }`}
+                    />
+                    {unit.label}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <RangeBoundInput
+            value={range.start}
+            divisor={timeRangeUnit.divisor}
+            onCommit={(start) => setRange({ start, end: range.end })}
+            className="w-20 h-8 px-2 bg-white text-gray-900 rounded-r-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-600"
           />
         </div>
-      </label>
+
+        <span className="font-normal">-</span>
+        <RangeBoundInput
+          value={range.end}
+          divisor={timeRangeUnit.divisor}
+          onCommit={(end) => setRange({ start: range.start, end })}
+        />
+      </div>
 
       {/* Flux Range */}
-      <label className="flex flex-col gap-1 text-xs xs:text-sm font-semibold w-64">
-        Flux Range [mol m-3]:
-        <div className="w-full font-normal">
-          <MultiRange
-            values={fluxValues}
-            minIndex={fluxRange.minIndex}
-            maxIndex={fluxRange.maxIndex}
-            onChange={setFluxRange}
-          />
+      <div className="flex items-center gap-2 text-xs xs:text-sm font-semibold">
+        <div className="relative" ref={fluxRangeUnitMenuRef}>
+          <button
+            type="button"
+            onClick={() => setFluxRangeUnitMenuOpen((open) => !open)}
+            className="flex items-center justify-between gap-1 w-24 h-8 bg-white text-gray-900 rounded-lg border text-xs font-bold px-2.5 focus:outline-none focus:ring-2 focus:ring-blue-600"
+          >
+            {fluxRangeUnit.label}
+            <ChevronDown className="w-3.5 h-3.5 flex-shrink-0" />
+          </button>
+
+          {fluxRangeUnitMenuOpen && (
+            <div className="absolute z-10 mt-1 min-w-[8rem] bg-white border border-gray-300 rounded-lg shadow-lg py-1">
+              {FLUX_UNITS.map((unit) => (
+                <button
+                  key={unit.id}
+                  type="button"
+                  disabled={!unit.supported}
+                  title={!unit.supported ? 'Conversion not yet supported' : undefined}
+                  onClick={() => {
+                    setFluxRangeUnitId(unit.id)
+                    setFluxRangeUnitMenuOpen(false)
+                  }}
+                  className={`w-full flex items-center gap-2 text-left text-xs font-bold px-3 py-1.5 ${
+                    unit.supported
+                      ? 'text-gray-800 hover:bg-gray-100'
+                      : 'text-gray-400 cursor-not-allowed'
+                  }`}
+                >
+                  <Check
+                    className={`w-3.5 h-3.5 flex-shrink-0 ${
+                      fluxRangeUnitId === unit.id ? 'opacity-100' : 'opacity-0'
+                    }`}
+                  />
+                  {unit.label}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
-      </label>
+
+        <RangeBoundInput
+          value={fluxRange.start}
+          divisor={fluxRangeUnit.divisor}
+          onCommit={(start) => setFluxRange({ start, end: fluxRange.end })}
+        />
+        <span className="font-normal">to</span>
+        <RangeBoundInput
+          value={fluxRange.end}
+          divisor={fluxRangeUnit.divisor}
+          onCommit={(end) => setFluxRange({ start: fluxRange.start, end })}
+        />
+      </div>
     </div>
   )
 }
