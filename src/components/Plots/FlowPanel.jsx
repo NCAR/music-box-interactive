@@ -8,7 +8,7 @@ const SPECIES_CHIP_VISIBLE = 25
 
 const LAYOUT_OPTIONS = [
   { id: 'force', label: 'Force-Directed' },
-  { id: 'layered', label: 'Layered (Flux Diagram)' },
+  { id: 'layered', label: 'Layered (Flow Diagram)' },
 ]
 
 const ARROW_SCALING_OPTIONS = [
