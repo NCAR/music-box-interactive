@@ -21,31 +21,48 @@ export function EnvironmentPlot() {
   const simulation = useSelector((state) => state.simulation)
   const conditions = useSelector((state) => state.conditions)
 
-  // Format environmental data
+  // Evolving temperature and pressure points fed to the solver, sorted for step interpolation
+  const evolvingPoints = useMemo(() => {
+    const times = conditions.evolving?.times
+    if (!Array.isArray(times) || times.length === 0) return []
+
+    return times
+      .map((time, index) => ({
+        time,
+        temperature: conditions.evolving.temperature?.[index],
+        pressure: conditions.evolving.pressure?.[index],
+      }))
+      .filter((point) => typeof point.time === 'number' && Number.isFinite(point.time))
+      .sort((a, b) => a.time - b.time)
+  }, [conditions.evolving])
+
+  const hasEvolvingConditions = Boolean(conditions.evolving?.enabled) && evolvingPoints.length > 0
+
+  // Format environmental data, mirroring the solver's step interpolation
+  // (most recent evolving value at or before each result's time)
   const envData = useMemo(() => {
     if (!simulation.results) return []
 
-    // Check if we have evolving environmental data from backend
-    if (simulation.environmentalData && simulation.environmentalData.length > 0) {
-      return simulation.environmentalData.map((envPoint) => ({
-        timeSeconds: envPoint.time,
-        timeHours: envPoint.time / 3600,
-        temperature: envPoint.temperature,
-        pressure: envPoint.pressure,
-      }))
-    }
+    return simulation.results.map((result) => {
+      let temperature = conditions.initial.temperature
+      let pressure = conditions.initial.pressure
 
-    // Fallback: use constant conditions
-    return simulation.results.map((result) => ({
-      timeSeconds: result.time,
-      timeHours: result.time / 3600,
-      temperature: conditions.initial.temperature,
-      pressure: conditions.initial.pressure,
-    }))
-  }, [simulation.results, simulation.environmentalData, conditions])
+      if (hasEvolvingConditions) {
+        for (const point of evolvingPoints) {
+          if (point.time > result.time) break
+          if (point.temperature !== undefined) temperature = point.temperature
+          if (point.pressure !== undefined) pressure = point.pressure
+        }
+      }
 
-  const hasEvolvingConditions =
-    simulation.environmentalData && simulation.environmentalData.length > 0
+      return {
+        timeSeconds: result.time,
+        timeHours: result.time / 3600,
+        temperature,
+        pressure,
+      }
+    })
+  }, [simulation.results, conditions.initial, hasEvolvingConditions, evolvingPoints])
 
   if (!simulation.results || simulation.status !== 'succeeded') {
     return (
@@ -191,9 +208,7 @@ export function EnvironmentPlot() {
               • Pressure range: {Math.min(...envData.map((d) => d.pressure)).toFixed(0)} -{' '}
               {Math.max(...envData.map((d) => d.pressure)).toFixed(0)} Pa
             </li>
-            <li>
-              • Interpolation method: {simulation.metadata?.evolvingConditions ? 'Enabled' : 'N/A'}
-            </li>
+            <li>• Interpolation method: Step (most recent value at or before each time)</li>
           </ul>
         ) : (
           <ul className="space-y-0.5 ml-4 text-gray-300">

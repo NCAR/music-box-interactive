@@ -17,8 +17,6 @@ import {
 } from '../redux/slices/conditionsSlice'
 import { v4 as uuidv4 } from 'uuid'
 
-const API_URL = 'http://localhost:3001/api'
-
 import { resetMechanism } from '../redux/slices/mechanismSlice'
 import { resetConditions } from '../redux/slices/conditionsSlice'
 import { resetSimulation } from '../redux/slices/simulationSlice'
