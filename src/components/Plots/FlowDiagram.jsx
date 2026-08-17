@@ -57,37 +57,39 @@ export function FlowDiagram() {
   }
 
   return (
-    <div className="flex flex-col h-full min-h-screen w-full gap-4">
-      <FlowPanel
-        arrowScaling={arrowScaling}
-        setArrowScaling={setArrowScaling}
-        timeValues={timeValues}
-        range={timeRange}
-        setRange={setTimeRange}
-        fluxValues={fluxValues}
-        fluxRange={fluxRange}
-        setFluxRange={setFluxRange}
-        selectedSpecies={selectedSpecies}
-        setSelectedSpecies={setSelectedSpecies}
-        layoutMode={layoutMode}
-        setLayoutMode={setLayoutMode}
-      />
-      <div className="w-full flex-1 min-h-[32rem] bg-white">
-        <FlowGraph
+    <Card>
+      <CardContent className="space-y-3 xs:space-y-4">
+        <FlowPanel
+          arrowScaling={arrowScaling}
+          setArrowScaling={setArrowScaling}
+          timeValues={timeValues}
+          range={timeRange}
+          setRange={setTimeRange}
+          fluxValues={fluxValues}
+          fluxRange={fluxRange}
+          setFluxRange={setFluxRange}
           selectedSpecies={selectedSpecies}
-          fluxRange={{
-            start: fluxValues[fluxRange.minIndex],
-            end: fluxValues[fluxRange.maxIndex],
-            isLogScale: arrowScaling === 'logarithmic',
-            maxArrowWidth: MAX_ARROW_WIDTH,
-          }}
-          timeRange={{
-            start: timeRange.start,
-            end: timeRange.end,
-          }}
+          setSelectedSpecies={setSelectedSpecies}
           layoutMode={layoutMode}
+          setLayoutMode={setLayoutMode}
         />
-      </div>
-    </div>
+        <div className="border rounded-lg p-2 xs:p-3 sm:p-4 bg-white min-h-[32rem]">
+          <FlowGraph
+            selectedSpecies={selectedSpecies}
+            fluxRange={{
+              start: fluxValues[fluxRange.minIndex],
+              end: fluxValues[fluxRange.maxIndex],
+              isLogScale: arrowScaling === 'logarithmic',
+              maxArrowWidth: MAX_ARROW_WIDTH,
+            }}
+            timeRange={{
+              start: timeRange.start,
+              end: timeRange.end,
+            }}
+            layoutMode={layoutMode}
+          />
+        </div>
+      </CardContent>
+    </Card>
   )
 }

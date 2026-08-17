@@ -143,17 +143,19 @@ export function FlowPanel({
   }
 
   return (
-    <div className="flex flex-wrap items-start gap-4 p-3 xs:p-4 w-full border rounded-md bg-white/10 text-gray-900">
+    <div className="flex flex-wrap items-start gap-4 p-2 xs:p-3 sm:p-4 w-full rounded-lg bg-gray-50 text-gray-900 mt-2 xs:mt-3 sm:mt-4">
       {/* Species Selection */}
       <label className="flex flex-col gap-1 text-xs xs:text-sm font-semibold w-full">
-        <div className="w-full rounded-lg p-2 xs:p-3 bg-gray-50 font-normal text-base">
-          {/* Select All / Deselect All + Search */}
-          <div className="flex flex-wrap items-center justify-between gap-2 w-full mb-2">
+        <div className="w-full font-normal text-base">
+          <div className="flex flex-col xs:flex-row items-start xs:items-center justify-between gap-2 xs:gap-0 mb-3">
+            {/* Select All / Deselect All + Search */}
+            <div className="flex flex-wrap items-center justify-between gap-3 w-full">
+              <div className="flex items-center border border-gray-300 rounded-lg divide-x divide-gray-300 bg-white">
             <div className="relative" ref={selectAllMenuRef}>
               <button
                 type="button"
                 onClick={() => setSelectAllMenuOpen((open) => !open)}
-                className="flex items-center justify-between gap-1 w-32 h-8 bg-white text-gray-900 rounded-l-lg border text-xs font-bold px-2.5 focus:outline-none focus:ring-2 focus:ring-blue-600"
+                className="flex items-center justify-between gap-1 w-32 h-8 bg-white text-gray-900 rounded-l-lg text-xs font-bold px-2.5 focus:outline-none focus:ring-2 focus:ring-blue-600"
               >
                 {selectAllStatusLabel}
                 <ChevronDown className="w-3.5 h-3.5 flex-shrink-0" />
@@ -203,8 +205,9 @@ export function FlowPanel({
                 setSpeciesOverflowOpen(false)
               }}
               placeholder="Search species"
-              className="w-[30rem] h-8 px-3 bg-white text-gray-800 placeholder:text-gray-400 rounded-r-lg border text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
+              className="w-[30rem] h-8 px-3 bg-white text-gray-800 placeholder:text-gray-400 rounded-r-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
             />
+            </div>
 
             <div className="flex items-center border border-gray-300 rounded-lg divide-x divide-gray-300 bg-white">
             <div className="relative" ref={layoutMenuRef}>
@@ -274,12 +277,13 @@ export function FlowPanel({
                 </div>
               )}
             </div>
+            </div>
           </div>
-          </div>
+        </div>
 
-          {/* Species chips */}
-          <div className="flex flex-wrap items-center gap-1.5">
-            <h4 className="font-semibold text-xs text-gray-500 mr-1">
+        {/* Species chips */}
+          <div className="flex flex-wrap items-center gap-1.5 pl-2">
+            <h4 className="font-semibold text-xs xs:text-sm text-gray-500 mr-1">
               {displaySpecies.length} selected
             </h4>
             {visibleFilteredSpecies.map((name) => (
