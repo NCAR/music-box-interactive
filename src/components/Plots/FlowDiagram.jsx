@@ -14,6 +14,7 @@ import { Waypoints } from 'lucide-react'
 export function FlowDiagram() {
   const [arrowScaling, setArrowScaling] = useState('linear')
   const [arrowWidth, setArrowWidth] = useState(1)
+  const [layoutMode, setLayoutMode] = useState('force')
 
   const duration = useSelector((state) => state.conditions.basic.duration)
   const timeStep = useSelector((state) => state.conditions.basic.timeStep)
@@ -69,6 +70,8 @@ export function FlowDiagram() {
           setFluxRange={setFluxRange}
           selectedSpecies={selectedSpecies}
           setSelectedSpecies={setSelectedSpecies}
+          layoutMode={layoutMode}
+          setLayoutMode={setLayoutMode}
         />
       </div>
       <div className="w-[70%] h-[50%] bg-white">
@@ -84,6 +87,7 @@ export function FlowDiagram() {
             start: timeRange.start,
             end: timeRange.end,
           }}
+          layoutMode={layoutMode}
         />
       </div>
     </div>

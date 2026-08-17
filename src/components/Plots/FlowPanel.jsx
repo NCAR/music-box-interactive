@@ -26,6 +26,8 @@ export function FlowPanel({
   setFluxRange,
   selectedSpecies,
   setSelectedSpecies,
+  layoutMode,
+  setLayoutMode,
 }) {
   const species = useSelector((state) => state.mechanism.species)
 
@@ -60,7 +62,21 @@ export function FlowPanel({
   }
 
   return (
-    <div className="flex flex-col gap-4 p-4 h-full min-h-[24rem] border rounded-md bg-white/10 text-white">
+    <div className="flex flex-col gap-4 p-4 h-full min-h-[24rem] border rounded-md bg-white/10 text-gray-900">
+      {/* Layout Mode */}
+      <label className="flex flex-col gap-1 items-center text-lg font-semibold">
+        Layout:
+        <select
+          className="w-full rounded border bg-white !text-black px-2 py-1 text-base font-normal"
+          style={{ color: 'black' }}
+          value={layoutMode}
+          onChange={(e) => setLayoutMode(e.target.value)}
+        >
+          <option value="force">Force-Directed</option>
+          <option value="layered">Layered (Reaction Path)</option>
+        </select>
+      </label>
+
       {/* Arrow Width Scaling */}
       <label className="flex flex-col gap-1 items-center text-lg font-semibold">
         Arrow Width Scaling:
@@ -131,8 +147,11 @@ export function FlowPanel({
                     setSelectedSpecies([...selectedSpecies, s.name])
                   }
                 }}
-                className={`w-full px-4 py-2 rounded text-white text-center transition-colors
-                                          ${isSelected ? 'bg-white/30 backdrop-blur-sm border border-white/40 hover:bg-white/40' : 'bg-white/10 hover:bg-white/20'}`}
+                className={`w-full px-4 py-2 rounded text-center transition-colors ${
+                  isSelected
+                    ? 'bg-blue-500 text-white shadow-md'
+                    : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
+                }`}
               >
                 {s.name}
               </button>
