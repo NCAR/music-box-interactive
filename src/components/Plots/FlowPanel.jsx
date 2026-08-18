@@ -7,8 +7,8 @@ import { useClickOutside } from '../../hooks/useClickOutside'
 const SPECIES_CHIP_VISIBLE = 25
 
 const LAYOUT_OPTIONS = [
-  { id: 'force', label: 'Force-Directed' },
-  { id: 'layered', label: 'Layered' },
+  { id: 'force', label: 'Reaction-explicit' },
+  { id: 'layered', label: 'Species-only' },
 ]
 
 const ARROW_SCALING_OPTIONS = [
@@ -173,14 +173,14 @@ export function FlowPanel({
             <button
               type="button"
               onClick={() => setLayoutMenuOpen((open) => !open)}
-              className="flex items-center justify-between gap-1 w-40 h-8 bg-white text-gray-900 border border-gray-300 rounded-lg text-sm font-bold px-2.5 focus:outline-none focus:ring-2 focus:ring-blue-600"
+              className="flex items-center justify-between gap-1 w-44 h-8 bg-white text-gray-900 border border-gray-300 rounded-lg text-sm font-bold px-2.5 whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-blue-600"
             >
               {layoutOption.label}
               <ChevronDown className="w-3.5 h-3.5 flex-shrink-0" />
             </button>
 
             {layoutMenuOpen && (
-              <div className="absolute z-10 mt-1 min-w-[10rem] bg-white border border-gray-300 rounded-lg shadow-lg py-1">
+              <div className="absolute z-10 mt-1 min-w-[12rem] bg-white border border-gray-300 rounded-lg shadow-lg py-1">
                 {LAYOUT_OPTIONS.map((option) => (
                   <button
                     key={option.id}
@@ -189,7 +189,7 @@ export function FlowPanel({
                       setLayoutMode(option.id)
                       setLayoutMenuOpen(false)
                     }}
-                    className="w-full flex items-center gap-2 text-left text-sm font-bold px-3 py-1.5 text-gray-800 hover:bg-gray-100"
+                    className="w-full flex items-center gap-2 text-left text-sm font-bold px-3 py-1.5 text-gray-800 hover:bg-gray-100 whitespace-nowrap"
                   >
                     <Check
                       className={`w-3.5 h-3.5 flex-shrink-0 ${
