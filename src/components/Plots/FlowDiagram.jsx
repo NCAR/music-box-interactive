@@ -1,5 +1,5 @@
-import { React, useState } from 'react'
-import { FlowGraph } from './FlowGraph'
+import { React, useState, useEffect } from 'react'
+import { FlowGraph, isRealSpecies, computeFlux } from './FlowGraph'
 import { FlowPanel } from './FlowPanel'
 import { useSelector } from 'react-redux'
 import { Card, CardContent, CardDescription } from '../ui/card'
@@ -32,6 +32,41 @@ export function FlowDiagram() {
 
   // If no simulation results, show placeholder
   const simulation = useSelector((state) => state.simulation)
+  const reactions = useSelector((state) => state.mechanism.reactions)
+
+  // Flux values are cumulative production summed over the selected time window, so
+  // narrowing/widening the time range changes every reaction's flux magnitude. Re-derive
+  // the flux range's actual min/max whenever the time window or species selection changes,
+  // otherwise a stale range mutes every edge (flux falls outside the old bounds) with no
+  // indication why.
+  useEffect(() => {
+    if (!reactions || reactions.length === 0) return
+    if (!selectedSpecies || selectedSpecies.length === 0) return
+
+    const visibleReactions = reactions.filter((rxn) => {
+      const realReactants = rxn.reactants
+        ? rxn.reactants.map((r) => r['species name']).filter(isRealSpecies)
+        : []
+      return realReactants.length > 0 && realReactants.every((sp) => selectedSpecies.includes(sp))
+    })
+
+    if (visibleReactions.length === 0) return
+
+    const timeStart = timeRange.start ?? 0
+    const timeEnd = timeRange.end ?? Infinity
+
+    const fluxValues = visibleReactions.map((rxn) =>
+      computeFlux(rxn, simulation.excludedResults, timeStart, timeEnd)
+    )
+
+    const min = Math.min(...fluxValues)
+    const max = Math.max(...fluxValues)
+
+    if (isFinite(min) && isFinite(max)) {
+      setFluxRange({ start: min, end: max })
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [reactions, simulation.excludedResults, selectedSpecies, timeRange.start, timeRange.end])
   if (!simulation.results || simulation.status !== 'succeeded') {
     return (
       <Card>

@@ -5,7 +5,7 @@ import { useSelector } from 'react-redux'
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
-const isRealSpecies = (name) => !name.includes('__')
+export const isRealSpecies = (name) => !name.includes('__')
 
 function reactionLabel(reaction) {
   const fmt = (arr) =>
@@ -18,7 +18,7 @@ function reactionLabel(reaction) {
   return `${fmt(reaction.reactants)} → ${fmt(reaction.products)}`
 }
 
-function computeFlux(reaction, results, timeStart, timeEnd) {
+export function computeFlux(reaction, results, timeStart, timeEnd) {
   if (!Array.isArray(results)) return 0
 
   const prodName = reaction.name
