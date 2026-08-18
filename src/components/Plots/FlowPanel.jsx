@@ -2,6 +2,8 @@ import { useState, useRef, useCallback, useMemo, useEffect } from 'react'
 import { useSelector } from 'react-redux'
 import { ChevronDown, Check } from 'lucide-react'
 import { useClickOutside } from '../../hooks/useClickOutside'
+import { isRealSpecies } from './flowUtils'
+import { getSpeciesDisplayName } from './speciesFormat'
 
 // Show at most this many species as chips before collapsing the rest into a "+N others" menu
 const SPECIES_CHIP_VISIBLE = 25
@@ -87,8 +89,23 @@ export function FlowPanel({
   layoutMode,
   setLayoutMode,
 }) {
-  const species = useSelector((state) => state.mechanism.species)
-  const speciesNames = useMemo(() => species.map((s) => s.name), [species])
+  // Source the species list from actual simulation output (like the Species tab),
+  // not the full mechanism config — the config can declare species the solver
+  // never reports, and the graph only ever renders real, non-tracer species.
+  const results = useSelector((state) => state.simulation.results)
+  const speciesNames = useMemo(() => {
+    if (!Array.isArray(results) || results.length === 0) return []
+    const firstPoint = results[0]
+    const keys =
+      firstPoint?.concentrations && typeof firstPoint.concentrations === 'object'
+        ? Object.keys(firstPoint.concentrations)
+        : Object.keys(firstPoint).filter(
+            (key) => key !== 'time' && key !== 'timestamp' && key !== 'date' && key !== 'concentrations'
+          )
+    // Concentration keys are raw solver output ("CONC.<SPECIES>.mol m-3"); the
+    // graph matches selections against bare species names (rxn.reactants[i]['species name']).
+    return keys.map(getSpeciesDisplayName).filter(isRealSpecies)
+  }, [results])
   const displaySpecies = selectedSpecies || []
 
   const [initialized, setInitialized] = useState(false)
