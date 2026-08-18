@@ -8,6 +8,10 @@ import { getSpeciesDisplayName } from './speciesFormat'
 // Show at most this many species as chips before collapsing the rest into a "+N others" menu
 const SPECIES_CHIP_VISIBLE = 25
 
+// Mechanisms at or under this size default to all species selected.
+// Larger mechanisms default to none to keep graphs readable.
+const SPECIES_AUTO_SELECT_THRESHOLD = 15;
+
 const LAYOUT_OPTIONS = [
   { id: 'force', label: 'Reaction-explicit' },
   { id: 'layered', label: 'Species-only' },
@@ -110,10 +114,13 @@ export function FlowPanel({
 
   const [initialized, setInitialized] = useState(false)
 
-  // Select all species by default
+  // Small mechanisms default to all species selected. Larger mechanisms default to
+  // none to avoid producing an unreadable graph when everything is selected.
   useEffect(() => {
     if (!initialized && speciesNames.length > 0 && displaySpecies.length === 0) {
-      setSelectedSpecies(speciesNames)
+      if (speciesNames.length <= SPECIES_AUTO_SELECT_THRESHOLD) {
+        setSelectedSpecies(speciesNames)
+      }
       setInitialized(true)
     }
   }, [speciesNames, displaySpecies.length, initialized, setSelectedSpecies])
