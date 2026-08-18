@@ -1,5 +1,6 @@
 import { React, useState, useEffect } from 'react'
-import { FlowGraph, isRealSpecies, computeFlux } from './FlowGraph'
+import { FlowGraph } from './FlowGraph'
+import { isRealSpecies, computeFlux } from './flowUtils'
 import { FlowPanel } from './FlowPanel'
 import { useSelector } from 'react-redux'
 import { Card, CardContent, CardDescription } from '../ui/card'
@@ -34,11 +35,9 @@ export function FlowDiagram() {
   const simulation = useSelector((state) => state.simulation)
   const reactions = useSelector((state) => state.mechanism.reactions)
 
-  // Flux values are cumulative production summed over the selected time window, so
-  // narrowing/widening the time range changes every reaction's flux magnitude. Re-derive
-  // the flux range's actual min/max whenever the time window or species selection changes,
-  // otherwise a stale range mutes every edge (flux falls outside the old bounds) with no
-  // indication why.
+  // The gross production is cumulative over the selected time window, so its magnitude 
+  // changes with the time range and species selection. The range must therefore be
+  // recalculated whenever either changes to avoid stale scaling that can mute edges.
   useEffect(() => {
     if (!reactions || reactions.length === 0) return
     if (!selectedSpecies || selectedSpecies.length === 0) return
@@ -65,7 +64,6 @@ export function FlowDiagram() {
     if (isFinite(min) && isFinite(max)) {
       setFluxRange({ start: min, end: max })
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [reactions, simulation.excludedResults, selectedSpecies, timeRange.start, timeRange.end])
   if (!simulation.results || simulation.status !== 'succeeded') {
     return (

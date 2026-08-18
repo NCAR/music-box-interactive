@@ -2,10 +2,9 @@ import * as d3 from 'd3'
 import dagre from 'dagre'
 import { React, useEffect, useRef, useState } from 'react'
 import { useSelector } from 'react-redux'
+import { isRealSpecies, computeFlux } from './flowUtils'
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
-
-export const isRealSpecies = (name) => !name.includes('__')
 
 function reactionLabel(reaction) {
   const fmt = (arr) =>
@@ -16,28 +15,6 @@ function reactionLabel(reaction) {
       )
       .join(' + ')
   return `${fmt(reaction.reactants)} → ${fmt(reaction.products)}`
-}
-
-export function computeFlux(reaction, results, timeStart, timeEnd) {
-  if (!Array.isArray(results)) return 0
-
-  const prodName = reaction.name
-    .replace(/\s+/g, '_')
-    .replace(/[^A-Za-z0-9_]/g, '')
-    .toUpperCase()
-  const concKey = `CONC.${prodName}.mol m-3`
-
-  let total = 0
-  for (const timeEntry of results) {
-    const t = timeEntry.time
-    if (t < timeStart || t > timeEnd) continue
-    const concentrations = timeEntry.concentrations
-    if (!concentrations) continue
-    if (concKey in concentrations) {
-      total += concentrations[concKey] ?? 0
-    }
-  }
-  return total
 }
 
 /**
@@ -226,8 +203,7 @@ export function FlowGraph({ selectedSpecies, fluxRange, timeRange, layoutMode = 
 
       const edgePoints = (d) => dagreGraph.edge(d.source, d.target).points
 
-      const linkSel = g
-        .selectAll('path.edge')
+      g.selectAll('path.edge')
         .data(speciesLinks)
         .join('path')
         .attr('class', 'edge')
