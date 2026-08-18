@@ -1,6 +1,6 @@
 import { React, useState, useEffect } from 'react'
 import { FlowGraph } from './FlowGraph'
-import { isRealSpecies, computeFlux } from './flowUtils'
+import { isRealSpecies, computeGrossProduction } from './flowUtils'
 import { FlowPanel } from './FlowPanel'
 import { useSelector } from 'react-redux'
 import { Card, CardContent, CardDescription } from '../ui/card'
@@ -55,7 +55,7 @@ export function FlowDiagram() {
     const timeEnd = timeRange.end ?? Infinity
 
     const fluxValues = visibleReactions.map((rxn) =>
-      computeFlux(rxn, simulation.excludedResults, timeStart, timeEnd)
+      computeGrossProduction(rxn, simulation.excludedResults, timeStart, timeEnd)
     )
 
     const min = Math.min(...fluxValues)

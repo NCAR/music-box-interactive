@@ -2,7 +2,7 @@ import * as d3 from 'd3'
 import dagre from 'dagre'
 import { React, useEffect, useRef, useState } from 'react'
 import { useSelector } from 'react-redux'
-import { isRealSpecies, computeFlux } from './flowUtils'
+import { isRealSpecies, computeGrossProduction } from './flowUtils'
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -65,7 +65,7 @@ export function FlowGraph({ selectedSpecies, fluxRange, timeRange, layoutMode = 
 
     const fluxMap = {}
     for (const rxn of visibleReactions) {
-      fluxMap[rxn.name] = computeFlux(rxn, results, timeStart, timeEnd)
+      fluxMap[rxn.name] = computeGrossProduction(rxn, results, timeStart, timeEnd)
     }
 
     // ── 3. Build reaction nodes (used by the force layout only) ────────

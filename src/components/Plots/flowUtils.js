@@ -1,6 +1,6 @@
 export const isRealSpecies = (name) => !name.includes('__')
 
-export function computeFlux(reaction, results, timeStart, timeEnd) {
+export function computeGrossProduction(reaction, results, timeStart, timeEnd) {
   if (!Array.isArray(results)) return 0
 
   const prodName = reaction.name
