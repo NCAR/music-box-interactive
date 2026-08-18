@@ -2,8 +2,8 @@ import { React, useState } from 'react'
 import { FlowGraph } from './FlowGraph'
 import { FlowPanel } from './FlowPanel'
 import { useSelector } from 'react-redux'
-import { Card, CardContent } from '../ui/card'
-import { Waypoints } from 'lucide-react'
+import { Card, CardContent, CardDescription } from '../ui/card'
+import { Waypoints, StickyNote } from 'lucide-react'
 
 /*
  * FlowDiagram Component
@@ -50,6 +50,16 @@ export function FlowDiagram() {
   return (
     <Card>
       <CardContent className="space-y-3 xs:space-y-4">
+        {/* Note Box */}
+        <div className="flex items-start gap-2 text-sm text-gray-600 bg-blue-50/40 border border-blue-200 rounded-lg p-3 mt-2 xs:mt-3 sm:mt-4">
+          <StickyNote className="w-5 h-5 flex-shrink-0 mt-0.5" />
+          <CardDescription className="text-base">
+            <span className="font-semibold">Note:</span> This diagram shows cumulative
+            production, representing the time-integrated chemical production of the
+            species without accounting for subsequent chemical loss.
+          </CardDescription>
+        </div>
+
         <FlowPanel
           arrowScaling={arrowScaling}
           setArrowScaling={setArrowScaling}

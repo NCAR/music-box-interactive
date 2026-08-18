@@ -422,7 +422,7 @@ export function SimulationChart({ results, metadata }) {
                     type="button"
                     onClick={() => setSelectAllMenuOpen((open) => !open)}
                     className={`flex items-center justify-between gap-1 w-32 h-8 bg-blue-100/50 text-gray-900 rounded-l-lg
-                      text-xs font-bold px-2.5 focus:outline-none focus:ring-2 focus:ring-blue-600 transition-colors duration-200`}
+                      text-sm font-bold px-2.5 focus:outline-none focus:ring-2 focus:ring-blue-600 transition-colors duration-200`}
                   >
                     {selectAllStatusLabel}
                     <ChevronDown className="w-3.5 h-3.5 flex-shrink-0" />
@@ -436,7 +436,7 @@ export function SimulationChart({ results, metadata }) {
                           setSelectedSpecies(filteredSpecies)
                           setSelectAllMenuOpen(false)
                         }}
-                        className="w-full flex items-center gap-2 text-left text-xs font-bold px-3 py-1.5 text-gray-800 hover:bg-gray-100"
+                        className="w-full flex items-center gap-2 text-left text-sm font-bold px-3 py-1.5 text-gray-800 hover:bg-gray-100"
                       >
                         <Check
                           className={`w-3.5 h-3.5 flex-shrink-0 ${
@@ -451,7 +451,7 @@ export function SimulationChart({ results, metadata }) {
                           setSelectedSpecies([])
                           setSelectAllMenuOpen(false)
                         }}
-                        className="w-full flex items-center gap-2 text-left text-xs font-bold px-3 py-1.5 text-gray-800 hover:bg-gray-100"
+                        className="w-full flex items-center gap-2 text-left text-sm font-bold px-3 py-1.5 text-gray-800 hover:bg-gray-100"
                       >
                         <Check
                           className={`w-3.5 h-3.5 flex-shrink-0 ${
@@ -473,7 +473,7 @@ export function SimulationChart({ results, metadata }) {
                     setSpeciesOverflowOpen(false)
                   }}
                   placeholder="Search species"
-                  className="w-[30rem] h-8 px-3 text-gray-800 placeholder:text-gray-400 rounded-r-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
+                  className="w-[30rem] h-8 px-3 text-gray-800 placeholder:text-gray-400 rounded-r-lg text-base font-mono focus:outline-none focus:relative focus:z-10 focus:ring-2 focus:ring-blue-600"
                 />
               </div>
 
@@ -482,7 +482,7 @@ export function SimulationChart({ results, metadata }) {
                   <button
                     type="button"
                     onClick={() => setPlotUnitMenuOpen((open) => !open)}
-                    className={`flex items-center justify-between gap-1 w-24 h-8 bg-blue-100/50 text-gray-800 rounded-l-lg text-xs
+                    className={`flex items-center justify-between gap-1 w-24 h-8 bg-blue-100/50 text-gray-800 rounded-l-lg text-sm
                       font-bold px-2.5 focus:outline-none focus:ring-2 focus:ring-blue-600 transition-colors duration-200`}
                   >
                     {plotUnit.label}
@@ -501,7 +501,7 @@ export function SimulationChart({ results, metadata }) {
                             setPlotUnitId(unit.id)
                             setPlotUnitMenuOpen(false)
                           }}
-                          className={`w-full flex items-center gap-2 text-left text-xs font-bold px-3 py-1.5 ${
+                          className={`w-full flex items-center gap-2 text-left text-sm font-bold px-3 py-1.5 ${
                             unit.supported
                               ? 'text-gray-800 hover:bg-gray-100'
                               : 'text-gray-400 cursor-not-allowed'
@@ -524,7 +524,7 @@ export function SimulationChart({ results, metadata }) {
                     type="button"
                     onClick={() => setTimeUnitMenuOpen((open) => !open)}
                     className={`flex items-center justify-between gap-1 w-24 h-8 bg-blue-100/50 text-gray-800 rounded-r-lg
-                      text-xs font-bold px-2.5 focus:outline-none focus:ring-2 focus:ring-blue-600 transition-colors duration-200`}
+                      text-sm font-bold px-2.5 focus:outline-none focus:ring-2 focus:ring-blue-600 transition-colors duration-200`}
                   >
                     {timeUnit.label}
                     <ChevronDown className="w-3.5 h-3.5 flex-shrink-0" />
@@ -540,7 +540,7 @@ export function SimulationChart({ results, metadata }) {
                             setTimeUnitId(unit.id)
                             setTimeUnitMenuOpen(false)
                           }}
-                          className="w-full flex items-center gap-2 text-left text-xs font-bold px-3 py-1.5 text-gray-800 hover:bg-gray-100"
+                          className="w-full flex items-center gap-2 text-left text-sm font-bold px-3 py-1.5 text-gray-800 hover:bg-gray-100"
                         >
                           <Check
                             className={`w-3.5 h-3.5 flex-shrink-0 ${
@@ -558,14 +558,14 @@ export function SimulationChart({ results, metadata }) {
           </div>
 
           <div className="flex flex-wrap items-center gap-1.5 xs:gap-2 pl-2 lg:max-w-[calc(100%-13rem)]">
-            <h4 className="font-semibold text-xs xs:text-sm text-gray-500 mr-1">
+            <h4 className="font-semibold text-sm xs:text-base text-gray-500 mr-1">
               {displaySpecies.length} selected
             </h4>
             {visibleFilteredSpecies.map((species) => (
               <button
                 key={species}
                 onClick={() => toggleSpecies(species)}
-                className={`px-2 xs:px-3 py-1 rounded-full text-xs font-medium transition-all ${
+                className={`px-2 xs:px-3 py-1 rounded-full text-sm font-medium transition-all ${
                   displaySpecies.includes(species)
                     ? 'bg-blue-500 text-white shadow-md'
                     : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
@@ -584,7 +584,7 @@ export function SimulationChart({ results, metadata }) {
                 <button
                   type="button"
                   onClick={() => setSpeciesOverflowOpen((open) => !open)}
-                  className="px-2 xs:px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700 border border-gray-300 hover:bg-gray-200 transition-all"
+                  className="px-2 xs:px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-700 border border-gray-300 hover:bg-gray-200 transition-all"
                 >
                   +{overflowFilteredSpecies.length} others
                 </button>
@@ -596,7 +596,7 @@ export function SimulationChart({ results, metadata }) {
                         key={species}
                         type="button"
                         onClick={() => toggleSpecies(species)}
-                        className="w-full flex items-center gap-2 text-left text-xs font-medium px-3 py-1.5 hover:bg-gray-100 text-gray-800"
+                        className="w-full flex items-center gap-2 text-left text-sm font-medium px-3 py-1.5 hover:bg-gray-100 text-gray-800"
                       >
                         <span
                           className="w-2.5 h-2.5 rounded-full flex-shrink-0"
@@ -777,12 +777,12 @@ export function SimulationChart({ results, metadata }) {
         </div>
 
         {/* Summary Box */}
-        <div className="text-xs text-gray-600 bg-blue-50/40 border border-blue-200 rounded-lg p-3">
-          <p className="font-semibold text-sm mb-1 flex items-center gap-2">
+        <div className="text-sm text-gray-600 bg-blue-50/40 border border-blue-200 rounded-lg p-3">
+          <p className="font-semibold text-base mb-1 flex items-center gap-2">
             <BarChart3 className="w-4 h-4" />
             Summary:
           </p>
-          <CardDescription className="text-sm ml-4">
+          <CardDescription className="text-base ml-4">
             • {metadata?.mechanism?.toUpperCase()}
             {metadata?.mechanism &&
               !metadata.mechanism.toLowerCase().includes('mechanism') && (
