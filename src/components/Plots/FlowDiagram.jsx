@@ -14,7 +14,7 @@ import { Waypoints, StickyNote } from 'lucide-react'
 
 export function FlowDiagram() {
   const [arrowScaling, setArrowScaling] = useState('logarithmic')
-  const [layoutMode, setLayoutMode] = useState('force')
+  const [valueDisplay, setValueDisplay] = useState('absolute')
 
   // Fixed spread between the thinnest and thickest flux edges (BASE=2px up to MAX_ARROW_WIDTH+2px)
   const MAX_ARROW_WIDTH = 4
@@ -102,8 +102,8 @@ export function FlowDiagram() {
           setFluxRange={setFluxRange}
           selectedSpecies={selectedSpecies}
           setSelectedSpecies={setSelectedSpecies}
-          layoutMode={layoutMode}
-          setLayoutMode={setLayoutMode}
+          valueDisplay={valueDisplay}
+          setValueDisplay={setValueDisplay}
         />
         <div className="border rounded-lg p-2 xs:p-3 sm:p-4 bg-white min-h-[32rem]">
           <FlowGraph
@@ -118,7 +118,7 @@ export function FlowDiagram() {
               start: timeRange.start,
               end: timeRange.end,
             }}
-            layoutMode={layoutMode}
+            valueDisplay={valueDisplay}
           />
         </div>
       </CardContent>

@@ -1,8 +1,18 @@
 import * as d3 from 'd3'
-import dagre from 'dagre'
 import { React, useEffect, useRef, useState } from 'react'
 import { useSelector } from 'react-redux'
 import { isRealSpecies, computeGrossProduction } from './flowUtils'
+
+// Edge/arrow color for in-range flux; out-of-range edges are muted to gray instead.
+const ARROW_COLOR = '#3D96C3'
+const ARROW_MUTED_COLOR = '#6b7280'
+
+// Species node circles: unfilled, outline only
+const SPECIES_OUTLINE_COLOR = '#E6807A'
+
+// Reaction node rect fill
+const REACTION_NODE_COLOR = '#FFCA07'
+const REACTION_NODE_ACTIVE_COLOR = '#E6B606'
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -37,7 +47,7 @@ function measureText(text, fontSize = 10) {
 
 // ─── Component ──────────────────────────────────────────────────────────────
 
-export function FlowGraph({ selectedSpecies, fluxRange, timeRange, layoutMode = 'force' }) {
+export function FlowGraph({ selectedSpecies, fluxRange, timeRange, valueDisplay = 'absolute' }) {
   const ref = useRef()
   const tooltipRef = useRef()
   const [selectedNode, setSelectedNode] = useState(null)
@@ -68,12 +78,12 @@ export function FlowGraph({ selectedSpecies, fluxRange, timeRange, layoutMode = 
       fluxMap[rxn.name] = computeGrossProduction(rxn, results, timeStart, timeEnd)
     }
 
-    // ── 3. Build reaction nodes (used by the force layout only) ────────
+    // ── 3. Build reaction nodes ─────────────────────────────────────────
     const FONT_SIZE = 10
     const PAD_X = 12 // horizontal padding inside rect
     const PAD_Y = 10 // vertical padding inside rect
     const NODE_RX = 8
-    const SPECIES_R = 28 // base circle radius — grows with text
+    const SPECIES_R = 24 // base circle radius — grows with text
 
     const reactionNodes = visibleReactions.map((rxn) => {
       const label = reactionLabel(rxn)
@@ -122,11 +132,11 @@ export function FlowGraph({ selectedSpecies, fluxRange, timeRange, layoutMode = 
         .attr('viewBox', '0 -5 10 10')
         .attr('refX', 10)
         .attr('refY', 0)
-        .attr('markerWidth', 6)
-        .attr('markerHeight', 6)
+        .attr('markerWidth', 2)
+        .attr('markerHeight', 2)
         .attr('orient', 'auto')
         .append('svg:path')
-        .attr('fill', id === 'arrow' ? '#2dd4bf' : '#6b7280')
+        .attr('fill', id === 'arrow' ? ARROW_COLOR : ARROW_MUTED_COLOR)
         .attr('d', 'M0,-5L10,0L0,5')
     })
 
@@ -135,152 +145,6 @@ export function FlowGraph({ selectedSpecies, fluxRange, timeRange, layoutMode = 
 
     const tooltip = d3.select(tooltipRef.current)
 
-    // ════════════════════════════════════════════════════════════════════
-    // LAYERED MODE — species-only nodes, direct species→species edges,
-    // dagre computes a top-down layered layout (à la classic reaction
-    // path diagrams).
-    // ════════════════════════════════════════════════════════════════════
-    if (layoutMode === 'layered') {
-      // Aggregate reactant→product flux directly, skipping the reaction node.
-      const speciesLinkMap = new Map() // key: "source||target"
-      for (const rxn of visibleReactions) {
-        const flux = fluxMap[rxn.name]
-        const reactantNames = rxn.reactants
-          .filter((r) => isRealSpecies(r['species name']))
-          .map((r) => r['species name'])
-        const productNames = rxn.products
-          .filter((p) => isRealSpecies(p['species name']))
-          .map((p) => p['species name'])
-
-        reactantNames.forEach((source) => {
-          productNames.forEach((target) => {
-            if (source === target) return
-            const key = `${source}||${target}`
-            const existing = speciesLinkMap.get(key)
-            if (existing) existing.flux += flux
-            else speciesLinkMap.set(key, { source, target, flux })
-          })
-        })
-      }
-
-      const speciesLinks = [...speciesLinkMap.values()]
-
-      // % of a species' total outgoing flux that this edge accounts for —
-      // this is the branching-ratio label shown on each arrow.
-      const outgoingTotals = new Map()
-      speciesLinks.forEach((l) => {
-        outgoingTotals.set(l.source, (outgoingTotals.get(l.source) ?? 0) + l.flux)
-      })
-      speciesLinks.forEach((l) => {
-        const total = outgoingTotals.get(l.source) ?? 0
-        l.percent = total > 0 ? (l.flux / total) * 100 : 0
-      })
-
-      // ── dagre layout ───────────────────────────────────────────────
-      const dagreGraph = new dagre.graphlib.Graph()
-      dagreGraph.setGraph({ rankdir: 'TB', nodesep: 50, ranksep: 70, marginx: 20, marginy: 20 })
-      dagreGraph.setDefaultEdgeLabel(() => ({}))
-
-      speciesNodes.forEach((n) => {
-        dagreGraph.setNode(n.id, { width: n.r * 2, height: n.r * 2 })
-      })
-      speciesLinks.forEach((l) => {
-        dagreGraph.setEdge(l.source, l.target, { flux: l.flux, percent: l.percent })
-      })
-
-      dagre.layout(dagreGraph)
-
-      const graphInfo = dagreGraph.graph()
-      const width = Math.max(900, (graphInfo.width ?? 0) + 40)
-      const height = Math.max(600, (graphInfo.height ?? 0) + 40)
-      svg.attr('width', width).attr('height', height).attr('viewBox', [0, 0, width, height])
-
-      const lineGen = d3
-        .line()
-        .x((d) => d.x)
-        .y((d) => d.y)
-        .curve(d3.curveBasis)
-
-      const edgePoints = (d) => dagreGraph.edge(d.source, d.target).points
-
-      g.selectAll('path.edge')
-        .data(speciesLinks)
-        .join('path')
-        .attr('class', 'edge')
-        .attr('fill', 'none')
-        .style('stroke', '#2dd4bf')
-        .style('stroke-width', 1)
-        .style('cursor', 'pointer')
-        .attr('marker-end', 'url(#arrow)')
-        .attr('d', (d) => lineGen(edgePoints(d)))
-        .on('mousemove', (event, d) => {
-          tooltip
-            .style('display', 'block')
-            .style('left', `${event.offsetX + 12}px`)
-            .style('top', `${event.offsetY - 28}px`)
-            .text(`${d.percent.toFixed(1)}% · Flux: ${(d.flux ?? 0).toExponential(3)} mol m⁻³`)
-        })
-        .on('mouseleave', () => tooltip.style('display', 'none'))
-
-      g.selectAll('text.edge-label')
-        .data(speciesLinks)
-        .join('text')
-        .attr('class', 'edge-label')
-        .attr('text-anchor', 'middle')
-        .style('font-size', '9px')
-        .style('fill', '#5eead4')
-        .style('pointer-events', 'none')
-        .attr('x', (d) => {
-          const pts = edgePoints(d)
-          return pts[Math.floor(pts.length / 2)].x
-        })
-        .attr('y', (d) => {
-          const pts = edgePoints(d)
-          return pts[Math.floor(pts.length / 2)].y - 4
-        })
-        .text((d) => `${d.percent.toFixed(0)}%`)
-
-      const speciesGroup = g
-        .selectAll('g.species-node')
-        .data(speciesNodes)
-        .join('g')
-        .attr('class', 'species-node')
-        .attr('transform', (d) => {
-          const pos = dagreGraph.node(d.id)
-          d.x = pos.x
-          d.y = pos.y
-          return `translate(${pos.x},${pos.y})`
-        })
-
-      speciesGroup
-        .append('circle')
-        .attr('r', (d) => d.r)
-        .style('fill', '#1e3a5f')
-        .style('stroke', '#38bdf8')
-        .style('stroke-width', 0.5)
-
-      speciesGroup
-        .append('text')
-        .attr('text-anchor', 'middle')
-        .attr('dominant-baseline', 'middle')
-        .style('font-size', `${FONT_SIZE}px`)
-        .style('fill', '#bae6fd')
-        .style('pointer-events', 'none')
-        .text((d) => d.label)
-
-      const zoom = d3
-        .zoom()
-        .scaleExtent([0.05, 4])
-        .on('zoom', ({ transform }) => g.attr('transform', transform))
-      svg.call(zoom)
-
-      return
-    }
-
-    // ════════════════════════════════════════════════════════════════════
-    // FORCE MODE (default/original) — species + reaction nodes, force
-    // simulation layout.
-    // ════════════════════════════════════════════════════════════════════
     const width = 900
     const height = 800
     svg.attr('width', width).attr('height', height).attr('viewBox', [0, 0, width, height])
@@ -317,6 +181,29 @@ export function FlowGraph({ selectedSpecies, fluxRange, timeRange, layoutMode = 
     }
 
     const links = [...linkMap.values()]
+
+    // ── Relative share per edge ──────────────────────────────────────────
+    //   species → reaction edges: % of that species' total consumption
+    //   reaction → species edges: % of that species' total production
+    const consumptionTotalBySpecies = new Map()
+    const productionTotalBySpecies = new Map()
+    links.forEach((l) => {
+      if (nodeById[l.source]?.kind === 'species') {
+        consumptionTotalBySpecies.set(l.source, (consumptionTotalBySpecies.get(l.source) ?? 0) + l.flux)
+      }
+      if (nodeById[l.target]?.kind === 'species') {
+        productionTotalBySpecies.set(l.target, (productionTotalBySpecies.get(l.target) ?? 0) + l.flux)
+      }
+    })
+    links.forEach((l) => {
+      if (nodeById[l.source]?.kind === 'species') {
+        const total = consumptionTotalBySpecies.get(l.source) ?? 0
+        l.percent = total > 0 ? (l.flux / total) * 100 : 0
+      } else {
+        const total = productionTotalBySpecies.get(l.target) ?? 0
+        l.percent = total > 0 ? (l.flux / total) * 100 : 0
+      }
+    })
 
     // ── Force simulation ────────────────────────────────────────────────
     const sim = d3
@@ -400,7 +287,7 @@ export function FlowGraph({ selectedSpecies, fluxRange, timeRange, layoutMode = 
       .data(links)
       .join('line')
       .attr('class', 'edge')
-      .style('stroke', '#2dd4bf')
+      .style('stroke', ARROW_COLOR)
       .style('stroke-width', 1)
       .style('cursor', 'pointer')
       .attr('marker-end', 'url(#arrow)')
@@ -409,7 +296,12 @@ export function FlowGraph({ selectedSpecies, fluxRange, timeRange, layoutMode = 
           .style('display', 'block')
           .style('left', `${event.offsetX + 12}px`)
           .style('top', `${event.offsetY - 28}px`)
-          .text(`Flux: ${(d.flux ?? 0).toExponential(3)} mol m⁻³`)
+          .html(
+            valueDisplay === 'relative'
+              ? `<div>${d.percent.toFixed(1)}%</div>`
+              : `<div>Gross production:</div>` +
+                  `<div style="padding-left:4px">${(d.flux ?? 0).toExponential(3)} mol m-3</div>`
+          )
       })
       .on('mouseleave', () => tooltip.style('display', 'none'))
 
@@ -442,16 +334,18 @@ export function FlowGraph({ selectedSpecies, fluxRange, timeRange, layoutMode = 
     speciesGroup
       .append('circle')
       .attr('r', (d) => d.r)
-      .style('fill', '#1e3a5f')
-      .style('stroke', '#38bdf8')
-      .style('stroke-width', 0.5)
+      .style('fill', 'none')
+      .style('stroke', SPECIES_OUTLINE_COLOR)
+      .style('stroke-width', 4)
+      .style('pointer-events', 'all')
 
     speciesGroup
       .append('text')
       .attr('text-anchor', 'middle')
       .attr('dominant-baseline', 'middle')
       .style('font-size', `${FONT_SIZE}px`)
-      .style('fill', '#bae6fd')
+      .style('font-weight', 'bold')
+      .style('fill', '#1f2937')
       .style('pointer-events', 'none')
       .text((d) => d.label)
 
@@ -493,9 +387,8 @@ export function FlowGraph({ selectedSpecies, fluxRange, timeRange, layoutMode = 
       .attr('rx', NODE_RX)
       .attr('x', (d) => -d.hw)
       .attr('y', (d) => -d.hh)
-      .style('fill', '#0d9488')
-      .style('stroke', '#99f6e4')
-      .style('stroke-width', 0.5)
+      .style('fill', REACTION_NODE_COLOR)
+      .style('stroke', 'none')
 
     // Reaction label centered in rect
     nodeGroup
@@ -504,12 +397,12 @@ export function FlowGraph({ selectedSpecies, fluxRange, timeRange, layoutMode = 
       .attr('text-anchor', 'middle')
       .attr('dominant-baseline', 'middle')
       .style('font-size', `${FONT_SIZE}px`)
-      .style('fill', '#f0fdf4')
+      .style('fill', '#1f2937')
       .style('pointer-events', 'none')
       .text((d) => d.label)
 
-    // Flux label shown below rect on click/select
-    nodeGroup
+    // Gross production label shown below rect on click/select
+    const fluxLabel = nodeGroup
       .append('text')
       .attr('class', 'flux-label')
       .attr('text-anchor', 'middle')
@@ -518,7 +411,13 @@ export function FlowGraph({ selectedSpecies, fluxRange, timeRange, layoutMode = 
       .style('fill', '#046b5b')
       .style('opacity', 0)
       .style('pointer-events', 'none')
-      .text((d) => `Flux: ${d.flux.toExponential(3)} mol m⁻³`)
+
+    fluxLabel.append('tspan').attr('x', 0).attr('dy', 0).text('Gross production:')
+    fluxLabel
+      .append('tspan')
+      .attr('x', 0)
+      .attr('dy', '1.2em')
+      .text((d) => `${d.flux.toExponential(3)} mol m⁻³`)
 
     svg.on('click', () => setSelectedNode(null))
 
@@ -557,7 +456,7 @@ export function FlowGraph({ selectedSpecies, fluxRange, timeRange, layoutMode = 
 
     sim.alpha(0.4).restart()
     return () => sim.stop()
-  }, [selectedSpecies, fluxRange, timeRange, reactions, results, layoutMode])
+  }, [selectedSpecies, fluxRange, timeRange, reactions, results, valueDisplay])
 
   // Sync selectedNode → D3 flux label visibility & rect highlight
   useEffect(() => {
@@ -569,15 +468,12 @@ export function FlowGraph({ selectedSpecies, fluxRange, timeRange, layoutMode = 
         .style('opacity', isActive ? 1 : 0)
       d3.select(this)
         .select('rect')
-        .style('fill', isActive ? '#0f766e' : '#0d9488')
-        .style('stroke', isActive ? '#2dd4bf' : '#99f6e4')
-        .style('stroke-width', isActive ? 1.5 : 0.5)
+        .style('fill', isActive ? REACTION_NODE_ACTIVE_COLOR : REACTION_NODE_COLOR)
     })
   }, [selectedNode])
 
   // Re-applies edge stroke width & color whenever fluxRange changes
-  // without rebuilding the whole simulation. Applies to both the force
-  // layout's <line class="edge"> and the layered layout's <path class="edge">.
+  // without rebuilding the whole simulation.
   useEffect(() => {
     const isMuted = (flux) => flux < fluxRange.start || flux > fluxRange.end
 
@@ -599,7 +495,7 @@ export function FlowGraph({ selectedSpecies, fluxRange, timeRange, layoutMode = 
 
     d3.select(ref.current)
       .selectAll('.edge')
-      .style('stroke', (d) => (isMuted(d.flux) ? '#6b7280' : '#2dd4bf'))
+      .style('stroke', (d) => (isMuted(d.flux) ? ARROW_MUTED_COLOR : ARROW_COLOR))
       .style('stroke-width', (d) => edgeStrokeWidth(d.flux))
       .attr('marker-end', (d) => (isMuted(d.flux) ? 'url(#arrow-muted)' : 'url(#arrow)'))
   }, [fluxRange])
@@ -631,14 +527,10 @@ export function FlowGraph({ selectedSpecies, fluxRange, timeRange, layoutMode = 
           display: 'none',
           position: 'absolute',
           pointerEvents: 'none',
-          background: '#0f172a',
-          color: '#5eead4',
-          border: '1px solid #2dd4bf',
-          borderRadius: '4px',
-          padding: '4px 8px',
-          fontSize: '11px',
+          color: '#6b7280',
+          fontSize: '15px',
+          fontWeight: 'bold',
           whiteSpace: 'nowrap',
-          boxShadow: '0 2px 8px rgba(0,0,0,0.5)',
         }}
       />
     </div>
