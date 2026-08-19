@@ -26,20 +26,37 @@ const TIME_RANGE_UNITS = [
   { id: 'hours', label: 'Hours', divisor: 3600 },
 ]
 
+const formatBound = (raw, divisor, decimals) => {
+  const scaled = raw / divisor
+  return String(decimals != null ? scaled.toFixed(decimals) : scaled)
+}
+
 // Number input that displays values in the selected time unit while storing them in seconds.
-function RangeBoundInput({ value, divisor = 1, onCommit, className, decimals }) {
-  const rawDisplayValue = value / divisor
-  const displayValue = decimals != null ? rawDisplayValue.toFixed(decimals) : rawDisplayValue
-  const [draft, setDraft] = useState(String(displayValue))
+// Commits are clamped to [min, max], keeping a range's start from crossing its end.
+function RangeBoundInput({ value, divisor = 1, onCommit, className, decimals, min, max }) {
+  const displayValue = formatBound(value, divisor, decimals)
+  const [draft, setDraft] = useState(displayValue)
 
   useEffect(() => {
-    setDraft(String(displayValue))
+    setDraft(displayValue)
   }, [displayValue])
 
   const commit = () => {
     const parsed = parseFloat(draft)
-    if (!isNaN(parsed)) onCommit(parsed * divisor)
-    else setDraft(String(displayValue))
+    if (isNaN(parsed)) {
+      setDraft(displayValue)
+      return
+    }
+
+    let next = parsed * divisor
+    if (Number.isFinite(min)) next = Math.max(min, next)
+    if (Number.isFinite(max)) next = Math.min(max, next)
+
+    // Re-sync the draft explicitly: a clamped entry often equals the value already in
+    // state, so the `value` prop never changes and the effect above won't fire to
+    // replace the out-of-range text the user typed.
+    setDraft(formatBound(next, divisor, decimals))
+    onCommit(next)
   }
 
   return (
@@ -81,6 +98,8 @@ export function FlowPanel({
   setValueDisplay,
 }) {
   const results = useSelector((state) => state.simulation.results)
+  // Upper bound for Time Range — results never extend past the simulation length.
+  const duration = useSelector((state) => state.conditions.basic.duration)
   const speciesNames = useMemo(() => {
     if (!Array.isArray(results) || results.length === 0) return []
     const firstPoint = results[0]
@@ -284,6 +303,8 @@ export function FlowPanel({
             <RangeBoundInput
               value={range.start}
               divisor={timeRangeUnit.divisor}
+              min={0}
+              max={range.end}
               onCommit={(start) => setRange({ start, end: range.end })}
               className="w-20 h-8 px-2 bg-white text-gray-900 text-sm text-center focus:outline-none focus:relative focus:z-10 focus:ring-2 focus:ring-blue-600"
             />
@@ -295,6 +316,8 @@ export function FlowPanel({
             <RangeBoundInput
               value={range.end}
               divisor={timeRangeUnit.divisor}
+              min={range.start}
+              max={duration}
               onCommit={(end) => setRange({ start: range.start, end })}
               className="w-20 h-8 px-2 bg-white text-gray-900 rounded-r-lg text-sm text-center focus:outline-none focus:relative focus:z-10 focus:ring-2 focus:ring-blue-600"
             />
@@ -309,6 +332,8 @@ export function FlowPanel({
             <RangeBoundInput
               value={fluxRange.start}
               decimals={6}
+              min={0}
+              max={fluxRange.end}
               onCommit={(start) => setFluxRange({ start, end: fluxRange.end })}
               className="w-28 h-8 px-2 bg-white text-gray-900 rounded-l-lg text-sm text-center focus:outline-none focus:relative focus:z-10 focus:ring-2 focus:ring-blue-600"
             />
@@ -320,6 +345,7 @@ export function FlowPanel({
             <RangeBoundInput
               value={fluxRange.end}
               decimals={6}
+              min={fluxRange.start}
               onCommit={(end) => setFluxRange({ start: fluxRange.start, end })}
               className="w-28 h-8 px-2 bg-white text-gray-900 rounded-r-lg text-sm text-center focus:outline-none focus:relative focus:z-10 focus:ring-2 focus:ring-blue-600"
             />
