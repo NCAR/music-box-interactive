@@ -2,7 +2,6 @@ import { useState, useRef, useCallback, useMemo, useEffect } from 'react'
 import { useSelector } from 'react-redux'
 import { ChevronDown, Check } from 'lucide-react'
 import { useClickOutside } from '../../hooks/useClickOutside'
-import { isRealSpecies } from './flowUtils'
 import { getSpeciesDisplayName } from './speciesFormat'
 
 // Show at most this many species as chips before collapsing the rest into a "+N others" menu
@@ -10,7 +9,7 @@ const SPECIES_CHIP_VISIBLE = 25
 
 // Mechanisms at or under this size default to all species selected.
 // Larger mechanisms default to none to keep graphs readable.
-const SPECIES_AUTO_SELECT_THRESHOLD = 15;
+const SPECIES_AUTO_SELECT_THRESHOLD = 15
 
 const VALUE_DISPLAY_OPTIONS = [
   { id: 'absolute', label: 'Absolute' },
@@ -62,6 +61,7 @@ function RangeBoundInput({ value, divisor = 1, onCommit, className, decimals }) 
  * FlowPanel Component
  * Creates a control panel that allows for customization of flow visualizations
  * Features include:
+ *   - Value Display (absolute magnitude or relative contribution)
  *   - Arrow Width Scaling (linear or logarithmic)
  *   - Time Range selection (seconds or hours)
  *   - Time-integrated production range selection (in mol m-3)
@@ -90,7 +90,8 @@ export function FlowPanel({
         : Object.keys(firstPoint).filter(
             (key) => key !== 'time' && key !== 'timestamp' && key !== 'date' && key !== 'concentrations'
           )
-    return keys.map(getSpeciesDisplayName).filter(isRealSpecies)
+    // Tracer species are already stripped from `results` upstream, so no filtering needed here.
+    return keys.map(getSpeciesDisplayName)
   }, [results])
   const displaySpecies = selectedSpecies || []
 
@@ -174,7 +175,7 @@ export function FlowPanel({
 
   return (
     <div className="flex flex-wrap items-start gap-3 p-2 xs:p-3 sm:p-4 w-full rounded-lg bg-gray-50 text-gray-900 mt-2 xs:mt-3 sm:mt-4">
-      {/* Row 1: Value Display | Arrow Scaling | Time Range | Flux Range */}
+      {/* Row 1: Value Display | Arrow Scaling | Time Range | Gross Production */}
       <div className="flex flex-wrap items-center justify-between gap-3 w-full text-sm font-semibold">
         <div className="relative" ref={valueDisplayMenuRef}>
             <button
@@ -301,7 +302,7 @@ export function FlowPanel({
           </div>
         </div>
 
-        {/* Flux Range */}
+        {/* Gross Production Range */}
         <div className="flex items-center gap-2">
           <span>Gross Production (mol m-3)</span>
 
