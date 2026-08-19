@@ -90,7 +90,6 @@ export function FlowPanel({
         : Object.keys(firstPoint).filter(
             (key) => key !== 'time' && key !== 'timestamp' && key !== 'date' && key !== 'concentrations'
           )
-    // Tracer species are already stripped from `results` upstream, so no filtering needed here.
     return keys.map(getSpeciesDisplayName)
   }, [results])
   const displaySpecies = selectedSpecies || []
