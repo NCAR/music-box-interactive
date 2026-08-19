@@ -14,7 +14,7 @@ const SPECIES_AUTO_SELECT_THRESHOLD = 15;
 
 const VALUE_DISPLAY_OPTIONS = [
   { id: 'absolute', label: 'Absolute' },
-  { id: 'relative', label: 'Relative %' },
+  { id: 'relative', label: 'Relative' },
 ]
 
 const ARROW_SCALING_OPTIONS = [
@@ -193,14 +193,14 @@ export function FlowPanel({
   return (
     <div className="flex flex-wrap items-start gap-3 p-2 xs:p-3 sm:p-4 w-full rounded-lg bg-gray-50 text-gray-900 mt-2 xs:mt-3 sm:mt-4">
       {/* Row 1: Value Display | Arrow Scaling | Time Range | Flux Range */}
-      <div className="flex flex-wrap items-center gap-3 w-full text-sm font-semibold">
+      <div className="flex flex-wrap items-center justify-between gap-3 w-full text-sm font-semibold">
         <div className="relative" ref={valueDisplayMenuRef}>
             <button
               type="button"
               onClick={() => setValueDisplayMenuOpen((open) => !open)}
-              className="flex items-center justify-between gap-1 w-44 h-8 bg-white text-gray-900 border border-gray-300 rounded-lg text-sm font-bold px-2.5 whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-blue-600"
+              className="flex items-center justify-between gap-1 w-fit h-8 bg-blue-100/50 text-gray-900 border border-gray-300 rounded-lg text-sm font-bold px-2.5 whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-blue-600 transition-colors duration-200"
             >
-              {valueDisplayOption.label}
+              <span className="pr-2">{valueDisplayOption.label}</span>
               <ChevronDown className="w-3.5 h-3.5 flex-shrink-0" />
             </button>
 
@@ -232,7 +232,7 @@ export function FlowPanel({
             <button
               type="button"
               onClick={() => setArrowScalingMenuOpen((open) => !open)}
-              className="flex items-center justify-between gap-1 w-32 h-8 bg-white text-gray-900 border border-gray-300 rounded-lg text-sm font-bold px-2.5 focus:outline-none focus:ring-2 focus:ring-blue-600"
+              className="flex items-center justify-between gap-1 w-32 h-8 bg-blue-100/50 text-gray-900 border border-gray-300 rounded-lg text-sm font-bold px-2.5 focus:outline-none focus:ring-2 focus:ring-blue-600 transition-colors duration-200"
             >
               <span className="pr-2">{arrowScalingOption.label}</span>
               <ChevronDown className="w-3.5 h-3.5 flex-shrink-0" />
@@ -269,7 +269,7 @@ export function FlowPanel({
               <button
                 type="button"
                 onClick={() => setTimeRangeUnitMenuOpen((open) => !open)}
-                className="flex items-center justify-between gap-1 w-24 h-8 bg-white text-gray-900 rounded-l-lg text-sm font-bold px-2.5 focus:outline-none focus:ring-2 focus:ring-blue-600"
+                className="flex items-center justify-between gap-1 w-24 h-8 bg-blue-100/50 text-gray-900 rounded-l-lg text-sm font-bold px-2.5 focus:outline-none focus:ring-2 focus:ring-blue-600 transition-colors duration-200"
               >
                 {timeRangeUnit.label}
                 <ChevronDown className="w-3.5 h-3.5 flex-shrink-0" />
@@ -354,7 +354,7 @@ export function FlowPanel({
           <button
             type="button"
             onClick={() => setSelectAllMenuOpen((open) => !open)}
-            className="flex items-center justify-between gap-1 w-32 h-8 bg-white text-gray-900 rounded-l-lg text-sm font-bold px-2.5 focus:outline-none focus:ring-2 focus:ring-blue-600"
+            className="flex items-center justify-between gap-1 w-32 h-8 bg-blue-100/50 text-gray-900 rounded-l-lg text-sm font-bold px-2.5 focus:outline-none focus:ring-2 focus:ring-blue-600 transition-colors duration-200"
           >
             {selectAllStatusLabel}
             <ChevronDown className="w-3.5 h-3.5 flex-shrink-0" />

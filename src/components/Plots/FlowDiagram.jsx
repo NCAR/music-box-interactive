@@ -86,11 +86,27 @@ export function FlowDiagram() {
         {/* Note Box */}
         <div className="flex items-start gap-2 text-sm text-gray-600 bg-blue-50/40 border border-blue-200 rounded-lg p-3 mt-2 xs:mt-3 sm:mt-4">
           <StickyNote className="w-5 h-5 flex-shrink-0 mt-0.5" />
-          <CardDescription className="text-base">
-            <span className="font-semibold">Note:</span> This diagram shows cumulative
-            production, representing the time-integrated chemical production of the
-            species without accounting for subsequent chemical loss.
-          </CardDescription>
+          <div className="flex flex-col gap-1">
+            <CardDescription className="text-base font-semibold">Notes:</CardDescription>
+            <CardDescription className="text-base flex gap-2">
+              <span>•</span>
+              <span>
+                This diagram shows time-integrated chemical production of the species without 
+                accounting for subsequent chemical loss.
+              </span>
+            </CardDescription>
+            <CardDescription className="text-base flex gap-2">
+              <span>•</span>
+              <span>Absolute: magnitude of the total {"\u00A0"}{"\u00A0"}|{"\u00A0"}{"\u00A0"} Relative: contribution to the total (%)</span>
+            </CardDescription>
+            <CardDescription className="text-base flex gap-2">
+              <span>•</span>
+              <span>
+                Linear: proportional differences in magnitude {"\u00A0"}{"\u00A0"}|{"\u00A0"}{"\u00A0"} Logarithmic: scaled according to
+                the logarithm of the magnitude.
+              </span>
+            </CardDescription>
+          </div>
         </div>
 
         <FlowPanel
@@ -105,7 +121,7 @@ export function FlowDiagram() {
           valueDisplay={valueDisplay}
           setValueDisplay={setValueDisplay}
         />
-        <div className="border rounded-lg p-2 xs:p-3 sm:p-4 bg-white min-h-[32rem]">
+        <div className="border rounded-lg p-2 xs:p-3 sm:p-4 bg-white h-[50rem]">
           <FlowGraph
             selectedSpecies={selectedSpecies}
             fluxRange={{

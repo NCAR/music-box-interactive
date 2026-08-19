@@ -146,8 +146,8 @@ export function FlowGraph({ selectedSpecies, fluxRange, timeRange, valueDisplay 
     const tooltip = d3.select(tooltipRef.current)
 
     const width = 900
-    const height = 800
-    svg.attr('width', width).attr('height', height).attr('viewBox', [0, 0, width, height])
+    const height = 600
+    svg.attr('viewBox', [0, 0, width, height])
 
     const nodes = [...reactionNodes, ...speciesNodes]
     const nodeById = Object.fromEntries(nodes.map((n) => [n.id, n]))
@@ -299,8 +299,7 @@ export function FlowGraph({ selectedSpecies, fluxRange, timeRange, valueDisplay 
           .html(
             valueDisplay === 'relative'
               ? `<div>${d.percent.toFixed(1)}%</div>`
-              : `<div>Gross production:</div>` +
-                  `<div style="padding-left:4px">${(d.flux ?? 0).toExponential(3)} mol m-3</div>`
+              : `<div>${(d.flux ?? 0).toExponential(3)} mol m-3</div>`
           )
       })
       .on('mouseleave', () => tooltip.style('display', 'none'))
@@ -412,11 +411,10 @@ export function FlowGraph({ selectedSpecies, fluxRange, timeRange, valueDisplay 
       .style('opacity', 0)
       .style('pointer-events', 'none')
 
-    fluxLabel.append('tspan').attr('x', 0).attr('dy', 0).text('Gross production:')
     fluxLabel
       .append('tspan')
       .attr('x', 0)
-      .attr('dy', '1.2em')
+      .attr('dy', 0)
       .text((d) => `${d.flux.toExponential(3)} mol m⁻³`)
 
     svg.on('click', () => setSelectedNode(null))
