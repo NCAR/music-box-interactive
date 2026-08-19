@@ -27,18 +27,8 @@ const TIME_RANGE_UNITS = [
   { id: 'hours', label: 'Hours', divisor: 3600 },
 ]
 
-// Flux is always stored in mol m-3; ppb needs the ideal gas law with per-point
-// temperature/pressure to convert, which isn't implemented yet.
-const FLUX_DIVISOR = 1
-
-// A number input for one end of a range, displayed/edited in the currently
-// selected unit but always committed back in the range's base unit
-// (seconds for Time Range, mol m-3 for Flux Range).
-// Hides the native up/down stepper across browsers
-const NO_SPINNER =
-  '[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none'
-
-function RangeBoundInput({ value, divisor, onCommit, className, decimals }) {
+// Number input that displays values in the selected time unit while storing them in seconds.
+function RangeBoundInput({ value, divisor = 1, onCommit, className, decimals }) {
   const rawDisplayValue = value / divisor
   const displayValue = decimals != null ? rawDisplayValue.toFixed(decimals) : rawDisplayValue
   const [draft, setDraft] = useState(String(displayValue))
@@ -55,18 +45,15 @@ function RangeBoundInput({ value, divisor, onCommit, className, decimals }) {
 
   return (
     <input
-      type="number"
-      step="any"
+      type="text"
+      inputMode="decimal"
       value={draft}
       onChange={(e) => setDraft(e.target.value)}
       onBlur={commit}
       onKeyDown={(e) => {
         if (e.key === 'Enter') commit()
       }}
-      className={`${NO_SPINNER} ${
-        className ??
-        'w-20 h-8 px-2 bg-white text-gray-900 rounded border text-sm text-center focus:outline-none focus:ring-2 focus:ring-blue-600'
-      }`}
+      className={className}
     />
   )
 }
@@ -77,7 +64,7 @@ function RangeBoundInput({ value, divisor, onCommit, className, decimals }) {
  * Features include:
  *   - Arrow Width Scaling (linear or logarithmic)
  *   - Time Range selection (seconds or hours)
- *   - Flux Range selection (in mol m-3)
+ *   - Time-integrated production range selection (in mol m-3)
  *   - Species Selection Dropdown
  */
 
@@ -93,9 +80,6 @@ export function FlowPanel({
   valueDisplay,
   setValueDisplay,
 }) {
-  // Source the species list from actual simulation output (like the Species tab),
-  // not the full mechanism config — the config can declare species the solver
-  // never reports, and the graph only ever renders real, non-tracer species.
   const results = useSelector((state) => state.simulation.results)
   const speciesNames = useMemo(() => {
     if (!Array.isArray(results) || results.length === 0) return []
@@ -106,8 +90,6 @@ export function FlowPanel({
         : Object.keys(firstPoint).filter(
             (key) => key !== 'time' && key !== 'timestamp' && key !== 'date' && key !== 'concentrations'
           )
-    // Concentration keys are raw solver output ("CONC.<SPECIES>.mol m-3"); the
-    // graph matches selections against bare species names (rxn.reactants[i]['species name']).
     return keys.map(getSpeciesDisplayName).filter(isRealSpecies)
   }, [results])
   const displaySpecies = selectedSpecies || []
@@ -326,7 +308,6 @@ export function FlowPanel({
           <div className="flex items-center border border-gray-300 rounded-lg bg-white">
             <RangeBoundInput
               value={fluxRange.start}
-              divisor={FLUX_DIVISOR}
               decimals={6}
               onCommit={(start) => setFluxRange({ start, end: fluxRange.end })}
               className="w-28 h-8 px-2 bg-white text-gray-900 rounded-l-lg text-sm text-center focus:outline-none focus:relative focus:z-10 focus:ring-2 focus:ring-blue-600"
@@ -338,7 +319,6 @@ export function FlowPanel({
 
             <RangeBoundInput
               value={fluxRange.end}
-              divisor={FLUX_DIVISOR}
               decimals={6}
               onCommit={(end) => setFluxRange({ start: fluxRange.start, end })}
               className="w-28 h-8 px-2 bg-white text-gray-900 rounded-r-lg text-sm text-center focus:outline-none focus:relative focus:z-10 focus:ring-2 focus:ring-blue-600"
