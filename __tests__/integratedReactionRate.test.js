@@ -22,7 +22,7 @@ const naiveSum = (results, timeStart, timeEnd) =>
     .reduce((acc, p) => acc + (p.concentrations[KEY] ?? 0), 0);
 
 const rate = (results, timeStart, timeEnd) =>
-  computeIntegratedReactionRate(REACTION` `, INDEX, results, timeStart, timeEnd);
+  computeIntegratedReactionRate(REACTION, INDEX, results, timeStart, timeEnd);
 
 describe('computeIntegratedReactionRate — analytic correctness', () => {
   it('recovers the integral of a constant rate', () => {
