@@ -70,10 +70,6 @@ describe('isRealSpeciesName', () => {
 });
 
 describe('no tracer collides with a real species in any bundled mechanism', () => {
-  // The defect this guards was not hypothetical: in carbon_bond_5, 31 of 39 named reactions
-  // are named after the species they consume, so the name-derived tracer was the real
-  // species' own key. Its concentration was stripped from the results as synthetic, and the
-  // tracer was injected as a genuine product of a reaction that consumes it.
   const mechanisms = [
     ['carbon_bond_5', carbonBond5Config],
     ['ts1', ts1Config],
@@ -90,15 +86,15 @@ describe('no tracer collides with a real species in any bundled mechanism', () =
       buildTracerSpeciesName(index, reaction.name)
     );
 
-    // No tracer may shadow a declared species...
+    // No tracer may shadow a declared species
     expect(tracerNames.filter((n) => declared.has(n))).toEqual([]);
-    // ...nor may the alkoxy/nitrate variants run.js derives from it.
+    // nor may the alkoxy/nitrate variants run.js derives from it.
     expect(tracerNames.flatMap((n) => [`${n}_A`, `${n}_B`]).filter((n) => declared.has(n))).toEqual(
       []
     );
-    // ...and every reaction must get its own distinct tracer.
+    // Every reaction must get its own distinct tracer.
     expect(new Set(tracerNames).size).toBe(reactions.length);
-    // ...and every declared species must survive the tracer filter.
+    // Every declared species must survive the tracer filter.
     expect([...declared].every(isRealSpeciesName)).toBe(true);
   });
 

@@ -2,32 +2,27 @@ import { computeIntegratedReactionRate } from '../src/components/Plots/flowUtils
 import { buildTracerConcentrationKey } from '../src/services/simulation/local/tracer';
 
 // A tracer species is injected as a product with no consumption term, so the solver
-// integrates it for us: its concentration at time t IS the integral of that reaction's
-// rate from 0 to t. Reading a window is therefore an endpoint DIFFERENCE, C(T2) - C(T1).
-//
-// The bug these tests exist to prevent: summing the tracer across every sample instead.
-// That re-adds the whole accumulated total at each step, so the answer scales with output
-// resolution rather than with chemistry -- halving the output frequency halved every value.
+// integrates it: its concentration at time t is the integral of that reaction's
+// rate from 0 to t.
 
 const REACTION = { name: 'NO2' };
 const INDEX = 165;
 const KEY = buildTracerConcentrationKey(INDEX, REACTION.name);
 
-/** Build a results array by sampling an analytic tracer function C(t) at `times`. */
+// Build a results array by sampling an analytic tracer function C(t) at `times`.
 const resultsFrom = (tracerFn, times) =>
   times.map((t) => ({ time: t, concentrations: { [KEY]: tracerFn(t) } }));
 
 const linspace = (from, to, count) =>
   Array.from({ length: count }, (_, i) => from + ((to - from) * i) / (count - 1));
 
-/** What the old, incorrect implementation did -- kept so we can assert we are NOT that. */
 const naiveSum = (results, timeStart, timeEnd) =>
   results
     .filter((p) => p.time >= timeStart && p.time <= timeEnd)
     .reduce((acc, p) => acc + (p.concentrations[KEY] ?? 0), 0);
 
 const rate = (results, timeStart, timeEnd) =>
-  computeIntegratedReactionRate(REACTION, INDEX, results, timeStart, timeEnd);
+  computeIntegratedReactionRate(REACTION` `, INDEX, results, timeStart, timeEnd);
 
 describe('computeIntegratedReactionRate — analytic correctness', () => {
   it('recovers the integral of a constant rate', () => {
@@ -50,7 +45,6 @@ describe('computeIntegratedReactionRate — analytic correctness', () => {
 });
 
 describe('computeIntegratedReactionRate — resolution independence', () => {
-  // This is the property the summation bug violated, and the main regression guard.
   const tracerFn = (t) => (t * t) / 2; // integral over [0,10] is exactly 50
   const resolutions = [2, 3, 6, 11, 101, 1001];
 
@@ -64,9 +58,8 @@ describe('computeIntegratedReactionRate — resolution independence', () => {
     expect(new Set(values).size).toBe(1);
   });
 
-  it('would fail under the old summation (proving this test can detect a regression)', () => {
-    // Guard the guard: confirm summing really does drift with resolution, so the
-    // assertions above are meaningful rather than vacuously true.
+  it('would fail under the naive summation (proving this test can detect a regression)', () => {
+    // Summing drifts with resolution, so the assertions above are meaningful rather than vacuously true.
     const sums = resolutions.map((n) => naiveSum(resultsFrom(tracerFn, linspace(0, 10, n)), 0, 10));
     expect(new Set(sums).size).toBe(resolutions.length);
     expect(Math.max(...sums)).toBeGreaterThan(10 * Math.min(...sums));
@@ -145,7 +138,7 @@ describe('computeIntegratedReactionRate — defensive cases', () => {
 });
 
 describe('computeIntegratedReactionRate — index-keyed lookup', () => {
-  // Regression test for the original defect: tracers were named after reactions, so a
+  // Regression test for the defect: tracers were named after reactions, so a
   // reaction named "ALD2" produced the key "CONC.ALD2.mol m-3" -- the real species' key.
   it('reads the tracer key, never the same-named real species', () => {
     const reaction = { name: 'ALD2' };
