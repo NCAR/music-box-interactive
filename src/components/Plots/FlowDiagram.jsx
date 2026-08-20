@@ -42,20 +42,24 @@ export function FlowDiagram() {
     if (!reactions || reactions.length === 0) return
     if (!selectedSpecies || selectedSpecies.length === 0) return
 
-    const visibleReactions = reactions.filter((rxn) => {
-      const realReactants = rxn.reactants
-        ? rxn.reactants.map((r) => r['species name']).filter(isRealSpecies)
-        : []
-      return realReactants.length > 0 && realReactants.every((sp) => selectedSpecies.includes(sp))
-    })
+    // Capture each reaction's index before filtering -- tracer keys are index-based, so an
+    // index taken from the filtered array would read the wrong reaction's tracer.
+    const visibleReactions = reactions
+      .map((reaction, index) => ({ reaction, index }))
+      .filter(({ reaction }) => {
+        const realReactants = reaction.reactants
+          ? reaction.reactants.map((r) => r['species name']).filter(isRealSpecies)
+          : []
+        return realReactants.length > 0 && realReactants.every((sp) => selectedSpecies.includes(sp))
+      })
 
     if (visibleReactions.length === 0) return
 
     const timeStart = timeRange.start ?? 0
     const timeEnd = timeRange.end ?? Infinity
 
-    const fluxValues = visibleReactions.map((rxn) =>
-      computeGrossProduction(rxn, simulation.excludedResults, timeStart, timeEnd)
+    const fluxValues = visibleReactions.map(({ reaction, index }) =>
+      computeGrossProduction(reaction, index, simulation.excludedResults, timeStart, timeEnd)
     )
 
     const min = Math.min(...fluxValues)

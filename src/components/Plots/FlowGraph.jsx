@@ -73,10 +73,18 @@ export function FlowGraph({ selectedSpecies, fluxRange, timeRange, valueDisplay 
     const timeStart = timeRange?.start ?? 0
     const timeEnd = timeRange?.end ?? Infinity
 
+    // Walk the unfiltered `reactions` array: tracer keys are index-based, and indices from
+    // the filtered `visibleReactions` would point at the wrong reactions' tracers.
     const fluxMap = {}
-    for (const rxn of visibleReactions) {
-      fluxMap[rxn.name] = computeGrossProduction(rxn, results, timeStart, timeEnd)
-    }
+    reactions.forEach((reaction, index) => {
+      fluxMap[reaction.name] = computeGrossProduction(
+        reaction,
+        index,
+        results,
+        timeStart,
+        timeEnd
+      )
+    })
 
     // ── 3. Build reaction nodes ─────────────────────────────────────────
     const FONT_SIZE = 10
