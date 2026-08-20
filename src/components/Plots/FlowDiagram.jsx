@@ -1,6 +1,6 @@
 import { React, useState, useEffect } from 'react'
 import { FlowGraph } from './FlowGraph'
-import { isRealSpecies, computeGrossProduction } from './flowUtils'
+import { isRealSpecies, computeIntegratedReactionRate } from './flowUtils'
 import { FlowPanel } from './FlowPanel'
 import { useSelector } from 'react-redux'
 import { Card, CardContent, CardDescription } from '../ui/card'
@@ -16,7 +16,7 @@ export function FlowDiagram() {
   const [arrowScaling, setArrowScaling] = useState('logarithmic')
   const [valueDisplay, setValueDisplay] = useState('absolute')
 
-  // Fixed spread between the thinnest and thickest flux edges (BASE=2px up to MAX_ARROW_WIDTH+2px)
+  // Fixed spread between the thinnest and thickest edges (BASE=2px up to MAX_ARROW_WIDTH+2px)
   const MAX_ARROW_WIDTH = 4
 
   const duration = useSelector((state) => state.conditions.basic.duration)
@@ -25,9 +25,10 @@ export function FlowDiagram() {
   // const example = useSelector((state) => state);
   // console.log('FlowPanel example state:', example);
 
-  const FLUX_MIN = 0.00004155230486602744
-  const FLUX_MAX = 0.9648828478468641
-  const [fluxRange, setFluxRange] = useState({ start: FLUX_MIN, end: FLUX_MAX })
+  // Placeholder only: the effect below derives the real min/max from the selected reactions.
+  // Not seeded with hardcoded magnitudes -- those are mechanism-specific, so any fixed pair
+  // displays fabricated numbers for every mechanism but the one they were measured from.
+  const [rateRange, setRateRange] = useState({ start: 0, end: 0 })
 
   const [selectedSpecies, setSelectedSpecies] = useState([])
 
@@ -35,7 +36,7 @@ export function FlowDiagram() {
   const simulation = useSelector((state) => state.simulation)
   const reactions = useSelector((state) => state.mechanism.reactions)
 
-  // The gross production is cumulative over the selected time window, so its magnitude 
+  // The integrated reaction rate depends on the selected time window, so its magnitude
   // changes with the time range and species selection. The range must therefore be
   // recalculated whenever either changes to avoid stale scaling that can mute edges.
   useEffect(() => {
@@ -58,15 +59,15 @@ export function FlowDiagram() {
     const timeStart = timeRange.start ?? 0
     const timeEnd = timeRange.end ?? Infinity
 
-    const fluxValues = visibleReactions.map(({ reaction, index }) =>
-      computeGrossProduction(reaction, index, simulation.excludedResults, timeStart, timeEnd)
+    const rateValues = visibleReactions.map(({ reaction, index }) =>
+      computeIntegratedReactionRate(reaction, index, simulation.excludedResults, timeStart, timeEnd)
     )
 
-    const min = Math.min(...fluxValues)
-    const max = Math.max(...fluxValues)
+    const min = Math.min(...rateValues)
+    const max = Math.max(...rateValues)
 
     if (isFinite(min) && isFinite(max)) {
-      setFluxRange({ start: min, end: max })
+      setRateRange({ start: min, end: max })
     }
   }, [reactions, simulation.excludedResults, selectedSpecies, timeRange.start, timeRange.end])
   if (!simulation.results || simulation.status !== 'succeeded') {
@@ -95,8 +96,9 @@ export function FlowDiagram() {
             <CardDescription className="text-base flex gap-2">
               <span>•</span>
               <span>
-                This diagram shows time-integrated chemical production of the species without 
-                accounting for subsequent chemical loss.
+                Each arrow shows the integrated reaction rate over the selected time range —
+                the reaction rate integrated over time, in mol m-3. It measures how much the
+                reaction itself turned over, not the net change of any one species.
               </span>
             </CardDescription>
             <CardDescription className="text-base flex gap-2">
@@ -118,8 +120,8 @@ export function FlowDiagram() {
           setArrowScaling={setArrowScaling}
           range={timeRange}
           setRange={setTimeRange}
-          fluxRange={fluxRange}
-          setFluxRange={setFluxRange}
+          rateRange={rateRange}
+          setRateRange={setRateRange}
           selectedSpecies={selectedSpecies}
           setSelectedSpecies={setSelectedSpecies}
           valueDisplay={valueDisplay}
@@ -128,9 +130,9 @@ export function FlowDiagram() {
         <div className="border rounded-lg p-2 xs:p-3 sm:p-4 bg-white h-[50rem]">
           <FlowGraph
             selectedSpecies={selectedSpecies}
-            fluxRange={{
-              start: fluxRange.start,
-              end: fluxRange.end,
+            rateRange={{
+              start: rateRange.start,
+              end: rateRange.end,
               isLogScale: arrowScaling === 'logarithmic',
               maxArrowWidth: MAX_ARROW_WIDTH,
             }}

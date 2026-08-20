@@ -26,15 +26,18 @@ const TIME_RANGE_UNITS = [
   { id: 'hours', label: 'Hours', divisor: 3600 },
 ]
 
-const formatBound = (raw, divisor, decimals) => {
+// `sigDigits` renders in exponential notation, which is required for integrated rates:
+// they run around 1e-6 to 1e-8, and fixed-point rounding would show 1.8e-7 as "0.000000"
+// and commit a literal 0 on blur. Time values are plain magnitudes and pass no sigDigits.
+const formatBound = (raw, divisor, sigDigits) => {
   const scaled = raw / divisor
-  return String(decimals != null ? scaled.toFixed(decimals) : scaled)
+  return String(sigDigits != null ? scaled.toExponential(sigDigits) : scaled)
 }
 
 // Number input that displays values in the selected time unit while storing them in seconds.
 // Commits are clamped to [min, max], keeping a range's start from crossing its end.
-function RangeBoundInput({ value, divisor = 1, onCommit, className, decimals, min, max }) {
-  const displayValue = formatBound(value, divisor, decimals)
+function RangeBoundInput({ value, divisor = 1, onCommit, className, sigDigits, min, max }) {
+  const displayValue = formatBound(value, divisor, sigDigits)
   const [draft, setDraft] = useState(displayValue)
 
   useEffect(() => {
@@ -42,6 +45,10 @@ function RangeBoundInput({ value, divisor = 1, onCommit, className, decimals, mi
   }, [displayValue])
 
   const commit = () => {
+    // Untouched field: committing would round-trip the *displayed* value back into state,
+    // discarding precision the display omits. Merely focusing and leaving must be lossless.
+    if (draft === displayValue) return
+
     const parsed = parseFloat(draft)
     if (isNaN(parsed)) {
       setDraft(displayValue)
@@ -55,7 +62,7 @@ function RangeBoundInput({ value, divisor = 1, onCommit, className, decimals, mi
     // Re-sync the draft explicitly: a clamped entry often equals the value already in
     // state, so the `value` prop never changes and the effect above won't fire to
     // replace the out-of-range text the user typed.
-    setDraft(formatBound(next, divisor, decimals))
+    setDraft(formatBound(next, divisor, sigDigits))
     onCommit(next)
   }
 
@@ -81,7 +88,7 @@ function RangeBoundInput({ value, divisor = 1, onCommit, className, decimals, mi
  *   - Value Display (absolute magnitude or relative contribution)
  *   - Arrow Width Scaling (linear or logarithmic)
  *   - Time Range selection (seconds or hours)
- *   - Time-integrated production range selection (in mol m-3)
+ *   - Integrated reaction rate range selection (in mol m-3)
  *   - Species Selection Dropdown
  */
 
@@ -90,8 +97,8 @@ export function FlowPanel({
   setArrowScaling,
   range,
   setRange,
-  fluxRange,
-  setFluxRange,
+  rateRange,
+  setRateRange,
   selectedSpecies,
   setSelectedSpecies,
   valueDisplay,
@@ -193,7 +200,7 @@ export function FlowPanel({
 
   return (
     <div className="flex flex-wrap items-start gap-3 p-2 xs:p-3 sm:p-4 w-full rounded-lg bg-gray-50 text-gray-900 mt-2 xs:mt-3 sm:mt-4">
-      {/* Row 1: Value Display | Arrow Scaling | Time Range | Gross Production */}
+      {/* Row 1: Value Display | Arrow Scaling | Time Range | Integrated Reaction Rate */}
       <div className="flex flex-wrap items-center justify-between gap-3 w-full text-sm font-semibold">
         <div className="relative" ref={valueDisplayMenuRef}>
             <button
@@ -324,17 +331,17 @@ export function FlowPanel({
           </div>
         </div>
 
-        {/* Gross Production Range */}
+        {/* Integrated Reaction Rate Range */}
         <div className="flex items-center gap-2">
-          <span>Gross Production (mol m-3)</span>
+          <span>Integrated Rate (mol m-3)</span>
 
           <div className="flex items-center border border-gray-300 rounded-lg bg-white">
             <RangeBoundInput
-              value={fluxRange.start}
-              decimals={6}
+              value={rateRange.start}
+              sigDigits={3}
               min={0}
-              max={fluxRange.end}
-              onCommit={(start) => setFluxRange({ start, end: fluxRange.end })}
+              max={rateRange.end}
+              onCommit={(start) => setRateRange({ start, end: rateRange.end })}
               className="w-28 h-8 px-2 bg-white text-gray-900 rounded-l-lg text-sm text-center focus:outline-none focus:relative focus:z-10 focus:ring-2 focus:ring-blue-600"
             />
 
@@ -343,10 +350,10 @@ export function FlowPanel({
             </span>
 
             <RangeBoundInput
-              value={fluxRange.end}
-              decimals={6}
-              min={fluxRange.start}
-              onCommit={(end) => setFluxRange({ start: fluxRange.start, end })}
+              value={rateRange.end}
+              sigDigits={3}
+              min={rateRange.start}
+              onCommit={(end) => setRateRange({ start: rateRange.start, end })}
               className="w-28 h-8 px-2 bg-white text-gray-900 rounded-r-lg text-sm text-center focus:outline-none focus:relative focus:z-10 focus:ring-2 focus:ring-blue-600"
             />
           </div>

@@ -1,24 +1,8 @@
-// Per-reaction "tracer" species.
-//
-// The MICM solver only reports concentrations, never reaction rates over time, so there is
-// no way to ask it how much a given reaction produced. The workaround is to append one
-// synthetic species to each reaction's products and never list it as anyone's reactant:
-// having only a production term, its concentration can only accumulate, making it an
-// odometer for that single reaction. The flow diagram reads it back as cumulative
-// production, and run.js strips these keys out of the results before anything else sees them.
-//
-// The key is derived from the reaction's ARRAY INDEX, not its name. Species names come from
-// the mechanism config, so a name-derived tracer shares a namespace with real chemistry --
-// in carbon_bond_5, 31 of 39 named reactions are named after the species they consume (the
-// ALD2 photolysis reaction is literally named "ALD2"), so the tracer collided with the real
-// species: its concentration was stripped from the results as if it were synthetic, and the
-// tracer was injected as a genuine product of a reaction that consumes it, inflating ALD2 by
-// ~2.3x over a 3-hour run. Indices live in a namespace the config cannot reach.
-//
-// The normalized reaction name is appended purely as a debugging aid and a staleness guard.
-// Editing the mechanism does not clear prior results, so stale excludedResults can be read
-// against a re-indexed reactions array; including the name means a shifted index fails to
-// match and production reads 0, rather than silently reporting another reaction's numbers.
+// Per-reaction "tracer" species. Injected as a product with no consumption term, so its
+// concentration is a running integral of that reaction's rate. Read back by differencing
+// its endpoints -- see computeIntegratedReactionRate.
+// Keyed by array index, not reaction name: names live in the same namespace as real species
+// and would collide (carbon_bond_5 names 31 reactions after the species they consume).
 
 export const TRACER_PREFIX = '__PROD__'
 
