@@ -1,6 +1,10 @@
 import { React, useState, useEffect } from 'react'
 import { FlowGraph } from './FlowGraph'
-import { isRealSpecies, computeIntegratedReactionRate } from './flowUtils'
+import {
+  computeIntegratedReactionRate,
+  getThirdBodyNames,
+  isReactionVisible,
+} from './flowUtils'
 import { FlowPanel } from './FlowPanel'
 import { useSelector } from 'react-redux'
 import { Card, CardContent, CardDescription } from '../ui/card'
@@ -35,6 +39,7 @@ export function FlowDiagram() {
   // If no simulation results, show placeholder
   const simulation = useSelector((state) => state.simulation)
   const reactions = useSelector((state) => state.mechanism.reactions)
+  const species = useSelector((state) => state.mechanism.species)
 
   // The integrated reaction rate depends on the selected time window, so its magnitude
   // changes with the time range and species selection. The range must therefore be
@@ -43,16 +48,13 @@ export function FlowDiagram() {
     if (!reactions || reactions.length === 0) return
     if (!selectedSpecies || selectedSpecies.length === 0) return
 
+    const thirdBodyNames = getThirdBodyNames(species)
+
     // Capture each reaction's index before filtering -- tracer keys are index-based, so an
     // index taken from the filtered array would read the wrong reaction's tracer.
     const visibleReactions = reactions
       .map((reaction, index) => ({ reaction, index }))
-      .filter(({ reaction }) => {
-        const realReactants = reaction.reactants
-          ? reaction.reactants.map((r) => r['species name']).filter(isRealSpecies)
-          : []
-        return realReactants.length > 0 && realReactants.every((sp) => selectedSpecies.includes(sp))
-      })
+      .filter(({ reaction }) => isReactionVisible(reaction, selectedSpecies, thirdBodyNames))
 
     if (visibleReactions.length === 0) return
 
@@ -69,7 +71,14 @@ export function FlowDiagram() {
     if (isFinite(min) && isFinite(max)) {
       setRateRange({ start: min, end: max })
     }
-  }, [reactions, simulation.excludedResults, selectedSpecies, timeRange.start, timeRange.end])
+  }, [
+    reactions,
+    species,
+    simulation.excludedResults,
+    selectedSpecies,
+    timeRange.start,
+    timeRange.end,
+  ])
   if (!simulation.results || simulation.status !== 'succeeded') {
     return (
       <Card>

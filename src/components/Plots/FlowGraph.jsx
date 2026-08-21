@@ -1,7 +1,12 @@
 import * as d3 from 'd3'
 import { React, useEffect, useRef, useState } from 'react'
 import { useSelector } from 'react-redux'
-import { isRealSpecies, computeIntegratedReactionRate } from './flowUtils'
+import {
+  isRealSpecies,
+  computeIntegratedReactionRate,
+  getThirdBodyNames,
+  isReactionVisible,
+} from './flowUtils'
 
 // Edge/arrow color for in-range rate; out-of-range edges are muted to gray instead.
 const ARROW_COLOR = '#3D96C3'
@@ -53,19 +58,24 @@ export function FlowGraph({ selectedSpecies, rateRange, timeRange, valueDisplay 
   const [selectedNode, setSelectedNode] = useState(null)
 
   const reactions = useSelector((state) => state.mechanism.reactions)
+  const species = useSelector((state) => state.mechanism.species)
   const results = useSelector((state) => state.simulation.excludedResults)
 
   useEffect(() => {
     if (!selectedSpecies || selectedSpecies.length === 0) return
     if (!reactions || reactions.length === 0) return
 
+    const thirdBodyNames = getThirdBodyNames(species)
+
+    // Third bodies stay out of the graph itself: they are unchanged by the reaction, so an
+    // M node with arrows in and out would imply it is consumed and produced. They remain in
+    // the reaction label, which shows the true stoichiometry.
+    const isGraphSpecies = (name) => isRealSpecies(name) && !thirdBodyNames.has(name)
+
     // ── 1. Filter visible reactions ───────────────────────────────────
-    const visibleReactions = reactions.filter((rxn) => {
-      const realReactants = rxn.reactants
-        ? rxn.reactants.map((r) => r['species name']).filter(isRealSpecies)
-        : []
-      return realReactants.length > 0 && realReactants.every((sp) => selectedSpecies.includes(sp))
-    })
+    const visibleReactions = reactions.filter((rxn) =>
+      isReactionVisible(rxn, selectedSpecies, thirdBodyNames)
+    )
 
     if (visibleReactions.length === 0) return
 
@@ -115,10 +125,10 @@ export function FlowGraph({ selectedSpecies, rateRange, timeRange, valueDisplay 
     const speciesSet = new Set()
     for (const rxn of visibleReactions) {
       rxn.reactants.forEach((r) => {
-        if (isRealSpecies(r['species name'])) speciesSet.add(r['species name'])
+        if (isGraphSpecies(r['species name'])) speciesSet.add(r['species name'])
       })
       rxn.products.forEach((p) => {
-        if (isRealSpecies(p['species name'])) speciesSet.add(p['species name'])
+        if (isGraphSpecies(p['species name'])) speciesSet.add(p['species name'])
       })
     }
 
@@ -179,12 +189,12 @@ export function FlowGraph({ selectedSpecies, rateRange, timeRange, valueDisplay 
 
       // reactant species → reaction
       rxn.reactants
-        .filter((r) => isRealSpecies(r['species name']))
+        .filter((r) => isGraphSpecies(r['species name']))
         .forEach((r) => upsertLink(r['species name'], rxn.name, rate))
 
       // reaction → product species
       rxn.products
-        .filter((p) => isRealSpecies(p['species name']))
+        .filter((p) => isGraphSpecies(p['species name']))
         .forEach((p) => upsertLink(rxn.name, p['species name'], rate))
     }
 
@@ -462,7 +472,7 @@ export function FlowGraph({ selectedSpecies, rateRange, timeRange, valueDisplay 
 
     sim.alpha(0.4).restart()
     return () => sim.stop()
-  }, [selectedSpecies, rateRange, timeRange, reactions, results, valueDisplay])
+  }, [selectedSpecies, rateRange, timeRange, reactions, species, results, valueDisplay])
 
   // Sync selectedNode → D3 rate label visibility & rect highlight
   useEffect(() => {
