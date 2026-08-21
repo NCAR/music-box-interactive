@@ -41,7 +41,7 @@ export function BasicConfigTab() {
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
-            <label className="block text-sm font-semibold text-blue-100 mb-2">
+            <label className="block text-sm font-semibold text-blue-900 mb-2">
               Duration (hours)
             </label>
             <input
@@ -50,7 +50,7 @@ export function BasicConfigTab() {
               onChange={handleDurationChange}
               step="0.1"
               min="0"
-              className="w-full px-3 py-2 border-2 border-white/30 bg-white/10 text-white placeholder:text-gray-400 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent"
+              className="w-full px-3 py-2 border-2 border-white/30 bg-white/10 text-gray-900 placeholder:text-gray-500 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent"
             />
             <p className="text-xs text-gray-500 mt-1">
               Total simulation time: {basic.duration} seconds
@@ -66,7 +66,7 @@ export function BasicConfigTab() {
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
-            <label className="block text-sm font-semibold text-blue-100 mb-2">
+            <label className="block text-sm font-semibold text-blue-900 mb-2">
               Time Step (seconds)
             </label>
             <input
@@ -75,7 +75,7 @@ export function BasicConfigTab() {
               onChange={handleTimeStepChange}
               step="10"
               min="1"
-              className="w-full px-3 py-2 border-2 border-white/30 bg-white/10 text-white placeholder:text-gray-400 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent"
+              className="w-full px-3 py-2 border-2 border-white/30 bg-white/10 text-gray-900 placeholder:text-gray-500 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent"
             />
             <p className="text-xs text-gray-500 mt-1">
               Smaller timesteps = more accurate but slower
@@ -83,7 +83,7 @@ export function BasicConfigTab() {
           </div>
 
           <div>
-            <label className="block text-sm font-semibold text-blue-100 mb-2">
+            <label className="block text-sm font-semibold text-blue-900 mb-2">
               Output Frequency
             </label>
             <input
@@ -92,7 +92,7 @@ export function BasicConfigTab() {
               onChange={handleOutputFrequencyChange}
               step="1"
               min="1"
-              className="w-full px-3 py-2 border-2 border-white/30 bg-white/10 text-white placeholder:text-gray-400 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent"
+              className="w-full px-3 py-2 border-2 border-white/30 bg-white/10 text-gray-900 placeholder:text-gray-500 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent"
             />
             <p className="text-xs text-gray-500 mt-1">
               Save output every {basic.outputFrequency} timesteps
@@ -101,7 +101,7 @@ export function BasicConfigTab() {
         </CardContent>
       </Card>
 
-      <div className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-lg p-3 text-xs text-gray-300">
+      <div className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-lg p-3 text-xs text-gray-700">
         <p className="font-semibold mb-1 flex items-center gap-2">
           <Info className="w-4 h-4" />
           Configuration Summary:

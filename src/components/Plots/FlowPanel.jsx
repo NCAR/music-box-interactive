@@ -417,7 +417,7 @@ export function FlowPanel({
             setSpeciesOverflowOpen(false)
           }}
           placeholder="Search species"
-          className="w-[30rem] h-8 px-3 bg-white text-gray-800 placeholder:text-gray-400 rounded-r-lg text-base font-mono focus:outline-none focus:relative focus:z-10 focus:ring-2 focus:ring-blue-600"
+          className="w-[30rem] h-8 px-3 bg-white text-gray-800 placeholder:text-gray-500 rounded-r-lg text-base font-mono focus:outline-none focus:relative focus:z-10 focus:ring-2 focus:ring-blue-600"
         />
       </div>
       </div>

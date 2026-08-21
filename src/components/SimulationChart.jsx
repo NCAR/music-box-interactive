@@ -473,7 +473,7 @@ export function SimulationChart({ results, metadata }) {
                     setSpeciesOverflowOpen(false)
                   }}
                   placeholder="Search species"
-                  className="w-[30rem] h-8 px-3 text-gray-800 placeholder:text-gray-400 rounded-r-lg text-base font-mono focus:outline-none focus:relative focus:z-10 focus:ring-2 focus:ring-blue-600"
+                  className="w-[30rem] h-8 px-3 text-gray-800 placeholder:text-gray-500 rounded-r-lg text-base font-mono focus:outline-none focus:relative focus:z-10 focus:ring-2 focus:ring-blue-600"
                 />
               </div>
 
@@ -504,7 +504,7 @@ export function SimulationChart({ results, metadata }) {
                           className={`w-full flex items-center gap-2 text-left text-sm font-bold px-3 py-1.5 ${
                             unit.supported
                               ? 'text-gray-800 hover:bg-gray-100'
-                              : 'text-gray-400 cursor-not-allowed'
+                              : 'text-gray-500 cursor-not-allowed'
                           }`}
                         >
                           <Check

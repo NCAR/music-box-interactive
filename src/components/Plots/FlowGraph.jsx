@@ -512,14 +512,14 @@ export function FlowGraph({ selectedSpecies, rateRange, timeRange, valueDisplay 
 
   if (!selectedSpecies || selectedSpecies.length === 0) {
     return (
-      <div className="flex items-center justify-center h-full text-gray-400 text-lg">
+      <div className="flex items-center justify-center h-full text-gray-600 text-lg">
         Select species in the panel to view reaction nodes
       </div>
     )
   }
   if (!reactions || reactions.length === 0) {
     return (
-      <div className="flex items-center justify-center h-full text-gray-400 text-lg">
+      <div className="flex items-center justify-center h-full text-gray-600 text-lg">
         No reactions found in mechanism
       </div>
     )

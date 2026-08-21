@@ -90,7 +90,7 @@ export function ReviewTab() {
           {/* Summary Statistics */}
           <div className="grid grid-cols-2 xs:grid-cols-2 sm:grid-cols-4 gap-2 xs:gap-3">
             <div className="bg-white/5 backdrop-blur-lg border border-white/20 rounded-lg p-2 xs:p-3">
-              <div className="text-xs xs:text-sm text-white-600 font-semibold truncate">
+              <div className="text-xs xs:text-sm text-gray-700 font-semibold truncate">
                 Mechanism
               </div>
               <div className="text-sm xs:text-base sm:text-lg font-bold text-red-600/70 truncate">
@@ -98,20 +98,20 @@ export function ReviewTab() {
               </div>
             </div>
             <div className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-lg p-2 xs:p-3">
-              <div className="text-xs xs:text-sm text-white-600 font-semibold">Species</div>
+              <div className="text-xs xs:text-sm text-gray-700 font-semibold">Species</div>
               <div className="text-sm xs:text-base sm:text-lg font-bold text-green-600">
                 {mechanism.species.length}
               </div>
             </div>
             <div className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-lg p-2 xs:p-3">
-              <div className="text-xs xs:text-sm text-white-600 font-semibold">Reactions</div>
+              <div className="text-xs xs:text-sm text-gray-700 font-semibold">Reactions</div>
               <div className="text-sm xs:text-base sm:text-lg font-bold text-orange-600">
                 {mechanism.reactions.length}
               </div>
             </div>
             <div className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-lg p-2 xs:p-3">
-              <div className="text-xs xs:text-sm text-white-600 font-semibold">Duration</div>
-              <div className="text-lg font-bold text-white-400">
+              <div className="text-xs xs:text-sm text-gray-700 font-semibold">Duration</div>
+              <div className="text-lg font-bold text-gray-900">
                 {(conditions.basic.duration / 3600).toFixed(1)}h
               </div>
             </div>
@@ -130,7 +130,7 @@ export function ReviewTab() {
                     <Microscope className="w-3 h-3 xs:w-4 xs:h-4" />
                     Mechanism
                   </h5>
-                  <ul className="ml-3 xs:ml-4 space-y-1 text-xs xs:text-sm text-gray-300">
+                  <ul className="ml-3 xs:ml-4 space-y-1 text-xs xs:text-sm text-gray-700">
                     <li>
                       <span className="font-semibold">Name:</span>{' '}
                       <span className="font-medium">{mechanism.selectedMechanism || 'custom'}</span>
@@ -159,10 +159,10 @@ export function ReviewTab() {
 
                   {/* Basic Conditions */}
                   <div className="mb-3">
-                    <h6 className="font-bold text-xs xs:text-sm text-gray-300 mb-1">
+                    <h6 className="font-bold text-xs xs:text-sm text-gray-700 mb-1">
                       Basic Settings:
                     </h6>
-                    <ul className="ml-3 xs:ml-4 space-y-1 text-xs xs:text-sm text-gray-300">
+                    <ul className="ml-3 xs:ml-4 space-y-1 text-xs xs:text-sm text-gray-700">
                       <li>
                         <span className="font-semibold">Temperature:</span>{' '}
                         <span className="font-medium">{conditions.initial.temperature} K</span>
@@ -188,8 +188,8 @@ export function ReviewTab() {
                   {/* Evolving Conditions */}
                   {Object.keys(conditions.evolving || {}).length > 0 && (
                     <div>
-                      <h6 className="font-bold text-xs xs:text-sm text-gray-300 mb-1">Evolving:</h6>
-                      <ul className="ml-3 xs:ml-4 space-y-1 text-xs xs:text-sm text-gray-300">
+                      <h6 className="font-bold text-xs xs:text-sm text-gray-700 mb-1">Evolving:</h6>
+                      <ul className="ml-3 xs:ml-4 space-y-1 text-xs xs:text-sm text-gray-700">
                         {Object.entries(conditions.evolving).map(([key, value]) => (
                           <li key={key}>
                             <span className="font-semibold">{key}:</span>{' '}
@@ -209,7 +209,7 @@ export function ReviewTab() {
                       <FlaskConical className="w-3 h-3 xs:w-4 xs:h-4" />
                       Initial Concentrations
                     </h5>
-                    <ul className="ml-3 xs:ml-4 space-y-1 text-xs xs:text-sm text-gray-300 max-h-48 overflow-y-auto">
+                    <ul className="ml-3 xs:ml-4 space-y-1 text-xs xs:text-sm text-gray-700 max-h-48 overflow-y-auto">
                       {Object.keys(conditions.initial.concentrations).length > 0 ? (
                         Object.entries(conditions.initial.concentrations).map(([species, conc]) => (
                           <li key={species}>
@@ -218,17 +218,17 @@ export function ReviewTab() {
                           </li>
                         ))
                       ) : (
-                        <li className="text-gray-400 italic">No initial concentrations</li>
+                        <li className="text-gray-600 italic">No initial concentrations</li>
                       )}
                     </ul>
                   </div>
 
                   {/* Metadata Section */}
                   <div className="border-t border-white/20 pt-2 xs:pt-3">
-                    <h5 className="font-semibold text-white-600 text-sm xs:text-base mb-2">
+                    <h5 className="font-semibold text-gray-700 text-sm xs:text-base mb-2">
                       Metadata
                     </h5>
-                    <ul className="ml-3 xs:ml-4 space-y-1 text-xs xs:text-sm text-gray-300">
+                    <ul className="ml-3 xs:ml-4 space-y-1 text-xs xs:text-sm text-gray-700">
                       <li>
                         <span className="font-semibold">Version:</span>{' '}
                         <span className="font-medium">{configuration.metadata.version}</span>
@@ -279,7 +279,7 @@ export function ReviewTab() {
         <CardContent>
           <div className="space-y-2 text-md">
             <div
-              className={`flex items-center gap-2 ${mechanism.selectedMechanism ? 'text-green-400' : 'text-red-500'}`}
+              className={`flex items-center gap-2 ${mechanism.selectedMechanism ? 'text-green-700' : 'text-red-700'}`}
             >
               {mechanism.selectedMechanism ? (
                 <CheckCircle2 className="w-4 h-4" />
@@ -289,7 +289,7 @@ export function ReviewTab() {
               <span>Mechanism selected: {mechanism.selectedMechanism || 'None'}</span>
             </div>
             <div
-              className={`flex items-center gap-2 ${mechanism.species.length > 0 ? 'text-green-400' : 'text-yellow-400'}`}
+              className={`flex items-center gap-2 ${mechanism.species.length > 0 ? 'text-green-700' : 'text-yellow-700'}`}
             >
               {mechanism.species.length > 0 ? (
                 <CheckCircle2 className="w-4 h-4" />
@@ -299,7 +299,7 @@ export function ReviewTab() {
               <span>Species defined: {mechanism.species.length}</span>
             </div>
             <div
-              className={`flex items-center gap-2 ${mechanism.reactions.length > 0 ? 'text-green-400' : 'text-red-500'}`}
+              className={`flex items-center gap-2 ${mechanism.reactions.length > 0 ? 'text-green-700' : 'text-red-700'}`}
             >
               {mechanism.reactions.length > 0 ? (
                 <CheckCircle2 className="w-4 h-4" />
@@ -309,7 +309,7 @@ export function ReviewTab() {
               <span>Reactions defined: {mechanism.reactions.length}</span>
             </div>
             <div
-              className={`flex items-center gap-2 ${conditions.basic.duration > 0 ? 'text-green-400' : 'text-red-500'}`}
+              className={`flex items-center gap-2 ${conditions.basic.duration > 0 ? 'text-green-700' : 'text-red-700'}`}
             >
               {conditions.basic.duration > 0 ? (
                 <CheckCircle2 className="w-4 h-4" />
@@ -319,7 +319,7 @@ export function ReviewTab() {
               <span>Duration set: {(conditions.basic.duration / 3600).toFixed(1)} hours</span>
             </div>
             <div
-              className={`flex items-center gap-2 ${Object.keys(conditions.initial.concentrations).length > 0 ? 'text-green-400' : 'text-yellow-400'}`}
+              className={`flex items-center gap-2 ${Object.keys(conditions.initial.concentrations).length > 0 ? 'text-green-700' : 'text-yellow-700'}`}
             >
               {Object.keys(conditions.initial.concentrations).length > 0 ? (
                 <CheckCircle2 className="w-4 h-4" />
@@ -334,7 +334,7 @@ export function ReviewTab() {
         </CardContent>
       </Card>
 
-      <div className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-lg p-3 text-xs text-gray-300">
+      <div className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-lg p-3 text-xs text-gray-700">
         <p className="font-semibold mb-1 flex items-center gap-2">
           <Lightbulb className="w-4 h-4" />
           Next Steps:

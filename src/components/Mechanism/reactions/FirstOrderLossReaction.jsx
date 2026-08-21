@@ -47,7 +47,7 @@ export function FirstOrderLossReactionForm({ onAddReaction }) {
       )}
 
       <div>
-        <label className="block text-xs font-semibold text-blue-100 mb-1">
+        <label className="block text-xs font-semibold text-blue-900 mb-1">
           Reactants (e.g., "C" or "2C")
         </label>
         <input
@@ -55,12 +55,12 @@ export function FirstOrderLossReactionForm({ onAddReaction }) {
           value={reactants}
           onChange={(e) => setReactants(e.target.value)}
           placeholder="C"
-          className="w-full px-3 py-2 border-2 border-white/30 bg-white/10 text-white placeholder:text-gray-400 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
+          className="w-full px-3 py-2 border-2 border-white/30 bg-white/10 text-gray-900 placeholder:text-gray-500 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
         />
       </div>
 
       <div>
-        <label className="block text-xs font-semibold text-blue-100 mb-1">
+        <label className="block text-xs font-semibold text-blue-900 mb-1">
           Scaling Factor (optional; defaults to 1.0)
         </label>
         <input
@@ -68,7 +68,7 @@ export function FirstOrderLossReactionForm({ onAddReaction }) {
           value={scalingFactor}
           onChange={(e) => setScalingFactor(e.target.value)}
           placeholder="12.3"
-          className="w-full px-3 py-2 border-2 border-white/30 bg-white/10 text-white placeholder:text-gray-400 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
+          className="w-full px-3 py-2 border-2 border-white/30 bg-white/10 text-gray-900 placeholder:text-gray-500 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
         />
       </div>
 

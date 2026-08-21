@@ -17,9 +17,9 @@ export function CurrentExampleIndicator() {
 
   return (
     <div className="flex items-center gap-2 p-3 bg-green-500/10 backdrop-blur-lg border border-green-400/30 rounded-lg">
-      <CheckCircle2 className="text-green-400 w-5 h-5" />
-      <span className="text-sm text-gray-300">
-        <strong className="text-white font-semibold">Loaded:</strong> {currentExample.name}
+      <CheckCircle2 className="text-green-700 w-5 h-5" />
+      <span className="text-sm text-gray-700">
+        <strong className="text-gray-900 font-semibold">Loaded:</strong> {currentExample.name}
       </span>
       {selectedMechanism && (
         <Badge variant="success" className="ml-auto">

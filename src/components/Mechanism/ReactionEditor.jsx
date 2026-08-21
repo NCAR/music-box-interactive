@@ -105,20 +105,20 @@ export function ReactionEditor() {
         <CardContent className="space-y-4">
           {/* Add New Reaction Form (shown for all mechanisms) */}
           <div className="p-4 bg-white/0 backdrop-blur-lg rounded-xl border-2 border-white/20">
-            <h4 className="font-bold text-sm mb-3 text-blue-100 flex items-center gap-2">
+            <h4 className="font-bold text-sm mb-3 text-blue-900 flex items-center gap-2">
               <Plus className="w-4 h-4" />
               Add New Reaction
             </h4>
 
             <div className="space-y-3">
               <div>
-                <label className="block text-xs font-semibold text-blue-100 mb-1">
+                <label className="block text-xs font-semibold text-blue-900 mb-1">
                   Reaction Type
                 </label>
                 <select
                   value={reactionType}
                   onChange={(e) => setReactionType(e.target.value)}
-                  className="w-full px-3 py-2 border-2 border-white/30 bg-white/10 text-black placeholder:text-gray-400 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-600"
+                  className="w-full px-3 py-2 border-2 border-white/30 bg-white/10 text-black placeholder:text-gray-500 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-600"
                   style={{ color: 'white', backgroundColor: 'rgba(255,255,255,0.1)' }}
                 >
                   {reactionRegistry.map((type) => (
@@ -151,23 +151,23 @@ export function ReactionEditor() {
                 <div className="flex justify-center mb-2">
                   <FlaskConical className="w-16 h-16" />
                 </div>
-                <p className="text-blue-100 font-medium mb-1">
+                <p className="text-blue-900 font-medium mb-1">
                   {isPredefined.reactions} reactions are pre-configured in this mechanism
                 </p>
-                <p className="text-xs text-gray-400 mb-2">
+                <p className="text-xs text-gray-600 mb-2">
                   Reaction definitions are loaded from the mechanism config file
                 </p>
-                <p className="text-xs text-blue-300">
+                <p className="text-xs text-blue-700">
                   Add custom reactions above to extend the mechanism
                 </p>
               </div>
             ) : isPredefined && reactions.length > 0 ? (
               <div>
                 <div className="text-center py-4 bg-white/10 backdrop-blur-lg rounded-lg border border-white/20 mb-3">
-                  <p className="text-blue-100 font-medium text-sm mb-1">
+                  <p className="text-blue-900 font-medium text-sm mb-1">
                     {isPredefined.reactions} pre-configured + {reactions.length} custom reactions
                   </p>
-                  <p className="text-xs text-gray-400">Custom reactions shown below</p>
+                  <p className="text-xs text-gray-600">Custom reactions shown below</p>
                 </div>
                 <div className="space-y-2 max-h-96 overflow-y-auto">
                   {reactions.map((reaction) => (
@@ -179,7 +179,7 @@ export function ReactionEditor() {
                         <h5 className="font-semibold text-sm font-mono">
                           {formatReactionDisplay(reaction)}
                         </h5>
-                        <p className="text-xs text-gray-300">
+                        <p className="text-xs text-gray-700">
                           Type: {reaction.type}
                           {reaction.A !== undefined && ` • A = ${reaction.A}`}
                           {reaction.A === undefined &&
@@ -217,18 +217,18 @@ export function ReactionEditor() {
                         {formatReactionDisplay(reaction)}
                       </h5>
                       <div className="flex gap-3 mt-1">
-                        <span className="text-xs px-2 py-0.5 bg-white/10 backdrop-blur-lg border border-white/20 text-blue-400 rounded">
+                        <span className="text-xs px-2 py-0.5 bg-white/10 backdrop-blur-lg border border-white/20 text-blue-700 rounded">
                           {reaction.type}
                         </span>
                         {reaction.A !== undefined && (
-                          <span className="text-xs text-gray-300">
+                          <span className="text-xs text-gray-700">
                             A = {reaction.A.toExponential(2)}
                           </span>
                         )}
                         {reaction.A === undefined &&
                           (reaction.scalingFactor !== undefined ||
                             reaction['scaling factor'] !== undefined) && (
-                            <span className="text-xs text-gray-300">
+                            <span className="text-xs text-gray-700">
                               Scale = {reaction.scalingFactor ?? reaction['scaling factor']}
                             </span>
                           )}
@@ -251,7 +251,7 @@ export function ReactionEditor() {
         </CardContent>
       </Card>
 
-      <div className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-lg p-3 text-xs text-gray-300">
+      <div className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-lg p-3 text-xs text-gray-700">
         <p className="font-semibold mb-1 flex items-center gap-2">
           <Lightbulb className="w-4 h-4" />
           Reaction Editor Notes:

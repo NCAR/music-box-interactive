@@ -89,77 +89,77 @@ export function BranchedReactionForm({ onAddReaction }) {
       )}
 
       <div>
-        <label className="block text-xs font-semibold text-blue-100 mb-1">Reactants</label>
+        <label className="block text-xs font-semibold text-blue-900 mb-1">Reactants</label>
         <input
           type="text"
           value={reactants}
           onChange={(e) => setReactants(e.target.value)}
           placeholder="A"
-          className="w-full px-3 py-2 border-2 border-white/30 bg-white/10 text-white placeholder:text-gray-400 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
+          className="w-full px-3 py-2 border-2 border-white/30 bg-white/10 text-gray-900 placeholder:text-gray-500 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
         />
       </div>
 
       <div>
-        <label className="block text-xs font-semibold text-blue-100 mb-1">Alkoxy Products</label>
+        <label className="block text-xs font-semibold text-blue-900 mb-1">Alkoxy Products</label>
         <input
           type="text"
           value={alkoxyProducts}
           onChange={(e) => setAlkoxyProducts(e.target.value)}
           placeholder="0.2B + 1.2A"
-          className="w-full px-3 py-2 border-2 border-white/30 bg-white/10 text-white placeholder:text-gray-400 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
+          className="w-full px-3 py-2 border-2 border-white/30 bg-white/10 text-gray-900 placeholder:text-gray-500 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
         />
       </div>
 
       <div>
-        <label className="block text-xs font-semibold text-blue-100 mb-1">Nitrate Products</label>
+        <label className="block text-xs font-semibold text-blue-900 mb-1">Nitrate Products</label>
         <input
           type="text"
           value={nitrateProducts}
           onChange={(e) => setNitrateProducts(e.target.value)}
           placeholder="1.2C"
-          className="w-full px-3 py-2 border-2 border-white/30 bg-white/10 text-white placeholder:text-gray-400 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
+          className="w-full px-3 py-2 border-2 border-white/30 bg-white/10 text-gray-900 placeholder:text-gray-500 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
         />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         <div>
-          <label className="block text-xs font-semibold text-blue-100 mb-1">X (optional)</label>
+          <label className="block text-xs font-semibold text-blue-900 mb-1">X (optional)</label>
           <input
             type="text"
             value={xValue}
             onChange={(e) => setXValue(e.target.value)}
             placeholder="1.2e-4"
-            className="w-full px-3 py-2 border-2 border-white/30 bg-white/10 text-white placeholder:text-gray-400 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
+            className="w-full px-3 py-2 border-2 border-white/30 bg-white/10 text-gray-900 placeholder:text-gray-500 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
           />
         </div>
         <div>
-          <label className="block text-xs font-semibold text-blue-100 mb-1">Y (optional)</label>
+          <label className="block text-xs font-semibold text-blue-900 mb-1">Y (optional)</label>
           <input
             type="text"
             value={yValue}
             onChange={(e) => setYValue(e.target.value)}
             placeholder="167"
-            className="w-full px-3 py-2 border-2 border-white/30 bg-white/10 text-white placeholder:text-gray-400 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
+            className="w-full px-3 py-2 border-2 border-white/30 bg-white/10 text-gray-900 placeholder:text-gray-500 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
           />
         </div>
         <div>
-          <label className="block text-xs font-semibold text-blue-100 mb-1">a0 (optional)</label>
+          <label className="block text-xs font-semibold text-blue-900 mb-1">a0 (optional)</label>
           <input
             type="text"
             value={a0Value}
             onChange={(e) => setA0Value(e.target.value)}
             placeholder="0.15"
-            className="w-full px-3 py-2 border-2 border-white/30 bg-white/10 text-white placeholder:text-gray-400 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
+            className="w-full px-3 py-2 border-2 border-white/30 bg-white/10 text-gray-900 placeholder:text-gray-500 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
           />
         </div>
         <div>
-          <label className="block text-xs font-semibold text-blue-100 mb-1">n (optional)</label>
+          <label className="block text-xs font-semibold text-blue-900 mb-1">n (optional)</label>
           <input
             type="text"
             value={nValue}
             onChange={(e) => setNValue(e.target.value)}
             placeholder="9"
-            className="w-full px-3 py-2 border-2 border-white/30 bg-white/10 text-white placeholder:text-gray-400 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
+            className="w-full px-3 py-2 border-2 border-white/30 bg-white/10 text-gray-900 placeholder:text-gray-500 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
           />
         </div>
       </div>

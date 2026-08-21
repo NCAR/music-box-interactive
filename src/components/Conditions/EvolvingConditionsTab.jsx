@@ -427,7 +427,7 @@ export function EvolvingConditionsTab() {
 
         <CardContent className="space-y-4">
           {!evolving.enabled ? (
-            <div className="text-center py-8 text-white-100">
+            <div className="text-center py-8 text-gray-500">
               <p className="text-sm">Enable evolving conditions to define time-series data</p>
               <p className="text-xs mt-2">
                 When disabled, initial conditions will be used throughout the simulation
@@ -437,19 +437,19 @@ export function EvolvingConditionsTab() {
             <>
               {/* Interpolation Method Selector */}
               <div className="p-4 bg-white/5 backdrop-blur-lg rounded-xl border border-white/20">
-                <label className="block text-xs font-semibold text-blue-100 mb-2">
+                <label className="block text-xs font-semibold text-blue-900 mb-2">
                   Interpolation Method
                 </label>
                 <select
                   value={evolving.interpolationMethod || 'linear'}
                   onChange={(e) => dispatch(setInterpolationMethod(e.target.value))}
-                  className="w-full px-3 py-2 border-2 border-white/30 bg-white/10 text-white rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-600"
+                  className="w-full px-3 py-2 border-2 border-white/30 bg-white/10 text-gray-900 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-600"
                 >
                   <option value="linear">Linear - Smooth transition between points</option>
                   <option value="step">Step - Hold value until next point</option>
                   <option value="cubic">Cubic - Smooth curves (future feature)</option>
                 </select>
-                <p className="text-xs text-gray-400 mt-2">
+                <p className="text-xs text-gray-600 mt-2">
                   {evolving.interpolationMethod === 'linear' &&
                     'Values are interpolated linearly between time points'}
                   {evolving.interpolationMethod === 'step' &&
@@ -491,13 +491,13 @@ export function EvolvingConditionsTab() {
 
               {/* Add Time Point Form */}
               <div className="p-4 bg-white/0 backdrop-blur-lg rounded-xl border-2 border-white/20">
-                <h4 className="font-bold text-sm mb-3 text-blue-100 flex items-center gap-2">
+                <h4 className="font-bold text-sm mb-3 text-blue-900 flex items-center gap-2">
                   <Plus className="w-4 h-4" />
                   Add Time Point Manually
                 </h4>
                 <div className="grid grid-cols-3 gap-3">
                   <div>
-                    <label className="block text-xs font-semibold text-blue-100 mb-1">
+                    <label className="block text-xs font-semibold text-blue-900 mb-1">
                       Time (seconds)
                     </label>
                     <input
@@ -505,11 +505,11 @@ export function EvolvingConditionsTab() {
                       value={newTime}
                       onChange={(e) => setNewTime(e.target.value)}
                       placeholder="0"
-                      className="w-full px-2 py-2 border-2 border-white/30 bg-white/10 text-white placeholder:text-gray-400 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
+                      className="w-full px-2 py-2 border-2 border-white/30 bg-white/10 text-gray-900 placeholder:text-gray-500 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-semibold text-blue-100 mb-1">
+                    <label className="block text-xs font-semibold text-blue-900 mb-1">
                       Temperature (K)
                     </label>
                     <input
@@ -517,11 +517,11 @@ export function EvolvingConditionsTab() {
                       value={newTemp}
                       onChange={(e) => setNewTemp(e.target.value)}
                       placeholder="298.15"
-                      className="w-full px-2 py-2 border-2 border-white/30 bg-white/10 text-white placeholder:text-gray-400 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
+                      className="w-full px-2 py-2 border-2 border-white/30 bg-white/10 text-gray-900 placeholder:text-gray-500 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-semibold text-blue-100 mb-1">
+                    <label className="block text-xs font-semibold text-blue-900 mb-1">
                       Pressure (Pa)
                     </label>
                     <input
@@ -529,7 +529,7 @@ export function EvolvingConditionsTab() {
                       value={newPress}
                       onChange={(e) => setNewPress(e.target.value)}
                       placeholder="101325"
-                      className="w-full px-2 py-2 border-2 border-white/30 bg-white/10 text-white placeholder:text-gray-400 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
+                      className="w-full px-2 py-2 border-2 border-white/30 bg-white/10 text-gray-900 placeholder:text-gray-500 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
                     />
                   </div>
                 </div>
@@ -548,10 +548,10 @@ export function EvolvingConditionsTab() {
                 <div className="space-y-2">
                   {!hasTimeAtZero && (
                     <div className="bg-yellow-900/20 border border-yellow-400/50 rounded-lg p-3 flex items-start gap-3">
-                      <AlertCircle className="w-5 h-5 text-yellow-400 flex-shrink-0 mt-0.5" />
+                      <AlertCircle className="w-5 h-5 text-yellow-700 flex-shrink-0 mt-0.5" />
                       <div className="flex-1">
-                        <p className="text-sm font-semibold text-yellow-100">Missing Start Point</p>
-                        <p className="text-xs text-yellow-200 mt-1">
+                        <p className="text-sm font-semibold text-yellow-900">Missing Start Point</p>
+                        <p className="text-xs text-yellow-700 mt-1">
                           Consider adding a time point at t=0s to define initial environmental
                           conditions
                         </p>
@@ -568,10 +568,10 @@ export function EvolvingConditionsTab() {
                   )}
                   {!hasTimeAtEnd && (
                     <div className="bg-yellow-900/20 border border-yellow-400/50 rounded-lg p-3 flex items-start gap-3">
-                      <AlertCircle className="w-5 h-5 text-yellow-400 flex-shrink-0 mt-0.5" />
+                      <AlertCircle className="w-5 h-5 text-yellow-700 flex-shrink-0 mt-0.5" />
                       <div className="flex-1">
-                        <p className="text-sm font-semibold text-yellow-100">Incomplete Coverage</p>
-                        <p className="text-xs text-yellow-200 mt-1">
+                        <p className="text-sm font-semibold text-yellow-900">Incomplete Coverage</p>
+                        <p className="text-xs text-yellow-700 mt-1">
                           No time point at simulation end (t={basicConditions.duration}s).
                           Conditions will be extrapolated.
                         </p>
@@ -591,12 +591,12 @@ export function EvolvingConditionsTab() {
 
               {needsMorePoints && (
                 <div className="bg-orange-900/20 border border-orange-400/50 rounded-lg p-3 flex items-start gap-3">
-                  <AlertCircle className="w-5 h-5 text-orange-400 flex-shrink-0 mt-0.5" />
+                  <AlertCircle className="w-5 h-5 text-orange-700 flex-shrink-0 mt-0.5" />
                   <div className="flex-1">
-                    <p className="text-sm font-semibold text-orange-100">
+                    <p className="text-sm font-semibold text-orange-900">
                       No Time Points Configured
                     </p>
-                    <p className="text-xs text-orange-200 mt-1">
+                    <p className="text-xs text-orange-700 mt-1">
                       Evolving conditions are enabled but no time points have been added. Add at
                       least one time point to use this feature.
                     </p>
@@ -660,7 +660,7 @@ export function EvolvingConditionsTab() {
         </CardContent>
       </Card>
 
-      <div className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-lg p-3 text-xs text-white">
+      <div className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-lg p-3 text-xs text-gray-700">
         <p className="font-semibold mb-1 flex items-center gap-2">
           <AlertCircle className="w-4 h-4" />
           Important Notes:

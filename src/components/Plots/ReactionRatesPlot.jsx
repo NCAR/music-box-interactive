@@ -171,13 +171,13 @@ export function ReactionRatesPlot() {
       <Card>
         <CardHeader>
           <CardTitle>Reaction Rates</CardTitle>
-          <CardDescription className="text-white-500 italic">
+          <CardDescription className="text-gray-500 italic">
             View photolysis and user-defined reaction rate parameters
           </CardDescription>
         </CardHeader>
 
         <CardContent>
-          <div className="text-center py-12 text-white-500">
+          <div className="text-center py-12 text-gray-500">
             <div className="flex justify-center mb-4">
               <FlaskConical className="w-16 h-16" />
             </div>

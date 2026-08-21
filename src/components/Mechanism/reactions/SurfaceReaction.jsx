@@ -58,7 +58,7 @@ export function SurfaceReactionForm({ onAddReaction }) {
       )}
 
       <div>
-        <label className="block text-xs font-semibold text-blue-100 mb-1">
+        <label className="block text-xs font-semibold text-blue-900 mb-1">
           Gas-Phase Species (e.g., "A")
         </label>
         <input
@@ -66,12 +66,12 @@ export function SurfaceReactionForm({ onAddReaction }) {
           value={gasPhaseSpecies}
           onChange={(e) => setGasPhaseSpecies(e.target.value)}
           placeholder="A"
-          className="w-full px-3 py-2 border-2 border-white/30 bg-white/10 text-white placeholder:text-gray-400 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
+          className="w-full px-3 py-2 border-2 border-white/30 bg-white/10 text-gray-900 placeholder:text-gray-500 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
         />
       </div>
 
       <div>
-        <label className="block text-xs font-semibold text-blue-100 mb-1">
+        <label className="block text-xs font-semibold text-blue-900 mb-1">
           Gas-Phase Products (e.g., "B + C")
         </label>
         <input
@@ -79,12 +79,12 @@ export function SurfaceReactionForm({ onAddReaction }) {
           value={gasPhaseProducts}
           onChange={(e) => setGasPhaseProducts(e.target.value)}
           placeholder="B + C"
-          className="w-full px-3 py-2 border-2 border-white/30 bg-white/10 text-white placeholder:text-gray-400 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
+          className="w-full px-3 py-2 border-2 border-white/30 bg-white/10 text-gray-900 placeholder:text-gray-500 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
         />
       </div>
 
       <div>
-        <label className="block text-xs font-semibold text-blue-100 mb-1">
+        <label className="block text-xs font-semibold text-blue-900 mb-1">
           Reaction Probability (optional)
         </label>
         <input
@@ -92,7 +92,7 @@ export function SurfaceReactionForm({ onAddReaction }) {
           value={reactionProbability}
           onChange={(e) => setReactionProbability(e.target.value)}
           placeholder="2.0e-2"
-          className="w-full px-3 py-2 border-2 border-white/30 bg-white/10 text-white placeholder:text-gray-400 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
+          className="w-full px-3 py-2 border-2 border-white/30 bg-white/10 text-gray-900 placeholder:text-gray-500 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
         />
       </div>
 
