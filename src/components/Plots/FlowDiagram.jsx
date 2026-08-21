@@ -2,6 +2,7 @@ import { React, useState, useEffect } from 'react'
 import { FlowGraph } from './FlowGraph'
 import {
   computeIntegratedReactionRate,
+  getReactionEdges,
   getThirdBodyNames,
   isReactionVisible,
 } from './flowUtils'
@@ -61,12 +62,23 @@ export function FlowDiagram() {
     const timeStart = timeRange.start ?? 0
     const timeEnd = timeRange.end ?? Infinity
 
-    const rateValues = visibleReactions.map(({ reaction, index }) =>
-      computeIntegratedReactionRate(reaction, index, simulation.excludedResults, timeStart, timeEnd)
-    )
+    // Range over EDGE values, not per-reaction rates: edges carry `coefficient x rate`, so a
+    // range built from bare rates would sit below any coefficient > 1 edge and mute it.
+    const edgeValues = visibleReactions.flatMap(({ reaction, index }) => {
+      const rate = computeIntegratedReactionRate(
+        reaction,
+        index,
+        simulation.excludedResults,
+        timeStart,
+        timeEnd
+      )
+      return getReactionEdges(reaction, rate, thirdBodyNames).map((edge) => edge.value)
+    })
 
-    const min = Math.min(...rateValues)
-    const max = Math.max(...rateValues)
+    if (edgeValues.length === 0) return
+
+    const min = Math.min(...edgeValues)
+    const max = Math.max(...edgeValues)
 
     if (isFinite(min) && isFinite(max)) {
       setRateRange({ start: min, end: max })

@@ -28,6 +28,49 @@ export const isReactionVisible = (reaction, selectedSpecies, thirdBodyNames) => 
 }
 
 /**
+ * Edges one reaction contributes, with stoichiometric coefficients applied.
+ *
+ * The reaction's integrated rate counts reaction *events*; an edge represents the flow of a
+ * *species*, so it carries `coefficient x rate`. In `O + O3 -> 2 O2` the O2 edge is twice
+ * the rate, because each event yields two O2.
+ *
+ * A negative product coefficient means the reaction net-consumes that species -- CB05 uses
+ * this for lumped operator species (PAR). Those become consumption edges rather than
+ * production edges with a negative magnitude, which would sort below any range minimum and
+ * would produce NaN widths under log scaling.
+ *
+ * Coefficients are aggregated per species per direction, so a species listed more than once
+ * on the same side sums rather than overwriting.
+ */
+export const getReactionEdges = (reaction, rate, thirdBodyNames) => {
+  const keep = (name) => isRealSpecies(name) && !thirdBodyNames.has(name)
+  const consumed = new Map()
+  const produced = new Map()
+  const add = (map, name, coeff) => map.set(name, (map.get(name) ?? 0) + coeff)
+
+  for (const entry of reaction?.reactants ?? []) {
+    const name = entry['species name']
+    if (keep(name)) add(consumed, name, Math.abs(entry.coefficient ?? 1))
+  }
+  for (const entry of reaction?.products ?? []) {
+    const name = entry['species name']
+    if (!keep(name)) continue
+    const coeff = entry.coefficient ?? 1
+    if (coeff < 0) add(consumed, name, -coeff)
+    else if (coeff > 0) add(produced, name, coeff)
+  }
+
+  const edges = []
+  for (const [name, coeff] of consumed) {
+    edges.push({ source: name, target: reaction.name, value: coeff * rate })
+  }
+  for (const [name, coeff] of produced) {
+    edges.push({ source: reaction.name, target: name, value: coeff * rate })
+  }
+  return edges
+}
+
+/**
  * Integrated reaction rate for the reaction at `reactionIndex` over [timeStart, timeEnd],
  * in mol m-3 -- i.e. the time integral of that reaction's rate across the window.
  *

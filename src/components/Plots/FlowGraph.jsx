@@ -4,6 +4,7 @@ import { useSelector } from 'react-redux'
 import {
   isRealSpecies,
   computeIntegratedReactionRate,
+  getReactionEdges,
   getThirdBodyNames,
   isReactionVisible,
 } from './flowUtils'
@@ -171,8 +172,9 @@ export function FlowGraph({ selectedSpecies, rateRange, timeRange, valueDisplay 
     const nodeById = Object.fromEntries(nodes.map((n) => [n.id, n]))
 
     // ── Build edges: reaction → product-species, species → reaction ────
-    //   Each edge carries the integrated rate of the reaction it belongs to.
-    //   Deduplicate same source→target pairs: keep the one with highest rate
+    //   Each edge carries `coefficient x rate` -- the flow of that species, not the
+    //   reaction's own turnover, which is what the reaction node itself reports.
+    //   Deduplicate same source→target pairs: keep the one with highest value
     //   so stacked overlapping lines don't make arrows look artificially thick.
     const linkMap = new Map() // key: "sourceId||targetId"
 
@@ -185,17 +187,9 @@ export function FlowGraph({ selectedSpecies, rateRange, timeRange, valueDisplay 
     }
 
     for (const rxn of visibleReactions) {
-      const rate = rateMap[rxn.name]
-
-      // reactant species → reaction
-      rxn.reactants
-        .filter((r) => isGraphSpecies(r['species name']))
-        .forEach((r) => upsertLink(r['species name'], rxn.name, rate))
-
-      // reaction → product species
-      rxn.products
-        .filter((p) => isGraphSpecies(p['species name']))
-        .forEach((p) => upsertLink(rxn.name, p['species name'], rate))
+      for (const edge of getReactionEdges(rxn, rateMap[rxn.name], thirdBodyNames)) {
+        upsertLink(edge.source, edge.target, edge.value)
+      }
     }
 
     const links = [...linkMap.values()]
