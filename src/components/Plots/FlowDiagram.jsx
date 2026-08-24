@@ -117,9 +117,9 @@ export function FlowDiagram() {
             <CardDescription className="text-base flex gap-2">
               <span>•</span>
               <span>
-                Each arrow shows the integrated reaction rate over the selected time range —
-                the reaction rate integrated over time, in mol m-3. It measures how much the
-                reaction itself turned over, not the net change of any one species.
+                Each arrow shows the flux — the species production or consumption rate,
+                integrated over the selected time range, in mol m-3, and scaled by that
+                species' stoichiometric coefficient in the reaction.
               </span>
             </CardDescription>
             <CardDescription className="text-base flex gap-2">

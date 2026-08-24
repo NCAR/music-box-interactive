@@ -200,7 +200,7 @@ export function FlowPanel({
 
   return (
     <div className="flex flex-wrap items-start gap-3 p-2 xs:p-3 sm:p-4 w-full rounded-lg bg-gray-50 text-gray-900 mt-2 xs:mt-3 sm:mt-4">
-      {/* Row 1: Value Display | Arrow Scaling | Time Range | Integrated Reaction Rate */}
+      {/* Row 1: Value Display | Arrow Scaling | Time Range | Flux */}
       <div className="flex flex-wrap items-center justify-between gap-3 w-full text-sm font-semibold">
         <div className="relative" ref={valueDisplayMenuRef}>
             <button
@@ -331,9 +331,9 @@ export function FlowPanel({
           </div>
         </div>
 
-        {/* Integrated Reaction Rate Range */}
+        {/* Flux Range */}
         <div className="flex items-center gap-2">
-          <span>Integrated Rate (mol m-3)</span>
+          <span>Flux (mol m-3)</span>
 
           <div className="flex items-center border border-gray-300 rounded-lg bg-white">
             <RangeBoundInput
