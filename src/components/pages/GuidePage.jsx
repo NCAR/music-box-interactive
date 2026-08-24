@@ -12,7 +12,7 @@ export function GuidePage() {
       <Card>
         <CardHeader>
           <CardTitle className="text-3xl">Welcome to MusicBox Interactive</CardTitle>
-          <CardDescription className="text-base text-white/80 italic">
+          <CardDescription className="text-base text-gray-700 italic">
             Your guide to setting up and running atmospheric chemistry simulations
           </CardDescription>
         </CardHeader>
@@ -47,7 +47,7 @@ export function GuidePage() {
       <Card>
         <CardHeader>
           <CardTitle>Step-by-Step Workflow</CardTitle>
-          <CardDescription className="text-white/80">
+          <CardDescription className="text-gray-700">
             Follow these steps to run your first simulation
           </CardDescription>
         </CardHeader>
@@ -63,8 +63,8 @@ export function GuidePage() {
               </div>
               <div className="flex-1">
                 <h3 className="font-bold text-lg mb-2">Start from Dashboard</h3>
-                <p className="text-sm text-gray-300 mb-2">Choose one of three options to begin:</p>
-                <ul className="list-disc list-inside ml-4 space-y-1 text-sm text-gray-300">
+                <p className="text-sm text-gray-700 mb-2">Choose one of three options to begin:</p>
+                <ul className="list-disc list-inside ml-4 space-y-1 text-sm text-gray-700">
                   <li>
                     <strong>Browse Examples:</strong> Load a pre-configured mechanism (Chapman, TS1,
                     or Full Configuration)
@@ -87,11 +87,11 @@ export function GuidePage() {
               </div>
               <div className="flex-1">
                 <h3 className="font-bold text-lg mb-2">Define Your Mechanism</h3>
-                <p className="text-sm text-gray-300 mb-2">
+                <p className="text-sm text-gray-700 mb-2">
                   Navigate to the <strong>Mechanism</strong> page to configure chemical species and
                   reactions:
                 </p>
-                <ul className="list-disc list-inside ml-4 space-y-1 text-sm text-gray-300">
+                <ul className="list-disc list-inside ml-4 space-y-1 text-sm text-gray-700">
                   <li>
                     <strong>Species Tab:</strong> Add chemical species with properties (molecular
                     weight, diffusion coefficient, etc.)
@@ -101,7 +101,7 @@ export function GuidePage() {
                     and reaction types (ARRHENIUS, PHOTOLYSIS, TROE, etc.)
                   </li>
                 </ul>
-                <div className="mt-2 p-3 bg-white/0 backdrop-blur-lg border border-white/20 rounded-lg text-xs text-gray-300 w-fit">
+                <div className="mt-2 p-3 bg-white/0 backdrop-blur-lg border border-white/20 rounded-lg text-xs text-gray-700 w-fit">
                   <strong>Tip:</strong> If you loaded an example, species and reactions are already
                   configured!
                 </div>
@@ -115,10 +115,10 @@ export function GuidePage() {
               </div>
               <div className="flex-1">
                 <h3 className="font-bold text-lg mb-2">Configure Conditions</h3>
-                <p className="text-sm text-gray-300 mb-2">
+                <p className="text-sm text-gray-700 mb-2">
                   Navigate to the <strong>Conditions</strong> page and complete each tab:
                 </p>
-                <ul className="list-disc list-inside ml-4 space-y-1 text-sm text-gray-300">
+                <ul className="list-disc list-inside ml-4 space-y-1 text-sm text-gray-700">
                   <li>
                     <strong>General Tab:</strong> Set temperature, pressure, simulation duration,
                     and time step
@@ -144,11 +144,11 @@ export function GuidePage() {
               </div>
               <div className="flex-1">
                 <h3 className="font-bold text-lg mb-2">Run Simulation</h3>
-                <p className="text-sm text-gray-300 mb-2">
+                <p className="text-sm text-gray-700 mb-2">
                   In the <strong>Review</strong> tab under Conditions, click the{' '}
                   <strong>Run Simulation</strong> button:
                 </p>
-                <ul className="list-disc list-inside ml-4 space-y-1 text-sm text-gray-300">
+                <ul className="list-disc list-inside ml-4 space-y-1 text-sm text-gray-700">
                   <li>Review your configuration checklist to ensure all required fields are set</li>
                   <li>Click "Run Simulation" to execute the model</li>
                   <li>Wait for the simulation to complete (progress will be shown)</li>
@@ -163,10 +163,10 @@ export function GuidePage() {
               </div>
               <div className="flex-1">
                 <h3 className="font-bold text-lg mb-2">View Results</h3>
-                <p className="text-sm text-gray-300 mb-2">
+                <p className="text-sm text-gray-700 mb-2">
                   Navigate to the <strong>Results</strong> page to visualize and export your data:
                 </p>
-                <ul className="list-disc list-inside ml-4 space-y-1 text-sm text-gray-300">
+                <ul className="list-disc list-inside ml-4 space-y-1 text-sm text-gray-700">
                   <li>View interactive plots showing species concentrations over time</li>
                   <li>Select specific species to display on the chart</li>
                   <li>Download results as CSV or JSON for further analysis</li>
@@ -187,10 +187,10 @@ export function GuidePage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="p-4 bg-white/0 backdrop-blur-lg border border-white/20 rounded-lg">
               <h4 className="font-bold mb-2 underline decoration-clone">Chapman Mechanism</h4>
-              <p className="text-xs text-white-200 mb-2">
+              <p className="text-xs text-gray-700 mb-2">
                 Stratospheric oxygen chemistry with photolysis reactions
               </p>
-              <ul className="text-xs text-white-200 space-y-1">
+              <ul className="text-xs text-gray-700 space-y-1">
                 <li>4 species (O2, O, O1D, O3)</li>
                 <li>Photolysis-driven reactions</li>
                 <li>Ideal for learning basics</li>
@@ -199,8 +199,8 @@ export function GuidePage() {
 
             <div className="p-4 bg-white/0 backdrop-blur-lg border border-white/20 rounded-lg">
               <h4 className="font-bold mb-2 underline decoration-clone">TS1 Mechanism</h4>
-              <p className="text-xs text-white-200 mb-2">Tropospheric chemistry with 210 species</p>
-              <ul className="text-xs text-white-200 space-y-1">
+              <p className="text-xs text-gray-700 mb-2">Tropospheric chemistry with 210 species</p>
+              <ul className="text-xs text-gray-700 space-y-1">
                 <li>210 species</li>
                 <li>534 reactions (ARRHENIUS, TROE)</li>
                 <li>Comprehensive tropospheric chemistry</li>
@@ -209,8 +209,8 @@ export function GuidePage() {
 
             <div className="p-4 bg-white/0 backdrop-blur-lg border border-white/20 rounded-lg">
               <h4 className="font-bold mb-2 underline decoration-clone">Full Configuration</h4>
-              <p className="text-xs text-white-200 mb-2">Test mechanism with all reaction types</p>
-              <ul className="text-xs text-white-200 space-y-1">
+              <p className="text-xs text-gray-700 mb-2">Test mechanism with all reaction types</p>
+              <ul className="text-xs text-gray-700 space-y-1">
                 <li>10 species</li>
                 <li>11 reaction types demonstrated</li>
                 <li>Great for testing features</li>
@@ -229,35 +229,35 @@ export function GuidePage() {
           <div className="space-y-3 text-sm">
             <div className="flex gap-3">
               <Lightbulb className="w-6 h-6 flex-shrink-0" />
-              <div className="text-gray-300">
+              <div className="text-gray-700">
                 <strong>Use Scientific Notation:</strong> For concentrations and rate constants, use
                 scientific notation (e.g., 1.5e-8) for better precision
               </div>
             </div>
             <div className="flex gap-3">
               <Save className="w-6 h-6 flex-shrink-0" />
-              <div className="text-gray-300">
+              <div className="text-gray-700">
                 <strong>Save Your Work:</strong> Download your configuration from the Review tab
                 before running simulations, so you can reload it later
               </div>
             </div>
             <div className="flex gap-3">
               <Timer className="w-6 h-6 flex-shrink-0" />
-              <div className="text-gray-300">
+              <div className="text-gray-700">
                 <strong>Start Small:</strong> For initial tests, use shorter simulation times and
                 larger time steps to ensure everything works correctly
               </div>
             </div>
             <div className="flex gap-3">
               <BarChart3 className="w-6 h-6 flex-shrink-0" />
-              <div className="text-gray-300">
+              <div className="text-gray-700">
                 <strong>Review Configuration:</strong> Always check the configuration checklist in
                 the Review tab before running to ensure all required fields are complete
               </div>
             </div>
             <div className="flex gap-3">
               <RotateCw className="w-6 h-6 flex-shrink-0" />
-              <div className="text-gray-300">
+              <div className="text-gray-700">
                 <strong>Experiment:</strong> Try different mechanisms, modify parameters, and see
                 how results change - that's the best way to learn!
               </div>
@@ -272,7 +272,7 @@ export function GuidePage() {
           <CardTitle>Need More Help?</CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-sm text-gray-300 mb-3">
+          <p className="text-sm text-gray-700 mb-3">
             For more information about MUSICA and MICM, visit the official documentation:
           </p>
           <ul className="space-y-2 text-sm">
@@ -281,7 +281,7 @@ export function GuidePage() {
                 href="https://github.com/NCAR/musica"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-blue-400 hover:text-blue-300 font-medium underline"
+                className="text-blue-700 hover:text-blue-900 font-medium underline"
               >
                 MUSICA GitHub Repository
               </a>
@@ -291,7 +291,7 @@ export function GuidePage() {
                 href="https://ncar.github.io/musica/"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-blue-400 hover:text-blue-300 font-medium underline"
+                className="text-blue-700 hover:text-blue-900 font-medium underline"
               >
                 MUSICA Documentation
               </a>

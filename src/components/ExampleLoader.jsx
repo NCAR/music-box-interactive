@@ -290,7 +290,7 @@ export function ExampleLoader() {
 
       <CardContent>
         {error && (
-          <div className="bg-red-900/20 backdrop-blur-lg border border-red-400/30 text-red-400 px-4 py-3 rounded mb-4">
+          <div className="bg-red-900/20 backdrop-blur-lg border border-red-400/30 text-red-700 px-4 py-3 rounded mb-4">
             {error}
           </div>
         )}
@@ -303,8 +303,8 @@ export function ExampleLoader() {
             >
               <div className="flex-1">
                 <h4 className="font-semibold text-sm">{example.name}</h4>
-                <p className="text-xs text-gray-100 mt-1">{example.description}</p>
-                <span className="inline-block mt-2 px-2 py-1 bg-white/5 backdrop-blur-lg border border-white/20 text-white text-xs font-bold rounded">
+                <p className="text-xs text-gray-700 mt-1">{example.description}</p>
+                <span className="inline-block mt-2 px-2 py-1 bg-white/5 backdrop-blur-lg border border-white/20 text-gray-900 text-xs font-bold rounded">
                   {example.mechanism_name}
                 </span>
               </div>

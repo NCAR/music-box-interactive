@@ -50,7 +50,7 @@ export function EmissionReactionForm({ onAddReaction }) {
       )}
 
       <div>
-        <label className="block text-xs font-semibold text-blue-100 mb-1">
+        <label className="block text-xs font-semibold text-blue-900 mb-1">
           Products (e.g., "O3" or "NO + O2")
         </label>
         <input
@@ -58,13 +58,13 @@ export function EmissionReactionForm({ onAddReaction }) {
           value={products}
           onChange={(e) => setProducts(e.target.value)}
           placeholder="O3"
-          className="w-full px-3 py-2 border-2 border-white/30 bg-white/10 text-white placeholder:text-gray-400 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
+          className="w-full px-3 py-2 border-2 border-white/30 bg-white/10 text-gray-900 placeholder:text-gray-500 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
         />
       </div>
 
       <div>
         <div>
-          <label className="block text-xs font-semibold text-blue-100 mb-1">
+          <label className="block text-xs font-semibold text-blue-900 mb-1">
             Scaling Factor (optional; defaults to 1.0)
           </label>
           <input
@@ -72,7 +72,7 @@ export function EmissionReactionForm({ onAddReaction }) {
             value={emissionScaling}
             onChange={(e) => setEmissionScaling(e.target.value)}
             placeholder="12.3"
-            className="w-full px-3 py-2 border-2 border-white/30 bg-white/10 text-white placeholder:text-gray-400 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
+            className="w-full px-3 py-2 border-2 border-white/30 bg-white/10 text-gray-900 placeholder:text-gray-500 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
           />
         </div>
       </div>

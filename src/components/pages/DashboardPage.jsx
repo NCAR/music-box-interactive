@@ -187,7 +187,7 @@ export function DashboardPage() {
           <CardTitle className="text-lg xs:text-xl sm:text-2xl">
             MusicBox Interactive Dashboard
           </CardTitle>
-          <CardDescription className="text-sm xs:text-base text-white-200 italic">
+          <CardDescription className="text-sm xs:text-base text-gray-700 italic">
             Atmospheric Chemistry Simulation Platform powered by MUSICA/MICM
           </CardDescription>
         </CardHeader>
@@ -198,7 +198,7 @@ export function DashboardPage() {
                 <Atom className="w-6 h-6 xs:w-7 xs:h-7 sm:w-8 sm:h-8" />
               </div>
               <h3 className="font-semibold mb-1 text-sm xs:text-base">Mechanism Editor</h3>
-              <p className="text-xs text-gray-200 italic">
+              <p className="text-xs text-gray-700 italic">
                 Create and edit chemical species and reactions
               </p>
             </div>
@@ -207,7 +207,7 @@ export function DashboardPage() {
                 <Settings className="w-6 h-6 xs:w-7 xs:h-7 sm:w-8 sm:h-8" />
               </div>
               <h3 className="font-semibold mb-1 text-sm xs:text-base">Configure Conditions</h3>
-              <p className="text-xs text-gray-200 italic">
+              <p className="text-xs text-gray-700 italic">
                 Set simulation parameters and initial conditions
               </p>
             </div>
@@ -216,7 +216,7 @@ export function DashboardPage() {
                 <BarChart3 className="w-6 h-6 xs:w-7 xs:h-7 sm:w-8 sm:h-8" />
               </div>
               <h3 className="font-semibold mb-1 text-sm xs:text-base">Visualize Results</h3>
-              <p className="text-xs text-gray-200 italic">
+              <p className="text-xs text-gray-700 italic">
                 Analyze concentration profiles and reaction rates
               </p>
             </div>
@@ -231,7 +231,7 @@ export function DashboardPage() {
             <Rocket className="w-5 h-5 xs:w-6 xs:h-6" />
             Getting Started
           </CardTitle>
-          <CardDescription className="text-white italic text-sm xs:text-base">
+          <CardDescription className="text-gray-700 italic text-sm xs:text-base">
             Choose how you want to start using MusicBox
           </CardDescription>
         </CardHeader>
@@ -243,7 +243,7 @@ export function DashboardPage() {
                 <PenLine className="w-8 h-8 xs:w-9 xs:h-9 sm:w-10 sm:h-10" />
               </div>
               <h4 className="font-bold mb-2 text-sm xs:text-base">Start from Scratch</h4>
-              <p className="text-xs text-gray-200 mb-3 italic">
+              <p className="text-xs text-gray-700 mb-3 italic">
                 Build a custom mechanism from the ground up. Add species and reactions manually.
               </p>
               <Button
@@ -261,7 +261,7 @@ export function DashboardPage() {
                 <FolderOpen className="w-8 h-8 xs:w-9 xs:h-9 sm:w-10 sm:h-10" />
               </div>
               <h4 className="font-bold mb-2 text-sm xs:text-base">Load Configuration</h4>
-              <p className="text-xs text-gray-200 mb-3 xs:mb-7 italic">
+              <p className="text-xs text-gray-700 mb-3 xs:mb-7 italic">
                 Load a previously saved configuration file (.json) to continue your work.
               </p>
               <input
@@ -288,7 +288,7 @@ export function DashboardPage() {
                 <Library className="w-8 h-8 xs:w-9 xs:h-9 sm:w-10 sm:h-10" />
               </div>
               <h4 className="font-bold mb-2 text-sm xs:text-base">Select Example</h4>
-              <p className="text-xs text-gray-200 mb-3 italic">
+              <p className="text-xs text-gray-700 mb-3 italic">
                 Choose from pre-configured examples (Chapman, TS1, Full Configuration) to get
                 started quickly.
               </p>

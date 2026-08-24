@@ -15,7 +15,7 @@ export function SpeciesPlot() {
     return (
       <Card>
         <CardContent className="flex items-center justify-center h-96">
-          <div className="text-center text-white-500">
+          <div className="text-center text-gray-500">
             <div className="flex justify-center mb-2">
               <BarChart3 className="w-12 h-12" />
             </div>

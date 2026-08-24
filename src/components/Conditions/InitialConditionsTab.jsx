@@ -207,7 +207,7 @@ export function InitialConditionsTab() {
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
-            <label className="block text-sm font-semibold text-blue-100 mb-2">
+            <label className="block text-sm font-semibold text-blue-900 mb-2">
               Temperature (K)
             </label>
             <input
@@ -219,7 +219,7 @@ export function InitialConditionsTab() {
               }}
               step="0.1"
               min="0"
-              className="w-full px-3 py-2 border-2 border-white/30 bg-white/10 text-white placeholder:text-gray-400 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent"
+              className="w-full px-3 py-2 border-2 border-white/30 bg-white/10 text-gray-900 placeholder:text-gray-500 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent"
             />
             <p className="text-xs text-gray-500 mt-1">
               {(initial.temperature - 273.15).toFixed(2)}°C
@@ -227,7 +227,7 @@ export function InitialConditionsTab() {
           </div>
 
           <div>
-            <label className="block text-sm font-semibold text-blue-100 mb-2">Pressure (Pa)</label>
+            <label className="block text-sm font-semibold text-blue-900 mb-2">Pressure (Pa)</label>
             <input
               type="number"
               value={initial.pressure}
@@ -237,7 +237,7 @@ export function InitialConditionsTab() {
               }}
               step="100"
               min="0"
-              className="w-full px-3 py-2 border-2 border-white/30 bg-white/10 text-white placeholder:text-gray-400 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent"
+              className="w-full px-3 py-2 border-2 border-white/30 bg-white/10 text-gray-900 placeholder:text-gray-500 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent"
             />
             <p className="text-xs text-gray-500 mt-1">
               {(initial.pressure / 101325).toFixed(4)} atm
@@ -255,7 +255,7 @@ export function InitialConditionsTab() {
         <CardContent className="space-y-4">
           {/* Add New Species */}
           <div className="p-4 bg-white/0 backdrop-blur-lg rounded-xl border-2 border-white/20">
-            <h4 className="font-bold text-sm mb-3 text-blue-100 flex items-center gap-2">
+            <h4 className="font-bold text-sm mb-3 text-blue-900 flex items-center gap-2">
               <Plus className="w-4 h-4" />
               Add New Species
             </h4>
@@ -272,14 +272,14 @@ export function InitialConditionsTab() {
                 placeholder="Species name (e.g., OH, NO3)"
                 value={newSpecies}
                 onChange={(e) => setNewSpecies(e.target.value)}
-                className="px-3 py-2 border-2 border-white/30 bg-white/10 text-white placeholder:text-gray-400 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent"
+                className="px-3 py-2 border-2 border-white/30 bg-white/10 text-gray-900 placeholder:text-gray-500 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent"
               />
               <input
                 type="text"
                 placeholder="Concentration (e.g., 1e-8)"
                 value={newConcentration}
                 onChange={(e) => setNewConcentration(e.target.value)}
-                className="px-3 py-2 border-2 border-white/30 bg-white/10 text-white placeholder:text-gray-400 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent"
+                className="px-3 py-2 border-2 border-white/30 bg-white/10 text-gray-900 placeholder:text-gray-500 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent"
               />
             </div>
 
@@ -306,14 +306,14 @@ export function InitialConditionsTab() {
                   className="flex items-center gap-3 p-3 border border-white/20 rounded-lg bg-white/5 hover:bg-white/10 transition-colors"
                 >
                   <div className="flex-1">
-                    <label className="block text-sm font-semibold text-blue-100 mb-1">
+                    <label className="block text-sm font-semibold text-blue-900 mb-1">
                       {species}
                     </label>
                     <input
                       type="text"
                       value={concentration}
                       onChange={(e) => handleConcentrationChange(species, e.target.value)}
-                      className="w-full px-2 py-1 border border-white/30 bg-white/10 text-white placeholder:text-gray-400 rounded text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
+                      className="w-full px-2 py-1 border border-white/30 bg-white/10 text-gray-900 placeholder:text-gray-500 rounded text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
                     />
                   </div>
                   <Button
@@ -331,7 +331,7 @@ export function InitialConditionsTab() {
         </CardContent>
       </Card>
 
-      <div className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-lg p-3 text-xs text-gray-300">
+      <div className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-lg p-3 text-xs text-gray-700">
         <p className="font-semibold mb-1 flex items-center gap-2">
           <Lightbulb className="w-4 h-4" />
           Tips:

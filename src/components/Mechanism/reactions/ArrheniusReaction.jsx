@@ -84,7 +84,7 @@ export function ArrheniusReactionForm({ onAddReaction }) {
       )}
 
       <div>
-        <label className="block text-xs font-semibold text-blue-100 mb-1">
+        <label className="block text-xs font-semibold text-blue-900 mb-1">
           Reactants (e.g., "O2 + O" or "2NO2")
         </label>
         <input
@@ -92,12 +92,12 @@ export function ArrheniusReactionForm({ onAddReaction }) {
           value={reactants}
           onChange={(e) => setReactants(e.target.value)}
           placeholder="O2 + O"
-          className="w-full px-3 py-2 border-2 border-white/30 bg-white/10 text-white placeholder:text-gray-400 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
+          className="w-full px-3 py-2 border-2 border-white/30 bg-white/10 text-gray-900 placeholder:text-gray-500 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
         />
       </div>
 
       <div>
-        <label className="block text-xs font-semibold text-blue-100 mb-1">
+        <label className="block text-xs font-semibold text-blue-900 mb-1">
           Products (e.g., "O3" or "NO + O2")
         </label>
         <input
@@ -105,13 +105,13 @@ export function ArrheniusReactionForm({ onAddReaction }) {
           value={products}
           onChange={(e) => setProducts(e.target.value)}
           placeholder="O3"
-          className="w-full px-3 py-2 border-2 border-white/30 bg-white/10 text-white placeholder:text-gray-400 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
+          className="w-full px-3 py-2 border-2 border-white/30 bg-white/10 text-gray-900 placeholder:text-gray-500 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
         />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         <div>
-          <label className="block text-xs font-semibold text-blue-100 mb-1">
+          <label className="block text-xs font-semibold text-blue-900 mb-1">
             Rate Constant A (pre-exponential factor)
           </label>
           <input
@@ -119,47 +119,47 @@ export function ArrheniusReactionForm({ onAddReaction }) {
             value={rateA}
             onChange={(e) => setRateA(e.target.value)}
             placeholder="1.0e-10"
-            className="w-full px-3 py-2 border-2 border-white/30 bg-white/10 text-white placeholder:text-gray-400 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
+            className="w-full px-3 py-2 border-2 border-white/30 bg-white/10 text-gray-900 placeholder:text-gray-500 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
           />
         </div>
         <div>
-          <label className="block text-xs font-semibold text-blue-100 mb-1">Parameter B</label>
+          <label className="block text-xs font-semibold text-blue-900 mb-1">Parameter B</label>
           <input
             type="text"
             value={rateB}
             onChange={(e) => setRateB(e.target.value)}
             placeholder="0.0"
-            className="w-full px-3 py-2 border-2 border-white/30 bg-white/10 text-white placeholder:text-gray-400 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
+            className="w-full px-3 py-2 border-2 border-white/30 bg-white/10 text-gray-900 placeholder:text-gray-500 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
           />
         </div>
         <div>
-          <label className="block text-xs font-semibold text-blue-100 mb-1">Parameter C</label>
+          <label className="block text-xs font-semibold text-blue-900 mb-1">Parameter C</label>
           <input
             type="text"
             value={rateC}
             onChange={(e) => setRateC(e.target.value)}
             placeholder="0.0"
-            className="w-full px-3 py-2 border-2 border-white/30 bg-white/10 text-white placeholder:text-gray-400 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
+            className="w-full px-3 py-2 border-2 border-white/30 bg-white/10 text-gray-900 placeholder:text-gray-500 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
           />
         </div>
         <div>
-          <label className="block text-xs font-semibold text-blue-100 mb-1">Parameter D</label>
+          <label className="block text-xs font-semibold text-blue-900 mb-1">Parameter D</label>
           <input
             type="text"
             value={rateD}
             onChange={(e) => setRateD(e.target.value)}
             placeholder="0.0"
-            className="w-full px-3 py-2 border-2 border-white/30 bg-white/10 text-white placeholder:text-gray-400 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
+            className="w-full px-3 py-2 border-2 border-white/30 bg-white/10 text-gray-900 placeholder:text-gray-500 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
           />
         </div>
         <div>
-          <label className="block text-xs font-semibold text-blue-100 mb-1">Parameter E</label>
+          <label className="block text-xs font-semibold text-blue-900 mb-1">Parameter E</label>
           <input
             type="text"
             value={rateE}
             onChange={(e) => setRateE(e.target.value)}
             placeholder="0.0"
-            className="w-full px-3 py-2 border-2 border-white/30 bg-white/10 text-white placeholder:text-gray-400 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
+            className="w-full px-3 py-2 border-2 border-white/30 bg-white/10 text-gray-900 placeholder:text-gray-500 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
           />
         </div>
       </div>

@@ -68,7 +68,7 @@ export function EnvironmentPlot() {
     return (
       <Card>
         <CardContent className="flex items-center justify-center h-96">
-          <div className="text-center text-white-500">
+          <div className="text-center text-gray-500">
             <div className="flex justify-center mb-2">
               <Thermometer className="w-12 h-12" />
             </div>
@@ -189,13 +189,13 @@ export function EnvironmentPlot() {
         className={`border rounded-lg p-3 text-xs ${hasEvolvingConditions ? 'bg-green-900/20 border-green-400/50' : 'bg-blue-900/20 border-blue-400/50'}`}
       >
         <p
-          className={`font-semibold mb-1 flex items-center gap-2 ${hasEvolvingConditions ? 'text-green-100' : 'text-blue-100'}`}
+          className={`font-semibold mb-1 flex items-center gap-2 ${hasEvolvingConditions ? 'text-green-800' : 'text-blue-900'}`}
         >
           <Info className="w-4 h-4" />
           Environmental Conditions:
         </p>
         {hasEvolvingConditions ? (
-          <ul className="space-y-0.5 ml-4 text-gray-300">
+          <ul className="space-y-0.5 ml-4 text-gray-700">
             <li>
               • <strong>Evolving conditions enabled</strong> - Temperature and pressure vary over
               time
@@ -211,7 +211,7 @@ export function EnvironmentPlot() {
             <li>• Interpolation method: Step (most recent value at or before each time)</li>
           </ul>
         ) : (
-          <ul className="space-y-0.5 ml-4 text-gray-300">
+          <ul className="space-y-0.5 ml-4 text-gray-700">
             <li>
               • Temperature: {conditions.initial.temperature} K (
               {(conditions.initial.temperature - 273.15).toFixed(2)}°C) - Constant

@@ -76,7 +76,7 @@ export function TunnelingReactionForm({ onAddReaction }) {
       )}
 
       <div>
-        <label className="block text-xs font-semibold text-blue-100 mb-1">
+        <label className="block text-xs font-semibold text-blue-900 mb-1">
           Reactants (e.g., "B")
         </label>
         <input
@@ -84,12 +84,12 @@ export function TunnelingReactionForm({ onAddReaction }) {
           value={reactants}
           onChange={(e) => setReactants(e.target.value)}
           placeholder="B"
-          className="w-full px-3 py-2 border-2 border-white/30 bg-white/10 text-white placeholder:text-gray-400 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
+          className="w-full px-3 py-2 border-2 border-white/30 bg-white/10 text-gray-900 placeholder:text-gray-500 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
         />
       </div>
 
       <div>
-        <label className="block text-xs font-semibold text-blue-100 mb-1">
+        <label className="block text-xs font-semibold text-blue-900 mb-1">
           Products (e.g., "C" or "0.2A + 1.2B")
         </label>
         <input
@@ -97,39 +97,39 @@ export function TunnelingReactionForm({ onAddReaction }) {
           value={products}
           onChange={(e) => setProducts(e.target.value)}
           placeholder="C"
-          className="w-full px-3 py-2 border-2 border-white/30 bg-white/10 text-white placeholder:text-gray-400 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
+          className="w-full px-3 py-2 border-2 border-white/30 bg-white/10 text-gray-900 placeholder:text-gray-500 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
         />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
         <div>
-          <label className="block text-xs font-semibold text-blue-100 mb-1">A (optional)</label>
+          <label className="block text-xs font-semibold text-blue-900 mb-1">A (optional)</label>
           <input
             type="text"
             value={paramA}
             onChange={(e) => setParamA(e.target.value)}
             placeholder="123.45"
-            className="w-full px-3 py-2 border-2 border-white/30 bg-white/10 text-white placeholder:text-gray-400 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
+            className="w-full px-3 py-2 border-2 border-white/30 bg-white/10 text-gray-900 placeholder:text-gray-500 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
           />
         </div>
         <div>
-          <label className="block text-xs font-semibold text-blue-100 mb-1">B (optional)</label>
+          <label className="block text-xs font-semibold text-blue-900 mb-1">B (optional)</label>
           <input
             type="text"
             value={paramB}
             onChange={(e) => setParamB(e.target.value)}
             placeholder="1200.0"
-            className="w-full px-3 py-2 border-2 border-white/30 bg-white/10 text-white placeholder:text-gray-400 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
+            className="w-full px-3 py-2 border-2 border-white/30 bg-white/10 text-gray-900 placeholder:text-gray-500 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
           />
         </div>
         <div>
-          <label className="block text-xs font-semibold text-blue-100 mb-1">C (optional)</label>
+          <label className="block text-xs font-semibold text-blue-900 mb-1">C (optional)</label>
           <input
             type="text"
             value={paramC}
             onChange={(e) => setParamC(e.target.value)}
             placeholder="1.0e8"
-            className="w-full px-3 py-2 border-2 border-white/30 bg-white/10 text-white placeholder:text-gray-400 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
+            className="w-full px-3 py-2 border-2 border-white/30 bg-white/10 text-gray-900 placeholder:text-gray-500 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
           />
         </div>
       </div>

@@ -1,145 +1,482 @@
-import { MultiRange } from '../ui/multirange'
+import { useState, useRef, useCallback, useMemo, useEffect } from 'react'
 import { useSelector } from 'react-redux'
+import { ChevronDown, Check } from 'lucide-react'
+import { useClickOutside } from '../../hooks/useClickOutside'
+import { getSpeciesDisplayName } from './speciesFormat'
+
+// Show at most this many species as chips before collapsing the rest into a "+N others" menu
+const SPECIES_CHIP_VISIBLE = 25
+
+// Mechanisms at or under this size default to all species selected.
+// Larger mechanisms default to none to keep graphs readable.
+const SPECIES_AUTO_SELECT_THRESHOLD = 15
+
+const VALUE_DISPLAY_OPTIONS = [
+  { id: 'absolute', label: 'Absolute' },
+  { id: 'relative', label: 'Relative' },
+]
+
+const ARROW_SCALING_OPTIONS = [
+  { id: 'linear', label: 'Linear' },
+  { id: 'logarithmic', label: 'Logarithmic' },
+]
+
+const TIME_RANGE_UNITS = [
+  { id: 'seconds', label: 'Seconds', divisor: 1 },
+  { id: 'hours', label: 'Hours', divisor: 3600 },
+]
+
+// `sigDigits` renders in exponential notation, which is required for integrated rates:
+// they run around 1e-6 to 1e-8, and fixed-point rounding would show 1.8e-7 as "0.000000"
+// and commit a literal 0 on blur. Time values are plain magnitudes and pass no sigDigits.
+const formatBound = (raw, divisor, sigDigits) => {
+  const scaled = raw / divisor
+  return String(sigDigits != null ? scaled.toExponential(sigDigits) : scaled)
+}
+
+// Number input that displays values in the selected time unit while storing them in seconds.
+// Commits are clamped to [min, max], keeping a range's start from crossing its end.
+function RangeBoundInput({ value, divisor = 1, onCommit, className, sigDigits, min, max }) {
+  const displayValue = formatBound(value, divisor, sigDigits)
+  const [draft, setDraft] = useState(displayValue)
+
+  useEffect(() => {
+    setDraft(displayValue)
+  }, [displayValue])
+
+  const commit = () => {
+    // Untouched field: committing would round-trip the *displayed* value back into state,
+    // discarding precision the display omits. Merely focusing and leaving must be lossless.
+    if (draft === displayValue) return
+
+    const parsed = parseFloat(draft)
+    if (isNaN(parsed)) {
+      setDraft(displayValue)
+      return
+    }
+
+    let next = parsed * divisor
+    if (Number.isFinite(min)) next = Math.max(min, next)
+    if (Number.isFinite(max)) next = Math.min(max, next)
+
+    // Re-sync the draft explicitly: a clamped entry often equals the value already in
+    // state, so the `value` prop never changes and the effect above won't fire to
+    // replace the out-of-range text the user typed.
+    setDraft(formatBound(next, divisor, sigDigits))
+    onCommit(next)
+  }
+
+  return (
+    <input
+      type="text"
+      inputMode="decimal"
+      value={draft}
+      onChange={(e) => setDraft(e.target.value)}
+      onBlur={commit}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter') commit()
+      }}
+      className={className}
+    />
+  )
+}
 
 /*
  * FlowPanel Component
  * Creates a control panel that allows for customization of flow visualizations
  * Features include:
- *   - Arrow Width Scaling
- *       - Linear or logarithmic
- *       - Slider to adjust width
- *   - Time Range(s) Selection w/slider
- *   - Flux Range Slider (in mol m-3)
+ *   - Value Display (absolute magnitude or relative contribution)
+ *   - Arrow Width Scaling (linear or logarithmic)
+ *   - Time Range selection (seconds or hours)
+ *   - Integrated reaction rate range selection (in mol m-3)
  *   - Species Selection Dropdown
  */
 
 export function FlowPanel({
   arrowScaling,
   setArrowScaling,
-  arrowWidth,
-  setArrowWidth,
-  timeValues,
   range,
   setRange,
-  fluxValues,
-  fluxRange,
-  setFluxRange,
+  rateRange,
+  setRateRange,
   selectedSpecies,
   setSelectedSpecies,
+  valueDisplay,
+  setValueDisplay,
 }) {
-  const species = useSelector((state) => state.mechanism.species)
+  const results = useSelector((state) => state.simulation.results)
+  // Upper bound for Time Range — results never extend past the simulation length.
+  const duration = useSelector((state) => state.conditions.basic.duration)
+  const speciesNames = useMemo(() => {
+    if (!Array.isArray(results) || results.length === 0) return []
+    const firstPoint = results[0]
+    const keys =
+      firstPoint?.concentrations && typeof firstPoint.concentrations === 'object'
+        ? Object.keys(firstPoint.concentrations)
+        : Object.keys(firstPoint).filter(
+            (key) => key !== 'time' && key !== 'timestamp' && key !== 'date' && key !== 'concentrations'
+          )
+    return keys.map(getSpeciesDisplayName)
+  }, [results])
+  const displaySpecies = selectedSpecies || []
 
-  // Convert time values to indices and back
-  const timeValueToIndex = (timeVal) => {
-    if (!timeValues || timeValues.length === 0) return 0
-    return timeValues.reduce(
-      (bestIdx, v, i) =>
-        Math.abs(v - timeVal) < Math.abs(timeValues[bestIdx] - timeVal) ? i : bestIdx,
-      0
+  const [initialized, setInitialized] = useState(false)
+
+  // Small mechanisms default to all species selected. Larger mechanisms default to
+  // none to avoid producing an unreadable graph when everything is selected.
+  useEffect(() => {
+    if (!initialized && speciesNames.length > 0 && displaySpecies.length === 0) {
+      if (speciesNames.length <= SPECIES_AUTO_SELECT_THRESHOLD) {
+        setSelectedSpecies(speciesNames)
+      }
+      setInitialized(true)
+    }
+  }, [speciesNames, displaySpecies.length, initialized, setSelectedSpecies])
+
+  const [speciesSearch, setSpeciesSearch] = useState('')
+  const [selectAllMenuOpen, setSelectAllMenuOpen] = useState(false)
+  const [speciesOverflowOpen, setSpeciesOverflowOpen] = useState(false)
+  const [valueDisplayMenuOpen, setValueDisplayMenuOpen] = useState(false)
+  const [arrowScalingMenuOpen, setArrowScalingMenuOpen] = useState(false)
+  const [timeRangeUnitId, setTimeRangeUnitId] = useState('seconds')
+  const [timeRangeUnitMenuOpen, setTimeRangeUnitMenuOpen] = useState(false)
+  const selectAllMenuRef = useRef(null)
+  const speciesOverflowRef = useRef(null)
+  const valueDisplayMenuRef = useRef(null)
+  const arrowScalingMenuRef = useRef(null)
+  const timeRangeUnitMenuRef = useRef(null)
+  const closeSelectAllMenu = useCallback(() => setSelectAllMenuOpen(false), [])
+  const closeSpeciesOverflow = useCallback(() => setSpeciesOverflowOpen(false), [])
+  const closeValueDisplayMenu = useCallback(() => setValueDisplayMenuOpen(false), [])
+  const closeArrowScalingMenu = useCallback(() => setArrowScalingMenuOpen(false), [])
+  const closeTimeRangeUnitMenu = useCallback(() => setTimeRangeUnitMenuOpen(false), [])
+  useClickOutside(selectAllMenuRef, closeSelectAllMenu, selectAllMenuOpen)
+  useClickOutside(speciesOverflowRef, closeSpeciesOverflow, speciesOverflowOpen)
+  useClickOutside(valueDisplayMenuRef, closeValueDisplayMenu, valueDisplayMenuOpen)
+  useClickOutside(arrowScalingMenuRef, closeArrowScalingMenu, arrowScalingMenuOpen)
+  useClickOutside(timeRangeUnitMenuRef, closeTimeRangeUnitMenu, timeRangeUnitMenuOpen)
+
+  const timeRangeUnit = TIME_RANGE_UNITS.find((u) => u.id === timeRangeUnitId) ?? TIME_RANGE_UNITS[0]
+
+  const valueDisplayOption =
+    VALUE_DISPLAY_OPTIONS.find((o) => o.id === valueDisplay) ?? VALUE_DISPLAY_OPTIONS[0]
+  const arrowScalingOption =
+    ARROW_SCALING_OPTIONS.find((o) => o.id === arrowScaling) ?? ARROW_SCALING_OPTIONS[0]
+
+  const toggleSpecies = (name) => {
+    setSelectedSpecies(
+      displaySpecies.includes(name)
+        ? displaySpecies.filter((n) => n !== name)
+        : [...displaySpecies, name]
     )
   }
 
-  const indexToTimeValue = (idx) => {
-    return timeValues[Math.max(0, Math.min(idx, timeValues.length - 1))] || 0
-  }
+  // Filter and sort species for the search box (exact match first)
+  const filteredSpecies = useMemo(() => {
+    const search = speciesSearch.trim().toLowerCase()
+    if (!search) return speciesNames
+    return speciesNames
+      .filter((name) => name.toLowerCase().startsWith(search))
+      .sort((a, b) => {
+        const aExact = a.toLowerCase() === search
+        const bExact = b.toLowerCase() === search
+        if (aExact && !bExact) return -1
+        if (!aExact && bExact) return 1
+        return 0
+      })
+  }, [speciesNames, speciesSearch])
 
-  // Convert range (time values) to indices for MultiRange
-  const minIdx = timeValueToIndex(range.start)
-  const maxIdx = timeValueToIndex(range.end)
+  const visibleFilteredSpecies = filteredSpecies.slice(0, SPECIES_CHIP_VISIBLE)
+  const overflowFilteredSpecies = filteredSpecies.slice(SPECIES_CHIP_VISIBLE)
 
-  // console.log('range:', range);
-  // console.log('timeValues first 5:', timeValues?.slice(0, 5));
-  // console.log('minIdx:', minIdx, 'maxIdx:', maxIdx);
-
-  const handleTimeRangeChange = (newRange) => {
-    // console.log('handleTimeRangeChange called with:', newRange);
-    const start = indexToTimeValue(newRange.minIndex)
-    const end = indexToTimeValue(newRange.maxIndex)
-    // console.log('setting range to:', { start, end });
-    setRange({ start, end })
-  }
+  const allFilteredSelected =
+    filteredSpecies.length > 0 && filteredSpecies.every((name) => displaySpecies.includes(name))
+  const noneSelected = displaySpecies.length === 0
+  const selectAllStatusLabel = allFilteredSelected
+    ? 'Select all'
+    : noneSelected
+      ? 'Deselect all'
+      : 'Custom'
 
   return (
-    <div className="flex flex-col gap-4 p-4 h-full min-h-[24rem] border rounded-md bg-white/10 text-white">
-      {/* Arrow Width Scaling */}
-      <label className="flex flex-col gap-1 items-center text-lg font-semibold">
-        Arrow Width Scaling:
-        <select
-          className="w-full rounded border bg-white !text-black px-2 py-1 text-base font-normal"
-          style={{ color: 'black' }}
-          value={arrowScaling}
-          onChange={(e) => setArrowScaling(e.target.value)}
-        >
-          <option value="linear">Linear</option>
-          <option value="logarithmic">Logarithmic</option>
-        </select>
-      </label>
+    <div className="flex flex-wrap items-start gap-3 p-2 xs:p-3 sm:p-4 w-full rounded-lg bg-gray-50 text-gray-900 mt-2 xs:mt-3 sm:mt-4">
+      {/* Row 1: Value Display | Arrow Scaling | Time Range | Flux */}
+      <div className="flex flex-wrap items-center justify-between gap-3 w-full text-sm font-semibold">
+        <div className="relative" ref={valueDisplayMenuRef}>
+            <button
+              type="button"
+              onClick={() => setValueDisplayMenuOpen((open) => !open)}
+              className="flex items-center justify-between gap-1 w-fit h-8 bg-blue-100/50 text-gray-900 border border-gray-300 rounded-lg text-sm font-bold px-2.5 whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-blue-600 transition-colors duration-200"
+            >
+              <span className="pr-2">{valueDisplayOption.label}</span>
+              <ChevronDown className="w-3.5 h-3.5 flex-shrink-0" />
+            </button>
 
-      {/* Arrow Width */}
-      <label className="flex flex-col gap-1 items-center text-lg">
-        Max Arrow Width: {arrowWidth}
-        <input
-          type="range"
-          min={1}
-          max={15}
-          step={1}
-          value={arrowWidth}
-          onChange={(e) => setArrowWidth(e.target.value)}
-          className="w-full accent-teal-400"
-        />
-      </label>
+            {valueDisplayMenuOpen && (
+              <div className="absolute z-10 mt-1 min-w-[12rem] bg-white border border-gray-300 rounded-lg shadow-lg py-1">
+                {VALUE_DISPLAY_OPTIONS.map((option) => (
+                  <button
+                    key={option.id}
+                    type="button"
+                    onClick={() => {
+                      setValueDisplay(option.id)
+                      setValueDisplayMenuOpen(false)
+                    }}
+                    className="w-full flex items-center gap-2 text-left text-sm font-bold px-3 py-1.5 text-gray-800 hover:bg-gray-100 whitespace-nowrap"
+                  >
+                    <Check
+                      className={`w-3.5 h-3.5 flex-shrink-0 ${
+                        valueDisplay === option.id ? 'opacity-100' : 'opacity-0'
+                      }`}
+                    />
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
 
-      {/* Time Range */}
-      <label className="flex flex-col gap-1 items-center text-lg font-semibold">
-        Time Range [s]:
-        <div className="w-full font-normal text-base">
-          <MultiRange
-            values={timeValues}
-            minIndex={minIdx}
-            maxIndex={maxIdx}
-            onChange={handleTimeRangeChange}
-          />
-        </div>
-      </label>
+          <div className="relative" ref={arrowScalingMenuRef}>
+            <button
+              type="button"
+              onClick={() => setArrowScalingMenuOpen((open) => !open)}
+              className="flex items-center justify-between gap-1 w-32 h-8 bg-blue-100/50 text-gray-900 border border-gray-300 rounded-lg text-sm font-bold px-2.5 focus:outline-none focus:ring-2 focus:ring-blue-600 transition-colors duration-200"
+            >
+              <span className="pr-2">{arrowScalingOption.label}</span>
+              <ChevronDown className="w-3.5 h-3.5 flex-shrink-0" />
+            </button>
 
-      {/* Flux Range */}
-      <label className="flex flex-col gap-1 items-center text-lg font-semibold">
-        Flux Range [mol m-3]:
-        <div className="w-full font-normal text-base">
-          <MultiRange
-            values={fluxValues}
-            minIndex={fluxRange.minIndex}
-            maxIndex={fluxRange.maxIndex}
-            onChange={setFluxRange}
-          />
-        </div>
-      </label>
+            {arrowScalingMenuOpen && (
+              <div className="absolute z-10 mt-1 min-w-[9rem] bg-white border border-gray-300 rounded-lg shadow-lg py-1">
+                {ARROW_SCALING_OPTIONS.map((option) => (
+                  <button
+                    key={option.id}
+                    type="button"
+                    onClick={() => {
+                      setArrowScaling(option.id)
+                      setArrowScalingMenuOpen(false)
+                    }}
+                    className="w-full flex items-center gap-2 text-left text-sm font-bold px-3 py-1.5 text-gray-800 hover:bg-gray-100"
+                  >
+                    <Check
+                      className={`w-3.5 h-3.5 flex-shrink-0 ${
+                        arrowScaling === option.id ? 'opacity-100' : 'opacity-0'
+                      }`}
+                    />
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
 
-      {/* Species Selection */}
-      <label className="flex flex-col gap-1 items-center text-lg font-semibold">
-        Select Species:
-        <div className="w-full flex flex-col gap-1 font-normal text-base">
-          {species.map((s) => {
-            const isSelected = selectedSpecies?.includes(s.name)
-            return (
+        {/* Time Range */}
+        <div className="flex items-center gap-2">
+          <div className="flex items-center border border-gray-300 rounded-lg bg-white">
+            <div className="relative border-r border-gray-300" ref={timeRangeUnitMenuRef}>
               <button
-                key={'species-' + s.name}
-                onClick={() => {
-                  if (isSelected) {
-                    setSelectedSpecies(selectedSpecies.filter((name) => name !== s.name))
-                  } else {
-                    setSelectedSpecies([...selectedSpecies, s.name])
-                  }
-                }}
-                className={`w-full px-4 py-2 rounded text-white text-center transition-colors
-                                          ${isSelected ? 'bg-white/30 backdrop-blur-sm border border-white/40 hover:bg-white/40' : 'bg-white/10 hover:bg-white/20'}`}
+                type="button"
+                onClick={() => setTimeRangeUnitMenuOpen((open) => !open)}
+                className="flex items-center justify-between gap-1 w-24 h-8 bg-blue-100/50 text-gray-900 rounded-l-lg text-sm font-bold px-2.5 focus:outline-none focus:ring-2 focus:ring-blue-600 transition-colors duration-200"
               >
-                {s.name}
+                {timeRangeUnit.label}
+                <ChevronDown className="w-3.5 h-3.5 flex-shrink-0" />
               </button>
-            )
-          })}
+
+              {timeRangeUnitMenuOpen && (
+                <div className="absolute z-10 mt-1 min-w-[8rem] bg-white border border-gray-300 rounded-lg shadow-lg py-1">
+                  {TIME_RANGE_UNITS.map((unit) => (
+                    <button
+                      key={unit.id}
+                      type="button"
+                      onClick={() => {
+                        setTimeRangeUnitId(unit.id)
+                        setTimeRangeUnitMenuOpen(false)
+                      }}
+                      className="w-full flex items-center gap-2 text-left text-sm font-bold px-3 py-1.5 text-gray-800 hover:bg-gray-100"
+                    >
+                      <Check
+                        className={`w-3.5 h-3.5 flex-shrink-0 ${
+                          timeRangeUnitId === unit.id ? 'opacity-100' : 'opacity-0'
+                        }`}
+                      />
+                      {unit.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <RangeBoundInput
+              value={range.start}
+              divisor={timeRangeUnit.divisor}
+              min={0}
+              max={range.end}
+              onCommit={(start) => setRange({ start, end: range.end })}
+              className="w-20 h-8 px-2 bg-white text-gray-900 text-sm text-center focus:outline-none focus:relative focus:z-10 focus:ring-2 focus:ring-blue-600"
+            />
+
+            <span className="flex items-center justify-center h-8 px-2 text-gray-500 font-normal bg-white">
+              -
+            </span>
+
+            <RangeBoundInput
+              value={range.end}
+              divisor={timeRangeUnit.divisor}
+              min={range.start}
+              max={duration}
+              onCommit={(end) => setRange({ start: range.start, end })}
+              className="w-20 h-8 px-2 bg-white text-gray-900 rounded-r-lg text-sm text-center focus:outline-none focus:relative focus:z-10 focus:ring-2 focus:ring-blue-600"
+            />
+          </div>
         </div>
-      </label>
+
+        {/* Flux Range */}
+        <div className="flex items-center gap-2">
+          <span>Flux (mol m-3)</span>
+
+          <div className="flex items-center border border-gray-300 rounded-lg bg-white">
+            <RangeBoundInput
+              value={rateRange.start}
+              sigDigits={3}
+              min={0}
+              max={rateRange.end}
+              onCommit={(start) => setRateRange({ start, end: rateRange.end })}
+              className="w-28 h-8 px-2 bg-white text-gray-900 rounded-l-lg text-sm text-center focus:outline-none focus:relative focus:z-10 focus:ring-2 focus:ring-blue-600"
+            />
+
+            <span className="flex items-center justify-center h-8 px-2 text-gray-500 font-normal bg-white">
+              -
+            </span>
+
+            <RangeBoundInput
+              value={rateRange.end}
+              sigDigits={3}
+              min={rateRange.start}
+              onCommit={(end) => setRateRange({ start: rateRange.start, end })}
+              className="w-28 h-8 px-2 bg-white text-gray-900 rounded-r-lg text-sm text-center focus:outline-none focus:relative focus:z-10 focus:ring-2 focus:ring-blue-600"
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Row 2: Select All / Deselect All + Search */}
+      <div className="w-full flex">
+      <div className="flex items-center border border-gray-300 rounded-lg divide-x divide-gray-300 bg-white">
+        <div className="relative" ref={selectAllMenuRef}>
+          <button
+            type="button"
+            onClick={() => setSelectAllMenuOpen((open) => !open)}
+            className="flex items-center justify-between gap-1 w-32 h-8 bg-blue-100/50 text-gray-900 rounded-l-lg text-sm font-bold px-2.5 focus:outline-none focus:ring-2 focus:ring-blue-600 transition-colors duration-200"
+          >
+            {selectAllStatusLabel}
+            <ChevronDown className="w-3.5 h-3.5 flex-shrink-0" />
+          </button>
+
+          {selectAllMenuOpen && (
+            <div className="absolute z-10 mt-1 min-w-[9rem] bg-white border border-gray-300 rounded-lg shadow-lg py-1">
+              <button
+                type="button"
+                onClick={() => {
+                  setSelectedSpecies(filteredSpecies)
+                  setSelectAllMenuOpen(false)
+                }}
+                className="w-full flex items-center gap-2 text-left text-sm font-bold px-3 py-1.5 text-gray-800 hover:bg-gray-100"
+              >
+                <Check
+                  className={`w-3.5 h-3.5 flex-shrink-0 ${
+                    allFilteredSelected ? 'opacity-100' : 'opacity-0'
+                  }`}
+                />
+                Select all
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setSelectedSpecies([])
+                  setSelectAllMenuOpen(false)
+                }}
+                className="w-full flex items-center gap-2 text-left text-sm font-bold px-3 py-1.5 text-gray-800 hover:bg-gray-100"
+              >
+                <Check
+                  className={`w-3.5 h-3.5 flex-shrink-0 ${
+                    noneSelected ? 'opacity-100' : 'opacity-0'
+                  }`}
+                />
+                Deselect all
+              </button>
+            </div>
+          )}
+        </div>
+
+        <input
+          type="text"
+          value={speciesSearch}
+          onChange={(e) => {
+            setSpeciesSearch(e.target.value)
+            setSpeciesOverflowOpen(false)
+          }}
+          placeholder="Search species"
+          className="w-[30rem] h-8 px-3 bg-white text-gray-800 placeholder:text-gray-500 rounded-r-lg text-base font-mono focus:outline-none focus:relative focus:z-10 focus:ring-2 focus:ring-blue-600"
+        />
+      </div>
+      </div>
+
+      {/* Row 3: Species chips */}
+      <div className="flex flex-wrap items-center gap-1.5 pl-2">
+        <h4 className="font-semibold text-sm xs:text-base text-gray-500 mr-1">
+          {displaySpecies.length} selected
+        </h4>
+        {visibleFilteredSpecies.map((name) => (
+          <button
+            key={name}
+            onClick={() => toggleSpecies(name)}
+            className={`px-2 xs:px-3 py-1 rounded-full text-sm font-medium transition-all ${
+              displaySpecies.includes(name)
+                ? 'bg-[#E6807A] text-white shadow-md'
+                : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
+            }`}
+          >
+            {name}
+          </button>
+        ))}
+        {overflowFilteredSpecies.length > 0 && (
+          <div className="relative" ref={speciesOverflowRef}>
+            <button
+              type="button"
+              onClick={() => setSpeciesOverflowOpen((open) => !open)}
+              className="px-2 xs:px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-700 border border-gray-300 hover:bg-gray-200 transition-all"
+            >
+              +{overflowFilteredSpecies.length} others
+            </button>
+
+            {speciesOverflowOpen && (
+              <div className="absolute z-20 mt-1 w-56 max-h-64 overflow-y-auto bg-white border border-gray-300 rounded-lg shadow-lg py-1">
+                {overflowFilteredSpecies.map((name) => (
+                  <button
+                    key={name}
+                    type="button"
+                    onClick={() => toggleSpecies(name)}
+                    className="w-full flex items-center gap-2 text-left text-sm font-medium px-3 py-1.5 hover:bg-gray-100 text-gray-800"
+                  >
+                    <span
+                      className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${
+                        displaySpecies.includes(name) ? 'bg-[#E6807A]' : 'bg-gray-300'
+                      }`}
+                    />
+                    <span className="flex-1 truncate">{name}</span>
+                    <Check
+                      className={`w-3.5 h-3.5 flex-shrink-0 ${
+                        displaySpecies.includes(name) ? 'opacity-100' : 'opacity-0'
+                      }`}
+                    />
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   )
 }

@@ -1,6 +1,7 @@
 import { MusicBox } from '@ncar/music-box'
 import { buildLocalSimulationPayload } from './payload'
 import { normalizeSimulationResults } from './results'
+import { buildTracerSpeciesName } from './tracer'
 import { store } from '../../../redux/store'
 import {
   setExcludedResults,
@@ -13,16 +14,9 @@ const addProductsToReactions = (reactions) => {
   // Track the actual new product species names and their corresponding CONC keys
   const productSpeciesToAdd = []
   const productConcentrationKeys = []
-  reactions.forEach((reaction) => {
-    let prodName = ''
-    if (typeof reaction.name === 'string' && reaction.name.length > 0) {
-      prodName = reaction.name
-        .replace(/\s+/g, '_')
-        .replace(/[^A-Za-z0-9_]/g, '')
-        .toUpperCase()
-    } else {
-      prodName = 'REACT_' + Math.random().toString(36).substring(2, 10).toUpperCase()
-    }
+  reactions.forEach((reaction, index) => {
+    // Index-derived so it cannot collide with a real species name -- see ./tracer.js
+    const prodName = buildTracerSpeciesName(index, reaction.name)
 
     // Handle products
     if (Array.isArray(reaction.products)) {
