@@ -82,9 +82,6 @@ const filterProductConcentrations = (results, excludeConcentrationKeys) => {
     excludedResults.push({ time: point.time, concentrations: excludedConcentrations })
   }
 
-  // console.log('Filtered Results:', filteredResults);
-  // console.log('Excluded Results:', excludedResults);
-
   return {
     filteredResults,
     excludedResults,
@@ -129,9 +126,7 @@ export const runLocalSimulation = async ({ mechanismData, conditions }) => {
     payload.mechanism.phases = phases
   }
 
-  // console.log('finalMechanism', payload)
   const rawResults = await MusicBox.fromJson(payload).solve()
-  // console.log('rawResults', rawResults)
   const normalizedPoints = normalizeSimulationResults(rawResults)
 
   if (normalizedPoints.length === 0) {
