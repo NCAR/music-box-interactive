@@ -14,6 +14,7 @@ import carbonBond5Config from '@ncar/music-box/examples/carbon_bond_5/my_config.
 import carbonBond5InitialConcentrationsCsv from '@ncar/music-box/examples/carbon_bond_5/initial_concentrations.csv?raw';
 import carbonBond5InitialReactionRatesCsv from '@ncar/music-box/examples/carbon_bond_5/initial_reaction_rates.csv?raw';
 import { parseCsvToBlock } from '@ncar/music-box';
+import { durationSeconds, stepSeconds } from './helpers/boxModelOptions';
 
 function withInlineConditionData(config, csvContents = []) {
   const existingData = Array.isArray(config?.conditions?.data) ? config.conditions.data : [];
@@ -28,16 +29,6 @@ function withInlineConditionData(config, csvContents = []) {
     },
   };
 }
-
-// Mock MusicBox to avoid actual computation
-vi.mock('@ncar/music-box', () => ({
-  parseCsvToBlock: vi.fn((...args) => args[0]), // simple passthrough for test
-  MusicBox: {
-    fromJson: vi.fn().mockReturnValue({
-      solve: vi.fn().mockResolvedValue([{ time: 0, concentrations: { O3: 1 } }]),
-    }),
-  },
-}));
 
 vi.mock('react-router-dom', async () => {
   const actual = await vi.importActual('react-router-dom');
@@ -76,7 +67,7 @@ describe('RunSimulationButton (Carbon-Bond-5 example)', () => {
     (carbonBond5Example.mechanism.mechanism.species || []).forEach((species) => {
       store.dispatch(addSpecies({
         name: species.name,
-        molecular_weight_kg_mol: 0.048,
+        molecular_weight_kg_mol: species['molecular weight [kg mol-1]'],
         properties: {},
       }));
     });
@@ -84,9 +75,9 @@ describe('RunSimulationButton (Carbon-Bond-5 example)', () => {
       store.dispatch(addReaction({ ...reaction, id: reaction.id || 'test' }));
     });
     const options = carbonBond5Example.mechanism["box model options"] || {};
-    if (options["simulation length [sec]"]) store.dispatch(setDuration(options["simulation length [sec]"]));
-    if (options["chemistry time step [sec]"]) store.dispatch(setTimeStep(options["chemistry time step [sec]"]));
-    if (options["output time step [sec]"]) store.dispatch(setOutputFrequency(options["output time step [sec]"]));
+    store.dispatch(setDuration(durationSeconds(options)));
+    store.dispatch(setTimeStep(stepSeconds(options, "chemistry time step")));
+    store.dispatch(setOutputFrequency(stepSeconds(options, "output time step")));
     store.dispatch(setConditions(carbonBond5Example.mechanism.conditions));
     store.dispatch(setExampleFiles({ ...carbonBond5Example.csv, data: carbonBond5Example.mechanism.conditions?.data || [] }));
     store.dispatch(setExampleLoaded(false));

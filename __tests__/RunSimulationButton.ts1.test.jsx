@@ -7,12 +7,12 @@ import simulationReducer from '../src/redux/slices/simulationSlice';
 import { render, fireEvent, waitFor, screen } from '@testing-library/react';
 
 import { RunSimulationButton } from '../src/components/RunSimulationButton';
-import { vi } from 'vitest';
 
 // TS1 Example Imports
 import ts1Config from '@ncar/music-box/examples/ts1/my_config.json' with { type: 'json' };
 import ts1InitialConditionsCsv from '@ncar/music-box/examples/ts1/initial_conditions.csv?raw';
 import { parseCsvToBlock } from '@ncar/music-box';
+import { durationSeconds, stepSeconds } from './helpers/boxModelOptions';
 
 function withInlineConditionData(config, csvContents = []) {
   const existingData = Array.isArray(config?.conditions?.data) ? config.conditions.data : [];
@@ -28,15 +28,11 @@ function withInlineConditionData(config, csvContents = []) {
   };
 }
 
-// Mock MusicBox to avoid actual computation
-vi.mock('@ncar/music-box', () => ({
-  parseCsvToBlock: vi.fn((...args) => args[0]), // simple passthrough for test
-  MusicBox: {
-    fromJson: vi.fn().mockReturnValue({
-      solve: vi.fn().mockResolvedValue([{ time: 0, concentrations: { O3: 1 } }]),
-    }),
-  },
-}));
+// TS1 is the only bundled mechanism with SURFACE reactions, so it is the only one that
+// exercises tracer injection into 'gas-phase products' and the molecular-weight requirement
+// that comes with it. A real solve is slow. See solverPayloadContract.test.js for the cheap
+// schema-only coverage.
+import { vi } from 'vitest';
 
 vi.mock('react-router-dom', async () => {
   const actual = await vi.importActual('react-router-dom');
@@ -75,7 +71,7 @@ describe('RunSimulationButton (TS1 example)', () => {
     (ts1Example.mechanism.mechanism.species || []).forEach((species) => {
       store.dispatch(addSpecies({
         name: species.name,
-        molecular_weight_kg_mol: 0.048,
+        molecular_weight_kg_mol: species['molecular weight [kg mol-1]'],
         properties: {},
       }));
     });
@@ -83,9 +79,9 @@ describe('RunSimulationButton (TS1 example)', () => {
       store.dispatch(addReaction({ ...reaction, id: reaction.id || 'test' }));
     });
     const options = ts1Example.mechanism["box model options"] || {};
-    if (options["simulation length [sec]"]) store.dispatch(setDuration(options["simulation length [sec]"]));
-    if (options["chemistry time step [sec]"]) store.dispatch(setTimeStep(options["chemistry time step [sec]"]));
-    if (options["output time step [sec]"]) store.dispatch(setOutputFrequency(options["output time step [sec]"]));
+    store.dispatch(setDuration(durationSeconds(options)));
+    store.dispatch(setTimeStep(stepSeconds(options, "chemistry time step")));
+    store.dispatch(setOutputFrequency(stepSeconds(options, "output time step")));
     store.dispatch(setConditions(ts1Example.mechanism.conditions));
     store.dispatch(setExampleFiles({ ...ts1Example.csv, data: ts1Example.mechanism.conditions?.data || [] }));
     store.dispatch(setExampleLoaded(false));
@@ -102,6 +98,6 @@ describe('RunSimulationButton (TS1 example)', () => {
 
     await waitFor(() => {
       expect(store.getState().simulation.status).toBe('succeeded');
-    });
-  });
+    }, { timeout: 120000 });
+  }, 120000);
 });

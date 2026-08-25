@@ -13,6 +13,7 @@ import chapmanConfig from '@ncar/music-box/examples/chapman/my_config.json' with
 import chapmanInitialConcentrationsCsv from '@ncar/music-box/examples/chapman/initial_concentrations.csv?raw';
 import chapmanConditionsBoulderCsv from '@ncar/music-box/examples/chapman/conditions_Boulder.csv?raw';
 import { parseCsvToBlock } from '@ncar/music-box';
+import { durationSeconds, stepSeconds } from './helpers/boxModelOptions';
 
 // Helper to build the same data structure as ExampleLoader
 function toExampleCsvJson(content) {
@@ -55,17 +56,7 @@ const chapmanExample = {
   mechanism: withInlineConditionData(chapmanConfig, [chapmanInitialConcentrationsCsv, chapmanConditionsBoulderCsv]),
 };
 
-// Mock MusicBox to avoid actual computation
 import { vi } from 'vitest';
-
-vi.mock('@ncar/music-box', () => ({
-  parseCsvToBlock: vi.fn((...args) => args[0]), // simple passthrough for test
-  MusicBox: {
-    fromJson: vi.fn().mockReturnValue({
-      solve: vi.fn().mockResolvedValue([{ time: 0, concentrations: { O3: 1 } }]),
-    }),
-  },
-}));
 
 vi.mock('react-router-dom', async () => {
   const actual = await vi.importActual('react-router-dom');
@@ -99,7 +90,7 @@ describe('RunSimulationButton (Chapman example)', () => {
     (chapmanExample.mechanism.mechanism.species || []).forEach((species) => {
       store.dispatch(addSpecies({
         name: species.name,
-        molecular_weight_kg_mol: 0.048,
+        molecular_weight_kg_mol: species['molecular weight [kg mol-1]'],
         properties: {},
       }));
     });
@@ -109,9 +100,9 @@ describe('RunSimulationButton (Chapman example)', () => {
     });
     // Set box model options
     const options = chapmanExample.mechanism["box model options"] || {};
-    if (options["simulation length [sec]"]) store.dispatch(setDuration(options["simulation length [sec]"]));
-    if (options["chemistry time step [sec]"]) store.dispatch(setTimeStep(options["chemistry time step [sec]"]));
-    if (options["output time step [sec]"]) store.dispatch(setOutputFrequency(options["output time step [sec]"]));
+    store.dispatch(setDuration(durationSeconds(options)));
+    store.dispatch(setTimeStep(stepSeconds(options, "chemistry time step")));
+    store.dispatch(setOutputFrequency(stepSeconds(options, "output time step")));
     store.dispatch(setConditions(chapmanExample.mechanism.conditions));
     store.dispatch(setExampleFiles({ ...chapmanExample.csv, data: chapmanExample.mechanism.conditions?.data || [] }));
     store.dispatch(setExampleLoaded(false));
