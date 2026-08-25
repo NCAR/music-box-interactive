@@ -15,11 +15,10 @@ const toSolverSpecies = (species = []) => {
       return sp
     }
 
-    const { ['molecular weight [kg mol-1]']: _omitMolecularWeight, ...rest } = sp
     return {
-      ...rest,
-      'is third body': Object.prototype.hasOwnProperty.call(rest, 'is third body')
-        ? rest['is third body']
+      ...sp,
+      'is third body': Object.prototype.hasOwnProperty.call(sp, 'is third body')
+        ? sp['is third body']
         : false,
     }
   })

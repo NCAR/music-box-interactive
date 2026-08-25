@@ -100,7 +100,7 @@ export const runLocalSimulation = async ({ mechanismData, conditions }) => {
 
   productSpeciesToAdd.forEach((prodName) => {
     if (!species.some((sp) => sp?.name === prodName)) {
-      species.push({ name: prodName, 'molecular weight [kg mol-1]': 0.029 })
+      species.push({ name: prodName })
     }
   })
 
