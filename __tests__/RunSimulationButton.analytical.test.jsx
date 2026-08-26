@@ -13,7 +13,9 @@ import { vi } from 'vitest';
 import analyticalConfig from '@ncar/music-box/examples/analytical/my_config.json' with { type: 'json' };
 import analyticalInitialConditionsCsv from '@ncar/music-box/examples/analytical/initial_conditions.csv?raw';
 import { parseCsvToBlock } from '@ncar/music-box';
+
 import { durationSeconds, stepSeconds } from './helpers/boxModelOptions';
+import { expectedInitialConcentrations } from './helpers/initialConcentrations';
 
 function withInlineConditionData(config, csvContents = []) {
   const existingData = Array.isArray(config?.conditions?.data) ? config.conditions.data : [];
@@ -94,5 +96,23 @@ describe('RunSimulationButton (Analytical example)', () => {
     await waitFor(() => {
       expect(store.getState().simulation.status).toBe('succeeded');
     });
+
+    const results = store.getState().simulation.results;
+    expect(results.length).toBeGreaterThan(1);
+
+    // The run must start from the example's own conditions, which proves the CSVs were parsed
+    // and reached the solver..
+    const expectedInitial = expectedInitialConcentrations(analyticalConfig, [analyticalInitialConditionsCsv]);
+    expect(Object.keys(expectedInitial)).toHaveLength(3);
+    for (const [key, value] of Object.entries(expectedInitial)) {
+      expect(results[0].concentrations[key]).toBeCloseTo(value, 12);
+    }
+
+    // ...and it must integrate rather than echo the inputs back.
+    const finalConcentrations = results[results.length - 1].concentrations;
+    expect(Object.values(finalConcentrations).every(Number.isFinite)).toBe(true);
+    expect(
+      Object.entries(finalConcentrations).some(([key, value]) => value !== results[0].concentrations[key])
+    ).toBe(true);
   });
 });

@@ -14,6 +14,7 @@ import chapmanInitialConcentrationsCsv from '@ncar/music-box/examples/chapman/in
 import chapmanConditionsBoulderCsv from '@ncar/music-box/examples/chapman/conditions_Boulder.csv?raw';
 import { parseCsvToBlock } from '@ncar/music-box';
 import { durationSeconds, stepSeconds } from './helpers/boxModelOptions';
+import { expectedInitialConcentrations } from './helpers/initialConcentrations';
 
 // Helper to build the same data structure as ExampleLoader
 function toExampleCsvJson(content) {
@@ -120,5 +121,23 @@ describe('RunSimulationButton (Chapman example)', () => {
     await waitFor(() => {
       expect(store.getState().simulation.status).toBe('succeeded');
     });
+
+    const results = store.getState().simulation.results;
+    expect(results.length).toBeGreaterThan(1);
+
+    // The run must start from the example's own conditions, which proves the CSVs were parsed
+    // and reached the solver.
+    const expectedInitial = expectedInitialConcentrations(chapmanConfig, [chapmanInitialConcentrationsCsv, chapmanConditionsBoulderCsv]);
+    expect(Object.keys(expectedInitial)).toHaveLength(5);
+    for (const [key, value] of Object.entries(expectedInitial)) {
+      expect(results[0].concentrations[key]).toBeCloseTo(value, 12);
+    }
+
+    // ...and it must integrate rather than echo the inputs back.
+    const finalConcentrations = results[results.length - 1].concentrations;
+    expect(Object.values(finalConcentrations).every(Number.isFinite)).toBe(true);
+    expect(
+      Object.entries(finalConcentrations).some(([key, value]) => value !== results[0].concentrations[key])
+    ).toBe(true);
   });
 });
