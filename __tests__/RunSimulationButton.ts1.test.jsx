@@ -112,6 +112,7 @@ describe('RunSimulationButton (TS1 example)', () => {
     expect(Object.values(results[0].concentrations).every((value) => value === 0)).toBe(true);
 
     // The seeding and the integration must both have happened.
+    // At least one solved concentration differs from its initial value.
     const finalConcentrations = results[results.length - 1].concentrations;
     expect(Object.values(finalConcentrations).every(Number.isFinite)).toBe(true);
     expect(Object.values(finalConcentrations).filter((value) => value > 0).length).toBeGreaterThan(100);

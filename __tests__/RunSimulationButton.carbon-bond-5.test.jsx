@@ -107,8 +107,8 @@ describe('RunSimulationButton (Carbon-Bond-5 example)', () => {
     for (const [key, value] of Object.entries(expectedInitial)) {
       expect(results[0].concentrations[key]).toBeCloseTo(value, 12);
     }
-
-    // ...and it must integrate rather than echo the inputs back.
+    
+    // At least one solved concentration differs from its initial value.
     const finalConcentrations = results[results.length - 1].concentrations;
     expect(Object.values(finalConcentrations).every(Number.isFinite)).toBe(true);
     expect(
