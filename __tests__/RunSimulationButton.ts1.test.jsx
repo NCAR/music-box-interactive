@@ -13,6 +13,7 @@ import ts1Config from '@ncar/music-box/examples/ts1/my_config.json' with { type:
 import ts1InitialConditionsCsv from '@ncar/music-box/examples/ts1/initial_conditions.csv?raw';
 import { parseCsvToBlock } from '@ncar/music-box';
 import { durationSeconds, stepSeconds } from './helpers/boxModelOptions';
+import { expectedInitialConcentrations } from './helpers/initialConcentrations';
 
 function withInlineConditionData(config, csvContents = []) {
   const existingData = Array.isArray(config?.conditions?.data) ? config.conditions.data : [];
@@ -99,5 +100,24 @@ describe('RunSimulationButton (TS1 example)', () => {
     await waitFor(() => {
       expect(store.getState().simulation.status).toBe('succeeded');
     }, { timeout: 120000 });
+
+    const results = store.getState().simulation.results;
+    expect(results.length).toBeGreaterThan(1);
+
+    // Unlike the other examples, TS1's initial_conditions.csv timestamps its single row at
+    // t=1000s rather than t=0, so the run legitimately starts from zero concentrations and is
+    // seeded partway through. Asserting that explicitly keeps the difference visible.
+    const expectedInitial = expectedInitialConcentrations(ts1Config, [ts1InitialConditionsCsv]);
+    expect(Object.keys(expectedInitial)).toHaveLength(0);
+    expect(Object.values(results[0].concentrations).every((value) => value === 0)).toBe(true);
+
+    // The seeding and the integration must both have happened.
+    // At least one solved concentration differs from its initial value.
+    const finalConcentrations = results[results.length - 1].concentrations;
+    expect(Object.values(finalConcentrations).every(Number.isFinite)).toBe(true);
+    expect(Object.values(finalConcentrations).filter((value) => value > 0).length).toBeGreaterThan(100);
+    expect(
+      Object.entries(finalConcentrations).some(([key, value]) => value !== results[0].concentrations[key])
+    ).toBe(true);
   }, 120000);
 });

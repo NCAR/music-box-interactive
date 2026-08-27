@@ -14,6 +14,7 @@ import flowTubeInitialConcentrationsCsv from '@ncar/music-box/examples/flow_tube
 import flowTubeInitialReactionRatesCsv from '@ncar/music-box/examples/flow_tube/initial_reaction_rates.csv?raw';
 import { parseCsvToBlock } from '@ncar/music-box';
 import { durationSeconds, stepSeconds } from './helpers/boxModelOptions';
+import { expectedInitialConcentrations } from './helpers/initialConcentrations';
 
 function withInlineConditionData(config, csvContents = []) {
   const existingData = Array.isArray(config?.conditions?.data) ? config.conditions.data : [];
@@ -96,5 +97,23 @@ describe('RunSimulationButton (Flow-Tube example)', () => {
     await waitFor(() => {
       expect(store.getState().simulation.status).toBe('succeeded');
     });
+
+    const results = store.getState().simulation.results;
+    expect(results.length).toBeGreaterThan(1);
+
+    // The run must start from the example's own conditions, which proves the CSVs were parsed
+    // and reached the solver.
+    const expectedInitial = expectedInitialConcentrations(flowTubeConfig, [flowTubeInitialConcentrationsCsv, flowTubeInitialReactionRatesCsv]);
+    expect(Object.keys(expectedInitial)).toHaveLength(2);
+    for (const [key, value] of Object.entries(expectedInitial)) {
+      expect(results[0].concentrations[key]).toBeCloseTo(value, 12);
+    }
+
+        // At least one solved concentration differs from its initial value.
+    const finalConcentrations = results[results.length - 1].concentrations;
+    expect(Object.values(finalConcentrations).every(Number.isFinite)).toBe(true);
+    expect(
+      Object.entries(finalConcentrations).some(([key, value]) => value !== results[0].concentrations[key])
+    ).toBe(true);
   });
 });
