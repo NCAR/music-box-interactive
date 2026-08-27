@@ -10,9 +10,6 @@ const ToastViewport = React.forwardRef(({ className, ...props }, ref) => (
   <ToastPrimitives.Viewport
     ref={ref}
     className={cn(
-      // Mirrors the app shell's content box (sidebar offset + max-w-7xl + padding) so toasts sit
-      // at the bottom-right of the working area rather than the browser window. The viewport
-      // itself is click-through; each toast re-enables pointer events for itself.
       'pointer-events-none fixed top-0 z-[100] flex max-h-screen w-full flex-col-reverse p-4 sm:bottom-24 sm:left-0 sm:right-0 sm:top-auto sm:mx-auto sm:max-w-7xl sm:flex-col sm:items-end sm:px-6 lg:left-64 lg:px-8',
       className
     )}
@@ -27,8 +24,6 @@ const toastVariants = cva(
     variants: {
       variant: {
         default: 'bg-white border-blue-300 text-blue-700',
-        // Errors. The `destructive` class is what the group-[.destructive] rules on
-        // ToastAction/ToastClose below key off, so it has to be emitted here.
         destructive: 'destructive group bg-white border-red-400 text-red-700',
         delete: 'delete group bg-white border-red-300 text-red-700',
         success: 'success group bg-white border-green-300 text-green-700',

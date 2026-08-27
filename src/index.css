@@ -16,8 +16,6 @@
     --color-assist: #FFE0C2;
     --color-assist-hover: #F5D4B3;
     --color-assist-foreground: #351A00;
-    /* Solid green counterpart to the pale `assist` fill, for primary actions that
-    * need more weight than the peach. Matches the green used by the species pills. */
     --color-assist-secondary: #15803D;
     --color-assist-secondary-hover: #166534;
     --color-assist-secondary-foreground: #ffffff;

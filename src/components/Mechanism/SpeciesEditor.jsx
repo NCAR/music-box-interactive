@@ -30,7 +30,6 @@ const PROPERTY_FIELD_CONFIG = {
     label: 'Density (kg/m3)',
     placeholder: 'e.g., 1e-5',
   },
-  // A solver threshold: it carries the units of the quantity it bounds, not one of its own.
   'Absolute tolerance': {
     label: 'Absolute tolerance',
     placeholder: 'e.g., 1e-12',
@@ -52,8 +51,6 @@ function pillClassName(active, compact) {
   }`
 }
 
-// Dialog for entering a custom pill name, styled after Google Calendar's
-// "Another office" / "Add location" working-location dialog.
 function AddPillDialog({ label, onCancel, onAdd }) {
   const [draft, setDraft] = useState('')
   const trimmed = draft.trim()
@@ -122,8 +119,6 @@ function AddPillDialog({ label, onCancel, onAdd }) {
   )
 }
 
-// Pill-style phase picker: Gas | Aqueous | (any custom phases) | Others,
-// where Others opens a dialog to type a custom phase name (its own pill).
 function PhaseSelector({ value, onChange, size = 'default', allowCustom = true }) {
   const [dialogOpen, setDialogOpen] = useState(false)
   // Remembers every custom phase entered so their pills stay even after
@@ -197,8 +192,7 @@ function PhaseSelector({ value, onChange, size = 'default', allowCustom = true }
 
 // Multi-select pill picker for named numeric species properties: Density |
 // Absolute tolerance | (custom) | Others. Selecting a pill toggles that
-// property on/off and reveals a value input for it; Others adds a new
-// custom-named property the same way.
+// property on/off and reveals a value input for it.
 function PropertySelector({ properties, onChange, size = 'default' }) {
   const [dialogOpen, setDialogOpen] = useState(false)
   // Remembers every custom property name entered so its pill stays even
@@ -294,7 +288,7 @@ function PropertySelector({ properties, onChange, size = 'default' }) {
 
 // visual editor for species in the mechanism
 // Editable numeric fields a species may carry. Both are optional: species added through the
-// form get defaults, but ones loaded from a mechanism config often have only a molecular weight.
+// form get defaults.
 const SPECIES_FIELD_CONFIG = {
   molecular_weight_kg_mol: { label: 'Molecular weight (kg/mol)', placeholder: 'e.g., 0.029' },
   'diffusion coefficient [m2 s-1]': {
@@ -408,9 +402,6 @@ export function SpeciesEditor() {
   const [newSpeciesPhase, setNewSpeciesPhase] = useState('')
   const [newSpeciesProperties, setNewSpeciesProperties] = useState({})
   const [speciesSearch, setSpeciesSearch] = useState('')
-  // Species matching the search, exact matches first. Matching is on the start of the name, not
-  // anywhere within it: searching "I" should offer species beginning with I, not every name that
-  // happens to contain one (PI, HNO3I, ...).
   const speciesQuery = speciesSearch.trim().toLowerCase()
   const filteredSpecies = species
     .filter((sp) => sp.name.toLowerCase().startsWith(speciesQuery))
