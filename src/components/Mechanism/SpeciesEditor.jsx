@@ -35,7 +35,7 @@ const CUSTOM_PILL_MAX_LENGTH = 512
 // Shared pill styling for the phase and property selectors below.
 function pillClassName(active, compact) {
   return `${
-    compact ? 'px-2.5 py-1 text-[11px]' : 'px-3.5 py-1.5 text-sm'
+    compact ? 'px-2.5 py-1 text-[11px]' : 'px-4 py-2 text-[15px]'
   } font-semibold rounded-full border whitespace-nowrap transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-green-500 flex items-center gap-1.5 ${
     active
       ? 'bg-green-50 border-green-300 text-green-800'
@@ -72,7 +72,7 @@ function AddPillDialog({ label, onCancel, onAdd }) {
         className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl"
         onClick={(e) => e.stopPropagation()}
       >
-        <label className="block text-sm font-medium text-blue-600 mb-1">{label}</label>
+        <label className="block text-sm font-medium text-green-700 mb-1">{label}</label>
         <input
           type="text"
           autoFocus
@@ -82,7 +82,7 @@ function AddPillDialog({ label, onCancel, onAdd }) {
             if (e.key === 'Enter') handleAdd()
           }}
           maxLength={CUSTOM_PILL_MAX_LENGTH}
-          className="w-full border-0 border-b-2 border-blue-600 bg-transparent px-0 py-1.5 text-base text-gray-900 focus:outline-none"
+          className="w-full border-0 border-b-2 border-green-600 bg-transparent px-0 py-1.5 text-base text-gray-900 focus:outline-none"
         />
         <div className="mt-1 text-right text-xs text-gray-500">
           {draft.length}/{CUSTOM_PILL_MAX_LENGTH}
@@ -92,7 +92,7 @@ function AddPillDialog({ label, onCancel, onAdd }) {
           <button
             type="button"
             onClick={onCancel}
-            className="rounded px-4 py-2 text-sm font-medium text-blue-600 hover:bg-blue-50"
+            className="rounded px-4 py-2 text-sm font-medium text-green-700 hover:bg-green-50"
           >
             Cancel
           </button>
@@ -101,7 +101,7 @@ function AddPillDialog({ label, onCancel, onAdd }) {
             onClick={handleAdd}
             disabled={!trimmed}
             className={`rounded px-4 py-2 text-sm font-medium ${
-              trimmed ? 'text-blue-600 hover:bg-blue-50' : 'text-gray-400 cursor-not-allowed'
+              trimmed ? 'text-green-700 hover:bg-green-50' : 'text-gray-400 cursor-not-allowed'
             }`}
           >
             Add
@@ -137,7 +137,7 @@ function PhaseSelector({ value, onChange, size = 'default' }) {
   const compact = size === 'compact'
 
   return (
-    <div className="flex flex-nowrap items-center gap-2 overflow-x-auto">
+    <div className="flex flex-wrap items-center gap-2">
       <button
         type="button"
         onClick={() => onChange('Gas')}
@@ -226,7 +226,7 @@ function PropertySelector({ properties, onChange, size = 'default' }) {
 
   return (
     <div>
-      <div className="flex flex-nowrap items-center gap-2 overflow-x-auto">
+      <div className="flex flex-wrap items-center gap-2">
         {pillOptions.map((name) => (
           <button
             key={name}
@@ -257,19 +257,17 @@ function PropertySelector({ properties, onChange, size = 'default' }) {
           {activeNames.map((name) => {
             const { label, placeholder } = getPropertyFieldConfig(name)
             return (
-              <div key={name} className="grid grid-cols-1 gap-3 md:grid-cols-3">
-                <div>
-                  <label className="block text-xs font-semibold text-gray-700 mb-1">
-                    {label}
-                  </label>
-                  <input
-                    type="text"
-                    value={properties[name]}
-                    onChange={(e) => setPropertyValue(name, e.target.value)}
-                    placeholder={placeholder}
-                    className="w-full px-3 py-2 border-2 border-gray-400 bg-white/10 text-gray-900 placeholder:text-gray-500 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
-                  />
-                </div>
+              <div key={name}>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  {label}
+                </label>
+                <input
+                  type="text"
+                  value={properties[name]}
+                  onChange={(e) => setPropertyValue(name, e.target.value)}
+                  placeholder={placeholder}
+                  className="w-full px-4 py-3 border-2 border-gray-400 bg-white/10 text-gray-900 placeholder:text-gray-500 rounded-xl text-base font-mono focus:outline-none focus:border-green-700"
+                />
               </div>
             )
           })}
@@ -488,43 +486,44 @@ export function SpeciesEditor() {
         </Card>
       )}
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Add species</CardTitle>
-          <CardDescription>
-            {isPredefined
-              ? `Viewing ${isPredefined.name} mechanism - species are pre-configured`
-              : 'Add, edit, or remove chemical species in the mechanism'}
-          </CardDescription>
-        </CardHeader>
+      {/* Info box for predefined mechanisms */}
+      {isPredefined && (
+        <div className="bg-blue-50 border-2 border-blue-300 rounded-lg p-3 text-sm">
+          <p className="font-semibold text-blue-800 mb-1 flex items-center gap-2">
+            <Info className="w-4 h-4" />
+            Extending Pre-defined Mechanism
+          </p>
+          <p className="text-blue-700 text-xs">
+            You can add custom species to the {isPredefined.name} mechanism. This allows you to
+            extend the mechanism with additional species for specialized simulations.
+          </p>
+        </div>
+      )}
 
-        <CardContent className="space-y-4">
-          {/* Info box for predefined mechanisms */}
-          {isPredefined && (
-            <div className="bg-blue-50 border-2 border-blue-300 rounded-lg p-3 text-sm">
-              <p className="font-semibold text-blue-800 mb-1 flex items-center gap-2">
-                <Info className="w-4 h-4" />
-                Extending Pre-defined Mechanism
-              </p>
-              <p className="text-blue-700 text-xs">
-                You can add custom species to the {isPredefined.name} mechanism. This allows you to
-                extend the mechanism with additional species for specialized simulations.
-              </p>
-            </div>
-          )}
+      {/* Add form and species list are separate cards, side by side on wide screens. They
+          stack below lg, where two columns would leave neither enough room. */}
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:items-start">
+        <Card>
+          <CardHeader>
+            <CardTitle>Add species</CardTitle>
+            <CardDescription>
+              {isPredefined
+                ? `Extend the ${isPredefined.name} mechanism with a custom species`
+                : 'Define a new chemical species for the mechanism'}
+            </CardDescription>
+          </CardHeader>
 
-          {/* Add New Species Form (shown for all mechanisms) */}
-          <div className="p-4 bg-white/0 backdrop-blur-lg rounded-xl border-2 border-white/20">
-            <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
-              <div className="md:col-span-3">
-                <label className="block text-sm font-semibold text-gray-700 mb-1">
+          <CardContent>
+            <div className="grid grid-cols-1 gap-7">
+              <div>
+                <label className="block text-base font-semibold text-gray-800 mb-2">
                   Choose a phase
                 </label>
                 <PhaseSelector value={newSpeciesPhase} onChange={setNewSpeciesPhase} />
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1">
+                <label className="block text-base font-semibold text-gray-800 mb-2">
                   Species name
                 </label>
                 <input
@@ -532,12 +531,12 @@ export function SpeciesEditor() {
                   value={newSpeciesName}
                   onChange={(e) => setNewSpeciesName(e.target.value)}
                   placeholder="e.g., N2"
-                  className="w-full px-3 py-2 border-2 border-gray-400 bg-white/10 text-gray-900 placeholder:text-gray-500 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
+                  className="w-full px-4 py-3 border-2 border-gray-400 bg-white/10 text-gray-900 placeholder:text-gray-500 rounded-xl text-base font-mono focus:outline-none focus:border-green-700"
                 />
               </div>
 
-              <div className="md:col-span-3">
-                <label className="block text-sm font-semibold text-gray-700 mb-1">
+              <div>
+                <label className="block text-base font-semibold text-gray-800 mb-2">
                   Add properties
                 </label>
                 <PropertySelector
@@ -547,23 +546,29 @@ export function SpeciesEditor() {
               </div>
             </div>
 
-            <Button
-              onClick={handleAddSpecies}
-              variant="assist"
-              size="default"
-              className="mt-3 rounded-2xl"
-            >
-              Add Species
-            </Button>
-          </div>
+            <div className="mt-8 flex justify-center">
+              <Button
+                onClick={handleAddSpecies}
+                variant="assistSecondary"
+                size="lg"
+                className="rounded-2xl text-base"
+              >
+                Add species
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
 
-          {/* Species List with Search */}
-          <div>
-            <h4 className="font-semibold text-sm mb-2">
+        <Card>
+          <CardHeader>
+            <CardTitle>
               {isPredefined
                 ? `${isPredefined.name} Mechanism Species (${isPredefined.species} pre-configured${species.length > 0 ? ` + ${species.length} custom` : ''})`
                 : `Species List (${species.length} total)`}
-            </h4>
+            </CardTitle>
+          </CardHeader>
+
+          <CardContent>
 
             {/* Search Bar */}
             <input
@@ -571,7 +576,7 @@ export function SpeciesEditor() {
               value={speciesSearch}
               onChange={(e) => setSpeciesSearch(e.target.value)}
               placeholder="Search species by name"
-              className="w-full mb-3 px-3 py-2 border-2 border-gray-400 bg-white/10 text-gray-900 placeholder:text-gray-500 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
+              className="w-full mb-3 px-3 py-2 border-2 border-gray-400 bg-white/10 text-gray-900 placeholder:text-gray-500 rounded-lg text-sm font-mono focus:outline-none focus:border-green-700"
             />
 
             {isPredefined && species.length === 0 ? (
@@ -634,7 +639,7 @@ export function SpeciesEditor() {
                                 }
                               }}
                               placeholder="e.g., 1e-5"
-                              className="w-full max-w-xs px-3 py-2 border-2 border-gray-400 bg-white/10 text-gray-900 placeholder:text-gray-500 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
+                              className="w-full max-w-xs px-3 py-2 border-2 border-gray-400 bg-white/10 text-gray-900 placeholder:text-gray-500 rounded-lg text-sm font-mono focus:outline-none focus:border-green-700"
                             />
                           </div>
                         </div>
@@ -692,7 +697,7 @@ export function SpeciesEditor() {
                               }
                             }}
                             placeholder="e.g., 1e-5"
-                            className="w-full max-w-xs px-3 py-2 border-2 border-gray-400 bg-white/10 text-gray-900 placeholder:text-gray-500 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
+                            className="w-full max-w-xs px-3 py-2 border-2 border-gray-400 bg-white/10 text-gray-900 placeholder:text-gray-500 rounded-lg text-sm font-mono focus:outline-none focus:border-green-700"
                           />
                         </div>
                       </div>
@@ -710,9 +715,9 @@ export function SpeciesEditor() {
                 )}
               </div>
             )}
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      </div>
 
       <div className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-lg p-3 text-xs text-gray-700">
         <p className="font-semibold mb-1 flex items-center gap-2">
