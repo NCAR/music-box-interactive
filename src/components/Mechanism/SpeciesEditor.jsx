@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui
 import { Button } from '../ui/button'
 import { addSpecies, updateSpecies, removeSpecies } from '../../redux/slices/mechanismSlice'
 import { useToast } from '@/hooks/use-toast'
-import { Info, Atom, Lightbulb, ChevronDown } from 'lucide-react'
+import { Info, Atom, Lightbulb, ChevronDown, ChevronUp } from 'lucide-react'
 import { addSpeciesIfValid } from './speciesUtils'
 
 // Fixed phase segments; anything else is entered as a custom "Others" phase
@@ -25,6 +25,15 @@ const PROPERTY_FIELD_CONFIG = {
   'Diffusion coefficient': {
     label: 'Diffusion coefficient (m2/s)',
     placeholder: 'e.g., 1e-5',
+  },
+  'Density': {
+    label: 'Density (kg/m3)',
+    placeholder: 'e.g., 1e-5',
+  },
+  // A solver threshold: it carries the units of the quantity it bounds, not one of its own.
+  'Absolute tolerance': {
+    label: 'Absolute tolerance',
+    placeholder: 'e.g., 1e-12',
   },
 }
 function getPropertyFieldConfig(name) {
@@ -115,7 +124,7 @@ function AddPillDialog({ label, onCancel, onAdd }) {
 
 // Pill-style phase picker: Gas | Aqueous | (any custom phases) | Others,
 // where Others opens a dialog to type a custom phase name (its own pill).
-function PhaseSelector({ value, onChange, size = 'default' }) {
+function PhaseSelector({ value, onChange, size = 'default', allowCustom = true }) {
   const [dialogOpen, setDialogOpen] = useState(false)
   // Remembers every custom phase entered so their pills stay even after
   // switching to Gas/Aqueous/another custom phase, instead of disappearing.
@@ -164,12 +173,18 @@ function PhaseSelector({ value, onChange, size = 'default' }) {
         </button>
       ))}
 
-      <button type="button" onClick={() => setDialogOpen(true)} className={pillClassName(false, compact)}>
-        Others
-        <ChevronDown className="w-3.5 h-3.5 flex-shrink-0" />
-      </button>
+      {allowCustom && (
+        <button
+          type="button"
+          onClick={() => setDialogOpen(true)}
+          className={pillClassName(false, compact)}
+        >
+          Others
+          <ChevronDown className="w-3.5 h-3.5 flex-shrink-0" />
+        </button>
+      )}
 
-      {dialogOpen && (
+      {allowCustom && dialogOpen && (
         <AddPillDialog
           label="Add phase"
           onCancel={() => setDialogOpen(false)}
@@ -278,6 +293,111 @@ function PropertySelector({ properties, onChange, size = 'default' }) {
 }
 
 // visual editor for species in the mechanism
+// Editable numeric fields a species may carry. Both are optional: species added through the
+// form get defaults, but ones loaded from a mechanism config often have only a molecular weight.
+const SPECIES_FIELD_CONFIG = {
+  molecular_weight_kg_mol: { label: 'Molecular weight (kg/mol)', placeholder: 'e.g., 0.029' },
+  'diffusion coefficient [m2 s-1]': {
+    label: 'Diffusion coefficient (m2/s)',
+    placeholder: 'e.g., 1e-5',
+  },
+}
+
+// The fields to show for one species: the known top-level ones it actually defines, followed by
+// whatever named properties the configuration gave it.
+function getSpeciesFields(species) {
+  const fields = Object.entries(SPECIES_FIELD_CONFIG)
+    .filter(([key]) => species[key] !== undefined && species[key] !== null)
+    .map(([key, config]) => ({ key, ...config, value: species[key] }))
+
+  for (const [key, value] of Object.entries(species.properties || {})) {
+    const { label, placeholder } = getPropertyFieldConfig(key)
+    fields.push({ key, group: 'properties', label, placeholder, value })
+  }
+
+  return fields
+}
+
+// A species renders as a collapsed chip showing only its name. Clicking it unfolds the phase
+// and property values in place; an expanded chip claims a full row of the wrapping list so its
+// controls have room. Expansion is local state -- opening one leaves the others alone.
+function SpeciesChip({ species, onPhaseChange, onFieldSave, onRemove }) {
+  const [expanded, setExpanded] = useState(false)
+
+  if (!expanded) {
+    return (
+      <button
+        type="button"
+        onClick={() => setExpanded(true)}
+        className="flex items-center gap-1.5 rounded-full border border-gray-300 bg-white px-4 py-2 text-[15px] font-semibold text-gray-700 whitespace-nowrap transition-colors hover:bg-gray-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-green-500"
+      >
+        {species.name}
+        <ChevronDown className="w-3.5 h-3.5 flex-shrink-0" />
+      </button>
+    )
+  }
+
+  return (
+    <div className="w-full rounded-2xl border border-gray-300 bg-white p-4">
+      <div className="flex items-start justify-between gap-3">
+        <button
+          type="button"
+          onClick={() => setExpanded(false)}
+          className="flex items-center gap-1.5 rounded text-base font-semibold text-gray-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-green-500"
+        >
+          {species.name}
+          <ChevronUp className="w-4 h-4 flex-shrink-0" />
+        </button>
+
+        <Button
+          variant="glass"
+          size="sm"
+          onClick={() => onRemove(species.name)}
+          className="rounded-lg bg-white text-red-600 hover:bg-red-50"
+        >
+          Remove
+        </Button>
+      </div>
+
+      <div className="mt-3 flex flex-col gap-3">
+        <div>
+          <label className="mb-1 block text-[11px] uppercase tracking-wide text-gray-700">
+            Phase
+          </label>
+          {/* No "Others" pill here: editing a species picks among existing phases rather than
+              defining new ones. New phases are created in the Add species form. */}
+          <PhaseSelector
+            value={species.phase}
+            onChange={(phase) => onPhaseChange(species.name, phase)}
+            size="compact"
+            allowCustom={false}
+          />
+        </div>
+
+        {getSpeciesFields(species).map((field) => (
+          <div key={field.key} className="flex flex-col gap-1">
+            <label className="text-[11px] uppercase tracking-wide text-gray-700">
+              {field.label}
+            </label>
+            <input
+              type="text"
+              defaultValue={field.value ?? ''}
+              onBlur={(e) => onFieldSave(species.name, field, e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.currentTarget.blur()
+                }
+              }}
+              placeholder={field.placeholder}
+              className="w-full max-w-xs px-3 py-2 border-2 border-gray-400 bg-white/10 text-gray-900 placeholder:text-gray-500 rounded-lg text-sm font-mono focus:outline-none focus:border-green-700"
+            />
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 export function SpeciesEditor() {
   const dispatch = useDispatch()
   const species = useSelector((state) => state.mechanism.species)
@@ -403,7 +523,9 @@ export function SpeciesEditor() {
     })
   }
 
-  const handleDiffusionCoefficientSave = (speciesName, rawValue) => {
+  // Saves any numeric field on a species -- a top-level key like molecular weight, or a named
+  // entry under `properties`. Clearing the input removes the field rather than storing NaN.
+  const handleFieldSave = (speciesName, field, rawValue) => {
     const existingSpecies = species.find((sp) => sp.name === speciesName)
 
     if (!existingSpecies) {
@@ -413,8 +535,24 @@ export function SpeciesEditor() {
     const trimmedValue = rawValue.trim()
     const updatedSpecies = { ...existingSpecies }
 
+    const write = (value) => {
+      if (field.group === 'properties') {
+        const nextProperties = { ...(updatedSpecies.properties || {}) }
+        if (value === undefined) {
+          delete nextProperties[field.key]
+        } else {
+          nextProperties[field.key] = value
+        }
+        updatedSpecies.properties = nextProperties
+      } else if (value === undefined) {
+        delete updatedSpecies[field.key]
+      } else {
+        updatedSpecies[field.key] = value
+      }
+    }
+
     if (!trimmedValue) {
-      delete updatedSpecies['diffusion coefficient [m2 s-1]']
+      write(undefined)
       dispatch(updateSpecies(updatedSpecies))
       return
     }
@@ -424,13 +562,13 @@ export function SpeciesEditor() {
     if (Number.isNaN(parsedValue)) {
       toast({
         title: 'Error',
-        description: 'Diffusion coefficient must be a valid number',
+        description: `${field.label} must be a valid number`,
         variant: 'destructive',
       })
       return
     }
 
-    updatedSpecies['diffusion coefficient [m2 s-1]'] = parsedValue
+    write(parsedValue)
     updatedSpecies.phase = updatedSpecies.phase || 'Gas'
     dispatch(updateSpecies(updatedSpecies))
   }
@@ -564,7 +702,7 @@ export function SpeciesEditor() {
             <CardTitle>
               {isPredefined
                 ? `${isPredefined.name} Mechanism Species (${isPredefined.species} pre-configured${species.length > 0 ? ` + ${species.length} custom` : ''})`
-                : `Species List (${species.length} total)`}
+                : `Total ${species.length} species`}
             </CardTitle>
           </CardHeader>
 
@@ -601,57 +739,18 @@ export function SpeciesEditor() {
                   </p>
                   <p className="text-xs text-gray-600">Custom species shown below</p>
                 </div>
-                <div className="space-y-2 min-h-0 flex-1 overflow-y-auto">
+                <div className="flex min-h-0 flex-1 flex-wrap content-start gap-2 overflow-y-auto">
                   {filteredSpecies.length === 0 ? (
-                    <p className="text-center text-gray-500 py-8">No matching species found.</p>
+                    <p className="w-full text-center text-gray-500 py-8">No matching species found.</p>
                   ) : (
                     filteredSpecies.map((sp) => (
-                      <div
+                      <SpeciesChip
                         key={sp.name}
-                        className="flex items-center justify-between p-3 border border-white/20 rounded-lg bg-white/5 hover:bg-white/10 transition-colors"
-                      >
-                        <div className="flex-1">
-                          <div className="flex flex-wrap items-center gap-2 mb-1">
-                            <h5 className="font-semibold text-sm">{sp.name}</h5>
-                            <PhaseSelector
-                              value={sp.phase}
-                              onChange={(phase) => handlePhaseSave(sp.name, phase)}
-                              size="compact"
-                            />
-                          </div>
-                          <p className="text-xs text-gray-700">
-                            MW: {sp.molecular_weight_kg_mol} kg/mol
-                          </p>
-                          <div className="mt-2 flex flex-col gap-1">
-                            <label className="text-[11px] uppercase tracking-wide text-gray-700">
-                              Diffusion Coefficient (m2/s)
-                            </label>
-                            <input
-                              type="text"
-                              defaultValue={sp['diffusion coefficient [m2 s-1]'] ?? ''}
-                              onBlur={(e) =>
-                                handleDiffusionCoefficientSave(sp.name, e.target.value)
-                              }
-                              onKeyDown={(e) => {
-                                if (e.key === 'Enter') {
-                                  e.currentTarget.blur()
-                                }
-                              }}
-                              placeholder="e.g., 1e-5"
-                              className="w-full max-w-xs px-3 py-2 border-2 border-gray-400 bg-white/10 text-gray-900 placeholder:text-gray-500 rounded-lg text-sm font-mono focus:outline-none focus:border-green-700"
-                            />
-                          </div>
-                        </div>
-
-                        <Button
-                          variant="glass"
-                          size="sm"
-                          onClick={() => handleRemoveSpecies(sp.name)}
-                          className="rounded-lg text-red-600 hover:bg-red-900/20 backdrop-blur-lg"
-                        >
-                          Remove
-                        </Button>
-                      </div>
+                        species={sp}
+                        onPhaseChange={handlePhaseSave}
+                        onFieldSave={handleFieldSave}
+                        onRemove={handleRemoveSpecies}
+                      />
                     ))
                   )}
                 </div>
@@ -661,55 +760,18 @@ export function SpeciesEditor() {
                 No species defined. Add your first species above.
               </p>
             ) : (
-              <div className="space-y-2 min-h-0 flex-1 overflow-y-auto">
+              <div className="flex min-h-0 flex-1 flex-wrap content-start gap-2 overflow-y-auto">
                 {filteredSpecies.length === 0 ? (
-                  <p className="text-center text-gray-500 py-8">No matching species found.</p>
+                  <p className="w-full text-center text-gray-500 py-8">No matching species found.</p>
                 ) : (
                   filteredSpecies.map((sp) => (
-                    <div
+                    <SpeciesChip
                       key={sp.name}
-                      className="flex items-center justify-between p-3 border border-white/20 rounded-lg bg-white/5 hover:bg-white/10 transition-colors"
-                    >
-                      <div className="flex-1">
-                        <div className="flex flex-wrap items-center gap-2 mb-1">
-                          <h5 className="font-semibold text-sm">{sp.name}</h5>
-                          <PhaseSelector
-                            value={sp.phase}
-                            onChange={(phase) => handlePhaseSave(sp.name, phase)}
-                            size="compact"
-                          />
-                        </div>
-                        <p className="text-xs text-gray-700">
-                          MW: {sp.molecular_weight_kg_mol} kg/mol
-                        </p>
-                        <div className="mt-2 flex flex-col gap-1">
-                          <label className="text-[11px] uppercase tracking-wide text-gray-700">
-                            Diffusion Coefficient (m2/s)
-                          </label>
-                          <input
-                            type="text"
-                            defaultValue={sp['diffusion coefficient [m2 s-1]'] ?? ''}
-                            onBlur={(e) => handleDiffusionCoefficientSave(sp.name, e.target.value)}
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter') {
-                                e.currentTarget.blur()
-                              }
-                            }}
-                            placeholder="e.g., 1e-5"
-                            className="w-full max-w-xs px-3 py-2 border-2 border-gray-400 bg-white/10 text-gray-900 placeholder:text-gray-500 rounded-lg text-sm font-mono focus:outline-none focus:border-green-700"
-                          />
-                        </div>
-                      </div>
-
-                      <Button
-                        variant="glass"
-                        size="sm"
-                        onClick={() => handleRemoveSpecies(sp.name)}
-                        className="rounded-lg text-red-600 hover:bg-red-900/20 backdrop-blur-lg"
-                      >
-                        Remove
-                      </Button>
-                    </div>
+                      species={sp}
+                      onPhaseChange={handlePhaseSave}
+                      onFieldSave={handleFieldSave}
+                      onRemove={handleRemoveSpecies}
+                    />
                   ))
                 )}
               </div>
