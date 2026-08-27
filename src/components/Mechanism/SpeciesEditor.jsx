@@ -36,9 +36,9 @@ const CUSTOM_PILL_MAX_LENGTH = 512
 function pillClassName(active, compact) {
   return `${
     compact ? 'px-2.5 py-1 text-[11px]' : 'px-3.5 py-1.5 text-sm'
-  } font-semibold rounded-full border whitespace-nowrap transition-colors focus:outline-none focus:ring-2 focus:ring-blue-600 ${
+  } font-semibold rounded-full border whitespace-nowrap transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-green-500 flex items-center gap-1.5 ${
     active
-      ? 'bg-blue-50 border-blue-400 text-blue-700'
+      ? 'bg-green-50 border-green-300 text-green-800'
       : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
   }`
 }
@@ -164,11 +164,7 @@ function PhaseSelector({ value, onChange, size = 'default' }) {
         </button>
       ))}
 
-      <button
-        type="button"
-        onClick={() => setDialogOpen(true)}
-        className={`${pillClassName(false, compact)} flex items-center gap-1`}
-      >
+      <button type="button" onClick={() => setDialogOpen(true)} className={pillClassName(false, compact)}>
         Others
         <ChevronDown className="w-3.5 h-3.5 flex-shrink-0" />
       </button>
@@ -242,11 +238,7 @@ function PropertySelector({ properties, onChange, size = 'default' }) {
           </button>
         ))}
 
-        <button
-          type="button"
-          onClick={() => setDialogOpen(true)}
-          className={`${pillClassName(false, compact)} flex items-center gap-1`}
-        >
+        <button type="button" onClick={() => setDialogOpen(true)} className={pillClassName(false, compact)}>
           Others
           <ChevronDown className="w-3.5 h-3.5 flex-shrink-0" />
         </button>
@@ -265,15 +257,19 @@ function PropertySelector({ properties, onChange, size = 'default' }) {
           {activeNames.map((name) => {
             const { label, placeholder } = getPropertyFieldConfig(name)
             return (
-              <div key={name}>
-                <label className="block text-xs font-semibold text-blue-900 mb-1">{label}</label>
-                <input
-                  type="text"
-                  value={properties[name]}
-                  onChange={(e) => setPropertyValue(name, e.target.value)}
-                  placeholder={placeholder}
-                  className="w-full px-3 py-2 border-2 border-gray-400 bg-white/10 text-gray-900 placeholder:text-gray-500 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
-                />
+              <div key={name} className="grid grid-cols-1 gap-3 md:grid-cols-3">
+                <div>
+                  <label className="block text-xs font-semibold text-gray-700 mb-1">
+                    {label}
+                  </label>
+                  <input
+                    type="text"
+                    value={properties[name]}
+                    onChange={(e) => setPropertyValue(name, e.target.value)}
+                    placeholder={placeholder}
+                    className="w-full px-3 py-2 border-2 border-gray-400 bg-white/10 text-gray-900 placeholder:text-gray-500 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
+                  />
+                </div>
               </div>
             )
           })}
@@ -521,14 +517,14 @@ export function SpeciesEditor() {
           <div className="p-4 bg-white/0 backdrop-blur-lg rounded-xl border-2 border-white/20">
             <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
               <div className="md:col-span-3">
-                <label className="block text-xs font-semibold text-blue-900 mb-1">
+                <label className="block text-sm font-semibold text-gray-700 mb-1">
                   Choose a phase
                 </label>
                 <PhaseSelector value={newSpeciesPhase} onChange={setNewSpeciesPhase} />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-blue-900 mb-1">
+                <label className="block text-sm font-semibold text-gray-700 mb-1">
                   Species name
                 </label>
                 <input
@@ -541,7 +537,7 @@ export function SpeciesEditor() {
               </div>
 
               <div className="md:col-span-3">
-                <label className="block text-xs font-semibold text-blue-900 mb-1">
+                <label className="block text-sm font-semibold text-gray-700 mb-1">
                   Add properties
                 </label>
                 <PropertySelector
