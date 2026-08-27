@@ -509,7 +509,7 @@ export function SpeciesEditor() {
             <CardDescription>
               {isPredefined
                 ? `Extend the ${isPredefined.name} mechanism with a custom species`
-                : 'Define a new chemical species for the mechanism'}
+                : 'Define a new species for the mechanism'}
             </CardDescription>
           </CardHeader>
 
@@ -559,7 +559,7 @@ export function SpeciesEditor() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="flex flex-col lg:h-[56rem]">
           <CardHeader>
             <CardTitle>
               {isPredefined
@@ -568,8 +568,7 @@ export function SpeciesEditor() {
             </CardTitle>
           </CardHeader>
 
-          <CardContent>
-
+          <CardContent className="flex min-h-0 flex-1 flex-col">
             {/* Search Bar */}
             <input
               type="text"
@@ -595,14 +594,14 @@ export function SpeciesEditor() {
                 </p>
               </div>
             ) : isPredefined && species.length > 0 ? (
-              <div>
+              <div className="flex min-h-0 flex-1 flex-col">
                 <div className="text-center py-4 bg-white/10 backdrop-blur-lg rounded-lg border border-white/20 mb-3">
                   <p className="text-blue-900 font-medium text-sm mb-1">
                     {isPredefined.species} pre-configured + {species.length} custom species
                   </p>
                   <p className="text-xs text-gray-600">Custom species shown below</p>
                 </div>
-                <div className="space-y-2 max-h-96 overflow-y-auto">
+                <div className="space-y-2 min-h-0 flex-1 overflow-y-auto">
                   {filteredSpecies.length === 0 ? (
                     <p className="text-center text-gray-500 py-8">No matching species found.</p>
                   ) : (
@@ -662,7 +661,7 @@ export function SpeciesEditor() {
                 No species defined. Add your first species above.
               </p>
             ) : (
-              <div className="space-y-2 max-h-96 overflow-y-auto">
+              <div className="space-y-2 min-h-0 flex-1 overflow-y-auto">
                 {filteredSpecies.length === 0 ? (
                   <p className="text-center text-gray-500 py-8">No matching species found.</p>
                 ) : (
@@ -717,21 +716,6 @@ export function SpeciesEditor() {
             )}
           </CardContent>
         </Card>
-      </div>
-
-      <div className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-lg p-3 text-xs text-gray-700">
-        <p className="font-semibold mb-1 flex items-center gap-2">
-          <Lightbulb className="w-4 h-4" />
-          Species Editor Notes:
-        </p>
-        <ul className="space-y-0.5 ml-4">
-          <li>• Species names must be unique within the mechanism</li>
-          <li>• Species in this editor are treated as gas phase</li>
-          <li>• Molecular weight is in kg/mol (e.g., O2 = 0.032 kg/mol)</li>
-          <li>• Diffusion coefficient is editable in m2/s</li>
-          <li>• Removing a species will also remove it from all reactions</li>
-          <li>• Common atmospheric species: M (air), O2, N2, H2O, CO2</li>
-        </ul>
       </div>
     </div>
   )
