@@ -408,14 +408,16 @@ export function SpeciesEditor() {
   const [newSpeciesPhase, setNewSpeciesPhase] = useState('')
   const [newSpeciesProperties, setNewSpeciesProperties] = useState({})
   const [speciesSearch, setSpeciesSearch] = useState('')
-  // Filtered and sorted species list based on search
+  // Species matching the search, exact matches first. Matching is on the start of the name, not
+  // anywhere within it: searching "I" should offer species beginning with I, not every name that
+  // happens to contain one (PI, HNO3I, ...).
+  const speciesQuery = speciesSearch.trim().toLowerCase()
   const filteredSpecies = species
-    .filter((sp) => sp.name.toLowerCase().includes(speciesSearch.toLowerCase()))
+    .filter((sp) => sp.name.toLowerCase().startsWith(speciesQuery))
     .sort((a, b) => {
-      const search = speciesSearch.trim().toLowerCase()
-      if (!search) return 0
-      const aExact = a.name.toLowerCase() === search
-      const bExact = b.name.toLowerCase() === search
+      if (!speciesQuery) return 0
+      const aExact = a.name.toLowerCase() === speciesQuery
+      const bExact = b.name.toLowerCase() === speciesQuery
       if (aExact && !bExact) return -1
       if (!aExact && bExact) return 1
       // Otherwise, keep original order
