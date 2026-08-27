@@ -1,50 +1,282 @@
-import { useState, useRef, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { useSelector, useDispatch } from 'react-redux'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card'
 import { Button } from '../ui/button'
 import { addSpecies, updateSpecies, removeSpecies } from '../../redux/slices/mechanismSlice'
 import { useToast } from '@/hooks/use-toast'
-import { Info, Atom, Lightbulb, ChevronDown, Check } from 'lucide-react'
+import { Info, Atom, Lightbulb, ChevronDown } from 'lucide-react'
 import { addSpeciesIfValid } from './speciesUtils'
-import { useClickOutside } from '../../hooks/useClickOutside'
 
-// Species phase options
-const PHASE_OPTIONS = ['Gas', 'Aqueous', 'Surface']
+// Fixed phase segments; anything else is entered as a custom "Others" phase
+const FIXED_PHASE_OPTIONS = ['Gas', 'Aqueous']
+// Fixed property segments; anything else is entered as a custom "Others" property
+const FIXED_PROPERTY_OPTIONS = [
+  'Molecular weight',
+  'Diffusion coefficient',
+  'Density',
+  'Absolute tolerance',
+]
+const PROPERTY_FIELD_CONFIG = {
+  'Molecular weight': {
+    label: 'Molecular weight (kg/mol)',
+    placeholder: 'Default (0.029 kg/mol)',
+  },
+  'Diffusion coefficient': {
+    label: 'Diffusion coefficient (m2/s)',
+    placeholder: 'e.g., 1e-5',
+  },
+}
+function getPropertyFieldConfig(name) {
+  return PROPERTY_FIELD_CONFIG[name] || { label: `${name}`, placeholder: 'e.g., 1.2' }
+}
+const CUSTOM_PILL_MAX_LENGTH = 512
 
-// Dropdown for selecting a species phase; shows "Phase" until a value is chosen
-function PhaseDropdown({ value, onChange, buttonClassName, menuClassName }) {
-  const [open, setOpen] = useState(false)
-  const menuRef = useRef(null)
-  const close = useCallback(() => setOpen(false), [])
-  useClickOutside(menuRef, close, open)
+// Shared pill styling for the phase and property selectors below.
+function pillClassName(active, compact) {
+  return `${
+    compact ? 'px-2.5 py-1 text-[11px]' : 'px-3.5 py-1.5 text-sm'
+  } font-semibold rounded-full border whitespace-nowrap transition-colors focus:outline-none focus:ring-2 focus:ring-blue-600 ${
+    active
+      ? 'bg-blue-50 border-blue-400 text-blue-700'
+      : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
+  }`
+}
+
+// Dialog for entering a custom pill name, styled after Google Calendar's
+// "Another office" / "Add location" working-location dialog.
+function AddPillDialog({ label, onCancel, onAdd }) {
+  const [draft, setDraft] = useState('')
+  const trimmed = draft.trim()
+
+  const handleAdd = useCallback(() => {
+    if (trimmed) {
+      onAdd(trimmed)
+    }
+  }, [trimmed, onAdd])
+
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') onCancel()
+    }
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [onCancel])
+
+  return createPortal(
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+      onClick={onCancel}
+    >
+      <div
+        className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <label className="block text-sm font-medium text-blue-600 mb-1">{label}</label>
+        <input
+          type="text"
+          autoFocus
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') handleAdd()
+          }}
+          maxLength={CUSTOM_PILL_MAX_LENGTH}
+          className="w-full border-0 border-b-2 border-blue-600 bg-transparent px-0 py-1.5 text-base text-gray-900 focus:outline-none"
+        />
+        <div className="mt-1 text-right text-xs text-gray-500">
+          {draft.length}/{CUSTOM_PILL_MAX_LENGTH}
+        </div>
+
+        <div className="mt-4 flex items-center justify-end gap-2">
+          <button
+            type="button"
+            onClick={onCancel}
+            className="rounded px-4 py-2 text-sm font-medium text-blue-600 hover:bg-blue-50"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={handleAdd}
+            disabled={!trimmed}
+            className={`rounded px-4 py-2 text-sm font-medium ${
+              trimmed ? 'text-blue-600 hover:bg-blue-50' : 'text-gray-400 cursor-not-allowed'
+            }`}
+          >
+            Add
+          </button>
+        </div>
+      </div>
+    </div>,
+    document.body
+  )
+}
+
+// Pill-style phase picker: Gas | Aqueous | (any custom phases) | Others,
+// where Others opens a dialog to type a custom phase name (its own pill).
+function PhaseSelector({ value, onChange, size = 'default' }) {
+  const [dialogOpen, setDialogOpen] = useState(false)
+  // Remembers every custom phase entered so their pills stay even after
+  // switching to Gas/Aqueous/another custom phase, instead of disappearing.
+  const [savedCustoms, setSavedCustoms] = useState(() =>
+    value && !FIXED_PHASE_OPTIONS.includes(value) ? [value] : []
+  )
+
+  useEffect(() => {
+    if (value && !FIXED_PHASE_OPTIONS.includes(value)) {
+      setSavedCustoms((prev) => (prev.includes(value) ? prev : [...prev, value]))
+    }
+  }, [value])
+
+  const handleAddCustom = (phase) => {
+    onChange(phase)
+    setDialogOpen(false)
+  }
+
+  const compact = size === 'compact'
 
   return (
-    <div className="relative" ref={menuRef}>
-      <button type="button" onClick={() => setOpen((o) => !o)} className={buttonClassName}>
-        {value || 'Choose a phase'}
+    <div className="flex flex-nowrap items-center gap-2 overflow-x-auto">
+      <button
+        type="button"
+        onClick={() => onChange('Gas')}
+        className={pillClassName(value === 'Gas', compact)}
+      >
+        Gas
+      </button>
+      <button
+        type="button"
+        onClick={() => onChange('Aqueous')}
+        className={pillClassName(value === 'Aqueous', compact)}
+      >
+        Aqueous
+      </button>
+
+      {savedCustoms.map((custom) => (
+        <button
+          key={custom}
+          type="button"
+          onClick={() => onChange(custom)}
+          className={pillClassName(value === custom, compact)}
+        >
+          {custom}
+        </button>
+      ))}
+
+      <button
+        type="button"
+        onClick={() => setDialogOpen(true)}
+        className={`${pillClassName(false, compact)} flex items-center gap-1`}
+      >
+        Others
         <ChevronDown className="w-3.5 h-3.5 flex-shrink-0" />
       </button>
 
-      {open && (
-        <div className={menuClassName}>
-          {PHASE_OPTIONS.map((phase) => (
-            <button
-              key={phase}
-              type="button"
-              onClick={() => {
-                onChange(phase)
-                setOpen(false)
-              }}
-              className="w-full flex items-center gap-2 text-left text-sm font-bold px-3 py-1.5 text-gray-800 hover:bg-gray-100"
-            >
-              <Check
-                className={`w-3.5 h-3.5 flex-shrink-0 ${
-                  value === phase ? 'opacity-100' : 'opacity-0'
-                }`}
-              />
-              {phase}
-            </button>
-          ))}
+      {dialogOpen && (
+        <AddPillDialog
+          label="Add phase"
+          onCancel={() => setDialogOpen(false)}
+          onAdd={handleAddCustom}
+        />
+      )}
+    </div>
+  )
+}
+
+// Multi-select pill picker for named numeric species properties: Density |
+// Absolute tolerance | (custom) | Others. Selecting a pill toggles that
+// property on/off and reveals a value input for it; Others adds a new
+// custom-named property the same way.
+function PropertySelector({ properties, onChange, size = 'default' }) {
+  const [dialogOpen, setDialogOpen] = useState(false)
+  // Remembers every custom property name entered so its pill stays even
+  // after being toggled off, instead of disappearing.
+  const [savedCustoms, setSavedCustoms] = useState(() =>
+    Object.keys(properties).filter((name) => !FIXED_PROPERTY_OPTIONS.includes(name))
+  )
+
+  useEffect(() => {
+    setSavedCustoms((prev) => {
+      const missing = Object.keys(properties).filter(
+        (name) => !FIXED_PROPERTY_OPTIONS.includes(name) && !prev.includes(name)
+      )
+      return missing.length ? [...prev, ...missing] : prev
+    })
+  }, [properties])
+
+  const togglePill = (name) => {
+    if (name in properties) {
+      const next = { ...properties }
+      delete next[name]
+      onChange(next)
+    } else {
+      onChange({ ...properties, [name]: '' })
+    }
+  }
+
+  const handleAddCustom = (name) => {
+    onChange({ ...properties, [name]: properties[name] ?? '' })
+    setDialogOpen(false)
+  }
+
+  const setPropertyValue = (name, val) => {
+    onChange({ ...properties, [name]: val })
+  }
+
+  const compact = size === 'compact'
+  const activeNames = Object.keys(properties)
+  const pillOptions = [...FIXED_PROPERTY_OPTIONS, ...savedCustoms]
+
+  return (
+    <div>
+      <div className="flex flex-nowrap items-center gap-2 overflow-x-auto">
+        {pillOptions.map((name) => (
+          <button
+            key={name}
+            type="button"
+            onClick={() => togglePill(name)}
+            className={pillClassName(name in properties, compact)}
+          >
+            {name}
+          </button>
+        ))}
+
+        <button
+          type="button"
+          onClick={() => setDialogOpen(true)}
+          className={`${pillClassName(false, compact)} flex items-center gap-1`}
+        >
+          Others
+          <ChevronDown className="w-3.5 h-3.5 flex-shrink-0" />
+        </button>
+
+        {dialogOpen && (
+          <AddPillDialog
+            label="Add property"
+            onCancel={() => setDialogOpen(false)}
+            onAdd={handleAddCustom}
+          />
+        )}
+      </div>
+
+      {activeNames.length > 0 && (
+        <div className="mt-3 flex flex-col gap-3">
+          {activeNames.map((name) => {
+            const { label, placeholder } = getPropertyFieldConfig(name)
+            return (
+              <div key={name}>
+                <label className="block text-xs font-semibold text-blue-900 mb-1">{label}</label>
+                <input
+                  type="text"
+                  value={properties[name]}
+                  onChange={(e) => setPropertyValue(name, e.target.value)}
+                  placeholder={placeholder}
+                  className="w-full px-3 py-2 border-2 border-gray-400 bg-white/10 text-gray-900 placeholder:text-gray-500 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
+                />
+              </div>
+            )
+          })}
         </div>
       )}
     </div>
@@ -59,9 +291,8 @@ export function SpeciesEditor() {
   const { toast } = useToast()
 
   const [newSpeciesName, setNewSpeciesName] = useState('')
-  const [newMolWeight, setNewMolWeight] = useState('')
-  const [newDiffusionCoefficient, setNewDiffusionCoefficient] = useState('')
   const [newSpeciesPhase, setNewSpeciesPhase] = useState('')
+  const [newSpeciesProperties, setNewSpeciesProperties] = useState({})
   const [speciesSearch, setSpeciesSearch] = useState('')
   // Filtered and sorted species list based on search
   const filteredSpecies = species
@@ -104,9 +335,8 @@ export function SpeciesEditor() {
     const added = addSpeciesIfValid({
       species,
       newSpeciesName,
-      newMolWeight,
-      newDiffusionCoefficient,
       newSpeciesPhase,
+      newSpeciesProperties,
       dispatch,
       toast,
       addSpecies,
@@ -114,9 +344,10 @@ export function SpeciesEditor() {
 
     if (added) {
       setNewSpeciesName('')
-      setNewMolWeight('')
-      setNewDiffusionCoefficient('')
-      setNewSpeciesPhase('')
+      // Keep the selected property pills, but clear their values for the next species
+      setNewSpeciesProperties((prev) =>
+        Object.fromEntries(Object.keys(prev).map((name) => [name, '']))
+      )
     }
   }
 
@@ -263,7 +494,7 @@ export function SpeciesEditor() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Species Editor</CardTitle>
+          <CardTitle>Add species</CardTitle>
           <CardDescription>
             {isPredefined
               ? `Viewing ${isPredefined.name} mechanism - species are pre-configured`
@@ -289,51 +520,33 @@ export function SpeciesEditor() {
           {/* Add New Species Form (shown for all mechanisms) */}
           <div className="p-4 bg-white/0 backdrop-blur-lg rounded-xl border-2 border-white/20">
             <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+              <div className="md:col-span-3">
+                <label className="block text-xs font-semibold text-blue-900 mb-1">
+                  Choose a phase
+                </label>
+                <PhaseSelector value={newSpeciesPhase} onChange={setNewSpeciesPhase} />
+              </div>
+
               <div>
                 <label className="block text-xs font-semibold text-blue-900 mb-1">
-                  Species Name
+                  Species name
                 </label>
                 <input
                   type="text"
                   value={newSpeciesName}
                   onChange={(e) => setNewSpeciesName(e.target.value)}
-                  placeholder="e.g., OH, NO2, O3"
+                  placeholder="e.g., N2"
                   className="w-full px-3 py-2 border-2 border-gray-400 bg-white/10 text-gray-900 placeholder:text-gray-500 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
                 />
               </div>
 
-              <div>
+              <div className="md:col-span-3">
                 <label className="block text-xs font-semibold text-blue-900 mb-1">
-                  Molecular Weight (optional)
+                  Add properties
                 </label>
-                <input
-                  type="text"
-                  value={newMolWeight}
-                  onChange={(e) => setNewMolWeight(e.target.value)}
-                  placeholder="Leave empty for default (0.029 kg/mol)"
-                  className="w-full px-3 py-2 border-2 border-gray-400 bg-white/10 text-gray-900 placeholder:text-gray-500 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-blue-900 mb-1">
-                  Diffusion Coefficient (optional, m2/s)
-                </label>
-                <input
-                  type="text"
-                  value={newDiffusionCoefficient}
-                  onChange={(e) => setNewDiffusionCoefficient(e.target.value)}
-                  placeholder="e.g., 1e-5"
-                  className="w-full px-3 py-2 border-2 border-gray-400 bg-white/10 text-gray-900 placeholder:text-gray-500 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
-                />
-              </div>
-
-              <div>
-                <PhaseDropdown
-                  value={newSpeciesPhase}
-                  onChange={setNewSpeciesPhase}
-                  buttonClassName="w-full flex items-center justify-between gap-1 px-3 py-2 border-2 border-gray-400 bg-white/10 text-gray-900 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
-                  menuClassName="absolute z-10 mt-1 w-full min-w-[9rem] bg-white border border-gray-300 rounded-lg shadow-lg py-1"
+                <PropertySelector
+                  properties={newSpeciesProperties}
+                  onChange={setNewSpeciesProperties}
                 />
               </div>
             </div>
@@ -400,11 +613,10 @@ export function SpeciesEditor() {
                         <div className="flex-1">
                           <div className="flex flex-wrap items-center gap-2 mb-1">
                             <h5 className="font-semibold text-sm">{sp.name}</h5>
-                            <PhaseDropdown
+                            <PhaseSelector
                               value={sp.phase}
                               onChange={(phase) => handlePhaseSave(sp.name, phase)}
-                              buttonClassName="flex items-center gap-1 rounded-md border border-gray-400 bg-white/10 px-2 py-1 text-[11px] font-semibold uppercase tracking-wide text-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-600"
-                              menuClassName="absolute z-10 mt-1 min-w-[7rem] bg-white border border-gray-300 rounded-lg shadow-lg py-1"
+                              size="compact"
                             />
                           </div>
                           <p className="text-xs text-gray-700">
@@ -461,11 +673,10 @@ export function SpeciesEditor() {
                       <div className="flex-1">
                         <div className="flex flex-wrap items-center gap-2 mb-1">
                           <h5 className="font-semibold text-sm">{sp.name}</h5>
-                          <PhaseDropdown
+                          <PhaseSelector
                             value={sp.phase}
                             onChange={(phase) => handlePhaseSave(sp.name, phase)}
-                            buttonClassName="flex items-center gap-1 rounded-md border border-gray-400 bg-white/10 px-2 py-1 text-[11px] font-semibold uppercase tracking-wide text-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-600"
-                            menuClassName="absolute z-10 mt-1 min-w-[7rem] bg-white border border-gray-300 rounded-lg shadow-lg py-1"
+                            size="compact"
                           />
                         </div>
                         <p className="text-xs text-gray-700">

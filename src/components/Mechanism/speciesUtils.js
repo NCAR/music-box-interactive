@@ -2,9 +2,8 @@
 export function addSpeciesIfValid({
   species,
   newSpeciesName,
-  newMolWeight,
-  newDiffusionCoefficient,
   newSpeciesPhase,
+  newSpeciesProperties = {},
   dispatch,
   toast,
   addSpecies,
@@ -29,7 +28,10 @@ export function addSpeciesIfValid({
     return false
   }
 
-  const molWeight = newMolWeight ? parseFloat(newMolWeight) : 0.029
+  const { 'Molecular weight': rawMolWeight, 'Diffusion coefficient': rawDiffusionCoefficient, ...restProperties } =
+    newSpeciesProperties
+
+  const molWeight = rawMolWeight && rawMolWeight.trim() ? parseFloat(rawMolWeight) : 0.029
 
   if (isNaN(molWeight)) {
     toast({
@@ -41,8 +43,8 @@ export function addSpeciesIfValid({
   }
 
   const diffusionCoefficient =
-    newDiffusionCoefficient && newDiffusionCoefficient.trim()
-      ? Number.parseFloat(newDiffusionCoefficient)
+    rawDiffusionCoefficient && rawDiffusionCoefficient.trim()
+      ? Number.parseFloat(rawDiffusionCoefficient)
       : 1e-5
 
   if (Number.isNaN(diffusionCoefficient)) {
@@ -54,13 +56,33 @@ export function addSpeciesIfValid({
     return false
   }
 
+  const properties = {}
+  for (const [name, rawValue] of Object.entries(restProperties)) {
+    const trimmedValue = rawValue.trim()
+    if (!trimmedValue) {
+      continue
+    }
+
+    const parsedValue = Number.parseFloat(trimmedValue)
+    if (Number.isNaN(parsedValue)) {
+      toast({
+        title: 'Error',
+        description: `${name} must be a valid number`,
+        variant: 'destructive',
+      })
+      return false
+    }
+
+    properties[name] = parsedValue
+  }
+
   dispatch(
     addSpecies({
       name: normalizedName,
       molecular_weight_kg_mol: molWeight,
       'diffusion coefficient [m2 s-1]': diffusionCoefficient,
       phase: newSpeciesPhase || 'Gas',
-      properties: {},
+      properties,
     })
   )
 
