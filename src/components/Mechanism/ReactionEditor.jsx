@@ -3,7 +3,7 @@ import { useSelector, useDispatch } from 'react-redux'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card'
 import { Button } from '../ui/button'
 import { addReaction, removeReaction } from '../../redux/slices/mechanismSlice'
-import { Plus, FlaskConical, Lightbulb } from 'lucide-react'
+import { Plus, Lightbulb } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import { getReactionDefinition, reactionRegistry } from './reactions/reactionRegistry'
 
@@ -12,32 +12,8 @@ export function ReactionEditor() {
   const dispatch = useDispatch()
   const { toast } = useToast()
   const reactions = useSelector((state) => state.mechanism.reactions)
-  const selectedMechanism = useSelector((state) => state.mechanism.selectedMechanism)
 
   const [reactionType, setReactionType] = useState(reactionRegistry[0].type)
-
-  // check if predefined mech
-  const preDefinedMechanisms = {
-    chapman: {
-      name: 'Chapman',
-      species: 5,
-      reactions: 6,
-      description: 'Stratospheric oxygen chemistry',
-    },
-    ts1: {
-      name: 'TS1',
-      species: 209,
-      reactions: 512,
-      description: '209 species tropospheric mechanism',
-    },
-    analytical: {
-      name: 'Analytical',
-      species: 3,
-      reactions: 3,
-      description: 'Simple test mechanism (A→B→C)',
-    },
-  }
-  const isPredefined = preDefinedMechanisms[selectedMechanism]
 
   const activeReactionDefinition = getReactionDefinition(reactionType)
   const ActiveReactionForm = activeReactionDefinition.component
@@ -146,62 +122,7 @@ export function ReactionEditor() {
               {`Reactions List (${reactions.length} total)`}
             </h4>
 
-            {isPredefined && reactions.length === 0 ? (
-              <div className="text-center py-8 bg-white/10 backdrop-blur-lg rounded-lg border border-white/20">
-                <div className="flex justify-center mb-2">
-                  <FlaskConical className="w-16 h-16" />
-                </div>
-                <p className="text-blue-900 font-medium mb-1">
-                  {isPredefined.reactions} reactions are pre-configured in this mechanism
-                </p>
-                <p className="text-xs text-gray-600 mb-2">
-                  Reaction definitions are loaded from the mechanism config file
-                </p>
-                <p className="text-xs text-blue-700">
-                  Add custom reactions above to extend the mechanism
-                </p>
-              </div>
-            ) : isPredefined && reactions.length > 0 ? (
-              <div>
-                <div className="text-center py-4 bg-white/10 backdrop-blur-lg rounded-lg border border-white/20 mb-3">
-                  <p className="text-blue-900 font-medium text-sm mb-1">
-                    {isPredefined.reactions} pre-configured + {reactions.length} custom reactions
-                  </p>
-                  <p className="text-xs text-gray-600">Custom reactions shown below</p>
-                </div>
-                <div className="space-y-2 max-h-96 overflow-y-auto">
-                  {reactions.map((reaction) => (
-                    <div
-                      key={reaction.id}
-                      className="flex items-center justify-between p-3 border border-white/20 rounded-lg bg-white/5 hover:bg-white/10 transition-colors"
-                    >
-                      <div className="flex-1">
-                        <h5 className="font-semibold text-sm font-mono">
-                          {formatReactionDisplay(reaction)}
-                        </h5>
-                        <p className="text-xs text-gray-700">
-                          Type: {reaction.type}
-                          {reaction.A !== undefined && ` • A = ${reaction.A}`}
-                          {reaction.A === undefined &&
-                            (reaction.scalingFactor !== undefined ||
-                              reaction['scaling factor'] !== undefined) &&
-                            ` • Scale = ${reaction.scalingFactor ?? reaction['scaling factor']}`}
-                        </p>
-                      </div>
-
-                      <Button
-                        variant="glass"
-                        size="sm"
-                        onClick={() => handleRemoveReaction(reaction.id)}
-                        className="rounded-lg text-red-600 hover:bg-red-900/20 backdrop-blur-lg"
-                      >
-                        Remove
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ) : reactions.length === 0 ? (
+            {reactions.length === 0 ? (
               <p className="text-center text-gray-500 py-8">
                 No reactions defined. Add your first reaction above.
               </p>

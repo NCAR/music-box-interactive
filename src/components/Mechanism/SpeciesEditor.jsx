@@ -1,15 +1,16 @@
 import { useState, useCallback, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { useSelector, useDispatch } from 'react-redux'
+import { ChevronDown, ChevronUp } from 'lucide-react'
+import { useToast } from '@/hooks/use-toast'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card'
 import { Button } from '../ui/button'
 import { addSpecies, updateSpecies, removeSpecies } from '../../redux/slices/mechanismSlice'
-import { useToast } from '@/hooks/use-toast'
-import { Info, Atom, Lightbulb, ChevronDown, ChevronUp } from 'lucide-react'
 import { addSpeciesIfValid } from './speciesUtils'
 
 // Fixed phase segments; anything else is entered as a custom "Others" phase
 const FIXED_PHASE_OPTIONS = ['Gas', 'Aqueous']
+
 // Fixed property segments; anything else is entered as a custom "Others" property
 const FIXED_PROPERTY_OPTIONS = [
   'Molecular weight',
@@ -27,7 +28,7 @@ const PROPERTY_FIELD_CONFIG = {
     placeholder: 'e.g., 1e-5',
   },
   'Density': {
-    label: 'Density (kg/m3)',
+    label: 'Density (kg/m3)',  
     placeholder: 'e.g., 1e-5',
   },
   'Absolute tolerance': {
@@ -40,7 +41,15 @@ function getPropertyFieldConfig(name) {
 }
 const CUSTOM_PILL_MAX_LENGTH = 512
 
-// Shared pill styling for the phase and property selectors below.
+// Shared text-input styling in two sizes: a roomy variant for the add-species form,
+// and a compact variant for the search box and per-species value fields.
+const TEXT_INPUT =
+  'w-full px-4 py-3 border-2 border-gray-400 bg-white/10 text-gray-900 placeholder:text-gray-500 rounded-xl text-base font-mono focus:outline-none focus:border-green-700'
+const TEXT_INPUT_SM =
+  'px-3 py-2 border-2 border-gray-400 bg-white/10 text-gray-900 placeholder:text-gray-500 rounded-lg text-sm font-mono focus:outline-none focus:border-green-700'
+
+
+// Shared pill styling for the phase and property selectors.
 function pillClassName(active, compact) {
   return `${
     compact ? 'px-2.5 py-1 text-[11px]' : 'px-4 py-2 text-[15px]'
@@ -121,8 +130,7 @@ function AddPillDialog({ label, onCancel, onAdd }) {
 
 function PhaseSelector({ value, onChange, size = 'default', allowCustom = true }) {
   const [dialogOpen, setDialogOpen] = useState(false)
-  // Remembers every custom phase entered so their pills stay even after
-  // switching to Gas/Aqueous/another custom phase, instead of disappearing.
+  // Keeps custom phase pills visible when switching between phases.
   const [savedCustoms, setSavedCustoms] = useState(() =>
     value && !FIXED_PHASE_OPTIONS.includes(value) ? [value] : []
   )
@@ -190,13 +198,11 @@ function PhaseSelector({ value, onChange, size = 'default', allowCustom = true }
   )
 }
 
-// Multi-select pill picker for named numeric species properties: Density |
-// Absolute tolerance | (custom) | Others. Selecting a pill toggles that
-// property on/off and reveals a value input for it.
-function PropertySelector({ properties, onChange, size = 'default' }) {
+// Multi-select pills for numeric species properties; selecting a pill toggles
+// the property and shows its value input.
+function PropertySelector({ properties, onChange }) {
   const [dialogOpen, setDialogOpen] = useState(false)
-  // Remembers every custom property name entered so its pill stays even
-  // after being toggled off, instead of disappearing.
+  // Remembers custom property names so their pills persist when toggled off.
   const [savedCustoms, setSavedCustoms] = useState(() =>
     Object.keys(properties).filter((name) => !FIXED_PROPERTY_OPTIONS.includes(name))
   )
@@ -229,7 +235,6 @@ function PropertySelector({ properties, onChange, size = 'default' }) {
     onChange({ ...properties, [name]: val })
   }
 
-  const compact = size === 'compact'
   const activeNames = Object.keys(properties)
   const pillOptions = [...FIXED_PROPERTY_OPTIONS, ...savedCustoms]
 
@@ -241,13 +246,13 @@ function PropertySelector({ properties, onChange, size = 'default' }) {
             key={name}
             type="button"
             onClick={() => togglePill(name)}
-            className={pillClassName(name in properties, compact)}
+            className={pillClassName(name in properties, false)}
           >
             {name}
           </button>
         ))}
 
-        <button type="button" onClick={() => setDialogOpen(true)} className={pillClassName(false, compact)}>
+        <button type="button" onClick={() => setDialogOpen(true)} className={pillClassName(false, false)}>
           Others
           <ChevronDown className="w-3.5 h-3.5 flex-shrink-0" />
         </button>
@@ -275,7 +280,7 @@ function PropertySelector({ properties, onChange, size = 'default' }) {
                   value={properties[name]}
                   onChange={(e) => setPropertyValue(name, e.target.value)}
                   placeholder={placeholder}
-                  className="w-full px-4 py-3 border-2 border-gray-400 bg-white/10 text-gray-900 placeholder:text-gray-500 rounded-xl text-base font-mono focus:outline-none focus:border-green-700"
+                  className={TEXT_INPUT}
                 />
               </div>
             )
@@ -286,7 +291,6 @@ function PropertySelector({ properties, onChange, size = 'default' }) {
   )
 }
 
-// visual editor for species in the mechanism
 // Editable numeric fields a species may carry. Both are optional: species added through the
 // form get defaults.
 const SPECIES_FIELD_CONFIG = {
@@ -383,7 +387,7 @@ function SpeciesChip({ species, onPhaseChange, onFieldSave, onRemove }) {
                 }
               }}
               placeholder={field.placeholder}
-              className="w-full max-w-xs px-3 py-2 border-2 border-gray-400 bg-white/10 text-gray-900 placeholder:text-gray-500 rounded-lg text-sm font-mono focus:outline-none focus:border-green-700"
+              className={`w-full max-w-xs ${TEXT_INPUT_SM}`}
             />
           </div>
         ))}
@@ -395,7 +399,6 @@ function SpeciesChip({ species, onPhaseChange, onFieldSave, onRemove }) {
 export function SpeciesEditor() {
   const dispatch = useDispatch()
   const species = useSelector((state) => state.mechanism.species)
-  const selectedMechanism = useSelector((state) => state.mechanism.selectedMechanism)
   const { toast } = useToast()
 
   const [newSpeciesName, setNewSpeciesName] = useState('')
@@ -414,29 +417,6 @@ export function SpeciesEditor() {
       // Otherwise, keep original order
       return 0
     })
-
-  // check if predefined mech
-  const preDefinedMechanisms = {
-    chapman: {
-      name: 'Chapman',
-      species: 5,
-      reactions: 6,
-      description: 'Stratospheric oxygen chemistry',
-    },
-    ts1: {
-      name: 'TS1',
-      species: 209,
-      reactions: 512,
-      description: '209 species tropospheric mechanism',
-    },
-    analytical: {
-      name: 'Analytical',
-      species: 3,
-      reactions: 3,
-      description: 'Simple test mechanism (A→B→C)',
-    },
-  }
-  const isPredefined = preDefinedMechanisms[selectedMechanism]
 
   const handleAddSpecies = () => {
     const added = addSpeciesIfValid({
@@ -457,55 +437,6 @@ export function SpeciesEditor() {
       )
     }
   }
-
-  // const handleAddSpecies = () => {
-  //   if (!newSpeciesName) {
-  //     toast({
-  //       title: 'Error',
-  //       description: 'Please enter a species name',
-  //       variant: 'destructive',
-  //     })
-  //     return
-  //   }
-
-  //   // convert to uppercase (chemistry convention)
-  //   const normalizedName = newSpeciesName.trim().toUpperCase()
-
-  //   if (species.find(s => s.name === normalizedName)) {
-  //     toast({
-  //       title: 'Error',
-  //       description: `Species "${normalizedName}" already exists`,
-  //       variant: 'destructive',
-  //     })
-  //     return
-  //   }
-
-  //   // default to air mol weight if not provided
-  //   const molWeight = newMolWeight ? parseFloat(newMolWeight) : 0.029
-  //   if (isNaN(molWeight)) {
-  //     toast({
-  //       title: 'Error',
-  //       description: 'Molecular weight must be a valid number',
-  //       variant: 'destructive',
-  //     })
-  //     return
-  //   }
-
-  //   dispatch(addSpecies({
-  //     name: normalizedName,
-  //     molecular_weight_kg_mol: molWeight,
-  //     properties: {},
-  //   }))
-
-  //   toast({
-  //     title: 'Success',
-  //     description: `Species "${normalizedName}" added successfully`,
-  //     variant: 'success',
-  //   })
-
-  //   setNewSpeciesName('')
-  //   setNewMolWeight('')
-  // }
 
   const handleRemoveSpecies = (speciesName) => {
     dispatch(removeSpecies(speciesName))
@@ -581,67 +512,35 @@ export function SpeciesEditor() {
     )
   }
 
+  // Rendered identically whether or not a predefined mechanism is loaded; the predefined branch
+  // just stacks a summary above it.
+  const speciesChips = (
+    <div className="flex min-h-0 flex-1 flex-wrap content-start gap-2 overflow-y-auto">
+      {filteredSpecies.length === 0 ? (
+        <p className="w-full text-center text-gray-500 py-8">No matching species found.</p>
+      ) : (
+        filteredSpecies.map((sp) => (
+          <SpeciesChip
+            key={sp.name}
+            species={sp}
+            onPhaseChange={handlePhaseSave}
+            onFieldSave={handleFieldSave}
+            onRemove={handleRemoveSpecies}
+          />
+        ))
+      )}
+    </div>
+  )
+
   return (
     <div className="space-y-4">
-      {/* Pre-defined Mechanism Info */}
-      {isPredefined && (
-        <Card className="border-2 border-white/20">
-          <CardHeader>
-            <CardTitle>Using Pre-defined Mechanism: {isPredefined.name}</CardTitle>
-            <CardDescription>{isPredefined.description}</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 gap-4 mb-4">
-              <div className="bg-white/0 backdrop-blur-lg rounded-lg p-3 border border-white/20">
-                <div className="text-sm text-gray-700">Species Count</div>
-                <div className="text-2xl font-bold text-blue-600">{isPredefined.species}</div>
-              </div>
-              <div className="bg-white/0 backdrop-blur-lg rounded-lg p-3 border border-white/20">
-                <div className="text-sm text-gray-700">Reactions Count</div>
-                <div className="text-2xl font-bold text-blue-600">{isPredefined.reactions}</div>
-              </div>
-            </div>
-            <div className="bg-white/0 backdrop-blur-lg border border-white/20 rounded-lg p-3 text-sm text-gray-700">
-              <p className="font-semibold mb-1 flex items-center gap-2">
-                <Info className="w-4 h-4" />
-                About Pre-defined Mechanisms:
-              </p>
-              <ul className="space-y-0.5 ml-4 text-xs">
-                <li>• Species and reactions are loaded from mechanism config files</li>
-                <li>• You can modify initial conditions in the Conditions tab</li>
-                <li>• Run simulations directly without manual species/reaction setup</li>
-                <li>• For custom mechanisms, clear the example and add species manually</li>
-              </ul>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Info box for predefined mechanisms */}
-      {isPredefined && (
-        <div className="bg-blue-50 border-2 border-blue-300 rounded-lg p-3 text-sm">
-          <p className="font-semibold text-blue-800 mb-1 flex items-center gap-2">
-            <Info className="w-4 h-4" />
-            Extending Pre-defined Mechanism
-          </p>
-          <p className="text-blue-700 text-xs">
-            You can add custom species to the {isPredefined.name} mechanism. This allows you to
-            extend the mechanism with additional species for specialized simulations.
-          </p>
-        </div>
-      )}
-
       {/* Add form and species list are separate cards, side by side on wide screens. They
           stack below lg, where two columns would leave neither enough room. */}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:items-start">
         <Card>
           <CardHeader>
             <CardTitle>Add species</CardTitle>
-            <CardDescription>
-              {isPredefined
-                ? `Extend the ${isPredefined.name} mechanism with a custom species`
-                : 'Define a new species for the mechanism'}
-            </CardDescription>
+            <CardDescription>Define a new species for the mechanism</CardDescription>
           </CardHeader>
 
           <CardContent>
@@ -662,7 +561,7 @@ export function SpeciesEditor() {
                   value={newSpeciesName}
                   onChange={(e) => setNewSpeciesName(e.target.value)}
                   placeholder="e.g., N2"
-                  className="w-full px-4 py-3 border-2 border-gray-400 bg-white/10 text-gray-900 placeholder:text-gray-500 rounded-xl text-base font-mono focus:outline-none focus:border-green-700"
+                  className={TEXT_INPUT}
                 />
               </div>
 
@@ -692,11 +591,7 @@ export function SpeciesEditor() {
 
         <Card className="flex flex-col lg:h-[56rem]">
           <CardHeader>
-            <CardTitle>
-              {isPredefined
-                ? `${isPredefined.name} Mechanism Species (${isPredefined.species} pre-configured${species.length > 0 ? ` + ${species.length} custom` : ''})`
-                : `Total ${species.length} species`}
-            </CardTitle>
+            <CardTitle>{`Total ${species.length} species`}</CardTitle>
           </CardHeader>
 
           <CardContent className="flex min-h-0 flex-1 flex-col">
@@ -706,68 +601,15 @@ export function SpeciesEditor() {
               value={speciesSearch}
               onChange={(e) => setSpeciesSearch(e.target.value)}
               placeholder="Search species by name"
-              className="w-full mb-5 px-3 py-2 border-2 border-gray-400 bg-white/10 text-gray-900 placeholder:text-gray-500 rounded-lg text-sm font-mono focus:outline-none focus:border-green-700"
+              className={`w-full mb-5 ${TEXT_INPUT_SM}`}
             />
 
-            {isPredefined && species.length === 0 ? (
-              <div className="text-center py-8 bg-white/10 backdrop-blur-lg rounded-lg border border-white/20">
-                <div className="flex justify-center mb-2">
-                  <Atom className="w-16 h-16" />
-                </div>
-                <p className="text-blue-900 font-medium mb-1">
-                  {isPredefined.species} species are pre-configured in this mechanism
-                </p>
-                <p className="text-xs text-gray-600 mb-2">
-                  Species definitions are loaded from the mechanism config file
-                </p>
-                <p className="text-xs text-blue-700">
-                  Add custom species above to extend the mechanism
-                </p>
-              </div>
-            ) : isPredefined && species.length > 0 ? (
-              <div className="flex min-h-0 flex-1 flex-col">
-                <div className="text-center py-4 bg-white/10 backdrop-blur-lg rounded-lg border border-white/20 mb-3">
-                  <p className="text-blue-900 font-medium text-sm mb-1">
-                    {isPredefined.species} pre-configured + {species.length} custom species
-                  </p>
-                  <p className="text-xs text-gray-600">Custom species shown below</p>
-                </div>
-                <div className="flex min-h-0 flex-1 flex-wrap content-start gap-2 overflow-y-auto">
-                  {filteredSpecies.length === 0 ? (
-                    <p className="w-full text-center text-gray-500 py-8">No matching species found.</p>
-                  ) : (
-                    filteredSpecies.map((sp) => (
-                      <SpeciesChip
-                        key={sp.name}
-                        species={sp}
-                        onPhaseChange={handlePhaseSave}
-                        onFieldSave={handleFieldSave}
-                        onRemove={handleRemoveSpecies}
-                      />
-                    ))
-                  )}
-                </div>
-              </div>
-            ) : species.length === 0 ? (
+            {species.length === 0 ? (
               <p className="text-center text-gray-500 py-8">
                 No species defined. Add your first species above.
               </p>
             ) : (
-              <div className="flex min-h-0 flex-1 flex-wrap content-start gap-2 overflow-y-auto">
-                {filteredSpecies.length === 0 ? (
-                  <p className="w-full text-center text-gray-500 py-8">No matching species found.</p>
-                ) : (
-                  filteredSpecies.map((sp) => (
-                    <SpeciesChip
-                      key={sp.name}
-                      species={sp}
-                      onPhaseChange={handlePhaseSave}
-                      onFieldSave={handleFieldSave}
-                      onRemove={handleRemoveSpecies}
-                    />
-                  ))
-                )}
-              </div>
+              speciesChips
             )}
           </CardContent>
         </Card>
