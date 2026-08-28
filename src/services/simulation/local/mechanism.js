@@ -1,3 +1,4 @@
+import { PHASE_PROPERTY_KEYS } from './speciesProperties'
 const normalizeReactionComponents = (components = []) => {
   return (components || []).map((component) => {
     if (!component || typeof component !== 'object') return component
@@ -237,10 +238,15 @@ export const serializeSpecies = (species) => {
     molecular_weight_kg_mol,
     properties: _properties,
     phase: _phase,
-    'diffusion coefficient [m2 s-1]': _uiDiffusion,
     diffusion_coefficient_m2_s: _legacyDiffusion,
     ...serialized
   } = species
+
+  // Phase properties are members of PhaseSpecies; mechanism.species[] rejects them outright,
+  // so they are removed here and re-attached to the phase entries by buildPhases.
+  for (const key of PHASE_PROPERTY_KEYS) {
+    delete serialized[key]
+  }
 
   if (
     serialized['molecular weight [kg mol-1]'] === undefined &&
