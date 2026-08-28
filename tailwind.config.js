@@ -1,3 +1,5 @@
+import defaultTheme from 'tailwindcss/defaultTheme'
+
 /** @type {import('tailwindcss').Config} */
 export default {
   content: [
@@ -6,6 +8,10 @@ export default {
   ],
   theme: {
     extend: {
+      fontFamily: {
+        sans: ['Roboto', ...defaultTheme.fontFamily.sans],
+        mono: ['Roboto', ...defaultTheme.fontFamily.mono],
+      },
       screens: {
         'xs': '475px',
         '3xl': '1920px',
@@ -22,6 +28,9 @@ export default {
         assist: 'var(--color-assist)',
         'assist-hover': 'var(--color-assist-hover)',
         'assist-foreground': 'var(--color-assist-foreground)',
+        'assist-secondary': 'var(--color-assist-secondary)',
+        'assist-secondary-hover': 'var(--color-assist-secondary-hover)',
+        'assist-secondary-foreground': 'var(--color-assist-secondary-foreground)',
         surface: 'var(--color-surface)',
         'surface-alt': 'var(--color-surface-alt)',
         'surface-hover': 'var(--color-surface-hover)',

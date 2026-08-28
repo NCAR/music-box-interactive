@@ -16,6 +16,8 @@ const Button = React.forwardRef(
         'bg-danger text-white hover:bg-danger-hover shadow-sm transition-colors duration-200',
       assist:
         'bg-assist text-assist-foreground hover:bg-assist-hover font-bold shadow-sm hover:shadow transition-colors duration-200 rounded-full',
+      assistSecondary:
+        'bg-assist-secondary text-assist-secondary-foreground hover:bg-assist-secondary-hover font-bold antialiased tracking-wide shadow-sm hover:shadow transition-colors duration-200 rounded-full focus-visible:ring-assist-secondary',
     }
 
     const sizes = {

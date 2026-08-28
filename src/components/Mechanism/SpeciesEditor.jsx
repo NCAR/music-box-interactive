@@ -1,68 +1,429 @@
-import { useState } from 'react'
+import { useState, useCallback, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { useSelector, useDispatch } from 'react-redux'
+import { ChevronDown, ChevronUp } from 'lucide-react'
+import { useToast } from '@/hooks/use-toast'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card'
 import { Button } from '../ui/button'
 import { addSpecies, updateSpecies, removeSpecies } from '../../redux/slices/mechanismSlice'
-import { useToast } from '@/hooks/use-toast'
-import { Info, Plus, Atom, Lightbulb } from 'lucide-react'
 import { addSpeciesIfValid } from './speciesUtils'
 
-// visual editor for species in the mechanism
+// Fixed phase segments; anything else is entered as a custom "Others" phase
+const FIXED_PHASE_OPTIONS = ['Gas', 'Aqueous']
+const DISABLED_PHASE_OPTIONS = ['Aqueous']
+
+// Fixed property segments; anything else is entered as a custom "Others" property
+const FIXED_PROPERTY_OPTIONS = [
+  'Molecular weight',
+  'Diffusion coefficient',
+  'Density',
+  'Absolute tolerance',
+]
+const PROPERTY_FIELD_CONFIG = {
+  'Molecular weight': {
+    label: 'Molecular weight (kg/mol)',
+    placeholder: 'e.g., 0.029',
+  },
+  'Diffusion coefficient': {
+    label: 'Diffusion coefficient (m2/s)',
+    placeholder: 'e.g., 1e-5',
+  },
+  'Density': {
+    label: 'Density (kg/m3)',  
+    placeholder: 'e.g., 1e-5',
+  },
+  'Absolute tolerance': {
+    label: 'Absolute tolerance (mol/m3)',
+    placeholder: 'e.g., 1e-12',
+  },
+}
+function getPropertyFieldConfig(name) {
+  return PROPERTY_FIELD_CONFIG[name] || { label: `${name}`, placeholder: 'e.g., 1.2' }
+}
+const CUSTOM_PILL_MAX_LENGTH = 512
+
+// Shared text-input styling in two sizes: a roomy variant for the add-species form,
+// and a compact variant for the search box and per-species value fields.
+const TEXT_INPUT =
+  'w-full px-4 py-3 border-2 border-gray-400 bg-white/10 text-gray-900 placeholder:text-gray-500 rounded-xl text-base font-mono focus:outline-none focus:border-green-700'
+const TEXT_INPUT_SM =
+  'px-3 py-2 border-2 border-gray-400 bg-white/10 text-gray-900 placeholder:text-gray-500 rounded-lg text-sm font-mono focus:outline-none focus:border-green-700'
+
+
+// Shared pill styling for the phase and property selectors.
+function pillClassName(active, compact, disabled = false) {
+  const base = `${
+    compact ? 'px-2.5 py-1 text-[11px]' : 'px-4 py-2 text-[15px]'
+  } font-semibold rounded-full border whitespace-nowrap transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-green-500 flex items-center gap-1.5`
+
+  if (active) {
+    return `${base} bg-green-50 border-green-300 text-green-800`
+  }
+  if (disabled) {
+    return `${base} bg-gray-100 border-gray-200 text-gray-400 cursor-not-allowed`
+  }
+  return `${base} bg-white border-gray-300 text-gray-700 hover:bg-gray-50`
+}
+
+function AddPillDialog({ label, onCancel, onAdd }) {
+  const [draft, setDraft] = useState('')
+  const trimmed = draft.trim()
+
+  const handleAdd = useCallback(() => {
+    if (trimmed) {
+      onAdd(trimmed)
+    }
+  }, [trimmed, onAdd])
+
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') onCancel()
+    }
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [onCancel])
+
+  return createPortal(
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+      onClick={onCancel}
+    >
+      <div
+        className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <label className="block text-sm font-medium text-green-700 mb-1">{label}</label>
+        <input
+          type="text"
+          autoFocus
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') handleAdd()
+          }}
+          maxLength={CUSTOM_PILL_MAX_LENGTH}
+          className="w-full border-0 border-b-2 border-green-600 bg-transparent px-0 py-1.5 text-base text-gray-900 focus:outline-none"
+        />
+        <div className="mt-1 text-right text-xs text-gray-500">
+          {draft.length}/{CUSTOM_PILL_MAX_LENGTH}
+        </div>
+
+        <div className="mt-4 flex items-center justify-end gap-2">
+          <button
+            type="button"
+            onClick={onCancel}
+            className="rounded px-4 py-2 text-sm font-medium text-green-700 hover:bg-green-50"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={handleAdd}
+            disabled={!trimmed}
+            className={`rounded px-4 py-2 text-sm font-medium ${
+              trimmed ? 'text-green-700 hover:bg-green-50' : 'text-gray-400 cursor-not-allowed'
+            }`}
+          >
+            Add
+          </button>
+        </div>
+      </div>
+    </div>,
+    document.body
+  )
+}
+
+function PhaseSelector({ value, onChange, size = 'default', allowCustom = true }) {
+  const [dialogOpen, setDialogOpen] = useState(false)
+  // Keeps custom phase pills visible when switching between phases.
+  const [savedCustoms, setSavedCustoms] = useState(() =>
+    value && !FIXED_PHASE_OPTIONS.includes(value) ? [value] : []
+  )
+
+  useEffect(() => {
+    if (value && !FIXED_PHASE_OPTIONS.includes(value)) {
+      setSavedCustoms((prev) => (prev.includes(value) ? prev : [...prev, value]))
+    }
+  }, [value])
+
+  const handleAddCustom = (phase) => {
+    onChange(phase)
+    setDialogOpen(false)
+  }
+
+  const compact = size === 'compact'
+
+  return (
+    <div className="flex flex-wrap items-center gap-2">
+      {FIXED_PHASE_OPTIONS.map((phase) => {
+        const selected = value === phase
+        const disabled = DISABLED_PHASE_OPTIONS.includes(phase)
+        return (
+          <button
+            key={phase}
+            type="button"
+            disabled={disabled}
+            title={disabled && !selected ? `${phase} phase is not available yet` : undefined}
+            onClick={() => onChange(phase)}
+            className={pillClassName(selected, compact, disabled)}
+          >
+            {phase}
+          </button>
+        )
+      })}
+
+      {savedCustoms.map((custom) => (
+        <button
+          key={custom}
+          type="button"
+          onClick={() => onChange(custom)}
+          className={pillClassName(value === custom, compact)}
+        >
+          {custom}
+        </button>
+      ))}
+
+      {allowCustom && (
+        <button
+          type="button"
+          onClick={() => setDialogOpen(true)}
+          className={pillClassName(false, compact)}
+        >
+          Others
+          <ChevronDown className="w-3.5 h-3.5 flex-shrink-0" />
+        </button>
+      )}
+
+      {allowCustom && dialogOpen && (
+        <AddPillDialog
+          label="Add phase"
+          onCancel={() => setDialogOpen(false)}
+          onAdd={handleAddCustom}
+        />
+      )}
+    </div>
+  )
+}
+
+// Multi-select pills for numeric species properties; selecting a pill toggles
+// the property and shows its value input.
+function PropertySelector({ properties, onChange }) {
+  const [dialogOpen, setDialogOpen] = useState(false)
+  // Remembers custom property names so their pills persist when toggled off.
+  const [savedCustoms, setSavedCustoms] = useState(() =>
+    Object.keys(properties).filter((name) => !FIXED_PROPERTY_OPTIONS.includes(name))
+  )
+
+  useEffect(() => {
+    setSavedCustoms((prev) => {
+      const missing = Object.keys(properties).filter(
+        (name) => !FIXED_PROPERTY_OPTIONS.includes(name) && !prev.includes(name)
+      )
+      return missing.length ? [...prev, ...missing] : prev
+    })
+  }, [properties])
+
+  const togglePill = (name) => {
+    if (name in properties) {
+      const next = { ...properties }
+      delete next[name]
+      onChange(next)
+    } else {
+      onChange({ ...properties, [name]: '' })
+    }
+  }
+
+  const handleAddCustom = (name) => {
+    onChange({ ...properties, [name]: properties[name] ?? '' })
+    setDialogOpen(false)
+  }
+
+  const setPropertyValue = (name, val) => {
+    onChange({ ...properties, [name]: val })
+  }
+
+  const activeNames = Object.keys(properties)
+  const pillOptions = [...FIXED_PROPERTY_OPTIONS, ...savedCustoms]
+
+  return (
+    <div>
+      <div className="flex flex-wrap items-center gap-2">
+        {pillOptions.map((name) => (
+          <button
+            key={name}
+            type="button"
+            onClick={() => togglePill(name)}
+            className={pillClassName(name in properties, false)}
+          >
+            {name}
+          </button>
+        ))}
+
+        <button type="button" onClick={() => setDialogOpen(true)} className={pillClassName(false, false)}>
+          Others
+          <ChevronDown className="w-3.5 h-3.5 flex-shrink-0" />
+        </button>
+
+        {dialogOpen && (
+          <AddPillDialog
+            label="Add property"
+            onCancel={() => setDialogOpen(false)}
+            onAdd={handleAddCustom}
+          />
+        )}
+      </div>
+
+      {activeNames.length > 0 && (
+        <div className="mt-3 flex flex-col gap-3">
+          {activeNames.map((name) => {
+            const { label, placeholder } = getPropertyFieldConfig(name)
+            return (
+              <div key={name}>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  {label}
+                </label>
+                <input
+                  type="text"
+                  value={properties[name]}
+                  onChange={(e) => setPropertyValue(name, e.target.value)}
+                  placeholder={placeholder}
+                  className={TEXT_INPUT}
+                />
+              </div>
+            )
+          })}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// Editable numeric fields a species may carry. Both are optional: species added through the
+// form get defaults.
+const SPECIES_FIELD_CONFIG = {
+  molecular_weight_kg_mol: { label: 'Molecular weight (kg/mol)', placeholder: 'e.g., 0.029' },
+  'diffusion coefficient [m2 s-1]': {
+    label: 'Diffusion coefficient (m2/s)',
+    placeholder: 'e.g., 1e-5',
+  },
+}
+
+// The fields to show for one species: the known top-level ones it actually defines, followed by
+// whatever named properties the configuration gave it.
+function getSpeciesFields(species) {
+  const fields = Object.entries(SPECIES_FIELD_CONFIG)
+    .filter(([key]) => species[key] !== undefined && species[key] !== null)
+    .map(([key, config]) => ({ key, ...config, value: species[key] }))
+
+  for (const [key, value] of Object.entries(species.properties || {})) {
+    const { label, placeholder } = getPropertyFieldConfig(key)
+    fields.push({ key, group: 'properties', label, placeholder, value })
+  }
+
+  return fields
+}
+
+// A species renders as a collapsed chip showing only its name. Clicking it unfolds the phase
+// and property values in place; an expanded chip claims a full row of the wrapping list so its
+// controls have room. Expansion is local state -- opening one leaves the others alone.
+function SpeciesChip({ species, onPhaseChange, onFieldSave, onRemove }) {
+  const [expanded, setExpanded] = useState(false)
+
+  if (!expanded) {
+    return (
+      <button
+        type="button"
+        onClick={() => setExpanded(true)}
+        className="flex items-center gap-1.5 rounded-full border border-gray-300 bg-white px-4 py-2 text-[15px] font-semibold text-gray-700 whitespace-nowrap transition-colors hover:bg-gray-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-green-500"
+      >
+        {species.name}
+        <ChevronDown className="w-3.5 h-3.5 flex-shrink-0" />
+      </button>
+    )
+  }
+
+  return (
+    <div className="w-full rounded-2xl border border-gray-300 bg-white p-4">
+      <div className="flex items-start justify-between gap-3">
+        <button
+          type="button"
+          onClick={() => setExpanded(false)}
+          className="flex items-center gap-1.5 rounded text-base font-semibold text-gray-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-green-500"
+        >
+          {species.name}
+          <ChevronUp className="w-4 h-4 flex-shrink-0" />
+        </button>
+
+        <Button
+          variant="glass"
+          size="sm"
+          onClick={() => onRemove(species.name)}
+          className="rounded-lg bg-white text-red-600 hover:bg-red-50"
+        >
+          Remove
+        </Button>
+      </div>
+
+      <div className="mt-3 flex flex-col gap-3">
+        <div>
+          <label className="mb-1 block text-[11px] uppercase tracking-wide text-gray-700">
+            Phase
+          </label>
+          {/* No "Others" pill here: editing a species picks among existing phases rather than
+              defining new ones. New phases are created in the Add species form. */}
+          <PhaseSelector
+            value={species.phase}
+            onChange={(phase) => onPhaseChange(species.name, phase)}
+            size="compact"
+            allowCustom={false}
+          />
+        </div>
+
+        {getSpeciesFields(species).map((field) => (
+          <div key={field.key} className="flex flex-col gap-1">
+            <label className="text-[11px] uppercase tracking-wide text-gray-700">
+              {field.label}
+            </label>
+            <input
+              type="text"
+              defaultValue={field.value ?? ''}
+              onBlur={(e) => onFieldSave(species.name, field, e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.currentTarget.blur()
+                }
+              }}
+              placeholder={field.placeholder}
+              className={`w-full max-w-xs ${TEXT_INPUT_SM}`}
+            />
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 export function SpeciesEditor() {
   const dispatch = useDispatch()
   const species = useSelector((state) => state.mechanism.species)
-  const selectedMechanism = useSelector((state) => state.mechanism.selectedMechanism)
   const { toast } = useToast()
 
   const [newSpeciesName, setNewSpeciesName] = useState('')
-  const [newMolWeight, setNewMolWeight] = useState('')
-  const [newDiffusionCoefficient, setNewDiffusionCoefficient] = useState('')
-  const [newSpeciesPhase, setNewSpeciesPhase] = useState('Gas')
+  const [newSpeciesPhase, setNewSpeciesPhase] = useState('')
+  const [newSpeciesProperties, setNewSpeciesProperties] = useState({})
   const [speciesSearch, setSpeciesSearch] = useState('')
-  // Filtered and sorted species list based on search
+  const speciesQuery = speciesSearch.trim().toLowerCase()
+  // Sorted case-insensitively with natural numeric ordering (e.g., C2H6 before C10H22).
   const filteredSpecies = species
-    .filter((sp) => sp.name.toLowerCase().includes(speciesSearch.toLowerCase()))
-    .sort((a, b) => {
-      const search = speciesSearch.trim().toLowerCase()
-      if (!search) return 0
-      const aExact = a.name.toLowerCase() === search
-      const bExact = b.name.toLowerCase() === search
-      if (aExact && !bExact) return -1
-      if (!aExact && bExact) return 1
-      // Otherwise, keep original order
-      return 0
-    })
-
-  // check if predefined mech
-  const preDefinedMechanisms = {
-    chapman: {
-      name: 'Chapman',
-      species: 5,
-      reactions: 6,
-      description: 'Stratospheric oxygen chemistry',
-    },
-    ts1: {
-      name: 'TS1',
-      species: 209,
-      reactions: 512,
-      description: '209 species tropospheric mechanism',
-    },
-    analytical: {
-      name: 'Analytical',
-      species: 3,
-      reactions: 3,
-      description: 'Simple test mechanism (A→B→C)',
-    },
-  }
-  const isPredefined = preDefinedMechanisms[selectedMechanism]
+    .filter((sp) => sp.name.toLowerCase().startsWith(speciesQuery))
+    .sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' }))
 
   const handleAddSpecies = () => {
     const added = addSpeciesIfValid({
       species,
       newSpeciesName,
-      newMolWeight,
-      newDiffusionCoefficient,
       newSpeciesPhase,
+      newSpeciesProperties,
       dispatch,
       toast,
       addSpecies,
@@ -70,60 +431,12 @@ export function SpeciesEditor() {
 
     if (added) {
       setNewSpeciesName('')
-      setNewMolWeight('')
-      setNewDiffusionCoefficient('')
-      setNewSpeciesPhase('Gas')
+      // Keep the selected property pills, but clear their values for the next species
+      setNewSpeciesProperties((prev) =>
+        Object.fromEntries(Object.keys(prev).map((name) => [name, '']))
+      )
     }
   }
-
-  // const handleAddSpecies = () => {
-  //   if (!newSpeciesName) {
-  //     toast({
-  //       title: 'Error',
-  //       description: 'Please enter a species name',
-  //       variant: 'destructive',
-  //     })
-  //     return
-  //   }
-
-  //   // convert to uppercase (chemistry convention)
-  //   const normalizedName = newSpeciesName.trim().toUpperCase()
-
-  //   if (species.find(s => s.name === normalizedName)) {
-  //     toast({
-  //       title: 'Error',
-  //       description: `Species "${normalizedName}" already exists`,
-  //       variant: 'destructive',
-  //     })
-  //     return
-  //   }
-
-  //   // default to air mol weight if not provided
-  //   const molWeight = newMolWeight ? parseFloat(newMolWeight) : 0.029
-  //   if (isNaN(molWeight)) {
-  //     toast({
-  //       title: 'Error',
-  //       description: 'Molecular weight must be a valid number',
-  //       variant: 'destructive',
-  //     })
-  //     return
-  //   }
-
-  //   dispatch(addSpecies({
-  //     name: normalizedName,
-  //     molecular_weight_kg_mol: molWeight,
-  //     properties: {},
-  //   }))
-
-  //   toast({
-  //     title: 'Success',
-  //     description: `Species "${normalizedName}" added successfully`,
-  //     variant: 'success',
-  //   })
-
-  //   setNewSpeciesName('')
-  //   setNewMolWeight('')
-  // }
 
   const handleRemoveSpecies = (speciesName) => {
     dispatch(removeSpecies(speciesName))
@@ -134,7 +447,9 @@ export function SpeciesEditor() {
     })
   }
 
-  const handleDiffusionCoefficientSave = (speciesName, rawValue) => {
+  // Saves any numeric field on a species -- a top-level key like molecular weight, or a named
+  // entry under `properties`. Clearing the input removes the field rather than storing NaN.
+  const handleFieldSave = (speciesName, field, rawValue) => {
     const existingSpecies = species.find((sp) => sp.name === speciesName)
 
     if (!existingSpecies) {
@@ -144,8 +459,24 @@ export function SpeciesEditor() {
     const trimmedValue = rawValue.trim()
     const updatedSpecies = { ...existingSpecies }
 
+    const write = (value) => {
+      if (field.group === 'properties') {
+        const nextProperties = { ...(updatedSpecies.properties || {}) }
+        if (value === undefined) {
+          delete nextProperties[field.key]
+        } else {
+          nextProperties[field.key] = value
+        }
+        updatedSpecies.properties = nextProperties
+      } else if (value === undefined) {
+        delete updatedSpecies[field.key]
+      } else {
+        updatedSpecies[field.key] = value
+      }
+    }
+
     if (!trimmedValue) {
-      delete updatedSpecies['diffusion coefficient [m2 s-1]']
+      write(undefined)
       dispatch(updateSpecies(updatedSpecies))
       return
     }
@@ -155,13 +486,13 @@ export function SpeciesEditor() {
     if (Number.isNaN(parsedValue)) {
       toast({
         title: 'Error',
-        description: 'Diffusion coefficient must be a valid number',
+        description: `${field.label} must be a valid number`,
         variant: 'destructive',
       })
       return
     }
 
-    updatedSpecies['diffusion coefficient [m2 s-1]'] = parsedValue
+    write(parsedValue)
     updatedSpecies.phase = updatedSpecies.phase || 'Gas'
     dispatch(updateSpecies(updatedSpecies))
   }
@@ -181,346 +512,105 @@ export function SpeciesEditor() {
     )
   }
 
+  const speciesChips = (
+    <div className="flex min-h-0 flex-1 flex-wrap content-start gap-2 overflow-y-auto">
+      {filteredSpecies.length === 0 ? (
+        <p className="w-full text-center text-gray-500 py-8">No matching species found.</p>
+      ) : (
+        filteredSpecies.map((sp) => (
+          <SpeciesChip
+            key={sp.name}
+            species={sp}
+            onPhaseChange={handlePhaseSave}
+            onFieldSave={handleFieldSave}
+            onRemove={handleRemoveSpecies}
+          />
+        ))
+      )}
+    </div>
+  )
+
   return (
     <div className="space-y-4">
-      {/* Pre-defined Mechanism Info */}
-      {isPredefined && (
-        <Card className="border-2 border-white/20">
+      {/* Add form and species list are separate cards, side by side on wide screens. They
+          stack below lg, where two columns would leave neither enough room. */}
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:items-start">
+        <Card>
           <CardHeader>
-            <CardTitle>Using Pre-defined Mechanism: {isPredefined.name}</CardTitle>
-            <CardDescription>{isPredefined.description}</CardDescription>
+            <CardTitle>Add species</CardTitle>
+            <CardDescription>Define a new species for the mechanism</CardDescription>
           </CardHeader>
+
           <CardContent>
-            <div className="grid grid-cols-2 gap-4 mb-4">
-              <div className="bg-white/0 backdrop-blur-lg rounded-lg p-3 border border-white/20">
-                <div className="text-sm text-gray-700">Species Count</div>
-                <div className="text-2xl font-bold text-blue-600">{isPredefined.species}</div>
-              </div>
-              <div className="bg-white/0 backdrop-blur-lg rounded-lg p-3 border border-white/20">
-                <div className="text-sm text-gray-700">Reactions Count</div>
-                <div className="text-2xl font-bold text-blue-600">{isPredefined.reactions}</div>
-              </div>
-            </div>
-            <div className="bg-white/0 backdrop-blur-lg border border-white/20 rounded-lg p-3 text-sm text-gray-700">
-              <p className="font-semibold mb-1 flex items-center gap-2">
-                <Info className="w-4 h-4" />
-                About Pre-defined Mechanisms:
-              </p>
-              <ul className="space-y-0.5 ml-4 text-xs">
-                <li>• Species and reactions are loaded from mechanism config files</li>
-                <li>• You can modify initial conditions in the Conditions tab</li>
-                <li>• Run simulations directly without manual species/reaction setup</li>
-                <li>• For custom mechanisms, clear the example and add species manually</li>
-              </ul>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Species Editor</CardTitle>
-          <CardDescription>
-            {isPredefined
-              ? `Viewing ${isPredefined.name} mechanism - species are pre-configured`
-              : 'Add, edit, or remove chemical species in the mechanism'}
-          </CardDescription>
-        </CardHeader>
-
-        <CardContent className="space-y-4">
-          {/* Info box for predefined mechanisms */}
-          {isPredefined && (
-            <div className="bg-blue-50 border-2 border-blue-300 rounded-lg p-3 text-sm">
-              <p className="font-semibold text-blue-800 mb-1 flex items-center gap-2">
-                <Info className="w-4 h-4" />
-                Extending Pre-defined Mechanism
-              </p>
-              <p className="text-blue-700 text-xs">
-                You can add custom species to the {isPredefined.name} mechanism. This allows you to
-                extend the mechanism with additional species for specialized simulations.
-              </p>
-            </div>
-          )}
-
-          {/* Add New Species Form (shown for all mechanisms) */}
-          <div className="p-4 bg-white/0 backdrop-blur-lg rounded-xl border-2 border-white/20">
-            <h4 className="font-bold text-sm mb-3 text-blue-900 flex items-center gap-2">
-              <Plus className="w-4 h-4" />
-              Add New Species
-            </h4>
-
-            <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+            <div className="grid grid-cols-1 gap-7">
               <div>
-                <label className="block text-xs font-semibold text-blue-900 mb-1">
-                  Species Name
+                <label className="block text-base font-semibold text-gray-800 mb-2">
+                  Choose a phase
+                </label>
+                <PhaseSelector value={newSpeciesPhase} onChange={setNewSpeciesPhase} />
+              </div>
+
+              <div>
+                <label className="block text-base font-semibold text-gray-800 mb-2">
+                  Species name
                 </label>
                 <input
                   type="text"
                   value={newSpeciesName}
                   onChange={(e) => setNewSpeciesName(e.target.value)}
-                  placeholder="e.g., OH, NO2, O3"
-                  className="w-full px-3 py-2 border-2 border-white/30 bg-white/10 text-gray-900 placeholder:text-gray-500 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
+                  placeholder="e.g., N2"
+                  className={TEXT_INPUT}
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-blue-900 mb-1">
-                  Molecular Weight (optional)
+                <label className="block text-base font-semibold text-gray-800 mb-2">
+                  Add properties
                 </label>
-                <input
-                  type="text"
-                  value={newMolWeight}
-                  onChange={(e) => setNewMolWeight(e.target.value)}
-                  placeholder="Leave empty for default (0.029 kg/mol)"
-                  className="w-full px-3 py-2 border-2 border-white/30 bg-white/10 text-gray-900 placeholder:text-gray-500 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
+                <PropertySelector
+                  properties={newSpeciesProperties}
+                  onChange={setNewSpeciesProperties}
                 />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-blue-900 mb-1">
-                  Diffusion Coefficient (optional, m2/s)
-                </label>
-                <input
-                  type="text"
-                  value={newDiffusionCoefficient}
-                  onChange={(e) => setNewDiffusionCoefficient(e.target.value)}
-                  placeholder="e.g., 1e-5"
-                  className="w-full px-3 py-2 border-2 border-white/30 bg-white/10 text-gray-900 placeholder:text-gray-500 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-blue-900 mb-1">
-                  Species Phase
-                </label>
-                <select
-                  value={newSpeciesPhase}
-                  onChange={(e) => setNewSpeciesPhase(e.target.value)}
-                  className="w-full px-3 py-2 border-2 border-white/30 bg-white/10 text-gray-900 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
-                >
-                  <option value="Gas" className="text-black">
-                    Gas
-                  </option>
-                  <option value="Aqueous" className="text-black">
-                    Aqueous
-                  </option>
-                  <option value="Surface" className="text-black">
-                    Surface
-                  </option>
-                </select>
               </div>
             </div>
 
-            <Button
-              onClick={handleAddSpecies}
-              variant="assist"
-              size="default"
-              className="mt-3 rounded-2xl"
-            >
-              Add Species
-            </Button>
-          </div>
+            <div className="mt-8 flex justify-center">
+              <Button
+                onClick={handleAddSpecies}
+                variant="assistSecondary"
+                size="lg"
+                className="rounded-2xl text-base"
+              >
+                Add species
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
 
-          {/* Species List with Search */}
-          <div>
-            <h4 className="font-semibold text-sm mb-2">
-              {isPredefined
-                ? `${isPredefined.name} Mechanism Species (${isPredefined.species} pre-configured${species.length > 0 ? ` + ${species.length} custom` : ''})`
-                : `Species List (${species.length} total)`}
-            </h4>
+        <Card className="flex flex-col lg:h-[56rem]">
+          <CardHeader>
+            <CardTitle>{`${species.length} species`}</CardTitle>
+          </CardHeader>
 
+          <CardContent className="flex min-h-0 flex-1 flex-col">
             {/* Search Bar */}
             <input
               type="text"
               value={speciesSearch}
               onChange={(e) => setSpeciesSearch(e.target.value)}
               placeholder="Search species by name"
-              className="w-full mb-3 px-3 py-2 border-2 border-white/30 bg-white/10 text-gray-900 placeholder:text-gray-500 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
+              className={`w-full mb-5 ${TEXT_INPUT_SM}`}
             />
 
-            {isPredefined && species.length === 0 ? (
-              <div className="text-center py-8 bg-white/10 backdrop-blur-lg rounded-lg border border-white/20">
-                <div className="flex justify-center mb-2">
-                  <Atom className="w-16 h-16" />
-                </div>
-                <p className="text-blue-900 font-medium mb-1">
-                  {isPredefined.species} species are pre-configured in this mechanism
-                </p>
-                <p className="text-xs text-gray-600 mb-2">
-                  Species definitions are loaded from the mechanism config file
-                </p>
-                <p className="text-xs text-blue-700">
-                  Add custom species above to extend the mechanism
-                </p>
-              </div>
-            ) : isPredefined && species.length > 0 ? (
-              <div>
-                <div className="text-center py-4 bg-white/10 backdrop-blur-lg rounded-lg border border-white/20 mb-3">
-                  <p className="text-blue-900 font-medium text-sm mb-1">
-                    {isPredefined.species} pre-configured + {species.length} custom species
-                  </p>
-                  <p className="text-xs text-gray-600">Custom species shown below</p>
-                </div>
-                <div className="space-y-2 max-h-96 overflow-y-auto">
-                  {filteredSpecies.length === 0 ? (
-                    <p className="text-center text-gray-500 py-8">No matching species found.</p>
-                  ) : (
-                    filteredSpecies.map((sp) => (
-                      <div
-                        key={sp.name}
-                        className="flex items-center justify-between p-3 border border-white/20 rounded-lg bg-white/5 hover:bg-white/10 transition-colors"
-                      >
-                        <div className="flex-1">
-                          <div className="flex flex-wrap items-center gap-2 mb-1">
-                            <h5 className="font-semibold text-sm">{sp.name}</h5>
-                            <div className="flex items-center gap-1">
-                              <span className="text-[11px] uppercase tracking-wide text-blue-900">
-                                Phase
-                              </span>
-                              <select
-                                value={sp.phase || 'Gas'}
-                                onChange={(e) => handlePhaseSave(sp.name, e.target.value)}
-                                className="rounded-md border border-white/20 bg-white/10 px-2 py-1 text-[11px] font-semibold uppercase tracking-wide text-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-600"
-                              >
-                                <option value="Gas" className="text-black">
-                                  Gas
-                                </option>
-                                <option value="Aqueous" className="text-black">
-                                  Aqueous
-                                </option>
-                                <option value="Surface" className="text-black">
-                                  Surface
-                                </option>
-                              </select>
-                            </div>
-                          </div>
-                          <p className="text-xs text-gray-700">
-                            MW: {sp.molecular_weight_kg_mol} kg/mol
-                          </p>
-                          <div className="mt-2 flex flex-col gap-1">
-                            <label className="text-[11px] uppercase tracking-wide text-gray-700">
-                              Diffusion Coefficient (m2/s)
-                            </label>
-                            <input
-                              type="text"
-                              defaultValue={sp['diffusion coefficient [m2 s-1]'] ?? ''}
-                              onBlur={(e) =>
-                                handleDiffusionCoefficientSave(sp.name, e.target.value)
-                              }
-                              onKeyDown={(e) => {
-                                if (e.key === 'Enter') {
-                                  e.currentTarget.blur()
-                                }
-                              }}
-                              placeholder="e.g., 1e-5"
-                              className="w-full max-w-xs px-3 py-2 border-2 border-white/20 bg-white/10 text-gray-900 placeholder:text-gray-500 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
-                            />
-                          </div>
-                        </div>
-
-                        <Button
-                          variant="glass"
-                          size="sm"
-                          onClick={() => handleRemoveSpecies(sp.name)}
-                          className="rounded-lg text-red-600 hover:bg-red-900/20 backdrop-blur-lg"
-                        >
-                          Remove
-                        </Button>
-                      </div>
-                    ))
-                  )}
-                </div>
-              </div>
-            ) : species.length === 0 ? (
+            {species.length === 0 ? (
               <p className="text-center text-gray-500 py-8">
                 No species defined. Add your first species above.
               </p>
             ) : (
-              <div className="space-y-2 max-h-96 overflow-y-auto">
-                {filteredSpecies.length === 0 ? (
-                  <p className="text-center text-gray-500 py-8">No matching species found.</p>
-                ) : (
-                  filteredSpecies.map((sp) => (
-                    <div
-                      key={sp.name}
-                      className="flex items-center justify-between p-3 border border-white/20 rounded-lg bg-white/5 hover:bg-white/10 transition-colors"
-                    >
-                      <div className="flex-1">
-                        <div className="flex flex-wrap items-center gap-2 mb-1">
-                          <h5 className="font-semibold text-sm">{sp.name}</h5>
-                          <div className="flex items-center gap-1">
-                            <span className="text-[11px] uppercase tracking-wide text-blue-900">
-                              Phase
-                            </span>
-                            <select
-                              value={sp.phase || 'Gas'}
-                              onChange={(e) => handlePhaseSave(sp.name, e.target.value)}
-                              className="rounded-md border border-white/20 bg-white/10 px-2 py-1 text-[11px] font-semibold uppercase tracking-wide text-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-600"
-                            >
-                              <option value="Gas" className="text-black">
-                                Gas
-                              </option>
-                              <option value="Aqueous" className="text-black">
-                                Aqueous
-                              </option>
-                              <option value="Surface" className="text-black">
-                                Surface
-                              </option>
-                            </select>
-                          </div>
-                        </div>
-                        <p className="text-xs text-gray-700">
-                          MW: {sp.molecular_weight_kg_mol} kg/mol
-                        </p>
-                        <div className="mt-2 flex flex-col gap-1">
-                          <label className="text-[11px] uppercase tracking-wide text-gray-700">
-                            Diffusion Coefficient (m2/s)
-                          </label>
-                          <input
-                            type="text"
-                            defaultValue={sp['diffusion coefficient [m2 s-1]'] ?? ''}
-                            onBlur={(e) => handleDiffusionCoefficientSave(sp.name, e.target.value)}
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter') {
-                                e.currentTarget.blur()
-                              }
-                            }}
-                            placeholder="e.g., 1e-5"
-                            className="w-full max-w-xs px-3 py-2 border-2 border-white/20 bg-white/10 text-gray-900 placeholder:text-gray-500 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
-                          />
-                        </div>
-                      </div>
-
-                      <Button
-                        variant="glass"
-                        size="sm"
-                        onClick={() => handleRemoveSpecies(sp.name)}
-                        className="rounded-lg text-red-600 hover:bg-red-900/20 backdrop-blur-lg"
-                      >
-                        Remove
-                      </Button>
-                    </div>
-                  ))
-                )}
-              </div>
+              speciesChips
             )}
-          </div>
-        </CardContent>
-      </Card>
-
-      <div className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-lg p-3 text-xs text-gray-700">
-        <p className="font-semibold mb-1 flex items-center gap-2">
-          <Lightbulb className="w-4 h-4" />
-          Species Editor Notes:
-        </p>
-        <ul className="space-y-0.5 ml-4">
-          <li>• Species names must be unique within the mechanism</li>
-          <li>• Species in this editor are treated as gas phase</li>
-          <li>• Molecular weight is in kg/mol (e.g., O2 = 0.032 kg/mol)</li>
-          <li>• Diffusion coefficient is editable in m2/s</li>
-          <li>• Removing a species will also remove it from all reactions</li>
-          <li>• Common atmospheric species: M (air), O2, N2, H2O, CO2</li>
-        </ul>
+          </CardContent>
+        </Card>
       </div>
     </div>
   )

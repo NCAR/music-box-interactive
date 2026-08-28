@@ -16,6 +16,9 @@
     --color-assist: #FFE0C2;
     --color-assist-hover: #F5D4B3;
     --color-assist-foreground: #351A00;
+    --color-assist-secondary: #15803D;
+    --color-assist-secondary-hover: #166534;
+    --color-assist-secondary-foreground: #ffffff;
     --color-surface: #ffffff;
     --color-surface-alt: #f6f8fc;
     --color-surface-hover: #f1f3f4;

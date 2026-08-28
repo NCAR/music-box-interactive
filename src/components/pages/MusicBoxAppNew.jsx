@@ -43,6 +43,11 @@ function AppContent({ onNavigate }) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  // Client-side navigation preserves scroll position; reset it so each route starts at the top.
+  useEffect(() => {
+    window.scrollTo(0, 0)
+  }, [location.pathname])
+
   // Handle exit app - reset all Redux state and session before navigating home
   const handleExitApp = () => {
     dispatch(resetMechanism())
