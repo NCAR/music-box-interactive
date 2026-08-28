@@ -70,3 +70,15 @@ export const PHASE_PROPERTY_KEYS = SPECIES_PROPERTIES.filter((f) => f.target ===
 export const SPECIES_PROPERTY_KEYS = SPECIES_PROPERTIES.filter((f) => f.target === 'species').map(
   (f) => f.key
 )
+
+// Copies across only the keys the source actually defines, so "not set" stays distinguishable
+// from "set to a default".
+export const pickDeclared = (source, keys) => {
+  const picked = {}
+  for (const key of keys) {
+    if (source[key] !== undefined && source[key] !== null) {
+      picked[key] = source[key]
+    }
+  }
+  return picked
+}
