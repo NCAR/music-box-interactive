@@ -10,6 +10,7 @@ import { addSpeciesIfValid } from './speciesUtils'
 
 // Fixed phase segments; anything else is entered as a custom "Others" phase
 const FIXED_PHASE_OPTIONS = ['Gas', 'Aqueous']
+const DISABLED_PHASE_OPTIONS = ['Aqueous']
 
 // Fixed property segments; anything else is entered as a custom "Others" property
 const FIXED_PROPERTY_OPTIONS = [
@@ -21,7 +22,7 @@ const FIXED_PROPERTY_OPTIONS = [
 const PROPERTY_FIELD_CONFIG = {
   'Molecular weight': {
     label: 'Molecular weight (kg/mol)',
-    placeholder: 'Default (0.029 kg/mol)',
+    placeholder: 'e.g., 0.029',
   },
   'Diffusion coefficient': {
     label: 'Diffusion coefficient (m2/s)',
@@ -32,7 +33,7 @@ const PROPERTY_FIELD_CONFIG = {
     placeholder: 'e.g., 1e-5',
   },
   'Absolute tolerance': {
-    label: 'Absolute tolerance',
+    label: 'Absolute tolerance (mol/m3)',
     placeholder: 'e.g., 1e-12',
   },
 }
@@ -50,14 +51,18 @@ const TEXT_INPUT_SM =
 
 
 // Shared pill styling for the phase and property selectors.
-function pillClassName(active, compact) {
-  return `${
+function pillClassName(active, compact, disabled = false) {
+  const base = `${
     compact ? 'px-2.5 py-1 text-[11px]' : 'px-4 py-2 text-[15px]'
-  } font-semibold rounded-full border whitespace-nowrap transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-green-500 flex items-center gap-1.5 ${
-    active
-      ? 'bg-green-50 border-green-300 text-green-800'
-      : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
-  }`
+  } font-semibold rounded-full border whitespace-nowrap transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-green-500 flex items-center gap-1.5`
+
+  if (active) {
+    return `${base} bg-green-50 border-green-300 text-green-800`
+  }
+  if (disabled) {
+    return `${base} bg-gray-100 border-gray-200 text-gray-400 cursor-not-allowed`
+  }
+  return `${base} bg-white border-gray-300 text-gray-700 hover:bg-gray-50`
 }
 
 function AddPillDialog({ label, onCancel, onAdd }) {
@@ -150,20 +155,22 @@ function PhaseSelector({ value, onChange, size = 'default', allowCustom = true }
 
   return (
     <div className="flex flex-wrap items-center gap-2">
-      <button
-        type="button"
-        onClick={() => onChange('Gas')}
-        className={pillClassName(value === 'Gas', compact)}
-      >
-        Gas
-      </button>
-      <button
-        type="button"
-        onClick={() => onChange('Aqueous')}
-        className={pillClassName(value === 'Aqueous', compact)}
-      >
-        Aqueous
-      </button>
+      {FIXED_PHASE_OPTIONS.map((phase) => {
+        const selected = value === phase
+        const disabled = DISABLED_PHASE_OPTIONS.includes(phase)
+        return (
+          <button
+            key={phase}
+            type="button"
+            disabled={disabled}
+            title={disabled && !selected ? `${phase} phase is not available yet` : undefined}
+            onClick={() => onChange(phase)}
+            className={pillClassName(selected, compact, disabled)}
+          >
+            {phase}
+          </button>
+        )
+      })}
 
       {savedCustoms.map((custom) => (
         <button
@@ -406,17 +413,10 @@ export function SpeciesEditor() {
   const [newSpeciesProperties, setNewSpeciesProperties] = useState({})
   const [speciesSearch, setSpeciesSearch] = useState('')
   const speciesQuery = speciesSearch.trim().toLowerCase()
+  // Sorted case-insensitively with natural numeric ordering (e.g., C2H6 before C10H22).
   const filteredSpecies = species
     .filter((sp) => sp.name.toLowerCase().startsWith(speciesQuery))
-    .sort((a, b) => {
-      if (!speciesQuery) return 0
-      const aExact = a.name.toLowerCase() === speciesQuery
-      const bExact = b.name.toLowerCase() === speciesQuery
-      if (aExact && !bExact) return -1
-      if (!aExact && bExact) return 1
-      // Otherwise, keep original order
-      return 0
-    })
+    .sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' }))
 
   const handleAddSpecies = () => {
     const added = addSpeciesIfValid({
@@ -512,8 +512,6 @@ export function SpeciesEditor() {
     )
   }
 
-  // Rendered identically whether or not a predefined mechanism is loaded; the predefined branch
-  // just stacks a summary above it.
   const speciesChips = (
     <div className="flex min-h-0 flex-1 flex-wrap content-start gap-2 overflow-y-auto">
       {filteredSpecies.length === 0 ? (
@@ -591,7 +589,7 @@ export function SpeciesEditor() {
 
         <Card className="flex flex-col lg:h-[56rem]">
           <CardHeader>
-            <CardTitle>{`Total ${species.length} species`}</CardTitle>
+            <CardTitle>{`${species.length} species`}</CardTitle>
           </CardHeader>
 
           <CardContent className="flex min-h-0 flex-1 flex-col">
