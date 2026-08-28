@@ -16,8 +16,11 @@ const Button = React.forwardRef(
         'bg-danger text-white hover:bg-danger-hover shadow-sm transition-colors duration-200',
       assist:
         'bg-assist text-assist-foreground hover:bg-assist-hover font-bold shadow-sm hover:shadow transition-colors duration-200 rounded-full',
+      // Tinted green, matching the selected species pills. The `antialiased`/`tracking-wide`
+      // that the solid version carried were there to sharpen light text on a dark fill, which
+      // no longer applies now the text is dark on a pale ground.
       assistSecondary:
-        'bg-assist-secondary text-assist-secondary-foreground hover:bg-assist-secondary-hover font-bold antialiased tracking-wide shadow-sm hover:shadow transition-colors duration-200 rounded-full focus-visible:ring-assist-secondary',
+        'bg-assist-secondary text-assist-secondary-foreground border border-assist-secondary-border hover:bg-assist-secondary-hover font-semibold transition-colors duration-200 rounded-2xl focus-visible:ring-assist-secondary-ring',
     }
 
     const sizes = {

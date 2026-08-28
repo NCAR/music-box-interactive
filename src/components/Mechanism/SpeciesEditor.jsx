@@ -178,8 +178,6 @@ function PhaseSelector({ value, onChange, size = 'default', allowCustom = true }
   )
 }
 
-// Multi-select pills for numeric species properties; selecting a pill toggles
-// the property and shows its value input.
 // On/off switch for boolean species properties. A pill was ambiguous here: its selected state
 // reads as "this property has a value", which says nothing about whether that value is true.
 function Toggle({ checked, label, onChange }) {
@@ -191,6 +189,7 @@ function Toggle({ checked, label, onChange }) {
       onClick={() => onChange(!checked)}
       className="flex items-center gap-3 rounded text-sm font-semibold text-gray-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-green-500"
     >
+      {label}
       <span
         className={`relative inline-flex h-6 w-11 flex-shrink-0 items-center rounded-full transition-colors ${
           checked ? 'bg-green-700' : 'bg-gray-300'
@@ -202,7 +201,6 @@ function Toggle({ checked, label, onChange }) {
           }`}
         />
       </span>
-      {label}
     </button>
   )
 }
@@ -457,7 +455,6 @@ export function SpeciesEditor() {
     }
 
     updatedSpecies[field.key] = parsedValue
-    write(parsedValue)
     updatedSpecies.phase = updatedSpecies.phase || 'Gas'
     dispatch(updateSpecies(updatedSpecies))
   }
@@ -544,7 +541,7 @@ export function SpeciesEditor() {
                 onClick={handleAddSpecies}
                 variant="assistSecondary"
                 size="lg"
-                className="rounded-2xl text-base"
+                className="text-base"
               >
                 Add species
               </Button>

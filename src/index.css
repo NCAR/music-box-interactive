@@ -16,9 +16,13 @@
     --color-assist: #FFE0C2;
     --color-assist-hover: #F5D4B3;
     --color-assist-foreground: #351A00;
-    --color-assist-secondary: #15803D;
-    --color-assist-secondary-hover: #166534;
-    --color-assist-secondary-foreground: #ffffff;
+    /* Tinted green counterpart to `assist`, matching the selected species pills. */
+    --color-assist-secondary: #F0FDF4;
+    --color-assist-secondary-hover: #DCFCE7;
+    --color-assist-secondary-foreground: #166534;
+    --color-assist-secondary-border: #86EFAC;
+    /* The fill is too pale to double as a focus ring, so the ring gets its own value. */
+    --color-assist-secondary-ring: #22C55E;
     --color-surface: #ffffff;
     --color-surface-alt: #f6f8fc;
     --color-surface-hover: #f1f3f4;
