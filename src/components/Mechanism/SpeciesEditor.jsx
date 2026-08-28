@@ -178,8 +178,7 @@ function PhaseSelector({ value, onChange, size = 'default', allowCustom = true }
   )
 }
 
-// On/off switch for boolean species properties. A pill was ambiguous here: its selected state
-// reads as "this property has a value", which says nothing about whether that value is true.
+// On/off switch for boolean species properties.
 function Toggle({ checked, label, onChange }) {
   return (
     <button
@@ -206,9 +205,6 @@ function Toggle({ checked, label, onChange }) {
 }
 
 function PropertySelector({ properties, onChange }) {
-  // Selecting a pill puts the property in play and reveals its editor below: a value input for
-  // numbers, a toggle for booleans. A boolean starts at false, so choosing the pill without
-  // touching the toggle records a deliberate false rather than a missing value.
   const togglePill = (field) => {
     const next = { ...properties }
     if (field.pill in next) {
@@ -271,7 +267,6 @@ function PropertySelector({ properties, onChange }) {
   )
 }
 
-// The properties a species actually carries, in registry order, for the expanded chip.
 function getSpeciesFields(species) {
   return SPECIES_PROPERTIES.filter(
     (field) => species[field.key] !== undefined && species[field.key] !== null
@@ -422,8 +417,6 @@ export function SpeciesEditor() {
 
     const updatedSpecies = { ...existingSpecies }
 
-    // Booleans come straight from the toggle. Off is stored as absent, matching how the solver
-    // treats a missing flag.
     if (field.type === 'boolean') {
       if (rawValue) {
         updatedSpecies[field.key] = true

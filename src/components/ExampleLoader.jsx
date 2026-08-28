@@ -189,8 +189,8 @@ export function ExampleLoader() {
 
     dispatch(setMechanism(exampleConfig))
 
-    // Diffusion coefficient and density are PhaseSpecies members, so they live on
-    // phases[].species[] rather than on the species entry. Collect them by name first.
+    // Diffusion coefficient and density belong to PhaseSpecies, so collect them by name
+    // for placement under phases[].species[].
     const phaseProperties = new Map()
     for (const phase of Array.isArray(mechanismConfig.phases) ? mechanismConfig.phases : []) {
       for (const entry of Array.isArray(phase.species) ? phase.species : []) {
@@ -206,8 +206,7 @@ export function ExampleLoader() {
 
     const mechanismSpecies = Array.isArray(mechanismConfig.species) ? mechanismConfig.species : []
     mechanismSpecies.forEach((species) => {
-      // Only what the configuration actually declares. Filling in defaults here would make an
-      // unspecified property indistinguishable from a configured one in the editor.
+      // Only include declared properties; defaults would make unspecified values look configured.
       dispatch(
         addSpecies({
           name: species.name,

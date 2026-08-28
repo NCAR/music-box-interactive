@@ -29,9 +29,8 @@ export const buildLocalSimulationPayload = ({ mechanismData, conditions }) => {
   const mechanismLabel = getMechanismLabel(mechanismData)
   const sourceSpecies = Array.isArray(sourceMechanism.species) ? sourceMechanism.species : []
 
-  // serializeSpecies strips the phase properties (they are PhaseSpecies members, not Species
-  // members), so buildPhases needs the reconciled species from before that step to re-attach
-  // them to the phase entries.
+  // serializeSpecies strips PhaseSpecies properties, so buildPhases uses the pre-serialization
+  // species to re-attach them to the phase entries.
   const reconciledSpecies = reconcileSpeciesWithSource(
     mechanismData.species.length > 0 ? mechanismData.species : sourceSpecies,
     sourceSpecies

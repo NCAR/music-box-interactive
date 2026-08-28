@@ -256,9 +256,6 @@ export const serializeSpecies = (species) => {
   return serialized
 }
 
-// Phase properties -- diffusion coefficient, density -- are members of PhaseSpecies in the
-// solver, so they belong on the phase's species entry rather than the top-level species.
-// Species names are unique across phases, so a name maps to exactly one set of values.
 const phaseProperties = (name, species) => {
   const source = species.find((sp) => sp?.name === name)
   if (!source) {
@@ -274,8 +271,7 @@ const phaseProperties = (name, species) => {
   return attached
 }
 
-// An authored phase entry may already carry values from the mechanism file; anything set in the
-// editor takes precedence over those.
+// Editor values take precedence over values authored in the mechanism file.
 const toPhaseSpecies = (entry, species) => {
   const name = typeof entry === 'string' ? entry : entry?.name
   const base = typeof entry === 'string' ? { name } : { ...entry }

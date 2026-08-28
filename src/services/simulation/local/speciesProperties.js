@@ -50,8 +50,6 @@ export const SPECIES_PROPERTIES = [
     label: 'Density (kg/m3)',
     placeholder: 'e.g., 1000',
   },
-  // Last: the only boolean, so it reads as a separate kind of thing from the value properties
-  // above it. This order drives the pill row and the expanded-chip field list alike.
   {
     pill: 'Third body',
     key: 'is third body',
@@ -71,8 +69,7 @@ export const SPECIES_PROPERTY_KEYS = SPECIES_PROPERTIES.filter((f) => f.target =
   (f) => f.key
 )
 
-// Copies across only the keys the source actually defines, so "not set" stays distinguishable
-// from "set to a default".
+// Copies only defined keys, preserving the distinction between "not set" and "default".
 export const pickDeclared = (source, keys) => {
   const picked = {}
   for (const key of keys) {

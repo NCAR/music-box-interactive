@@ -113,12 +113,9 @@ describe('solver payload contract', () => {
     expect(excludedKeys.every((key) => key.includes(TRACER_PREFIX))).toBe(true)
   }, 30000)
 
-  // mechanism.species[] is strictly validated: an unrecognised key makes the solver refuse to
-  // build. Phase properties (diffusion coefficient, density) are members of PhaseSpecies, so
-  // they must be routed away from the species entry rather than passed through.
+  // mechanism.species[] rejects unknown keys, so PhaseSpecies properties (diffusion coefficient,
+  // density) must be routed to the phase entries instead.
   it('routes species properties to mechanism.species[] and keeps phase properties out', async () => {
-    // One species per property. The first three keep analytical's own names so its reactions
-    // still resolve; the rest are extra carriers.
     const names = analyticalConfig.mechanism.species.map((sp) => sp.name)
     const uiSpecies = SPECIES_PROPERTIES.map((field, index) => ({
       name: names[index] ?? `SP${index}`,
@@ -150,9 +147,8 @@ describe('solver payload contract', () => {
       expect(payload.mechanism.species.some((sp) => key in sp)).toBe(false)
     }
 
-    // ...and they must arrive on the phase entry instead. phases[].species[] is not validated,
-    // so a wrong key here would be silently ignored rather than raising -- this assertion is the
-    // only thing standing between a typo and a value that never reaches the solver.
+    // Route them to the phase entry. Since phases[].species[] is not validated, this assertion
+    // catches typos that would otherwise be silently ignored.
     const phaseEntries = payload.mechanism.phases.flatMap((phase) => phase.species)
     for (const field of SPECIES_PROPERTIES.filter((f) => f.target === 'phase')) {
       const carrier = phaseEntries.find((entry) => entry[field.key] !== undefined)
