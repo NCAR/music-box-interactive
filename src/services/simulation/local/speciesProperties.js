@@ -1,18 +1,12 @@
-// The optional species properties MICM understands, and where each belongs in the payload.
+// Optional species properties and their payload targets.
 //
-// `target` mirrors the C++ split: 'species' properties are members of Species and go on
-// mechanism.species[]; 'phase' properties are members of PhaseSpecies and go on
-// phases[].species[]. Putting a phase property on a species (or vice versa) is not a harmless
-// mistake -- see the notes on validation below.
+// `target` mirrors the C++ split:
+// - 'species': Species members → mechanism.species[]
+// - 'phase': PhaseSpecies members → phases[].species[]
 //
-// The keys are exact, and taken from the mechanism-configuration constants:
-//   inline constexpr std::string_view diffusion_coefficient = "diffusion coefficient [m2 s-1]";
-//   inline constexpr std::string_view density               = "density [kg m-3]";
-//
-// Two traps worth knowing:
-//   - Absolute tolerance must carry the `__` prefix. "absolute tolerance" is rejected.
-//   - mechanism.species[] rejects any key it does not recognise, but phases[].species[] is not
-//     validated at all, so a misspelled phase property is silently ignored rather than erroring.
+// Notes:
+// - Absolute tolerance requires the `__` prefix; "absolute tolerance" is rejected.
+// - mechanism.species[] rejects unknown keys, while phases[].species[] silently ignores them.
 export const SPECIES_PROPERTIES = [
   {
     pill: 'Molecular weight',
@@ -43,13 +37,6 @@ export const SPECIES_PROPERTIES = [
     placeholder: 'e.g., 1e-6',
   },
   {
-    pill: 'Third body',
-    key: 'is third body',
-    target: 'species',
-    type: 'boolean',
-    label: 'Third body',
-  },
-  {
     pill: 'Diffusion coefficient',
     key: 'diffusion coefficient [m2 s-1]',
     target: 'phase',
@@ -63,14 +50,23 @@ export const SPECIES_PROPERTIES = [
     label: 'Density (kg/m3)',
     placeholder: 'e.g., 1000',
   },
+  // Last: the only boolean, so it reads as a separate kind of thing from the value properties
+  // above it. This order drives the pill row and the expanded-chip field list alike.
+  {
+    pill: 'Third body',
+    key: 'is third body',
+    target: 'species',
+    type: 'boolean',
+    label: 'Third body',
+  },
 ]
 
-/** Keys that belong on phases[].species[] and must be kept off mechanism.species[]. */
+// Keys that belong on phases[].species[].
 export const PHASE_PROPERTY_KEYS = SPECIES_PROPERTIES.filter((f) => f.target === 'phase').map(
   (f) => f.key
 )
 
-/** Keys that belong on mechanism.species[]. */
+// Keys that belong on mechanism.species[].
 export const SPECIES_PROPERTY_KEYS = SPECIES_PROPERTIES.filter((f) => f.target === 'species').map(
   (f) => f.key
 )

@@ -1,4 +1,3 @@
-// components/mechanism/speciesUtils.js
 export function addSpeciesIfValid({
   species,
   newSpeciesName,
@@ -29,9 +28,8 @@ export function addSpeciesIfValid({
     return false
   }
 
-  // Properties arrive keyed by pill name; store them under the solver's own key so nothing has
-  // to be translated later. Every property is optional -- a blank field means "not set" and is
-  // simply omitted, rather than being filled in with an invented default.
+  // Properties are keyed by pill name. Store them under the solver's key to avoid later translation.
+  // All properties are optional. The blank fields are omitted rather than assigned defaults.
   const stored = {}
 
   for (const [pill, rawValue] of Object.entries(newSpeciesProperties)) {

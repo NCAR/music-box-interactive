@@ -13,8 +13,6 @@ import { SPECIES_PROPERTIES } from '../../services/simulation/local/speciesPrope
 const FIXED_PHASE_OPTIONS = ['Gas', 'Aqueous']
 const DISABLED_PHASE_OPTIONS = ['Aqueous']
 
-const propertyByPill = (pill) => SPECIES_PROPERTIES.find((f) => f.pill === pill)
-
 const CUSTOM_PILL_MAX_LENGTH = 512
 
 // Shared text-input styling in two sizes: a roomy variant for the add-species form,
@@ -182,14 +180,43 @@ function PhaseSelector({ value, onChange, size = 'default', allowCustom = true }
 
 // Multi-select pills for numeric species properties; selecting a pill toggles
 // the property and shows its value input.
+// On/off switch for boolean species properties. A pill was ambiguous here: its selected state
+// reads as "this property has a value", which says nothing about whether that value is true.
+function Toggle({ checked, label, onChange }) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      onClick={() => onChange(!checked)}
+      className="flex items-center gap-3 rounded text-sm font-semibold text-gray-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-green-500"
+    >
+      <span
+        className={`relative inline-flex h-6 w-11 flex-shrink-0 items-center rounded-full transition-colors ${
+          checked ? 'bg-green-700' : 'bg-gray-300'
+        }`}
+      >
+        <span
+          className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform ${
+            checked ? 'translate-x-[1.375rem]' : 'translate-x-0.5'
+          }`}
+        />
+      </span>
+      {label}
+    </button>
+  )
+}
+
 function PropertySelector({ properties, onChange }) {
+  // Selecting a pill puts the property in play and reveals its editor below: a value input for
+  // numbers, a toggle for booleans. A boolean starts at false, so choosing the pill without
+  // touching the toggle records a deliberate false rather than a missing value.
   const togglePill = (field) => {
     const next = { ...properties }
     if (field.pill in next) {
       delete next[field.pill]
     } else {
-      // A boolean property carries no value input; being selected is the value.
-      next[field.pill] = field.type === 'boolean' ? true : ''
+      next[field.pill] = field.type === 'boolean' ? false : ''
     }
     onChange(next)
   }
@@ -198,9 +225,7 @@ function PropertySelector({ properties, onChange }) {
     onChange({ ...properties, [pill]: value })
   }
 
-  const valueFields = Object.keys(properties)
-    .map(propertyByPill)
-    .filter((field) => field && field.type !== 'boolean')
+  const selectedFields = SPECIES_PROPERTIES.filter((field) => field.pill in properties)
 
   return (
     <div>
@@ -217,22 +242,31 @@ function PropertySelector({ properties, onChange }) {
         ))}
       </div>
 
-      {valueFields.length > 0 && (
+      {selectedFields.length > 0 && (
         <div className="mt-3 flex flex-col gap-3">
-          {valueFields.map((field) => (
-            <div key={field.pill}>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                {field.label}
-              </label>
-              <input
-                type="text"
-                value={properties[field.pill]}
-                onChange={(e) => setPropertyValue(field.pill, e.target.value)}
-                placeholder={field.placeholder}
-                className={TEXT_INPUT}
+          {selectedFields.map((field) =>
+            field.type === 'boolean' ? (
+              <Toggle
+                key={field.pill}
+                label={field.label}
+                checked={properties[field.pill] === true}
+                onChange={(checked) => setPropertyValue(field.pill, checked)}
               />
-            </div>
-          ))}
+            ) : (
+              <div key={field.pill}>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  {field.label}
+                </label>
+                <input
+                  type="text"
+                  value={properties[field.pill]}
+                  onChange={(e) => setPropertyValue(field.pill, e.target.value)}
+                  placeholder={field.placeholder}
+                  className={TEXT_INPUT}
+                />
+              </div>
+            )
+          )}
         </div>
       )}
     </div>
@@ -308,7 +342,11 @@ function SpeciesChip({ species, onPhaseChange, onFieldSave, onRemove }) {
               {field.label}
             </label>
             {field.type === 'boolean' ? (
-              <p className="text-sm text-gray-700">{field.value ? 'Yes' : 'No'}</p>
+              <Toggle
+                label={field.value ? 'Yes' : 'No'}
+                checked={field.value === true}
+                onChange={(checked) => onFieldSave(species.name, field, checked)}
+              />
             ) : (
               <input
                 type="text"
@@ -384,8 +422,21 @@ export function SpeciesEditor() {
       return
     }
 
-    const trimmedValue = rawValue.trim()
     const updatedSpecies = { ...existingSpecies }
+
+    // Booleans come straight from the toggle. Off is stored as absent, matching how the solver
+    // treats a missing flag.
+    if (field.type === 'boolean') {
+      if (rawValue) {
+        updatedSpecies[field.key] = true
+      } else {
+        delete updatedSpecies[field.key]
+      }
+      dispatch(updateSpecies(updatedSpecies))
+      return
+    }
+
+    const trimmedValue = rawValue.trim()
 
     // Clearing the input removes the property, which is how "not set" is expressed.
     if (!trimmedValue) {
