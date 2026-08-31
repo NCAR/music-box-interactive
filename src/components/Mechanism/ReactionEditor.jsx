@@ -214,7 +214,7 @@ export function ReactionEditor() {
 
         <Card className={LIST_CARD}>
           <CardHeader>
-            <CardTitle>{`Total ${reactions.length} reactions`}</CardTitle>
+            <CardTitle>{`${reactions.length} reactions`}</CardTitle>
           </CardHeader>
 
           <CardContent className={LIST_CARD_CONTENT}>
