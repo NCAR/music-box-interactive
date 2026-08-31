@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { v4 as uuidv4 } from 'uuid'
 import { Button } from '../../ui/button'
 import { parseReactionString } from './reactionUtils'
+import { FIELD_LABEL_SM, TEXT_INPUT_SM } from '../fieldStyles'
 
 export function BranchedReactionForm({ onAddReaction }) {
   const [reactants, setReactants] = useState('')
@@ -89,84 +90,86 @@ export function BranchedReactionForm({ onAddReaction }) {
       )}
 
       <div>
-        <label className="block text-xs font-semibold text-blue-900 mb-1">Reactants</label>
+        <label className={FIELD_LABEL_SM}>Reactants</label>
         <input
           type="text"
           value={reactants}
           onChange={(e) => setReactants(e.target.value)}
           placeholder="A"
-          className="w-full px-3 py-2 border-2 border-white/30 bg-white/10 text-gray-900 placeholder:text-gray-500 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
+          className={`w-full ${TEXT_INPUT_SM}`}
         />
       </div>
 
       <div>
-        <label className="block text-xs font-semibold text-blue-900 mb-1">Alkoxy Products</label>
+        <label className={FIELD_LABEL_SM}>Alkoxy Products</label>
         <input
           type="text"
           value={alkoxyProducts}
           onChange={(e) => setAlkoxyProducts(e.target.value)}
           placeholder="0.2B + 1.2A"
-          className="w-full px-3 py-2 border-2 border-white/30 bg-white/10 text-gray-900 placeholder:text-gray-500 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
+          className={`w-full ${TEXT_INPUT_SM}`}
         />
       </div>
 
       <div>
-        <label className="block text-xs font-semibold text-blue-900 mb-1">Nitrate Products</label>
+        <label className={FIELD_LABEL_SM}>Nitrate Products</label>
         <input
           type="text"
           value={nitrateProducts}
           onChange={(e) => setNitrateProducts(e.target.value)}
           placeholder="1.2C"
-          className="w-full px-3 py-2 border-2 border-white/30 bg-white/10 text-gray-900 placeholder:text-gray-500 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
+          className={`w-full ${TEXT_INPUT_SM}`}
         />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         <div>
-          <label className="block text-xs font-semibold text-blue-900 mb-1">X (optional)</label>
+          <label className={FIELD_LABEL_SM}>X (optional)</label>
           <input
             type="text"
             value={xValue}
             onChange={(e) => setXValue(e.target.value)}
             placeholder="1.2e-4"
-            className="w-full px-3 py-2 border-2 border-white/30 bg-white/10 text-gray-900 placeholder:text-gray-500 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
+            className={`w-full ${TEXT_INPUT_SM}`}
           />
         </div>
         <div>
-          <label className="block text-xs font-semibold text-blue-900 mb-1">Y (optional)</label>
+          <label className={FIELD_LABEL_SM}>Y (optional)</label>
           <input
             type="text"
             value={yValue}
             onChange={(e) => setYValue(e.target.value)}
             placeholder="167"
-            className="w-full px-3 py-2 border-2 border-white/30 bg-white/10 text-gray-900 placeholder:text-gray-500 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
+            className={`w-full ${TEXT_INPUT_SM}`}
           />
         </div>
         <div>
-          <label className="block text-xs font-semibold text-blue-900 mb-1">a0 (optional)</label>
+          <label className={FIELD_LABEL_SM}>a0 (optional)</label>
           <input
             type="text"
             value={a0Value}
             onChange={(e) => setA0Value(e.target.value)}
             placeholder="0.15"
-            className="w-full px-3 py-2 border-2 border-white/30 bg-white/10 text-gray-900 placeholder:text-gray-500 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
+            className={`w-full ${TEXT_INPUT_SM}`}
           />
         </div>
         <div>
-          <label className="block text-xs font-semibold text-blue-900 mb-1">n (optional)</label>
+          <label className={FIELD_LABEL_SM}>n (optional)</label>
           <input
             type="text"
             value={nValue}
             onChange={(e) => setNValue(e.target.value)}
             placeholder="9"
-            className="w-full px-3 py-2 border-2 border-white/30 bg-white/10 text-gray-900 placeholder:text-gray-500 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
+            className={`w-full ${TEXT_INPUT_SM}`}
           />
         </div>
       </div>
 
-      <Button onClick={handleAdd} variant="assist" size="default" className="rounded-2xl">
-        Add Reaction
-      </Button>
+      <div className="mt-8 flex justify-center">
+        <Button onClick={handleAdd} variant="assistSecondary" size="lg" className="text-base">
+          Add Reaction
+        </Button>
+      </div>
     </div>
   )
 }

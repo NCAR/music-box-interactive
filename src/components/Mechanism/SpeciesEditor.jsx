@@ -7,6 +7,16 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui
 import { Button } from '../ui/button'
 import { addSpecies, updateSpecies, removeSpecies } from '../../redux/slices/mechanismSlice'
 import { addSpeciesIfValid } from './speciesUtils'
+import {
+  EDITOR_GRID,
+  ITEM_CHIP,
+  ITEM_LIST,
+  ITEM_PANEL,
+  LIST_CARD,
+  LIST_CARD_CONTENT,
+  TEXT_INPUT,
+  TEXT_INPUT_SM,
+} from './fieldStyles'
 import { SPECIES_PROPERTIES } from '../../services/simulation/local/speciesProperties'
 
 // Fixed phase segments; anything else is entered as a custom "Others" phase
@@ -17,10 +27,6 @@ const CUSTOM_PILL_MAX_LENGTH = 512
 
 // Shared text-input styling in two sizes: a roomy variant for the add-species form,
 // and a compact variant for the search box and per-species value fields.
-const TEXT_INPUT =
-  'w-full px-4 py-3 border-2 border-gray-400 bg-white/10 text-gray-900 placeholder:text-gray-500 rounded-xl text-base font-mono focus:outline-none focus:border-green-700'
-const TEXT_INPUT_SM =
-  'px-3 py-2 border-2 border-gray-400 bg-white/10 text-gray-900 placeholder:text-gray-500 rounded-lg text-sm font-mono focus:outline-none focus:border-green-700'
 
 
 // Shared pill styling for the phase and property selectors.
@@ -284,7 +290,7 @@ function SpeciesChip({ species, onPhaseChange, onFieldSave, onRemove }) {
       <button
         type="button"
         onClick={() => setExpanded(true)}
-        className="flex items-center gap-1.5 rounded-full border border-gray-300 bg-white px-4 py-2 text-[15px] font-semibold text-gray-700 whitespace-nowrap transition-colors hover:bg-gray-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-green-500"
+        className={`${ITEM_CHIP} whitespace-nowrap`}
       >
         {species.name}
         <ChevronDown className="w-3.5 h-3.5 flex-shrink-0" />
@@ -293,7 +299,7 @@ function SpeciesChip({ species, onPhaseChange, onFieldSave, onRemove }) {
   }
 
   return (
-    <div className="w-full rounded-2xl border border-gray-300 bg-white p-4">
+    <div className={ITEM_PANEL}>
       <div className="flex items-start justify-between gap-3">
         <button
           type="button"
@@ -468,7 +474,7 @@ export function SpeciesEditor() {
   }
 
   const speciesChips = (
-    <div className="flex min-h-0 flex-1 flex-wrap content-start gap-2 overflow-y-auto">
+    <div className={ITEM_LIST}>
       {filteredSpecies.length === 0 ? (
         <p className="w-full text-center text-gray-500 py-8">No matching species found.</p>
       ) : (
@@ -489,7 +495,7 @@ export function SpeciesEditor() {
     <div className="space-y-4">
       {/* Add form and species list are separate cards, side by side on wide screens. They
           stack below lg, where two columns would leave neither enough room. */}
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:items-start">
+      <div className={EDITOR_GRID}>
         <Card>
           <CardHeader>
             <CardTitle>Add species</CardTitle>
@@ -542,12 +548,12 @@ export function SpeciesEditor() {
           </CardContent>
         </Card>
 
-        <Card className="flex flex-col lg:h-[56rem]">
+        <Card className={LIST_CARD}>
           <CardHeader>
             <CardTitle>{`${species.length} species`}</CardTitle>
           </CardHeader>
 
-          <CardContent className="flex min-h-0 flex-1 flex-col">
+          <CardContent className={LIST_CARD_CONTENT}>
             {/* Search Bar */}
             <input
               type="text"

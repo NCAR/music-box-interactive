@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { v4 as uuidv4 } from 'uuid'
 import { Button } from '../../ui/button'
 import { parseReactionString } from './reactionUtils'
+import { FIELD_LABEL_SM, TEXT_INPUT_CODE, TEXT_INPUT_SM } from '../fieldStyles'
 
 export function LambdaRateReactionForm({ onAddReaction }) {
   const [reactants, setReactants] = useState('')
@@ -76,7 +77,7 @@ export function LambdaRateReactionForm({ onAddReaction }) {
       )}
 
       <div>
-        <label className="block text-xs font-semibold text-blue-900 mb-1">
+        <label className={FIELD_LABEL_SM}>
           Reactants (e.g., "O2 + O" or "2NO2")
         </label>
         <input
@@ -84,12 +85,12 @@ export function LambdaRateReactionForm({ onAddReaction }) {
           value={reactants}
           onChange={(e) => setReactants(e.target.value)}
           placeholder="O2 + O"
-          className="w-full px-3 py-2 border-2 border-white/30 bg-white/10 text-gray-900 placeholder:text-gray-500 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
+          className={`w-full ${TEXT_INPUT_SM}`}
         />
       </div>
 
       <div>
-        <label className="block text-xs font-semibold text-blue-900 mb-1">
+        <label className={FIELD_LABEL_SM}>
           Products (e.g., "O3" or "NO + O2")
         </label>
         <input
@@ -97,12 +98,12 @@ export function LambdaRateReactionForm({ onAddReaction }) {
           value={products}
           onChange={(e) => setProducts(e.target.value)}
           placeholder="O3"
-          className="w-full px-3 py-2 border-2 border-white/30 bg-white/10 text-gray-900 placeholder:text-gray-500 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
+          className={`w-full ${TEXT_INPUT_SM}`}
         />
       </div>
 
       <div>
-        <label className="block text-xs font-semibold text-blue-900 mb-1">
+        <label className={FIELD_LABEL_SM}>
           Lambda Function (JavaScript)
         </label>
         <textarea
@@ -110,16 +111,18 @@ export function LambdaRateReactionForm({ onAddReaction }) {
           onChange={(e) => setLambdaFunction(e.target.value)}
           placeholder="(T, P, airDensity) => 1.2e-5 * Math.exp(-500.0 / T)"
           rows={4}
-          className="w-full px-3 py-2 border-2 border-white/30 bg-white/10 text-gray-900 placeholder:text-gray-500 rounded-lg text-xs font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
+          className={`w-full ${TEXT_INPUT_CODE}`}
         />
         <p className="mt-1 text-[11px] text-gray-700">
           Allowed parameters: <strong>T</strong>, <strong>P</strong>, <strong>airDensity</strong>
         </p>
       </div>
 
-      <Button onClick={handleAdd} variant="assist" size="default" className="rounded-2xl">
-        Add Reaction
-      </Button>
+      <div className="mt-8 flex justify-center">
+        <Button onClick={handleAdd} variant="assistSecondary" size="lg" className="text-base">
+          Add Reaction
+        </Button>
+      </div>
     </div>
   )
 }

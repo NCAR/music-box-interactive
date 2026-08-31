@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { v4 as uuidv4 } from 'uuid'
 import { Button } from '../../ui/button'
+import { FIELD_LABEL_SM, TEXT_INPUT_SM } from '../fieldStyles'
 
 export function EmissionReactionForm({ onAddReaction }) {
   const [products, setProducts] = useState('')
@@ -50,7 +51,7 @@ export function EmissionReactionForm({ onAddReaction }) {
       )}
 
       <div>
-        <label className="block text-xs font-semibold text-blue-900 mb-1">
+        <label className={FIELD_LABEL_SM}>
           Products (e.g., "O3" or "NO + O2")
         </label>
         <input
@@ -58,13 +59,13 @@ export function EmissionReactionForm({ onAddReaction }) {
           value={products}
           onChange={(e) => setProducts(e.target.value)}
           placeholder="O3"
-          className="w-full px-3 py-2 border-2 border-white/30 bg-white/10 text-gray-900 placeholder:text-gray-500 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
+          className={`w-full ${TEXT_INPUT_SM}`}
         />
       </div>
 
       <div>
         <div>
-          <label className="block text-xs font-semibold text-blue-900 mb-1">
+          <label className={FIELD_LABEL_SM}>
             Scaling Factor (optional; defaults to 1.0)
           </label>
           <input
@@ -72,14 +73,16 @@ export function EmissionReactionForm({ onAddReaction }) {
             value={emissionScaling}
             onChange={(e) => setEmissionScaling(e.target.value)}
             placeholder="12.3"
-            className="w-full px-3 py-2 border-2 border-white/30 bg-white/10 text-gray-900 placeholder:text-gray-500 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
+            className={`w-full ${TEXT_INPUT_SM}`}
           />
         </div>
       </div>
 
-      <Button onClick={handleAdd} variant="assist" size="default" className="rounded-2xl">
-        Add Reaction
-      </Button>
+      <div className="mt-8 flex justify-center">
+        <Button onClick={handleAdd} variant="assistSecondary" size="lg" className="text-base">
+          Add Reaction
+        </Button>
+      </div>
     </div>
   )
 }

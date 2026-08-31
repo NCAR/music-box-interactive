@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { v4 as uuidv4 } from 'uuid'
 import { Button } from '../../ui/button'
 import { parseReactionString } from './reactionUtils'
+import { FIELD_LABEL_SM, TEXT_INPUT_SM } from '../fieldStyles'
 
 export function SurfaceReactionForm({ onAddReaction }) {
   const [gasPhaseSpecies, setGasPhaseSpecies] = useState('')
@@ -58,7 +59,7 @@ export function SurfaceReactionForm({ onAddReaction }) {
       )}
 
       <div>
-        <label className="block text-xs font-semibold text-blue-900 mb-1">
+        <label className={FIELD_LABEL_SM}>
           Gas-Phase Species (e.g., "A")
         </label>
         <input
@@ -66,12 +67,12 @@ export function SurfaceReactionForm({ onAddReaction }) {
           value={gasPhaseSpecies}
           onChange={(e) => setGasPhaseSpecies(e.target.value)}
           placeholder="A"
-          className="w-full px-3 py-2 border-2 border-white/30 bg-white/10 text-gray-900 placeholder:text-gray-500 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
+          className={`w-full ${TEXT_INPUT_SM}`}
         />
       </div>
 
       <div>
-        <label className="block text-xs font-semibold text-blue-900 mb-1">
+        <label className={FIELD_LABEL_SM}>
           Gas-Phase Products (e.g., "B + C")
         </label>
         <input
@@ -79,12 +80,12 @@ export function SurfaceReactionForm({ onAddReaction }) {
           value={gasPhaseProducts}
           onChange={(e) => setGasPhaseProducts(e.target.value)}
           placeholder="B + C"
-          className="w-full px-3 py-2 border-2 border-white/30 bg-white/10 text-gray-900 placeholder:text-gray-500 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
+          className={`w-full ${TEXT_INPUT_SM}`}
         />
       </div>
 
       <div>
-        <label className="block text-xs font-semibold text-blue-900 mb-1">
+        <label className={FIELD_LABEL_SM}>
           Reaction Probability (optional)
         </label>
         <input
@@ -92,13 +93,15 @@ export function SurfaceReactionForm({ onAddReaction }) {
           value={reactionProbability}
           onChange={(e) => setReactionProbability(e.target.value)}
           placeholder="2.0e-2"
-          className="w-full px-3 py-2 border-2 border-white/30 bg-white/10 text-gray-900 placeholder:text-gray-500 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
+          className={`w-full ${TEXT_INPUT_SM}`}
         />
       </div>
 
-      <Button onClick={handleAdd} variant="assist" size="default" className="rounded-2xl">
-        Add Reaction
-      </Button>
+      <div className="mt-8 flex justify-center">
+        <Button onClick={handleAdd} variant="assistSecondary" size="lg" className="text-base">
+          Add Reaction
+        </Button>
+      </div>
     </div>
   )
 }
