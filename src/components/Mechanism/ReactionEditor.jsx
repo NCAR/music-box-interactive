@@ -188,7 +188,7 @@ export function ReactionEditor() {
             <div className="grid grid-cols-1 gap-7">
               <div>
                 <label className="block text-base font-semibold text-gray-800 mb-2">
-                  Reaction type
+                  Choose a reaction
                 </label>
                 <select
                   value={reactionType}
