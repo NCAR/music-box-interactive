@@ -48,7 +48,7 @@ const formatReactionDisplay = (reaction) => {
   return `${reactantStr} → ${productStr}`
 }
 
-// The rate parameter worth showing at a glance, which differs by reaction type.
+// The rate parameter varying by reaction type.
 const rateSummary = (reaction) => {
   if (reaction.A !== undefined) {
     return `A = ${Number(reaction.A).toExponential(2)}`
@@ -58,8 +58,7 @@ const rateSummary = (reaction) => {
   return scale !== undefined ? `Scale = ${scale}` : null
 }
 
-// A reaction renders as a collapsed chip showing its formula; clicking it unfolds the type, rate
-// parameter and name. Expansion is local state, so opening one leaves the others alone.
+// A reaction renders as a collapsed chip. Clicking it unfolds its type, rate parameter, and name.
 function ReactionChip({ reaction, onRemove }) {
   const [expanded, setExpanded] = useState(false)
   const formula = formatReactionDisplay(reaction)
@@ -133,9 +132,9 @@ export function ReactionEditor() {
   const activeReactionDefinition = getReactionDefinition(reactionType)
   const ActiveReactionForm = activeReactionDefinition.component
 
-  // Unlike species, a reaction has no single name to match on, so the search looks anywhere in
-  // the formula: typing NO2 finds every reaction it takes part in. Order is left alone --
-  // reactions are addressed by index elsewhere, and mechanism order carries authoring intent.
+  // Reactions have no single name to search, so the query matches anywhere in the formula.
+  // Typing species name finds every reaction it appears in. Order is preserved because reactions are
+  // indexed elsewhere and mechanism order reflects authoring intent.
   const reactionQuery = reactionSearch.trim().toLowerCase()
   const filteredReactions = reactions.filter((reaction) => {
     if (!reactionQuery) {

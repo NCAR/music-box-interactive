@@ -1,7 +1,7 @@
-// Styling shared by the species and reaction editors, so the two tabs stay visually identical.
+// Styling shared by the species and reaction editors.
 
-// Text inputs in two sizes: a roomy variant for the add forms, and a compact one for search
-// boxes and per-item value fields.
+// Text inputs in two sizes: a roomy variant for the add forms,
+// and a compact one for search boxes and per-item value fields.
 export const TEXT_INPUT =
   'w-full px-4 py-3 border-2 border-gray-400 bg-white/10 text-gray-900 placeholder:text-gray-500 rounded-xl text-base font-mono focus:outline-none focus:border-green-700'
 export const TEXT_INPUT_SM =
