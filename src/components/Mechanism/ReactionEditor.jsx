@@ -7,6 +7,10 @@ import { Button } from '../ui/button'
 import { addReaction, removeReaction } from '../../redux/slices/mechanismSlice'
 import { getReactionDefinition, reactionRegistry } from './reactions/reactionRegistry'
 import {
+  getReactionSpeciesNames,
+  resolveReactionSpeciesNames,
+} from '../../services/simulation/local/mechanism'
+import {
   EDITOR_GRID,
   ITEM_CHIP,
   ITEM_LIST,
@@ -125,6 +129,7 @@ export function ReactionEditor() {
   const dispatch = useDispatch()
   const { toast } = useToast()
   const reactions = useSelector((state) => state.mechanism.reactions)
+  const species = useSelector((state) => state.mechanism.species)
 
   const [reactionType, setReactionType] = useState(reactionRegistry[0].type)
   const [reactionSearch, setReactionSearch] = useState('')
@@ -145,7 +150,31 @@ export function ReactionEditor() {
   })
 
   const handleAddReaction = (newReaction) => {
-    dispatch(addReaction(newReaction))
+    // Predicts solver build failures when reactions reference undefined species by validating exact
+    // mechanism names, matching validateMechanismPayload. Since reaction input is upper-cased, first
+    // map names back to the mechanism's spelling so lower-case species can be referenced.
+    const definedNames = species.map((sp) => sp.name).filter(Boolean)
+    const resolved = resolveReactionSpeciesNames(newReaction, definedNames)
+
+    const defined = new Set(definedNames)
+    const unknown = [...new Set(getReactionSpeciesNames(resolved))].filter(
+      (name) => !defined.has(name)
+    )
+
+    if (unknown.length > 0) {
+      toast({
+        title: unknown.length === 1 ? 'Unknown species' : 'Unknown species',
+        description: `${unknown.join(', ')} ${
+          unknown.length === 1 ? 'is not' : 'are not'
+        } defined in this mechanism. Add ${
+          unknown.length === 1 ? 'it' : 'them'
+        } in the Species tab first.`,
+        variant: 'destructive',
+      })
+      return
+    }
+
+    dispatch(addReaction(resolved))
     toast({
       title: 'Reaction Added',
       description: `Successfully added reaction: ${newReaction.name || formatReactionDisplay(newReaction)}`,
