@@ -22,6 +22,11 @@ import { resetConditions } from '../redux/slices/conditionsSlice'
 import { resetSimulation } from '../redux/slices/simulationSlice'
 
 import { parseCsvToBlock } from '@ncar/music-box'
+import {
+  PHASE_PROPERTY_KEYS,
+  SPECIES_PROPERTY_KEYS,
+  pickDeclared,
+} from '../services/simulation/local/speciesProperties'
 
 import chapmanConfig from '@ncar/music-box/examples/chapman/my_config.json' with { type: 'json' }
 import analyticalConfig from '@ncar/music-box/examples/analytical/my_config.json' with { type: 'json' }
@@ -184,18 +189,30 @@ export function ExampleLoader() {
 
     dispatch(setMechanism(exampleConfig))
 
+    // Diffusion coefficient and density belong to PhaseSpecies, so collect them by name
+    // for placement under phases[].species[].
+    const phaseProperties = new Map()
+    for (const phase of Array.isArray(mechanismConfig.phases) ? mechanismConfig.phases : []) {
+      for (const entry of Array.isArray(phase.species) ? phase.species : []) {
+        if (!entry || typeof entry !== 'object' || !entry.name) {
+          continue
+        }
+        const carried = pickDeclared(entry, PHASE_PROPERTY_KEYS)
+        if (Object.keys(carried).length > 0) {
+          phaseProperties.set(entry.name, { ...phaseProperties.get(entry.name), ...carried })
+        }
+      }
+    }
+
     const mechanismSpecies = Array.isArray(mechanismConfig.species) ? mechanismConfig.species : []
     mechanismSpecies.forEach((species) => {
+      // Only include declared properties; defaults would make unspecified values look configured.
       dispatch(
         addSpecies({
           name: species.name,
-          molecular_weight_kg_mol:
-            species.molecular_weight_kg_mol ?? species['molecular weight [kg mol-1]'] ?? 0.048,
-          'diffusion coefficient [m2 s-1]':
-            species['diffusion coefficient [m2 s-1]'] ?? species.diffusion_coefficient_m2_s ?? 1e-5,
           phase: species.phase || 'Gas',
-          'is third body': species['is third body'] || false,
-          properties: {},
+          ...pickDeclared(species, SPECIES_PROPERTY_KEYS),
+          ...(phaseProperties.get(species.name) ?? {}),
         })
       )
     })

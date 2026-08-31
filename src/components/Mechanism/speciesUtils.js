@@ -1,9 +1,9 @@
-// components/mechanism/speciesUtils.js
 export function addSpeciesIfValid({
   species,
   newSpeciesName,
   newSpeciesPhase,
   newSpeciesProperties = {},
+  speciesProperties = [],
   dispatch,
   toast,
   addSpecies,
@@ -28,38 +28,23 @@ export function addSpeciesIfValid({
     return false
   }
 
-  const { 'Molecular weight': rawMolWeight, 'Diffusion coefficient': rawDiffusionCoefficient, ...restProperties } =
-    newSpeciesProperties
+  // Properties are keyed by pill name. Store them under the solver's key to avoid later translation.
+  // All properties are optional. The blank fields are omitted rather than assigned defaults.
+  const stored = {}
 
-  const molWeight = rawMolWeight && rawMolWeight.trim() ? parseFloat(rawMolWeight) : 0.029
+  for (const [pill, rawValue] of Object.entries(newSpeciesProperties)) {
+    const field = speciesProperties.find((f) => f.pill === pill)
+    if (!field) {
+      continue
+    }
 
-  if (isNaN(molWeight)) {
-    toast({
-      title: 'Error',
-      description: 'Molecular weight must be a valid number',
-      variant: 'destructive',
-    })
-    return false
-  }
+    if (field.type === 'boolean') {
+      stored[field.key] = Boolean(rawValue)
+      continue
+    }
 
-  const diffusionCoefficient =
-    rawDiffusionCoefficient && rawDiffusionCoefficient.trim()
-      ? Number.parseFloat(rawDiffusionCoefficient)
-      : 1e-5
-
-  if (Number.isNaN(diffusionCoefficient)) {
-    toast({
-      title: 'Error',
-      description: 'Diffusion coefficient must be a valid number',
-      variant: 'destructive',
-    })
-    return false
-  }
-
-  const properties = {}
-  for (const [name, rawValue] of Object.entries(restProperties)) {
-    const trimmedValue = rawValue.trim()
-    if (!trimmedValue) {
+    const trimmedValue = typeof rawValue === 'string' ? rawValue.trim() : rawValue
+    if (trimmedValue === '' || trimmedValue === undefined || trimmedValue === null) {
       continue
     }
 
@@ -67,22 +52,20 @@ export function addSpeciesIfValid({
     if (Number.isNaN(parsedValue)) {
       toast({
         title: 'Error',
-        description: `${name} must be a valid number`,
+        description: `${field.label} must be a valid number`,
         variant: 'destructive',
       })
       return false
     }
 
-    properties[name] = parsedValue
+    stored[field.key] = parsedValue
   }
 
   dispatch(
     addSpecies({
       name: normalizedName,
-      molecular_weight_kg_mol: molWeight,
-      'diffusion coefficient [m2 s-1]': diffusionCoefficient,
       phase: newSpeciesPhase || 'Gas',
-      properties,
+      ...stored,
     })
   )
 

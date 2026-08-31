@@ -4,6 +4,10 @@ import { MusicBox } from '@ncar/music-box'
 import { buildLocalSimulationPayload } from '../src/services/simulation/local/payload'
 import { runLocalSimulation } from '../src/services/simulation/local/run'
 import { TRACER_PREFIX } from '../src/services/simulation/local/tracer'
+import {
+  SPECIES_PROPERTIES,
+  PHASE_PROPERTY_KEYS,
+} from '../src/services/simulation/local/speciesProperties'
 import { durationSeconds, stepSeconds } from './helpers/boxModelOptions'
 
 import analyticalConfig from '@ncar/music-box/examples/analytical/my_config.json' with { type: 'json' }
@@ -107,5 +111,51 @@ describe('solver payload contract', () => {
     const excludedKeys = Object.keys(excludedResults[0].concentrations)
     expect(excludedKeys.length).toBeGreaterThan(0)
     expect(excludedKeys.every((key) => key.includes(TRACER_PREFIX))).toBe(true)
+  }, 30000)
+
+  // mechanism.species[] rejects unknown keys, so PhaseSpecies properties (diffusion coefficient,
+  // density) must be routed to the phase entries instead.
+  it('routes species properties to mechanism.species[] and keeps phase properties out', async () => {
+    const names = analyticalConfig.mechanism.species.map((sp) => sp.name)
+    const uiSpecies = SPECIES_PROPERTIES.map((field, index) => ({
+      name: names[index] ?? `SP${index}`,
+      phase: 'Gas',
+      [field.key]: field.type === 'boolean' ? true : 1e-6,
+    }))
+
+    const { conditions } = buildInputs(analyticalConfig)
+    const { payload } = buildLocalSimulationPayload({
+      mechanismData: {
+        mechanism: { mechanism: analyticalConfig.mechanism },
+        species: uiSpecies,
+        reactions: [],
+        currentExample: { name: 'analytical' },
+      },
+      conditions,
+    })
+
+    for (const field of SPECIES_PROPERTIES) {
+      const entry = payload.mechanism.species.find((sp) => sp[field.key] !== undefined)
+      if (field.target === 'species') {
+        expect(entry, `${field.key} should reach mechanism.species[]`).toBeDefined()
+      } else {
+        expect(entry, `${field.key} must not reach mechanism.species[]`).toBeUndefined()
+      }
+    }
+
+    for (const key of PHASE_PROPERTY_KEYS) {
+      expect(payload.mechanism.species.some((sp) => key in sp)).toBe(false)
+    }
+
+    // Route them to the phase entry. Since phases[].species[] is not validated, this assertion
+    // catches typos that would otherwise be silently ignored.
+    const phaseEntries = payload.mechanism.phases.flatMap((phase) => phase.species)
+    for (const field of SPECIES_PROPERTIES.filter((f) => f.target === 'phase')) {
+      const carrier = phaseEntries.find((entry) => entry[field.key] !== undefined)
+      expect(carrier, `${field.key} should reach phases[].species[]`).toBeDefined()
+      expect(carrier[field.key]).toBe(1e-6)
+    }
+
+    await expect(MusicBox.fromJson(payload).solve()).resolves.toBeDefined()
   }, 30000)
 })

@@ -31,6 +31,8 @@ export default {
         'assist-secondary': 'var(--color-assist-secondary)',
         'assist-secondary-hover': 'var(--color-assist-secondary-hover)',
         'assist-secondary-foreground': 'var(--color-assist-secondary-foreground)',
+        'assist-secondary-border': 'var(--color-assist-secondary-border)',
+        'assist-secondary-ring': 'var(--color-assist-secondary-ring)',
         surface: 'var(--color-surface)',
         'surface-alt': 'var(--color-surface-alt)',
         'surface-hover': 'var(--color-surface-hover)',

@@ -29,10 +29,13 @@ export const buildLocalSimulationPayload = ({ mechanismData, conditions }) => {
   const mechanismLabel = getMechanismLabel(mechanismData)
   const sourceSpecies = Array.isArray(sourceMechanism.species) ? sourceMechanism.species : []
 
-  const species = reconcileSpeciesWithSource(
+  // serializeSpecies strips PhaseSpecies properties, so buildPhases uses the pre-serialization
+  // species to re-attach them to the phase entries.
+  const reconciledSpecies = reconcileSpeciesWithSource(
     mechanismData.species.length > 0 ? mechanismData.species : sourceSpecies,
     sourceSpecies
-  ).map(serializeSpecies)
+  )
+  const species = reconciledSpecies.map(serializeSpecies)
 
   const reactions =
     mechanismData.reactions.length > 0
@@ -44,7 +47,7 @@ export const buildLocalSimulationPayload = ({ mechanismData, conditions }) => {
     sourceMechanism.reactions || []
   )
 
-  const phases = buildPhases(sourceMechanism, species)
+  const phases = buildPhases(sourceMechanism, reconciledSpecies)
 
   const payload = {
     'box model options': {

@@ -7,39 +7,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui
 import { Button } from '../ui/button'
 import { addSpecies, updateSpecies, removeSpecies } from '../../redux/slices/mechanismSlice'
 import { addSpeciesIfValid } from './speciesUtils'
+import { SPECIES_PROPERTIES } from '../../services/simulation/local/speciesProperties'
 
 // Fixed phase segments; anything else is entered as a custom "Others" phase
 const FIXED_PHASE_OPTIONS = ['Gas', 'Aqueous']
 const DISABLED_PHASE_OPTIONS = ['Aqueous']
 
-// Fixed property segments; anything else is entered as a custom "Others" property
-const FIXED_PROPERTY_OPTIONS = [
-  'Molecular weight',
-  'Diffusion coefficient',
-  'Density',
-  'Absolute tolerance',
-]
-const PROPERTY_FIELD_CONFIG = {
-  'Molecular weight': {
-    label: 'Molecular weight (kg/mol)',
-    placeholder: 'e.g., 0.029',
-  },
-  'Diffusion coefficient': {
-    label: 'Diffusion coefficient (m2/s)',
-    placeholder: 'e.g., 1e-5',
-  },
-  'Density': {
-    label: 'Density (kg/m3)',  
-    placeholder: 'e.g., 1e-5',
-  },
-  'Absolute tolerance': {
-    label: 'Absolute tolerance (mol/m3)',
-    placeholder: 'e.g., 1e-12',
-  },
-}
-function getPropertyFieldConfig(name) {
-  return PROPERTY_FIELD_CONFIG[name] || { label: `${name}`, placeholder: 'e.g., 1.2' }
-}
 const CUSTOM_PILL_MAX_LENGTH = 512
 
 // Shared text-input styling in two sizes: a roomy variant for the add-species form,
@@ -205,122 +178,99 @@ function PhaseSelector({ value, onChange, size = 'default', allowCustom = true }
   )
 }
 
-// Multi-select pills for numeric species properties; selecting a pill toggles
-// the property and shows its value input.
-function PropertySelector({ properties, onChange }) {
-  const [dialogOpen, setDialogOpen] = useState(false)
-  // Remembers custom property names so their pills persist when toggled off.
-  const [savedCustoms, setSavedCustoms] = useState(() =>
-    Object.keys(properties).filter((name) => !FIXED_PROPERTY_OPTIONS.includes(name))
+// On/off switch for boolean species properties.
+function Toggle({ checked, label, onChange }) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      onClick={() => onChange(!checked)}
+      className="flex items-center gap-3 rounded text-sm font-semibold text-gray-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-green-500"
+    >
+      {label}
+      <span
+        className={`relative inline-flex h-6 w-11 flex-shrink-0 items-center rounded-full transition-colors ${
+          checked ? 'bg-green-700' : 'bg-gray-300'
+        }`}
+      >
+        <span
+          className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform ${
+            checked ? 'translate-x-[1.375rem]' : 'translate-x-0.5'
+          }`}
+        />
+      </span>
+    </button>
   )
+}
 
-  useEffect(() => {
-    setSavedCustoms((prev) => {
-      const missing = Object.keys(properties).filter(
-        (name) => !FIXED_PROPERTY_OPTIONS.includes(name) && !prev.includes(name)
-      )
-      return missing.length ? [...prev, ...missing] : prev
-    })
-  }, [properties])
-
-  const togglePill = (name) => {
-    if (name in properties) {
-      const next = { ...properties }
-      delete next[name]
-      onChange(next)
+function PropertySelector({ properties, onChange }) {
+  const togglePill = (field) => {
+    const next = { ...properties }
+    if (field.pill in next) {
+      delete next[field.pill]
     } else {
-      onChange({ ...properties, [name]: '' })
+      next[field.pill] = field.type === 'boolean' ? false : ''
     }
+    onChange(next)
   }
 
-  const handleAddCustom = (name) => {
-    onChange({ ...properties, [name]: properties[name] ?? '' })
-    setDialogOpen(false)
+  const setPropertyValue = (pill, value) => {
+    onChange({ ...properties, [pill]: value })
   }
 
-  const setPropertyValue = (name, val) => {
-    onChange({ ...properties, [name]: val })
-  }
-
-  const activeNames = Object.keys(properties)
-  const pillOptions = [...FIXED_PROPERTY_OPTIONS, ...savedCustoms]
+  const selectedFields = SPECIES_PROPERTIES.filter((field) => field.pill in properties)
 
   return (
     <div>
       <div className="flex flex-wrap items-center gap-2">
-        {pillOptions.map((name) => (
+        {SPECIES_PROPERTIES.map((field) => (
           <button
-            key={name}
+            key={field.pill}
             type="button"
-            onClick={() => togglePill(name)}
-            className={pillClassName(name in properties, false)}
+            onClick={() => togglePill(field)}
+            className={pillClassName(field.pill in properties, false)}
           >
-            {name}
+            {field.pill}
           </button>
         ))}
-
-        <button type="button" onClick={() => setDialogOpen(true)} className={pillClassName(false, false)}>
-          Others
-          <ChevronDown className="w-3.5 h-3.5 flex-shrink-0" />
-        </button>
-
-        {dialogOpen && (
-          <AddPillDialog
-            label="Add property"
-            onCancel={() => setDialogOpen(false)}
-            onAdd={handleAddCustom}
-          />
-        )}
       </div>
 
-      {activeNames.length > 0 && (
+      {selectedFields.length > 0 && (
         <div className="mt-3 flex flex-col gap-3">
-          {activeNames.map((name) => {
-            const { label, placeholder } = getPropertyFieldConfig(name)
-            return (
-              <div key={name}>
+          {selectedFields.map((field) =>
+            field.type === 'boolean' ? (
+              <Toggle
+                key={field.pill}
+                label={field.label}
+                checked={properties[field.pill] === true}
+                onChange={(checked) => setPropertyValue(field.pill, checked)}
+              />
+            ) : (
+              <div key={field.pill}>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  {label}
+                  {field.label}
                 </label>
                 <input
                   type="text"
-                  value={properties[name]}
-                  onChange={(e) => setPropertyValue(name, e.target.value)}
-                  placeholder={placeholder}
+                  value={properties[field.pill]}
+                  onChange={(e) => setPropertyValue(field.pill, e.target.value)}
+                  placeholder={field.placeholder}
                   className={TEXT_INPUT}
                 />
               </div>
             )
-          })}
+          )}
         </div>
       )}
     </div>
   )
 }
 
-// Editable numeric fields a species may carry. Both are optional: species added through the
-// form get defaults.
-const SPECIES_FIELD_CONFIG = {
-  molecular_weight_kg_mol: { label: 'Molecular weight (kg/mol)', placeholder: 'e.g., 0.029' },
-  'diffusion coefficient [m2 s-1]': {
-    label: 'Diffusion coefficient (m2/s)',
-    placeholder: 'e.g., 1e-5',
-  },
-}
-
-// The fields to show for one species: the known top-level ones it actually defines, followed by
-// whatever named properties the configuration gave it.
 function getSpeciesFields(species) {
-  const fields = Object.entries(SPECIES_FIELD_CONFIG)
-    .filter(([key]) => species[key] !== undefined && species[key] !== null)
-    .map(([key, config]) => ({ key, ...config, value: species[key] }))
-
-  for (const [key, value] of Object.entries(species.properties || {})) {
-    const { label, placeholder } = getPropertyFieldConfig(key)
-    fields.push({ key, group: 'properties', label, placeholder, value })
-  }
-
-  return fields
+  return SPECIES_PROPERTIES.filter(
+    (field) => species[field.key] !== undefined && species[field.key] !== null
+  ).map((field) => ({ ...field, value: species[field.key] }))
 }
 
 // A species renders as a collapsed chip showing only its name. Clicking it unfolds the phase
@@ -384,18 +334,26 @@ function SpeciesChip({ species, onPhaseChange, onFieldSave, onRemove }) {
             <label className="text-[11px] uppercase tracking-wide text-gray-700">
               {field.label}
             </label>
-            <input
-              type="text"
-              defaultValue={field.value ?? ''}
-              onBlur={(e) => onFieldSave(species.name, field, e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  e.currentTarget.blur()
-                }
-              }}
-              placeholder={field.placeholder}
-              className={`w-full max-w-xs ${TEXT_INPUT_SM}`}
-            />
+            {field.type === 'boolean' ? (
+              <Toggle
+                label={field.value ? 'Yes' : 'No'}
+                checked={field.value === true}
+                onChange={(checked) => onFieldSave(species.name, field, checked)}
+              />
+            ) : (
+              <input
+                type="text"
+                defaultValue={field.value ?? ''}
+                onBlur={(e) => onFieldSave(species.name, field, e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.currentTarget.blur()
+                  }
+                }}
+                placeholder={field.placeholder}
+                className={`w-full max-w-xs ${TEXT_INPUT_SM}`}
+              />
+            )}
           </div>
         ))}
       </div>
@@ -424,6 +382,7 @@ export function SpeciesEditor() {
       newSpeciesName,
       newSpeciesPhase,
       newSpeciesProperties,
+      speciesProperties: SPECIES_PROPERTIES,
       dispatch,
       toast,
       addSpecies,
@@ -456,27 +415,23 @@ export function SpeciesEditor() {
       return
     }
 
-    const trimmedValue = rawValue.trim()
     const updatedSpecies = { ...existingSpecies }
 
-    const write = (value) => {
-      if (field.group === 'properties') {
-        const nextProperties = { ...(updatedSpecies.properties || {}) }
-        if (value === undefined) {
-          delete nextProperties[field.key]
-        } else {
-          nextProperties[field.key] = value
-        }
-        updatedSpecies.properties = nextProperties
-      } else if (value === undefined) {
-        delete updatedSpecies[field.key]
+    if (field.type === 'boolean') {
+      if (rawValue) {
+        updatedSpecies[field.key] = true
       } else {
-        updatedSpecies[field.key] = value
+        delete updatedSpecies[field.key]
       }
+      dispatch(updateSpecies(updatedSpecies))
+      return
     }
 
+    const trimmedValue = rawValue.trim()
+
+    // Clearing the input removes the property, which is how "not set" is expressed.
     if (!trimmedValue) {
-      write(undefined)
+      delete updatedSpecies[field.key]
       dispatch(updateSpecies(updatedSpecies))
       return
     }
@@ -492,7 +447,7 @@ export function SpeciesEditor() {
       return
     }
 
-    write(parsedValue)
+    updatedSpecies[field.key] = parsedValue
     updatedSpecies.phase = updatedSpecies.phase || 'Gas'
     dispatch(updateSpecies(updatedSpecies))
   }
@@ -579,7 +534,7 @@ export function SpeciesEditor() {
                 onClick={handleAddSpecies}
                 variant="assistSecondary"
                 size="lg"
-                className="rounded-2xl text-base"
+                className="text-base"
               >
                 Add species
               </Button>

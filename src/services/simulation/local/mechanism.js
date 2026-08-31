@@ -1,3 +1,4 @@
+import { PHASE_PROPERTY_KEYS } from './speciesProperties'
 const normalizeReactionComponents = (components = []) => {
   return (components || []).map((component) => {
     if (!component || typeof component !== 'object') return component
@@ -237,10 +238,13 @@ export const serializeSpecies = (species) => {
     molecular_weight_kg_mol,
     properties: _properties,
     phase: _phase,
-    'diffusion coefficient [m2 s-1]': _uiDiffusion,
     diffusion_coefficient_m2_s: _legacyDiffusion,
     ...serialized
   } = species
+
+  for (const key of PHASE_PROPERTY_KEYS) {
+    delete serialized[key]
+  }
 
   if (
     serialized['molecular weight [kg mol-1]'] === undefined &&
@@ -252,25 +256,49 @@ export const serializeSpecies = (species) => {
   return serialized
 }
 
+const phaseProperties = (name, species) => {
+  const source = species.find((sp) => sp?.name === name)
+  if (!source) {
+    return {}
+  }
+
+  const attached = {}
+  for (const key of PHASE_PROPERTY_KEYS) {
+    if (source[key] !== undefined && source[key] !== null) {
+      attached[key] = source[key]
+    }
+  }
+  return attached
+}
+
+// Editor values take precedence over values authored in the mechanism file.
+const toPhaseSpecies = (entry, species) => {
+  const name = typeof entry === 'string' ? entry : entry?.name
+  const base = typeof entry === 'string' ? { name } : { ...entry }
+  return { ...base, ...phaseProperties(name, species) }
+}
+
 export const buildPhases = (sourceMechanism, species) => {
   if (Array.isArray(sourceMechanism.phases) && sourceMechanism.phases.length > 0) {
     return sourceMechanism.phases.map((phase) => ({
       ...phase,
       species: Array.isArray(phase.species)
         ? [
-            ...phase.species.filter((sp) => species.some((s) => s.name === (sp.name || sp))),
+            ...phase.species
+              .filter((sp) => species.some((s) => s.name === (sp.name || sp)))
+              .map((sp) => toPhaseSpecies(sp, species)),
             ...species
               .filter((sp) => !phase.species.some((s) => (s.name || s) === sp.name))
-              .map((sp) => ({ name: sp.name })),
+              .map((sp) => toPhaseSpecies(sp.name, species)),
           ]
-        : species.map((sp) => ({ name: sp.name })),
+        : species.map((sp) => toPhaseSpecies(sp.name, species)),
     }))
   }
 
   return [
     {
       name: 'gas',
-      species: species.map((sp) => ({ name: sp.name })),
+      species: species.map((sp) => toPhaseSpecies(sp.name, species)),
     },
   ]
 }
