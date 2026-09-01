@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { Fragment, useState } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 import { ChevronDown, ChevronUp, Lightbulb } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
@@ -7,6 +7,7 @@ import { Button } from '../ui/button'
 import { addReaction, removeReaction } from '../../redux/slices/mechanismSlice'
 import { getReactionDefinition, reactionRegistry } from './reactions/reactionRegistry'
 import {
+  REACTION_COMPONENT_KEYS,
   getReactionSpeciesNames,
   resolveReactionSpeciesNames,
 } from '../../services/simulation/local/mechanism'
@@ -52,21 +53,46 @@ const formatReactionDisplay = (reaction) => {
   return `${reactantStr} → ${productStr}`
 }
 
-// The rate parameter varying by reaction type.
-const rateSummary = (reaction) => {
-  if (reaction.A !== undefined) {
-    return `A = ${Number(reaction.A).toExponential(2)}`
-  }
+// Structural fields. All other fields are rate parameters that vary by reaction type.
+// Deriving them from the object reflects what the reaction actually defines and requires
+// no changes when new reaction types are added.
+const NON_PARAMETER_KEYS = new Set([
+  'id',
+  'type',
+  'name',
+  'gas phase',
+  'gas-phase species',
+  ...REACTION_COMPONENT_KEYS,
+])
 
-  const scale = reaction.scalingFactor ?? reaction['scaling factor']
-  return scale !== undefined ? `Scale = ${scale}` : null
+const rateParameters = (reaction) =>
+  Object.entries(reaction).filter(
+    ([key, value]) =>
+      !NON_PARAMETER_KEYS.has(key) &&
+      !key.startsWith('__') &&
+      value !== undefined &&
+      value !== null &&
+      value !== ''
+  )
+
+// Use exponential notation only where it helps: rate constants span many orders of magnitude,
+// while values like B = 0 or D = 300 are clearer in plain notation.
+const formatParameterValue = (value) => {
+  if (typeof value !== 'number') {
+    return String(value)
+  }
+  if (value === 0) {
+    return '0'
+  }
+  const magnitude = Math.abs(value)
+  return magnitude < 1e-3 || magnitude >= 1e6 ? value.toExponential(2) : String(value)
 }
 
 // A reaction renders as a collapsed chip. Clicking it unfolds its type, rate parameter, and name.
 function ReactionChip({ reaction, onRemove }) {
   const [expanded, setExpanded] = useState(false)
   const formula = formatReactionDisplay(reaction)
-  const rate = rateSummary(reaction)
+  const parameters = rateParameters(reaction)
 
   if (!expanded) {
     return (
@@ -105,12 +131,17 @@ function ReactionChip({ reaction, onRemove }) {
           <p className="text-sm text-gray-700">{reaction.type}</p>
         </div>
 
-        {rate && (
+        {parameters.length > 0 && (
           <div className="flex flex-col gap-1">
-            <label className="text-[11px] uppercase tracking-wide text-gray-700">
-              Rate parameter
-            </label>
-            <p className="text-sm font-mono text-gray-700">{rate}</p>
+            <label className="text-[11px] uppercase tracking-wide text-gray-700">Parameters</label>
+            <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-sm font-mono text-gray-700">
+              {parameters.map(([key, value]) => (
+                <Fragment key={key}>
+                  <dt className="text-gray-500">{key}</dt>
+                  <dd className="break-all">{formatParameterValue(value)}</dd>
+                </Fragment>
+              ))}
+            </dl>
           </div>
         )}
 

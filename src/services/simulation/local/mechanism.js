@@ -328,7 +328,7 @@ const extractSpeciesNames = (components) => {
 }
 
 // Component arrays supported by the reaction, varying by reaction type.
-const REACTION_COMPONENT_KEYS = [
+export const REACTION_COMPONENT_KEYS = [
   'reactants',
   'products',
   'gas-phase products',
