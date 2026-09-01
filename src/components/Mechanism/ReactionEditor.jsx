@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui
 import { Button } from '../ui/button'
 import { Dropdown } from '../ui/dropdown'
 import { addReaction, removeReaction } from '../../redux/slices/mechanismSlice'
+import { hasDeclaredName } from './reactions/reactionUtils'
 import {
   getReactionDefinition,
   getReactionTypeLabel,
@@ -149,7 +150,7 @@ function ReactionChip({ reaction, onRemove }) {
           </div>
         )}
 
-        {reaction.name && (
+        {hasDeclaredName(reaction) && (
           <div className="flex flex-col gap-1">
             <label className="text-[11px] uppercase tracking-wide text-gray-700">Name</label>
             <p className="text-sm text-gray-700">{reaction.name}</p>
