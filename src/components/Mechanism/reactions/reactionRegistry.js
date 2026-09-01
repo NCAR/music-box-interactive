@@ -53,7 +53,7 @@ export const reactionRegistry = [
   },
   {
     type: 'SURFACE_REACTION',
-    label: 'Surface reaction',
+    label: 'Surface',
     component: SurfaceReactionForm,
   },
   {

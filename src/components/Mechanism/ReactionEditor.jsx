@@ -5,8 +5,8 @@ import { useToast } from '@/hooks/use-toast'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card'
 import { Button } from '../ui/button'
 import { Dropdown } from '../ui/dropdown'
-import { addReaction, removeReaction } from '../../redux/slices/mechanismSlice'
-import { hasDeclaredName } from './reactions/reactionUtils'
+import { addReaction, removeReaction, updateReaction } from '../../redux/slices/mechanismSlice'
+import { hasDeclaredName, parseReactionString } from './reactions/reactionUtils'
 import {
   getReactionDefinition,
   getReactionTypeLabel,
@@ -61,6 +61,51 @@ const formatReactionDisplay = (reaction) => {
 // Structural fields. All other fields are rate parameters that vary by reaction type.
 // Deriving them from the object reflects what the reaction actually defines and requires
 // no changes when new reaction types are added.
+const GAS_PHASE_SPECIES_KEY = 'gas-phase species'
+
+const COMPONENT_LABELS = {
+  reactants: 'Reactants',
+  // Display label only; the key stays as the solver spells it.
+  [GAS_PHASE_SPECIES_KEY]: 'Gas-phase reactant',
+  products: 'Products',
+  'gas-phase products': 'Gas-phase products',
+  'alkoxy products': 'Alkoxy products',
+  'nitrate products': 'Nitrate products',
+}
+
+// The editable text for a component array, in the same "2NO2 + OH" form the add form accepts, so
+// it round-trips back through parseReactionString.
+const componentsToInput = (components) =>
+  Array.isArray(components) && components.length > 0 ? formatReactionComponents(components) : ''
+
+// The species fields this reaction actually carries; the set differs by type. SURFACE names its
+// reactant in `gas-phase species` as a bare string rather than an array, so it needs handling of
+// its own -- without it a surface reaction's reactant has no field and cannot be edited.
+const componentFields = (reaction) => {
+  const fields = []
+
+  if (typeof reaction[GAS_PHASE_SPECIES_KEY] === 'string') {
+    fields.push({
+      key: GAS_PHASE_SPECIES_KEY,
+      label: COMPONENT_LABELS[GAS_PHASE_SPECIES_KEY],
+      value: reaction[GAS_PHASE_SPECIES_KEY],
+      single: true,
+    })
+  }
+
+  for (const key of REACTION_COMPONENT_KEYS) {
+    if (Array.isArray(reaction[key])) {
+      fields.push({
+        key,
+        label: COMPONENT_LABELS[key] ?? key,
+        value: componentsToInput(reaction[key]),
+      })
+    }
+  }
+
+  return fields
+}
+
 const NON_PARAMETER_KEYS = new Set([
   'id',
   'type',
@@ -94,7 +139,7 @@ const formatParameterValue = (value) => {
 }
 
 // A reaction renders as a collapsed chip. Clicking it unfolds its type, rate parameter, and name.
-function ReactionChip({ reaction, onRemove }) {
+function ReactionChip({ reaction, onRemove, onComponentsSave, onParameterSave }) {
   const [expanded, setExpanded] = useState(false)
   const formula = formatReactionDisplay(reaction)
   const parameters = rateParameters(reaction)
@@ -136,17 +181,49 @@ function ReactionChip({ reaction, onRemove }) {
           <p className="text-sm text-gray-700">{reaction.type}</p>
         </div>
 
+        {componentFields(reaction).map((field) => (
+          <div key={field.key} className="flex flex-col gap-1">
+            <label className="text-[11px] uppercase tracking-wide text-gray-700">
+              {field.label}
+            </label>
+            <input
+              type="text"
+              // Uncontrolled: the value is re-derived from the store on save, and a controlled
+              // input would fight the user while a partial formula is being typed.
+              key={field.value}
+              defaultValue={field.value}
+              onBlur={(e) => onComponentsSave(reaction, field, e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.currentTarget.blur()
+                }
+              }}
+              placeholder="e.g., O1D + N2"
+              className={`w-full ${TEXT_INPUT_SM} font-mono`}
+            />
+          </div>
+        ))}
+
         {parameters.length > 0 && (
-          <div className="flex flex-col gap-1">
+          <div className="flex flex-col gap-2">
             <label className="text-[11px] uppercase tracking-wide text-gray-700">Parameters</label>
-            <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-sm font-mono text-gray-700">
-              {parameters.map(([key, value]) => (
-                <Fragment key={key}>
-                  <dt className="text-gray-500">{key}</dt>
-                  <dd className="break-all">{formatParameterValue(value)}</dd>
-                </Fragment>
-              ))}
-            </dl>
+            {parameters.map(([key, value]) => (
+              <div key={key} className="flex items-center gap-3">
+                <span className="w-28 flex-shrink-0 text-sm font-mono text-gray-500">{key}</span>
+                <input
+                  type="text"
+                  key={`${key}-${value}`}
+                  defaultValue={formatParameterValue(value)}
+                  onBlur={(e) => onParameterSave(reaction, key, e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.currentTarget.blur()
+                    }
+                  }}
+                  className={`w-full ${TEXT_INPUT_SM} font-mono`}
+                />
+              </div>
+            ))}
           </div>
         )}
 
@@ -234,6 +311,87 @@ export function ReactionEditor() {
     })
   }
 
+  // Edits go through the same resolution and validation as adding, so an edit cannot introduce a
+  // species reference that a newly added reaction would have been rejected for.
+  const saveReaction = (candidate) => {
+    const definedNames = species.map((sp) => sp.name).filter(Boolean)
+    const resolved = resolveReactionSpeciesNames(candidate, definedNames)
+
+    const defined = new Set(definedNames)
+    const unknown = [...new Set(getReactionSpeciesNames(resolved))].filter(
+      (name) => !defined.has(name)
+    )
+
+    if (unknown.length > 0) {
+      toast({
+        title: 'Unknown species',
+        description: `${unknown.join(', ')} ${
+          unknown.length === 1 ? 'is not' : 'are not'
+        } defined in this mechanism.`,
+        variant: 'destructive',
+      })
+      return false
+    }
+
+    dispatch(updateReaction(resolved))
+    return true
+  }
+
+  const handleComponentsSave = (reaction, field, rawValue) => {
+    const parsed = parseReactionString(rawValue)
+
+    if (parsed.length === 0) {
+      toast({
+        title: 'Error',
+        description: `${field.label} cannot be empty.`,
+        variant: 'destructive',
+      })
+      return
+    }
+
+    // `gas-phase species` holds one species as a plain string, not a component array.
+    if (field.single) {
+      if (parsed.length > 1) {
+        toast({
+          title: 'Error',
+          description: `${field.label} must be a single species.`,
+          variant: 'destructive',
+        })
+        return
+      }
+      saveReaction({ ...reaction, [field.key]: parsed[0]['species name'] })
+      return
+    }
+
+    saveReaction({ ...reaction, [field.key]: parsed })
+  }
+
+  const handleParameterSave = (reaction, key, rawValue) => {
+    const trimmedValue = rawValue.trim()
+    const updated = { ...reaction }
+
+    // Clearing a parameter removes it, which is how "not set" is expressed.
+    if (!trimmedValue) {
+      delete updated[key]
+      saveReaction(updated)
+      return
+    }
+
+    const parsedValue = Number.parseFloat(trimmedValue)
+
+    if (Number.isNaN(parsedValue)) {
+      toast({
+        title: 'Error',
+        description: `${key} must be a valid number.`,
+        variant: 'destructive',
+      })
+      return
+    }
+
+    updated[key] = parsedValue
+    saveReaction(updated)
+  }
+
   const handleRemoveReaction = (reactionId) => {
     const reaction = reactions.find((r) => r.id === reactionId)
     dispatch(removeReaction(reactionId))
@@ -250,7 +408,13 @@ export function ReactionEditor() {
         <p className="w-full text-center text-gray-500 py-8">No matching reactions found.</p>
       ) : (
         filteredReactions.map((reaction) => (
-          <ReactionChip key={reaction.id} reaction={reaction} onRemove={handleRemoveReaction} />
+          <ReactionChip
+            key={reaction.id}
+            reaction={reaction}
+            onRemove={handleRemoveReaction}
+            onComponentsSave={handleComponentsSave}
+            onParameterSave={handleParameterSave}
+          />
         ))
       )}
     </div>
