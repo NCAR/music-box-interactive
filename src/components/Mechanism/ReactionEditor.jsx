@@ -4,8 +4,13 @@ import { ChevronDown, ChevronUp, Lightbulb } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card'
 import { Button } from '../ui/button'
+import { Dropdown } from '../ui/dropdown'
 import { addReaction, removeReaction } from '../../redux/slices/mechanismSlice'
-import { getReactionDefinition, reactionRegistry } from './reactions/reactionRegistry'
+import {
+  getReactionDefinition,
+  getReactionTypeLabel,
+  reactionRegistry,
+} from './reactions/reactionRegistry'
 import {
   REACTION_COMPONENT_KEYS,
   getReactionSpeciesNames,
@@ -18,7 +23,6 @@ import {
   ITEM_PANEL,
   LIST_CARD,
   LIST_CARD_CONTENT,
-  TEXT_INPUT,
   TEXT_INPUT_SM,
 } from './fieldStyles'
 
@@ -164,6 +168,7 @@ export function ReactionEditor() {
 
   const [reactionType, setReactionType] = useState(reactionRegistry[0].type)
   const [reactionSearch, setReactionSearch] = useState('')
+  const [typeFilter, setTypeFilter] = useState('')
 
   const activeReactionDefinition = getReactionDefinition(reactionType)
   const ActiveReactionForm = activeReactionDefinition.component
@@ -171,8 +176,23 @@ export function ReactionEditor() {
   // Reactions have no single name to search, so the query matches anywhere in the formula.
   // Typing species name finds every reaction it appears in. Order is preserved because reactions are
   // indexed elsewhere and mechanism order reflects authoring intent.
+  const typeCounts = reactions.reduce((counts, reaction) => {
+    const type = reaction.type || 'UNKNOWN'
+    counts[type] = (counts[type] || 0) + 1
+    return counts
+  }, {})
+  const availableTypes = Object.keys(typeCounts).sort()
+
+  // If the selection is stale after a mechanism change, show all items instead of
+  // silently showing an empty list.
+  const activeType = availableTypes.includes(typeFilter) ? typeFilter : ''
+
+  // Filters combine: select a type to narrow the list, then search by species within it.
   const reactionQuery = reactionSearch.trim().toLowerCase()
   const filteredReactions = reactions.filter((reaction) => {
+    if (activeType && reaction.type !== activeType) {
+      return false
+    }
     if (!reactionQuery) {
       return true
     }
@@ -250,17 +270,15 @@ export function ReactionEditor() {
                 <label className="block text-base font-semibold text-gray-800 mb-2">
                   Choose a reaction
                 </label>
-                <select
+                <Dropdown
                   value={reactionType}
-                  onChange={(e) => setReactionType(e.target.value)}
-                  className={TEXT_INPUT}
-                >
-                  {reactionRegistry.map((type) => (
-                    <option key={type.type} value={type.type}>
-                      {type.label}
-                    </option>
-                  ))}
-                </select>
+                  onChange={setReactionType}
+                  className="px-4 py-3 rounded-xl text-base"
+                  options={reactionRegistry.map((type) => ({
+                    value: type.type,
+                    label: type.label,
+                  }))}
+                />
               </div>
 
               <ActiveReactionForm
@@ -277,12 +295,25 @@ export function ReactionEditor() {
           </CardHeader>
 
           <CardContent className={LIST_CARD_CONTENT}>
+            <Dropdown
+              value={activeType}
+              onChange={setTypeFilter}
+              className="mb-3 h-10"
+              options={[
+                { value: '', label: `All reaction types (${reactions.length})` },
+                ...availableTypes.map((type) => ({
+                  value: type,
+                  label: `${getReactionTypeLabel(type)} (${typeCounts[type]})`,
+                })),
+              ]}
+            />
+
             <input
               type="text"
               value={reactionSearch}
               onChange={(e) => setReactionSearch(e.target.value)}
               placeholder="Search reactions by species"
-              className={`w-full mb-5 ${TEXT_INPUT_SM}`}
+              className={`w-full mb-5 h-10 ${TEXT_INPUT_SM}`}
             />
 
             {reactions.length === 0 ? (

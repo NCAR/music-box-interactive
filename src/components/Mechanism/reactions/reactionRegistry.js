@@ -73,3 +73,25 @@ export const getReactionDefinition = (reactionType) => {
     reactionRegistry.find((definition) => definition.type === reactionType) || reactionRegistry[0]
   )
 }
+
+// Mechanism files use solver type names that differ from the registry for three types.
+// serializeReaction applies this rename when saving; mapping them back keeps loaded reactions
+// labelled consistently with form-built ones.
+const SOLVER_TYPE_ALIASES = {
+  SURFACE: 'SURFACE_REACTION',
+  BRANCHED_NO_RO2: 'BRANCHED',
+  LAMBDA_RATE_CONSTANT: 'LAMBDA_RATE',
+}
+
+// Title-case unknown type names so they remain readable: USER_DEFINED → "User defined".
+const titleCase = (type) => {
+  const words = String(type).replace(/_/g, ' ').toLowerCase().trim()
+  return words.charAt(0).toUpperCase() + words.slice(1)
+}
+
+// Returns the display label for a reaction type, accepting either registry or solver naming.
+export const getReactionTypeLabel = (reactionType) => {
+  const registryType = SOLVER_TYPE_ALIASES[reactionType] ?? reactionType
+  const definition = reactionRegistry.find((entry) => entry.type === registryType)
+  return definition?.label ?? titleCase(reactionType)
+}
