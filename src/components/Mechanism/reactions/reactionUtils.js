@@ -30,12 +30,9 @@ export const buildReactionName = (reactantsInput, productsInput) => {
     : `${normalizedReactants} → (removed)`
 }
 
-// The label used when a reaction has no name of its own, e.g. "O1D + N2 -> O + N2".
-//
-// FlowGraph identifies reaction nodes by `reaction.name`, so every reaction needs one; without it
-// all unnamed reactions collapse onto a single node. ExampleLoader therefore fills one in. Being
-// able to recreate it here is what lets the editor tell a generated label apart from a name the
-// mechanism actually declared.
+// Generate a fallback label for unnamed reactions, e.g. "O1D + N2 -> O + N2".
+// FlowGraph keys reaction nodes by reaction.name, so every reaction needs one; recreating the
+// generated label lets the editor distinguish it from a name explicitly declared by the mechanism.
 const componentsToString = (components = []) =>
   components
     .map((component) => {
@@ -63,7 +60,7 @@ export const buildGeneratedReactionName = (reaction) => {
   return right ? `${left} -> ${right}` : `${left} -> (removed)`
 }
 
-/** True when a reaction's name is one we generated rather than one the mechanism declared. */
+// True when a reaction name was generated rather than declared by the mechanism.
 export const hasDeclaredName = (reaction) =>
   typeof reaction?.name === 'string' &&
   reaction.name.trim().length > 0 &&

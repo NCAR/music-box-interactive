@@ -118,27 +118,22 @@ export const getReactionDefinition = (reactionType) => {
   )
 }
 
-// Mechanism files use solver type names that differ from the registry for three types.
-// serializeReaction applies this rename when saving; mapping them back keeps loaded reactions
-// labelled consistently with form-built ones.
+// Mechanism files use solver type names for three registry types.
+// serializeReaction renames them on save; map them back on load to keep labels consistent.
 const SOLVER_TYPE_ALIASES = {
   SURFACE: 'SURFACE_REACTION',
   BRANCHED_NO_RO2: 'BRANCHED',
   LAMBDA_RATE_CONSTANT: 'LAMBDA_RATE',
 }
 
-// Title-case unknown type names so they remain readable: USER_DEFINED → "User defined".
+// Title-case unknown types for readability: USER_DEFINED → "User defined".
 const titleCase = (type) => {
   const words = String(type).replace(/_/g, ' ').toLowerCase().trim()
   return words.charAt(0).toUpperCase() + words.slice(1)
 }
 
-// Returns the display label for a reaction type, accepting either registry or solver naming.
-// The registry's spelling of a type. Reactions built in the form carry the registry name while
-// ones loaded from a mechanism carry the solver's, so anything grouping by type must reduce both
-// to one value first -- otherwise the same kind of reaction appears as two categories.
-// The rate parameters a type can carry, each with the value the solver applies when it is left
-// unset -- shown as the field's placeholder so an omitted parameter still reads as a value.
+// Normalize registry and solver type names to one value so the same reaction type is grouped together.
+// Return the type's rate parameters with their solver defaults as placeholders when unset.
 export const getReactionParameters = (reactionType) =>
   reactionRegistry.find((entry) => entry.type === canonicalReactionType(reactionType))
     ?.parameters ?? []

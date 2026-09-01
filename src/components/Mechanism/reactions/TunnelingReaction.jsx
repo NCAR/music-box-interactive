@@ -102,7 +102,7 @@ export function TunnelingReactionForm({ onAddReaction }) {
         />
       </div>
 
-      {/* One parameter per row: the labels are long enough that three columns truncate them. */}
+      {/* One parameter per row so long labels aren't truncated by three columns. */}
       <div className="grid grid-cols-1 gap-3">
         <div>
           <label className={FIELD_LABEL}>A (pre-exponential factor) </label>

@@ -75,14 +75,11 @@ const COMPONENT_LABELS = {
   'nitrate products': 'Nitrate products',
 }
 
-// The editable text for a component array, in the same "2NO2 + OH" form the add form accepts, so
-// it round-trips back through parseReactionString.
 const componentsToInput = (components) =>
   Array.isArray(components) && components.length > 0 ? formatReactionComponents(components) : ''
 
-// The species fields this reaction actually carries; the set differs by type. SURFACE names its
-// reactant in `gas-phase species` as a bare string rather than an array, so it needs handling of
-// its own -- without it a surface reaction's reactant has no field and cannot be edited.
+// Species fields vary by reaction type. SURFACE stores its reactant as a bare gas-phase species
+// string rather than an array, so it needs separate handling to remain editable.
 const componentFields = (reaction) => {
   const fields = []
 
@@ -117,10 +114,8 @@ const NON_PARAMETER_KEYS = new Set([
   ...REACTION_COMPONENT_KEYS,
 ])
 
-// Every rate parameter the type can carry, whether or not this reaction sets one: an omitted
-// parameter is left to the solver's default, and showing it blank is what lets it be filled in
-// afterwards. Anything the reaction carries that the registry does not list is appended, so a
-// value loaded from a mechanism file is never hidden.
+// Show every rate parameter the type supports, including unset ones so solver defaults can be filled
+// in later. Append unlisted parameters to ensure values loaded from mechanism files remain visible.
 const rateParameters = (reaction) => {
   const declared = getReactionParameters(reaction.type)
   const declaredKeys = declared.map((field) => field.key)
@@ -163,9 +158,8 @@ function ReactionChip({ reaction, onRemove, onComponentsSave, onParameterSave })
   const [expanded, setExpanded] = useState(false)
   const formula = formatReactionDisplay(reaction)
   const parameters = rateParameters(reaction)
-  // Size the name column to the longest name this reaction actually has, so "A" does not reserve
-  // room for "reaction probability" and "reaction probability" does not wrap. The names render in
-  // a monospace font, where 1ch is exactly one character.
+  // Size the name column to this reaction's longest parameter name so short names don't over-reserve
+  // space and long names don't wrap. In monospace, 1ch equals one character.
   const nameColumnWidth = parameters.length
     ? `${Math.max(...parameters.map((field) => field.key.length))}ch`
     : undefined
@@ -214,8 +208,8 @@ function ReactionChip({ reaction, onRemove, onComponentsSave, onParameterSave })
             </label>
             <input
               type="text"
-              // Uncontrolled: the value is re-derived from the store on save, and a controlled
-              // input would fight the user while a partial formula is being typed.
+              // Uncontrolled: the value is re-derived from the store on save, while a controlled input would
+              // interfere with typing partial formulas.
               key={field.value}
               defaultValue={field.value}
               onBlur={(e) => onComponentsSave(reaction, field, e.target.value)}
@@ -284,11 +278,9 @@ export function ReactionEditor() {
   const activeReactionDefinition = getReactionDefinition(reactionType)
   const ActiveReactionForm = activeReactionDefinition.component
 
-  // Reactions have no single name to search, so the query matches anywhere in the formula.
-  // Typing species name finds every reaction it appears in. Order is preserved because reactions are
-  // indexed elsewhere and mechanism order reflects authoring intent.
-  // Grouped by canonical type: a surface reaction added here and one loaded from a mechanism
-  // file are spelled differently but are the same kind, and belong under one option.
+  // Search reactions by matching the query anywhere in their formula; species matches find every
+  // reaction they appear in. Preserve mechanism order, and group reactions by canonical type so
+  // registry and solver spellings map to the same option.
   const typeCounts = reactions.reduce((counts, reaction) => {
     const type = canonicalReactionType(reaction.type || 'UNKNOWN')
     counts[type] = (counts[type] || 0) + 1
