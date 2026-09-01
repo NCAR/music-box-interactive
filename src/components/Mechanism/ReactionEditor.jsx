@@ -10,6 +10,7 @@ import { hasDeclaredName, parseReactionString } from './reactions/reactionUtils'
 import {
   canonicalReactionType,
   getReactionDefinition,
+  getReactionParameters,
   getReactionTypeLabel,
   reactionRegistry,
 } from './reactions/reactionRegistry'
@@ -116,8 +117,15 @@ const NON_PARAMETER_KEYS = new Set([
   ...REACTION_COMPONENT_KEYS,
 ])
 
-const rateParameters = (reaction) =>
-  Object.entries(reaction).filter(
+// Every rate parameter the type can carry, whether or not this reaction sets one: an omitted
+// parameter is left to the solver's default, and showing it blank is what lets it be filled in
+// afterwards. Anything the reaction carries that the registry does not list is appended, so a
+// value loaded from a mechanism file is never hidden.
+const rateParameters = (reaction) => {
+  const declared = getReactionParameters(reaction.type)
+  const declaredKeys = declared.map((field) => field.key)
+
+  const carried = Object.entries(reaction).filter(
     ([key, value]) =>
       !NON_PARAMETER_KEYS.has(key) &&
       !key.startsWith('__') &&
@@ -126,9 +134,20 @@ const rateParameters = (reaction) =>
       value !== ''
   )
 
+  return [
+    ...declared.map((field) => ({ ...field, value: reaction[field.key] })),
+    ...carried
+      .filter(([key]) => !declaredKeys.includes(key))
+      .map(([key, value]) => ({ key, value })),
+  ]
+}
+
 // Use exponential notation only where it helps: rate constants span many orders of magnitude,
 // while values like B = 0 or D = 300 are clearer in plain notation.
 const formatParameterValue = (value) => {
+  if (value === undefined || value === null) {
+    return ''
+  }
   if (typeof value !== 'number') {
     return String(value)
   }
@@ -148,7 +167,7 @@ function ReactionChip({ reaction, onRemove, onComponentsSave, onParameterSave })
   // room for "reaction probability" and "reaction probability" does not wrap. The names render in
   // a monospace font, where 1ch is exactly one character.
   const nameColumnWidth = parameters.length
-    ? `${Math.max(...parameters.map(([key]) => key.length))}ch`
+    ? `${Math.max(...parameters.map((field) => field.key.length))}ch`
     : undefined
 
   if (!expanded) {
@@ -214,19 +233,21 @@ function ReactionChip({ reaction, onRemove, onComponentsSave, onParameterSave })
         {parameters.length > 0 && (
           <div className="flex flex-col gap-2">
             <label className="text-[11px] uppercase tracking-wide text-gray-700">Parameters</label>
-            {parameters.map(([key, value]) => (
-              <div key={key} className="flex items-center gap-3">
+            {parameters.map((field) => (
+              <div key={field.key} className="flex items-center gap-3">
                 <span
                   className="flex-shrink-0 whitespace-nowrap text-sm font-mono text-gray-500"
                   style={{ width: nameColumnWidth }}
                 >
-                  {key}
+                  {field.key}
                 </span>
                 <input
                   type="text"
-                  key={`${key}-${value}`}
-                  defaultValue={formatParameterValue(value)}
-                  onBlur={(e) => onParameterSave(reaction, key, e.target.value)}
+                  key={`${field.key}-${field.value}`}
+                  defaultValue={formatParameterValue(field.value)}
+                  // The placeholder is the value the solver applies when this is left unset.
+                  placeholder={field.placeholder}
+                  onBlur={(e) => onParameterSave(reaction, field.key, e.target.value)}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') {
                       e.currentTarget.blur()

@@ -58,7 +58,7 @@ export function LambdaRateReactionForm({ onAddReaction }) {
       'gas phase': 'gas',
       reactants: parseReactionString(reactants),
       products: parseReactionString(products),
-      lambdaFunction: lambdaFunction.trim(),
+      'lambda function': lambdaFunction.trim(),
     }
 
     onAddReaction(newReaction)
