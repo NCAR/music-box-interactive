@@ -8,6 +8,7 @@ import { Dropdown } from '../ui/dropdown'
 import { addReaction, removeReaction, updateReaction } from '../../redux/slices/mechanismSlice'
 import { hasDeclaredName, parseReactionString } from './reactions/reactionUtils'
 import {
+  canonicalReactionType,
   getReactionDefinition,
   getReactionTypeLabel,
   reactionRegistry,
@@ -265,8 +266,10 @@ export function ReactionEditor() {
   // Reactions have no single name to search, so the query matches anywhere in the formula.
   // Typing species name finds every reaction it appears in. Order is preserved because reactions are
   // indexed elsewhere and mechanism order reflects authoring intent.
+  // Grouped by canonical type: a surface reaction added here and one loaded from a mechanism
+  // file are spelled differently but are the same kind, and belong under one option.
   const typeCounts = reactions.reduce((counts, reaction) => {
-    const type = reaction.type || 'UNKNOWN'
+    const type = canonicalReactionType(reaction.type || 'UNKNOWN')
     counts[type] = (counts[type] || 0) + 1
     return counts
   }, {})
@@ -279,7 +282,7 @@ export function ReactionEditor() {
   // Filters combine: select a type to narrow the list, then search by species within it.
   const reactionQuery = reactionSearch.trim().toLowerCase()
   const filteredReactions = reactions.filter((reaction) => {
-    if (activeType && reaction.type !== activeType) {
+    if (activeType && canonicalReactionType(reaction.type) !== activeType) {
       return false
     }
     if (!reactionQuery) {

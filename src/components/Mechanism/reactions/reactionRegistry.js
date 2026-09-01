@@ -90,6 +90,12 @@ const titleCase = (type) => {
 }
 
 // Returns the display label for a reaction type, accepting either registry or solver naming.
+// The registry's spelling of a type. Reactions built in the form carry the registry name while
+// ones loaded from a mechanism carry the solver's, so anything grouping by type must reduce both
+// to one value first -- otherwise the same kind of reaction appears as two categories.
+export const canonicalReactionType = (reactionType) =>
+  SOLVER_TYPE_ALIASES[reactionType] ?? reactionType
+
 export const getReactionTypeLabel = (reactionType) => {
   const registryType = SOLVER_TYPE_ALIASES[reactionType] ?? reactionType
   const definition = reactionRegistry.find((entry) => entry.type === registryType)

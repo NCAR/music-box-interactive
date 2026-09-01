@@ -18,8 +18,10 @@ export const TEXT_INPUT_CODE =
 // neither enough room.
 export const EDITOR_GRID = 'grid grid-cols-1 gap-4 lg:grid-cols-2 lg:items-start'
 
-// The list column is pinned so it does not grow with its contents; the list scrolls inside.
-export const LIST_CARD = 'flex flex-col lg:h-[56rem]'
+// Keep the list column fixed so only the list scrolls within its card.
+// Size it to the viewport rather than a fixed height; 10rem accounts for surrounding editor chrome.
+// min-h keeps it usable on short viewports, allowing the page to scroll when needed.
+export const LIST_CARD = 'flex flex-col lg:h-[calc(100vh-10rem)] lg:min-h-[24rem]'
 export const LIST_CARD_CONTENT = 'flex min-h-0 flex-1 flex-col'
 
 // Collapsed items flow and wrap; an expanded one takes a full row via `w-full`.
