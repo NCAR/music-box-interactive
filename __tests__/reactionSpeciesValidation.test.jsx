@@ -42,9 +42,17 @@ const renderEditor = (speciesNames) => {
 }
 
 // Arrhenius is the default reaction type, with reactants and products as its first two fields.
+// Selected by position within the add form rather than by placeholder, which is copy and gets
+// reworded; the search box is the only other text input on the page.
+const addFormInputs = () =>
+  [...document.querySelectorAll('input[type="text"]')].filter(
+    (input) => !/search/i.test(input.placeholder || '')
+  )
+
 const submitReaction = (reactants, products) => {
-  fireEvent.change(screen.getByPlaceholderText('O2 + O'), { target: { value: reactants } })
-  fireEvent.change(screen.getByPlaceholderText('O3'), { target: { value: products } })
+  const [reactantsField, productsField] = addFormInputs()
+  fireEvent.change(reactantsField, { target: { value: reactants } })
+  fireEvent.change(productsField, { target: { value: products } })
   fireEvent.click(screen.getByRole('button', { name: /add reaction/i }))
 }
 
