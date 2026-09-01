@@ -13,7 +13,7 @@ import { LambdaRateReactionForm } from './LambdaRateReaction'
 export const reactionRegistry = [
   {
     type: 'ARRHENIUS',
-    label: 'Arrhenius (Temperature-dependent)',
+    label: 'Arrhenius',
     component: ArrheniusReactionForm,
   },
   {
@@ -28,7 +28,7 @@ export const reactionRegistry = [
   },
   {
     type: 'PHOTOLYSIS',
-    label: 'Photolysis (Light-dependent)',
+    label: 'Photolysis',
     component: PhotolysisReactionForm,
   },
   {
