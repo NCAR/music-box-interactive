@@ -143,6 +143,12 @@ function ReactionChip({ reaction, onRemove, onComponentsSave, onParameterSave })
   const [expanded, setExpanded] = useState(false)
   const formula = formatReactionDisplay(reaction)
   const parameters = rateParameters(reaction)
+  // Size the name column to the longest name this reaction actually has, so "A" does not reserve
+  // room for "reaction probability" and "reaction probability" does not wrap. The names render in
+  // a monospace font, where 1ch is exactly one character.
+  const nameColumnWidth = parameters.length
+    ? `${Math.max(...parameters.map(([key]) => key.length))}ch`
+    : undefined
 
   if (!expanded) {
     return (
@@ -209,7 +215,12 @@ function ReactionChip({ reaction, onRemove, onComponentsSave, onParameterSave })
             <label className="text-[11px] uppercase tracking-wide text-gray-700">Parameters</label>
             {parameters.map(([key, value]) => (
               <div key={key} className="flex items-center gap-3">
-                <span className="w-28 flex-shrink-0 text-sm font-mono text-gray-500">{key}</span>
+                <span
+                  className="flex-shrink-0 whitespace-nowrap text-sm font-mono text-gray-500"
+                  style={{ width: nameColumnWidth }}
+                >
+                  {key}
+                </span>
                 <input
                   type="text"
                   key={`${key}-${value}`}
