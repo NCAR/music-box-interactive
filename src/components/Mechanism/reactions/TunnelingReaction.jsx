@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { v4 as uuidv4 } from 'uuid'
 import { Button } from '../../ui/button'
 import { parseReactionString } from './reactionUtils'
-import { FIELD_LABEL_SM, TEXT_INPUT_SM } from '../fieldStyles'
+import { FIELD_LABEL, TEXT_INPUT } from '../fieldStyles'
 
 export function TunnelingReactionForm({ onAddReaction }) {
   const [reactants, setReactants] = useState('')
@@ -77,60 +77,61 @@ export function TunnelingReactionForm({ onAddReaction }) {
       )}
 
       <div>
-        <label className={FIELD_LABEL_SM}>
-          Reactants (e.g., "B")
+        <label className={FIELD_LABEL}>
+          Reactants
         </label>
         <input
           type="text"
           value={reactants}
           onChange={(e) => setReactants(e.target.value)}
-          placeholder="B"
-          className={`w-full ${TEXT_INPUT_SM}`}
+          placeholder="e.g., CH2O + OH"
+          className={TEXT_INPUT}
         />
       </div>
 
       <div>
-        <label className={FIELD_LABEL_SM}>
-          Products (e.g., "C" or "0.2A + 1.2B")
+        <label className={FIELD_LABEL}>
+          Products
         </label>
         <input
           type="text"
           value={products}
           onChange={(e) => setProducts(e.target.value)}
-          placeholder="C"
-          className={`w-full ${TEXT_INPUT_SM}`}
+          placeholder="e.g., CHO + H2O"
+          className={TEXT_INPUT}
         />
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+      {/* One parameter per row: the labels are long enough that three columns truncate them. */}
+      <div className="grid grid-cols-1 gap-3">
         <div>
-          <label className={FIELD_LABEL_SM}>A (optional)</label>
+          <label className={FIELD_LABEL}>A (pre-exponential factor) </label>
           <input
             type="text"
             value={paramA}
             onChange={(e) => setParamA(e.target.value)}
-            placeholder="123.45"
-            className={`w-full ${TEXT_INPUT_SM}`}
+            placeholder="1.0"
+            className={TEXT_INPUT}
           />
         </div>
         <div>
-          <label className={FIELD_LABEL_SM}>B (optional)</label>
+          <label className={FIELD_LABEL}>B (linear temperature dependence)</label>
           <input
             type="text"
             value={paramB}
             onChange={(e) => setParamB(e.target.value)}
-            placeholder="1200.0"
-            className={`w-full ${TEXT_INPUT_SM}`}
+            placeholder="0.0"
+            className={TEXT_INPUT}
           />
         </div>
         <div>
-          <label className={FIELD_LABEL_SM}>C (optional)</label>
+          <label className={FIELD_LABEL}>C (cubed temperature dependence)</label>
           <input
             type="text"
             value={paramC}
             onChange={(e) => setParamC(e.target.value)}
-            placeholder="1.0e8"
-            className={`w-full ${TEXT_INPUT_SM}`}
+            placeholder="0.0"
+            className={TEXT_INPUT}
           />
         </div>
       </div>

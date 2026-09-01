@@ -23,7 +23,7 @@ export const reactionRegistry = [
   },
   {
     type: 'FIRST_ORDER_LOSS',
-    label: 'First-Order Loss',
+    label: 'First-order loss',
     component: FirstOrderLossReactionForm,
   },
   {
@@ -33,12 +33,12 @@ export const reactionRegistry = [
   },
   {
     type: 'TERNARY_CHEMICAL_ACTIVATION',
-    label: 'Ternary Chemical Activation',
+    label: 'Ternary chemical activation',
     component: TernaryChemicalActivationReactionForm,
   },
   {
     type: 'TROE',
-    label: 'Troe (Fall-Off)',
+    label: 'Troe (Fall-off)',
     component: TroeReactionForm,
   },
   {
@@ -53,17 +53,17 @@ export const reactionRegistry = [
   },
   {
     type: 'SURFACE_REACTION',
-    label: 'Surface Reaction',
+    label: 'Surface reaction',
     component: SurfaceReactionForm,
   },
   {
     type: 'USER_DEFINED',
-    label: 'User-Defined Rate',
+    label: 'User-defined rate',
     component: UserDefinedReactionForm,
   },
   {
     type: 'LAMBDA_RATE',
-    label: 'Lambda Rate',
+    label: 'Lambda rate',
     component: LambdaRateReactionForm,
   },
 ]

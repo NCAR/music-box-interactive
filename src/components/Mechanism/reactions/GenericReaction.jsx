@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { v4 as uuidv4 } from 'uuid'
 import { Button } from '../../ui/button'
 import { parseReactionString } from './reactionUtils'
-import { FIELD_LABEL_SM, TEXT_INPUT_SM } from '../fieldStyles'
+import { FIELD_LABEL, TEXT_INPUT } from '../fieldStyles'
 
 export function GenericReactionForm({ onAddReaction, reactionType }) {
   const [reactants, setReactants] = useState('')
@@ -45,7 +45,7 @@ export function GenericReactionForm({ onAddReaction, reactionType }) {
       )}
 
       <div>
-        <label className={FIELD_LABEL_SM}>
+        <label className={FIELD_LABEL}>
           Reactants (e.g., "O2 + O" or "2NO2")
         </label>
         <input
@@ -53,12 +53,12 @@ export function GenericReactionForm({ onAddReaction, reactionType }) {
           value={reactants}
           onChange={(e) => setReactants(e.target.value)}
           placeholder="O2 + O"
-          className={`w-full ${TEXT_INPUT_SM}`}
+          className={TEXT_INPUT}
         />
       </div>
 
       <div>
-        <label className={FIELD_LABEL_SM}>
+        <label className={FIELD_LABEL}>
           Products (e.g., "O3" or "NO + O2")
         </label>
         <input
@@ -66,7 +66,7 @@ export function GenericReactionForm({ onAddReaction, reactionType }) {
           value={products}
           onChange={(e) => setProducts(e.target.value)}
           placeholder="O3"
-          className={`w-full ${TEXT_INPUT_SM}`}
+          className={TEXT_INPUT}
         />
       </div>
 

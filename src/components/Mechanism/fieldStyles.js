@@ -7,12 +7,12 @@ export const TEXT_INPUT =
 export const TEXT_INPUT_SM =
   'px-3 py-2 border-2 border-gray-400 bg-white/10 text-gray-900 placeholder:text-gray-500 rounded-lg text-sm font-mono focus:outline-none focus:border-green-700'
 
-// Compact label for the reaction type forms, which pack many fields into one column.
-export const FIELD_LABEL_SM = 'block text-xs font-semibold text-gray-700 mb-1'
+// Field label, shared by the species property fields and the reaction type forms.
+export const FIELD_LABEL = 'block text-sm font-semibold text-gray-700 mb-2'
 
-// TEXT_INPUT_SM a step smaller, for the lambda-function textarea which holds code.
+// As TEXT_INPUT, a step down in type size, for the lambda-function textarea holding code.
 export const TEXT_INPUT_CODE =
-  'px-3 py-2 border-2 border-gray-400 bg-white/10 text-gray-900 placeholder:text-gray-500 rounded-lg text-xs font-mono focus:outline-none focus:border-green-700'
+  'px-4 py-3 border-2 border-gray-400 bg-white/10 text-gray-900 placeholder:text-gray-500 rounded-xl text-sm font-mono focus:outline-none focus:border-green-700'
 
 // The two editors sit side by side above lg and stack below it, where two columns would leave
 // neither enough room.

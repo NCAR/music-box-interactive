@@ -9,6 +9,7 @@ import { addSpecies, updateSpecies, removeSpecies } from '../../redux/slices/mec
 import { addSpeciesIfValid } from './speciesUtils'
 import {
   EDITOR_GRID,
+  FIELD_LABEL,
   ITEM_CHIP,
   ITEM_LIST,
   ITEM_PANEL,
@@ -254,7 +255,7 @@ function PropertySelector({ properties, onChange }) {
               />
             ) : (
               <div key={field.pill}>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                <label className={FIELD_LABEL}>
                   {field.label}
                 </label>
                 <input

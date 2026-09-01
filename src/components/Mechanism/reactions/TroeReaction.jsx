@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { v4 as uuidv4 } from 'uuid'
 import { Button } from '../../ui/button'
 import { parseReactionString } from './reactionUtils'
-import { FIELD_LABEL_SM, TEXT_INPUT_SM } from '../fieldStyles'
+import { FIELD_LABEL, TEXT_INPUT } from '../fieldStyles'
 
 export function TroeReactionForm({ onAddReaction }) {
   const [reactants, setReactants] = useState('')
@@ -108,116 +108,116 @@ export function TroeReactionForm({ onAddReaction }) {
       )}
 
       <div>
-        <label className={FIELD_LABEL_SM}>
-          Reactants (e.g., "A" or "2A")
+        <label className={FIELD_LABEL}>
+          Reactants
         </label>
         <input
           type="text"
           value={reactants}
           onChange={(e) => setReactants(e.target.value)}
-          placeholder="A"
-          className={`w-full ${TEXT_INPUT_SM}`}
+          placeholder="e.g., NO2"
+          className={TEXT_INPUT}
         />
       </div>
 
       <div>
-        <label className={FIELD_LABEL_SM}>
-          Products (e.g., "C" or "0.2A + 1.2B")
+        <label className={FIELD_LABEL}>
+          Products
         </label>
         <input
           type="text"
           value={products}
           onChange={(e) => setProducts(e.target.value)}
-          placeholder="C"
-          className={`w-full ${TEXT_INPUT_SM}`}
+          placeholder="e.g., O3"
+          className={TEXT_INPUT}
         />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         <div>
-          <label className={FIELD_LABEL_SM}>k0_A (optional)</label>
+          <label className={FIELD_LABEL}>k0_A (low-pressure pre-exponential factor) </label>
           <input
             type="text"
             value={k0A}
             onChange={(e) => setK0A(e.target.value)}
-            placeholder="32.1"
-            className={`w-full ${TEXT_INPUT_SM}`}
+            placeholder="1.0"
+            className={TEXT_INPUT}
           />
         </div>
         <div>
-          <label className={FIELD_LABEL_SM}>k0_B (optional)</label>
+          <label className={FIELD_LABEL}>k0_B (low-pres temperature parameter) </label>
           <input
             type="text"
             value={k0B}
             onChange={(e) => setK0B(e.target.value)}
-            placeholder="-2.3"
-            className={`w-full ${TEXT_INPUT_SM}`}
+            placeholder="0.0"
+            className={TEXT_INPUT}
           />
         </div>
         <div>
-          <label className={FIELD_LABEL_SM}>k0_C (optional)</label>
+          <label className={FIELD_LABEL}>k0_C (low-pressure exponential factor)</label>
           <input
             type="text"
             value={k0C}
             onChange={(e) => setK0C(e.target.value)}
-            placeholder="102.3"
-            className={`w-full ${TEXT_INPUT_SM}`}
+            placeholder="0.0"
+            className={TEXT_INPUT}
           />
         </div>
         <div>
-          <label className={FIELD_LABEL_SM}>
-            kinf_A (optional)
+          <label className={FIELD_LABEL}>
+            kinf_A (high-pres pre-exponential factor)
           </label>
           <input
             type="text"
             value={kinfA}
             onChange={(e) => setKinfA(e.target.value)}
-            placeholder="63.4"
-            className={`w-full ${TEXT_INPUT_SM}`}
+            placeholder="1.0"
+            className={TEXT_INPUT}
           />
         </div>
         <div>
-          <label className={FIELD_LABEL_SM}>
-            kinf_B (optional)
+          <label className={FIELD_LABEL}>
+            kinf_B (high-pres temperature parameter)
           </label>
           <input
             type="text"
             value={kinfB}
             onChange={(e) => setKinfB(e.target.value)}
-            placeholder="-1.3"
-            className={`w-full ${TEXT_INPUT_SM}`}
+            placeholder="0.0"
+            className={TEXT_INPUT}
           />
         </div>
         <div>
-          <label className={FIELD_LABEL_SM}>
-            kinf_C (optional)
+          <label className={FIELD_LABEL}>
+            kinf_C (high-pressure exponential factor)
           </label>
           <input
             type="text"
             value={kinfC}
             onChange={(e) => setKinfC(e.target.value)}
-            placeholder="908.5"
-            className={`w-full ${TEXT_INPUT_SM}`}
+            placeholder="0.0"
+            className={TEXT_INPUT}
           />
         </div>
         <div>
-          <label className={FIELD_LABEL_SM}>Fc (optional)</label>
+          <label className={FIELD_LABEL}>Fc </label>
           <input
             type="text"
             value={fc}
             onChange={(e) => setFc(e.target.value)}
-            placeholder="1.3"
-            className={`w-full ${TEXT_INPUT_SM}`}
+            placeholder="0.6"
+            className={TEXT_INPUT}
           />
         </div>
         <div>
-          <label className={FIELD_LABEL_SM}>N (optional)</label>
+          <label className={FIELD_LABEL}>N </label>
           <input
             type="text"
             value={nValue}
             onChange={(e) => setNValue(e.target.value)}
-            placeholder="32.1"
-            className={`w-full ${TEXT_INPUT_SM}`}
+            placeholder="1.0"
+            className={TEXT_INPUT}
           />
         </div>
       </div>

@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { v4 as uuidv4 } from 'uuid'
 import { Button } from '../../ui/button'
 import { parseReactionString } from './reactionUtils'
-import { FIELD_LABEL_SM, TEXT_INPUT_SM } from '../fieldStyles'
+import { FIELD_LABEL, TEXT_INPUT } from '../fieldStyles'
 
 export function FirstOrderLossReactionForm({ onAddReaction }) {
   const [reactants, setReactants] = useState('')
@@ -48,28 +48,28 @@ export function FirstOrderLossReactionForm({ onAddReaction }) {
       )}
 
       <div>
-        <label className={FIELD_LABEL_SM}>
-          Reactants (e.g., "C" or "2C")
+        <label className={FIELD_LABEL}>
+          Reactants
         </label>
         <input
           type="text"
           value={reactants}
           onChange={(e) => setReactants(e.target.value)}
-          placeholder="C"
-          className={`w-full ${TEXT_INPUT_SM}`}
+          placeholder="e.g., C"
+          className={TEXT_INPUT}
         />
       </div>
 
       <div>
-        <label className={FIELD_LABEL_SM}>
-          Scaling Factor (optional; defaults to 1.0)
+        <label className={FIELD_LABEL}>
+          Scaling factor
         </label>
         <input
           type="text"
           value={scalingFactor}
           onChange={(e) => setScalingFactor(e.target.value)}
-          placeholder="12.3"
-          className={`w-full ${TEXT_INPUT_SM}`}
+          placeholder="1.0"
+          className={TEXT_INPUT}
         />
       </div>
 

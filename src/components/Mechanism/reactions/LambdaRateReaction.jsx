@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { v4 as uuidv4 } from 'uuid'
 import { Button } from '../../ui/button'
 import { parseReactionString } from './reactionUtils'
-import { FIELD_LABEL_SM, TEXT_INPUT_CODE, TEXT_INPUT_SM } from '../fieldStyles'
+import { FIELD_LABEL, TEXT_INPUT, TEXT_INPUT_CODE } from '../fieldStyles'
 
 export function LambdaRateReactionForm({ onAddReaction }) {
   const [reactants, setReactants] = useState('')
@@ -77,33 +77,33 @@ export function LambdaRateReactionForm({ onAddReaction }) {
       )}
 
       <div>
-        <label className={FIELD_LABEL_SM}>
-          Reactants (e.g., "O2 + O" or "2NO2")
+        <label className={FIELD_LABEL}>
+          Reactants
         </label>
         <input
           type="text"
           value={reactants}
           onChange={(e) => setReactants(e.target.value)}
-          placeholder="O2 + O"
-          className={`w-full ${TEXT_INPUT_SM}`}
+          placeholder="e.g., O2 + O"
+          className={TEXT_INPUT}
         />
       </div>
 
       <div>
-        <label className={FIELD_LABEL_SM}>
-          Products (e.g., "O3" or "NO + O2")
+        <label className={FIELD_LABEL}>
+          Products
         </label>
         <input
           type="text"
           value={products}
           onChange={(e) => setProducts(e.target.value)}
-          placeholder="O3"
-          className={`w-full ${TEXT_INPUT_SM}`}
+          placeholder="e.g., O3"
+          className={TEXT_INPUT}
         />
       </div>
 
       <div>
-        <label className={FIELD_LABEL_SM}>
+        <label className={FIELD_LABEL}>
           Lambda Function (JavaScript)
         </label>
         <textarea
@@ -113,7 +113,7 @@ export function LambdaRateReactionForm({ onAddReaction }) {
           rows={4}
           className={`w-full ${TEXT_INPUT_CODE}`}
         />
-        <p className="mt-1 text-[11px] text-gray-700">
+        <p className="mt-1 text-[12px] text-gray-700">
           Allowed parameters: <strong>T</strong>, <strong>P</strong>, <strong>airDensity</strong>
         </p>
       </div>

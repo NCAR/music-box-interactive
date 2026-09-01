@@ -326,19 +326,6 @@ export function ReactionEditor() {
           </CardContent>
         </Card>
       </div>
-
-      <div className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-lg p-3 text-xs text-gray-700">
-        <p className="font-semibold mb-1 flex items-center gap-2">
-          <Lightbulb className="w-4 h-4" />
-          Reaction Editor Notes:
-        </p>
-        <ul className="space-y-0.5 ml-4">
-          <li>• Use "+" to separate multiple reactants or products</li>
-          <li>• Use numbers for stoichiometric coefficients (e.g., "2NO2")</li>
-          <li>• Arrhenius reactions require rate constant A</li>
-          <li>• Photolysis reactions will use user-defined rate parameters</li>
-        </ul>
-      </div>
     </div>
   )
 }

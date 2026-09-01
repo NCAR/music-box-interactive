@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { v4 as uuidv4 } from 'uuid'
 import { Button } from '../../ui/button'
 import { parseReactionString } from './reactionUtils'
-import { FIELD_LABEL_SM, TEXT_INPUT_SM } from '../fieldStyles'
+import { FIELD_LABEL, TEXT_INPUT } from '../fieldStyles'
 
 export function SurfaceReactionForm({ onAddReaction }) {
   const [gasPhaseSpecies, setGasPhaseSpecies] = useState('')
@@ -59,41 +59,41 @@ export function SurfaceReactionForm({ onAddReaction }) {
       )}
 
       <div>
-        <label className={FIELD_LABEL_SM}>
-          Gas-Phase Species (e.g., "A")
+        <label className={FIELD_LABEL}>
+          Gas-phase reactant
         </label>
         <input
           type="text"
           value={gasPhaseSpecies}
           onChange={(e) => setGasPhaseSpecies(e.target.value)}
-          placeholder="A"
-          className={`w-full ${TEXT_INPUT_SM}`}
+          placeholder="e.g., NO2"
+          className={TEXT_INPUT}
         />
       </div>
 
       <div>
-        <label className={FIELD_LABEL_SM}>
-          Gas-Phase Products (e.g., "B + C")
+        <label className={FIELD_LABEL}>
+          Gas-phase products
         </label>
         <input
           type="text"
           value={gasPhaseProducts}
           onChange={(e) => setGasPhaseProducts(e.target.value)}
-          placeholder="B + C"
-          className={`w-full ${TEXT_INPUT_SM}`}
+          placeholder="e.g., 0.5OH + 0.5NO + 0.5HNO3"
+          className={TEXT_INPUT}
         />
       </div>
 
       <div>
-        <label className={FIELD_LABEL_SM}>
-          Reaction Probability (optional)
+        <label className={FIELD_LABEL}>
+          Reaction probability 
         </label>
         <input
           type="text"
           value={reactionProbability}
           onChange={(e) => setReactionProbability(e.target.value)}
-          placeholder="2.0e-2"
-          className={`w-full ${TEXT_INPUT_SM}`}
+          placeholder="1.0"
+          className={TEXT_INPUT}
         />
       </div>
 

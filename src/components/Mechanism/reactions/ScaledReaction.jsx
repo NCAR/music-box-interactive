@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { v4 as uuidv4 } from 'uuid'
 import { Button } from '../../ui/button'
 import { parseReactionString } from './reactionUtils'
-import { FIELD_LABEL_SM, TEXT_INPUT_SM } from '../fieldStyles'
+import { FIELD_LABEL, TEXT_INPUT } from '../fieldStyles'
 
 export function ScaledReactionForm({ onAddReaction, reactionType, allowEmptyProducts = false }) {
   const [reactants, setReactants] = useState('')
@@ -56,41 +56,41 @@ export function ScaledReactionForm({ onAddReaction, reactionType, allowEmptyProd
       )}
 
       <div>
-        <label className={FIELD_LABEL_SM}>
-          Reactants (e.g., "O2 + O" or "2NO2")
+        <label className={FIELD_LABEL}>
+          Reactants
         </label>
         <input
           type="text"
           value={reactants}
           onChange={(e) => setReactants(e.target.value)}
-          placeholder="O2 + O"
-          className={`w-full ${TEXT_INPUT_SM}`}
+          placeholder="e.g., O3"
+          className={TEXT_INPUT}
         />
       </div>
 
       <div>
-        <label className={FIELD_LABEL_SM}>
-          Products (e.g., "O3" or "NO + O2")
+        <label className={FIELD_LABEL}>
+          Products
         </label>
         <input
           type="text"
           value={products}
           onChange={(e) => setProducts(e.target.value)}
-          placeholder="O3"
-          className={`w-full ${TEXT_INPUT_SM}`}
+          placeholder="e.g., O + O2"
+          className={TEXT_INPUT}
         />
       </div>
 
       <div>
-        <label className={FIELD_LABEL_SM}>
-          Scaling Factor (optional; defaults to 1.0)
+        <label className={FIELD_LABEL}>
+          Scaling factor
         </label>
         <input
           type="text"
           value={scalingFactor}
           onChange={(e) => setScalingFactor(e.target.value)}
-          placeholder="12.3"
-          className={`w-full ${TEXT_INPUT_SM}`}
+          placeholder="1.0"
+          className={TEXT_INPUT}
         />
       </div>
 

@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { v4 as uuidv4 } from 'uuid'
 import { Button } from '../../ui/button'
 import { parseReactionString } from './reactionUtils'
-import { FIELD_LABEL_SM, TEXT_INPUT_SM } from '../fieldStyles'
+import { FIELD_LABEL, TEXT_INPUT } from '../fieldStyles'
 
 export function BranchedReactionForm({ onAddReaction }) {
   const [reactants, setReactants] = useState('')
@@ -90,77 +90,77 @@ export function BranchedReactionForm({ onAddReaction }) {
       )}
 
       <div>
-        <label className={FIELD_LABEL_SM}>Reactants</label>
+        <label className={FIELD_LABEL}>Reactants</label>
         <input
           type="text"
           value={reactants}
           onChange={(e) => setReactants(e.target.value)}
-          placeholder="A"
-          className={`w-full ${TEXT_INPUT_SM}`}
+          placeholder="e.g., C4H9O2 + NO"
+          className={TEXT_INPUT}
         />
       </div>
 
       <div>
-        <label className={FIELD_LABEL_SM}>Alkoxy Products</label>
+        <label className={FIELD_LABEL}>Alkoxy products</label>
         <input
           type="text"
           value={alkoxyProducts}
           onChange={(e) => setAlkoxyProducts(e.target.value)}
-          placeholder="0.2B + 1.2A"
-          className={`w-full ${TEXT_INPUT_SM}`}
+          placeholder="e.g., C4H9O + NO2"
+          className={TEXT_INPUT}
         />
       </div>
 
       <div>
-        <label className={FIELD_LABEL_SM}>Nitrate Products</label>
+        <label className={FIELD_LABEL}>Nitrate products</label>
         <input
           type="text"
           value={nitrateProducts}
           onChange={(e) => setNitrateProducts(e.target.value)}
-          placeholder="1.2C"
-          className={`w-full ${TEXT_INPUT_SM}`}
+          placeholder="e.g., C4H9ONO2"
+          className={TEXT_INPUT}
         />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         <div>
-          <label className={FIELD_LABEL_SM}>X (optional)</label>
+          <label className={FIELD_LABEL}>X (pre-exponential factor)</label>
           <input
             type="text"
             value={xValue}
             onChange={(e) => setXValue(e.target.value)}
-            placeholder="1.2e-4"
-            className={`w-full ${TEXT_INPUT_SM}`}
+            placeholder="1.0"
+            className={TEXT_INPUT}
           />
         </div>
         <div>
-          <label className={FIELD_LABEL_SM}>Y (optional)</label>
+          <label className={FIELD_LABEL}>Y (exponential factor)</label>
           <input
             type="text"
             value={yValue}
             onChange={(e) => setYValue(e.target.value)}
-            placeholder="167"
-            className={`w-full ${TEXT_INPUT_SM}`}
+            placeholder="0.0"
+            className={TEXT_INPUT}
           />
         </div>
         <div>
-          <label className={FIELD_LABEL_SM}>a0 (optional)</label>
+          <label className={FIELD_LABEL}>a0 (branching factor)</label>
           <input
             type="text"
             value={a0Value}
             onChange={(e) => setA0Value(e.target.value)}
-            placeholder="0.15"
-            className={`w-full ${TEXT_INPUT_SM}`}
+            placeholder="1.0"
+            className={TEXT_INPUT}
           />
         </div>
         <div>
-          <label className={FIELD_LABEL_SM}>n (optional)</label>
+          <label className={FIELD_LABEL}>n (N of heavy atoms in the RO2 species) </label>
           <input
             type="text"
             value={nValue}
             onChange={(e) => setNValue(e.target.value)}
-            placeholder="9"
-            className={`w-full ${TEXT_INPUT_SM}`}
+            placeholder="0"
+            className={TEXT_INPUT}
           />
         </div>
       </div>
