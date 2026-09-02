@@ -120,4 +120,53 @@ describe('flow diagram node identity', () => {
 
     expect(labels).toEqual(['HNO3 → NO3'])
   })
+
+  // Labels are built over every reaction, not just the visible ones, so a shape the label builder
+  // cannot read takes the whole diagram down. SURFACE reactions carry no `reactants`/`products`
+  // at all -- ts1 has 13 of them -- and BRANCHED splits its products in two.
+  it('survives reaction shapes that carry no reactants/products', () => {
+    const surface = {
+      id: 's1',
+      type: 'SURFACE',
+      name: 'usr_NO2_aer',
+      'gas-phase species': 'HNO3',
+      'gas-phase products': [{ 'species name': 'NO3', coefficient: 1 }],
+    }
+    const branched = {
+      id: 'b1',
+      type: 'BRANCHED_NO_RO2',
+      name: 'branched',
+      reactants: [{ 'species name': 'HNO3', coefficient: 1 }],
+      'alkoxy products': [{ 'species name': 'NO3', coefficient: 1 }],
+      'nitrate products': [{ 'species name': 'NO3', coefficient: 1 }],
+    }
+
+    const { container } = renderGraph([reaction('a', 'ARRHENIUS'), surface, branched])
+    expect(container.querySelectorAll('rect').length).toBeGreaterThan(0)
+  })
+
+  it('reads a surface reaction formula from its gas-phase fields', () => {
+    const { container } = renderGraph([
+      {
+        id: 's1',
+        type: 'SURFACE',
+        name: 'usr',
+        reactants: [{ 'species name': 'HNO3', coefficient: 1 }],
+        products: [{ 'species name': 'NO3', coefficient: 1 }],
+      },
+      {
+        id: 's2',
+        type: 'SURFACE',
+        name: 'usr2',
+        'gas-phase species': 'HNO3',
+        'gas-phase products': [{ 'species name': 'NO3', coefficient: 1 }],
+      },
+    ])
+
+    // Both describe HNO3 -> NO3, so both labels collide and get numbered.
+    const labels = [...container.querySelectorAll('text')]
+      .map((node) => node.textContent)
+      .filter((text) => text.includes('→'))
+    expect(labels.some((label) => label.startsWith('HNO3 → NO3'))).toBe(true)
+  })
 })
