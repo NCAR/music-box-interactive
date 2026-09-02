@@ -191,3 +191,57 @@ describe('computeIntegratedReactionRate — index-keyed lookup', () => {
     expect(computeIntegratedReactionRate({ name: 'HONO' }, 5, results, 0, 10)).toBe(0);
   });
 });
+
+// A branched reaction's tracer is injected once per branch -- into `alkoxy products` and
+// `nitrate products`, suffixed _A and _B -- so the unsuffixed key never exists for one. Reading
+// only that key reported every branched reaction as rate 0, which drew its arrows muted and at
+// minimum width while every other reaction's scaled with its flux.
+describe('computeIntegratedReactionRate — branched reactions', () => {
+  const branched = {
+    name: 'BR',
+    reactants: [{ 'species name': 'A', coefficient: 1 }],
+    'alkoxy products': [{ 'species name': 'B', coefficient: 1 }],
+    'nitrate products': [{ 'species name': 'C', coefficient: 1 }],
+  };
+
+  const results = (concentrations) => [
+    { time: 0, concentrations: Object.fromEntries(Object.keys(concentrations).map((k) => [k, 0])) },
+    { time: 10, concentrations },
+  ];
+
+  it('sums the branch tracers', () => {
+    const rate = computeIntegratedReactionRate(
+      branched,
+      0,
+      results({
+        'CONC.__PROD__RXN_0_BR_A.mol m-3': 3,
+        'CONC.__PROD__RXN_0_BR_B.mol m-3': 7,
+      }),
+      0,
+      10
+    );
+    expect(rate).toBe(10);
+  });
+
+  it('still reads a single-tracer reaction from its unsuffixed key', () => {
+    const plain = {
+      name: 'BR',
+      reactants: [{ 'species name': 'A', coefficient: 1 }],
+      products: [{ 'species name': 'B', coefficient: 1 }],
+    };
+    const rate = computeIntegratedReactionRate(
+      plain,
+      0,
+      results({ 'CONC.__PROD__RXN_0_BR.mol m-3': 4 }),
+      0,
+      10
+    );
+    expect(rate).toBe(4);
+  });
+
+  it('reports zero when no tracer is present at all', () => {
+    expect(
+      computeIntegratedReactionRate(branched, 0, results({ 'CONC.OTHER.mol m-3': 5 }), 0, 10)
+    ).toBe(0);
+  });
+});

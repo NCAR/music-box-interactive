@@ -169,4 +169,30 @@ describe('flow diagram node identity', () => {
       .filter((text) => text.includes('→'))
     expect(labels.some((label) => label.startsWith('HNO3 → NO3'))).toBe(true)
   })
+
+  // An emission has no reactants and a first-order loss no products. A blank side reads as a
+  // rendering fault, so the empty set is shown instead -- as the reaction editor does.
+  it('labels an empty side with the empty set', () => {
+    const { container } = renderGraph([
+      {
+        id: 'e1',
+        type: 'EMISSION',
+        name: 'emit',
+        products: [{ 'species name': 'HNO3', coefficient: 1 }],
+      },
+      {
+        id: 'l1',
+        type: 'FIRST_ORDER_LOSS',
+        name: 'loss',
+        reactants: [{ 'species name': 'NO3', coefficient: 1 }],
+      },
+    ])
+
+    const labels = [...container.querySelectorAll('text')]
+      .map((node) => node.textContent)
+      .filter((text) => text.includes('→'))
+
+    expect(labels).toContain('\u2205 → HNO3')
+    expect(labels).toContain('NO3 → \u2205')
+  })
 })

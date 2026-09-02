@@ -1,5 +1,5 @@
 import {
-  buildTracerConcentrationKey,
+  buildTracerConcentrationKeys,
   isRealSpeciesName,
 } from '../../services/simulation/local/tracer'
 
@@ -126,19 +126,30 @@ export function computeIntegratedReactionRate(
 ) {
   if (!Array.isArray(results)) return 0
 
-  const concKey = buildTracerConcentrationKey(reactionIndex, reaction?.name)
+  // Sum rates across the reaction's tracer keys. Most reactions have one. Branched reactions
+  // have one per branch, with the total rate equal to their sum. Missing keys contribute zero.
+  let total = 0
+  let matched = false
 
-  let first = null
-  let last = null
-  for (const timeEntry of results) {
-    const t = timeEntry.time
-    if (t < timeStart || t > timeEnd) continue
-    const value = timeEntry.concentrations?.[concKey]
-    if (typeof value !== 'number') continue
-    if (first === null) first = value
-    last = value
+  for (const concKey of buildTracerConcentrationKeys(reactionIndex, reaction?.name)) {
+    let first = null
+    let last = null
+
+    for (const timeEntry of results) {
+      const t = timeEntry.time
+      if (t < timeStart || t > timeEnd) continue
+      const value = timeEntry.concentrations?.[concKey]
+      if (typeof value !== 'number') continue
+      if (first === null) first = value
+      last = value
+    }
+
+    if (first !== null) {
+      matched = true
+      total += last - first
+    }
   }
 
-  if (first === null) return 0
-  return last - first
+  return matched ? total : 0
 }
+

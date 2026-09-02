@@ -31,3 +31,13 @@ export const buildTracerConcentrationKey = (index, reactionName) =>
 /** True for real chemistry; false for the synthetic tracers injected above. */
 export const isRealSpeciesName = (name) =>
   typeof name === 'string' && !name.startsWith(TRACER_PREFIX)
+
+export const BRANCH_TRACER_SUFFIXES = ['_A', '_B']
+
+// All tracer keys a reaction may have: the base key plus one for each branch.
+export const buildTracerConcentrationKeys = (index, reactionName) => {
+  const base = buildTracerSpeciesName(index, reactionName)
+  return [base, ...BRANCH_TRACER_SUFFIXES.map((suffix) => `${base}${suffix}`)].map(
+    (name) => `CONC.${name}.mol m-3`
+  )
+}
