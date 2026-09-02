@@ -20,12 +20,40 @@ export const getThirdBodyNames = (species) =>
  * A reaction is drawn when every reactant the user *could* have selected is selected.
  * Third bodies are excluded from that requirement: they are ambient, not chosen.
  */
+// Reaction types store species differently: SURFACE uses `gas-phase species` and
+// `gas-phase products`, while BRANCHED splits products into `alkoxy products` and
+// `nitrate products`. Reading only `reactants`/`products` makes SURFACE reactions
+// invisible and BRANCHED reactions appear to consume without producing.
+const componentList = (components) =>
+  (Array.isArray(components) ? components : [components])
+    .filter(Boolean)
+    .map((entry) => (typeof entry === 'string' ? { 'species name': entry } : entry))
+
+export const reactionReactants = (reaction) =>
+  componentList(reaction?.reactants ?? reaction?.['gas-phase species'] ?? [])
+
+// Both branches of a branched reaction are produced so the diagram shows both.
+export const reactionProducts = (reaction) => [
+  ...componentList(reaction?.products ?? reaction?.['gas-phase products'] ?? []),
+  ...componentList(reaction?.['alkoxy products'] ?? []),
+  ...componentList(reaction?.['nitrate products'] ?? []),
+]
+
 export const isReactionVisible = (reaction, selectedSpecies, thirdBodyNames) => {
-  const required = (reaction?.reactants ?? [])
-    .map((r) => r['species name'])
-    .filter((name) => isRealSpecies(name) && !thirdBodyNames.has(name))
-  return required.length > 0 && required.every((sp) => selectedSpecies.includes(sp))
+  const named = (components) =>
+    components
+      .map((entry) => entry['species name'])
+      .filter((name) => isRealSpecies(name) && !thirdBodyNames.has(name))
+
+  const reactants = named(reactionReactants(reaction))
+
+  // Emissions have no reactants. They inject species from outside the mechanism. Anchor them on
+  // their products so they appear on the diagram.
+  const anchors = reactants.length > 0 ? reactants : named(reactionProducts(reaction))
+
+  return anchors.length > 0 && anchors.every((name) => selectedSpecies.includes(name))
 }
+
 
 /**
  * Edges one reaction contributes, with stoichiometric coefficients applied.
@@ -53,11 +81,11 @@ export const getReactionEdges = (reaction, rate, thirdBodyNames, nodeId = reacti
   const produced = new Map()
   const add = (map, name, coeff) => map.set(name, (map.get(name) ?? 0) + coeff)
 
-  for (const entry of reaction?.reactants ?? []) {
+  for (const entry of reactionReactants(reaction)) {
     const name = entry['species name']
     if (keep(name)) add(consumed, name, Math.abs(entry.coefficient ?? 1))
   }
-  for (const entry of reaction?.products ?? []) {
+  for (const entry of reactionProducts(reaction)) {
     const name = entry['species name']
     if (!keep(name)) continue
     const coeff = entry.coefficient ?? 1

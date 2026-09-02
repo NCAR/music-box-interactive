@@ -7,6 +7,8 @@ import {
   getReactionEdges,
   getThirdBodyNames,
   isReactionVisible,
+  reactionProducts,
+  reactionReactants,
 } from './flowUtils'
 import { getReactionTypeLabel } from '../Mechanism/reactions/reactionRegistry'
 
@@ -70,14 +72,17 @@ const buildReactionLabels = (reactions) => {
 }
 
 function reactionLabel(reaction) {
-  const fmt = (arr) =>
-    arr
-      .filter((s) => isRealSpecies(s['species name']))
-      .map((s) =>
-        s.coefficient === 1 ? s['species name'] : `${s.coefficient}${s['species name']}`
+  const fmt = (entries) =>
+    entries
+      .filter((entry) => isRealSpecies(entry['species name']))
+      .map((entry) =>
+        entry.coefficient === undefined || entry.coefficient === 1
+          ? entry['species name']
+          : `${entry.coefficient}${entry['species name']}`
       )
       .join(' + ')
-  return `${fmt(reaction.reactants)} → ${fmt(reaction.products)}`
+
+  return `${fmt(reactionReactants(reaction))} → ${fmt(reactionProducts(reaction))}`
 }
 
 /**
@@ -174,10 +179,10 @@ export function FlowGraph({ selectedSpecies, rateRange, timeRange, valueDisplay 
     // ── 4. Collect unique real species involved in visible reactions ───
     const speciesSet = new Set()
     for (const rxn of visibleReactions) {
-      rxn.reactants.forEach((r) => {
+      reactionReactants(rxn).forEach((r) => {
         if (isGraphSpecies(r['species name'])) speciesSet.add(r['species name'])
       })
-      rxn.products.forEach((p) => {
+      reactionProducts(rxn).forEach((p) => {
         if (isGraphSpecies(p['species name'])) speciesSet.add(p['species name'])
       })
     }
