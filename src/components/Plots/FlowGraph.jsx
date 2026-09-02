@@ -561,20 +561,30 @@ export function FlowGraph({
   useEffect(() => {
     const isMuted = (rate) => rate < rateRange.start || rate > rateRange.end
 
+    // Clamp widths to a finite value at or above BASE. Zero-rate edges yield log(0) = -Infinity,
+    // which SVG rejects, falling back to a 1px stroke; because markers scale with stroke width,
+    // the arrowhead disappears. Clamping preserves a minimum-width arrow.
+    const MIN_RATE = 1e-30
     const edgeStrokeWidth = (rate) => {
       const BASE = 2
       const f = rate ?? 0
       if (f < rateRange.start) return BASE
       if (f > rateRange.end) return rateRange.maxArrowWidth + BASE
+
+      let width = BASE
       if (rateRange.isLogScale) {
-        const lo = Math.log(Math.max(rateRange.start, 1e-30))
-        const hi = Math.log(Math.max(rateRange.end, 1e-30))
+        const lo = Math.log(Math.max(rateRange.start, MIN_RATE))
+        const hi = Math.log(Math.max(rateRange.end, MIN_RATE))
         if (hi === lo) return BASE
-        return ((Math.log(f) - lo) / (hi - lo)) * rateRange.maxArrowWidth + BASE
+        width =
+          ((Math.log(Math.max(f, MIN_RATE)) - lo) / (hi - lo)) * rateRange.maxArrowWidth + BASE
+      } else {
+        const range = rateRange.end - rateRange.start
+        if (range === 0) return BASE
+        width = ((f - rateRange.start) / range) * rateRange.maxArrowWidth + BASE
       }
-      const range = rateRange.end - rateRange.start
-      if (range === 0) return BASE
-      return ((f - rateRange.start) / range) * rateRange.maxArrowWidth + BASE
+
+      return Number.isFinite(width) ? Math.max(BASE, width) : BASE
     }
 
     d3.select(ref.current)
