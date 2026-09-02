@@ -7,6 +7,7 @@ import {
   getReactionEdges,
   getThirdBodyNames,
   isReactionVisible,
+  matchesReactionType,
   reactionProducts,
   reactionReactants,
 } from './flowUtils'
@@ -111,7 +112,13 @@ function measureText(text, fontSize = 10) {
 
 // ─── Component ──────────────────────────────────────────────────────────────
 
-export function FlowGraph({ selectedSpecies, rateRange, timeRange, valueDisplay = 'absolute' }) {
+export function FlowGraph({
+  selectedSpecies,
+  rateRange,
+  timeRange,
+  reactionType = '',
+  valueDisplay = 'absolute',
+}) {
   const ref = useRef()
   const tooltipRef = useRef()
   const [selectedNode, setSelectedNode] = useState(null)
@@ -132,8 +139,10 @@ export function FlowGraph({ selectedSpecies, rateRange, timeRange, valueDisplay 
     const isGraphSpecies = (name) => isRealSpecies(name) && !thirdBodyNames.has(name)
 
     // ── 1. Filter visible reactions ───────────────────────────────────
-    const visibleReactions = reactions.filter((rxn) =>
-      isReactionVisible(rxn, selectedSpecies, thirdBodyNames)
+    const visibleReactions = reactions.filter(
+      (rxn) =>
+        isReactionVisible(rxn, selectedSpecies, thirdBodyNames) &&
+        matchesReactionType(rxn, reactionType)
     )
 
     if (visibleReactions.length === 0) return
@@ -531,7 +540,7 @@ export function FlowGraph({ selectedSpecies, rateRange, timeRange, valueDisplay 
 
     sim.alpha(0.4).restart()
     return () => sim.stop()
-  }, [selectedSpecies, rateRange, timeRange, reactions, species, results, valueDisplay])
+  }, [selectedSpecies, reactionType, rateRange, timeRange, reactions, species, results, valueDisplay])
 
   // Sync selectedNode → D3 rate label visibility & rect highlight
   useEffect(() => {

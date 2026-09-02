@@ -1,3 +1,4 @@
+import { canonicalReactionType } from '../Mechanism/reactions/reactionRegistry'
 import {
   buildTracerConcentrationKeys,
   isRealSpeciesName,
@@ -38,6 +39,10 @@ export const reactionProducts = (reaction) => [
   ...componentList(reaction?.['alkoxy products'] ?? []),
   ...componentList(reaction?.['nitrate products'] ?? []),
 ]
+
+// The type filter narrows what the species selection already allows. An empty type means all.
+export const matchesReactionType = (reaction, reactionType) =>
+  !reactionType || canonicalReactionType(reaction?.type) === reactionType
 
 export const isReactionVisible = (reaction, selectedSpecies, thirdBodyNames) => {
   const named = (components) =>

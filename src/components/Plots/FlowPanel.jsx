@@ -3,6 +3,11 @@ import { useSelector } from 'react-redux'
 import { ChevronDown, Check } from 'lucide-react'
 import { useClickOutside } from '../../hooks/useClickOutside'
 import { getSpeciesDisplayName } from './speciesFormat'
+import { Dropdown } from '../ui/dropdown'
+import {
+  canonicalReactionType,
+  getReactionTypeLabel,
+} from '../Mechanism/reactions/reactionRegistry'
 
 // Show at most this many species as chips before collapsing the rest into a "+N others" menu
 const SPECIES_CHIP_VISIBLE = 25
@@ -101,10 +106,33 @@ export function FlowPanel({
   setRateRange,
   selectedSpecies,
   setSelectedSpecies,
+  reactionType,
+  setReactionType,
   valueDisplay,
   setValueDisplay,
 }) {
   const results = useSelector((state) => state.simulation.results)
+  const reactions = useSelector((state) => state.mechanism.reactions)
+
+  const reactionTypeOptions = useMemo(() => {
+    const counts = new Map()
+    for (const reaction of reactions ?? []) {
+      const type = canonicalReactionType(reaction.type || 'UNKNOWN')
+      counts.set(type, (counts.get(type) ?? 0) + 1)
+    }
+
+    return [
+      { value: '', label: `All reactions (${reactions?.length ?? 0})` },
+      ...[...counts.keys()]
+        .sort()
+        .map((type) => ({ value: type, label: `${getReactionTypeLabel(type)} (${counts.get(type)})` })),
+    ]
+  }, [reactions])
+
+  // A selection goes stale when the mechanism changes; fall back to showing everything.
+  const activeReactionType = reactionTypeOptions.some((option) => option.value === reactionType)
+    ? reactionType
+    : ''
   // Upper bound for Time Range — results never extend past the simulation length.
   const duration = useSelector((state) => state.conditions.basic.duration)
   const speciesNames = useMemo(() => {
@@ -360,8 +388,15 @@ export function FlowPanel({
         </div>
       </div>
 
-      {/* Row 2: Select All / Deselect All + Search */}
-      <div className="w-full flex">
+      {/* Row 2: Reaction type | Select All / Deselect All + Search */}
+      <div className="w-full flex items-center gap-3">
+      <Dropdown
+        value={activeReactionType}
+        onChange={setReactionType}
+        options={reactionTypeOptions}
+        className="h-8 w-44 flex-shrink-0 border border-gray-300 bg-blue-100/50 px-2.5 text-sm font-bold text-gray-900"
+      />
+
       <div className="flex items-center border border-gray-300 rounded-lg divide-x divide-gray-300 bg-white">
         <div className="relative" ref={selectAllMenuRef}>
           <button

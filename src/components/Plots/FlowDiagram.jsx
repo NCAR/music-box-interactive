@@ -5,6 +5,7 @@ import {
   getReactionEdges,
   getThirdBodyNames,
   isReactionVisible,
+  matchesReactionType,
 } from './flowUtils'
 import { FlowPanel } from './FlowPanel'
 import { useSelector } from 'react-redux'
@@ -36,6 +37,7 @@ export function FlowDiagram() {
   const [rateRange, setRateRange] = useState({ start: 0, end: 0 })
 
   const [selectedSpecies, setSelectedSpecies] = useState([])
+  const [reactionType, setReactionType] = useState('')
 
   // If no simulation results, show placeholder
   const simulation = useSelector((state) => state.simulation)
@@ -55,7 +57,11 @@ export function FlowDiagram() {
     // index taken from the filtered array would read the wrong reaction's tracer.
     const visibleReactions = reactions
       .map((reaction, index) => ({ reaction, index }))
-      .filter(({ reaction }) => isReactionVisible(reaction, selectedSpecies, thirdBodyNames))
+      .filter(
+        ({ reaction }) =>
+          isReactionVisible(reaction, selectedSpecies, thirdBodyNames) &&
+          matchesReactionType(reaction, reactionType)
+      )
 
     if (visibleReactions.length === 0) return
 
@@ -88,6 +94,7 @@ export function FlowDiagram() {
     species,
     simulation.excludedResults,
     selectedSpecies,
+    reactionType,
     timeRange.start,
     timeRange.end,
   ])
@@ -144,6 +151,8 @@ export function FlowDiagram() {
           rateRange={rateRange}
           setRateRange={setRateRange}
           selectedSpecies={selectedSpecies}
+          reactionType={reactionType}
+          setReactionType={setReactionType}
           setSelectedSpecies={setSelectedSpecies}
           valueDisplay={valueDisplay}
           setValueDisplay={setValueDisplay}
@@ -151,6 +160,7 @@ export function FlowDiagram() {
         <div className="border rounded-lg p-2 xs:p-3 sm:p-4 bg-white h-[50rem]">
           <FlowGraph
             selectedSpecies={selectedSpecies}
+            reactionType={reactionType}
             rateRange={{
               start: rateRange.start,
               end: rateRange.end,
