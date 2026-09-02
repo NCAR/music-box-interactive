@@ -42,7 +42,12 @@ export const isReactionVisible = (reaction, selectedSpecies, thirdBodyNames) => 
  * Coefficients are aggregated per species per direction, so a species listed more than once
  * on the same side sums rather than overwriting.
  */
-export const getReactionEdges = (reaction, rate, thirdBodyNames) => {
+
+// `nodeId` identifies the reaction node the edges attach to. It is passed explicitly because
+// reaction names are not unique: distinct reactions can share reactants and products, causing
+// name-keyed nodes to merge and report only one rate. Falls back to the name for callers without
+// a better identifier.
+export const getReactionEdges = (reaction, rate, thirdBodyNames, nodeId = reaction?.name) => {
   const keep = (name) => isRealSpecies(name) && !thirdBodyNames.has(name)
   const consumed = new Map()
   const produced = new Map()
@@ -62,10 +67,10 @@ export const getReactionEdges = (reaction, rate, thirdBodyNames) => {
 
   const edges = []
   for (const [name, coeff] of consumed) {
-    edges.push({ source: name, target: reaction.name, value: coeff * rate })
+    edges.push({ source: name, target: nodeId, value: coeff * rate })
   }
   for (const [name, coeff] of produced) {
-    edges.push({ source: reaction.name, target: name, value: coeff * rate })
+    edges.push({ source: nodeId, target: name, value: coeff * rate })
   }
   return edges
 }

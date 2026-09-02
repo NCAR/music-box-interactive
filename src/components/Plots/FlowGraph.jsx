@@ -8,6 +8,7 @@ import {
   getThirdBodyNames,
   isReactionVisible,
 } from './flowUtils'
+import { getReactionTypeLabel } from '../Mechanism/reactions/reactionRegistry'
 
 // Edge/arrow color for in-range rate; out-of-range edges are muted to gray instead.
 const ARROW_COLOR = '#3D96C3'
@@ -21,6 +22,52 @@ const REACTION_NODE_COLOR = '#FFCA07'
 const REACTION_NODE_ACTIVE_COLOR = '#E6B606'
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
+
+// Reaction names are not unique: ts1 and carbon_bond_5 contain distinct reactions
+// with the same reactants/products, causing name collisions. Identify nodes by the
+// reaction's own id to avoid merging them and reporting only one reaction's rate.
+const reactionNodeId = (reaction) => reaction.id ?? reaction.name
+
+// Node labels are reaction formulas, so distinct reactions can share the same label.
+// When it happens, they remain separate nodes with independent rates, but colliding labels
+// are qualified by reaction type, then numbered if needed.
+const buildReactionLabels = (reactions) => {
+  const formulaCounts = new Map()
+  const typeCounts = new Map()
+
+  for (const reaction of reactions) {
+    const formula = reactionLabel(reaction)
+    formulaCounts.set(formula, (formulaCounts.get(formula) ?? 0) + 1)
+    const typeKey = `${formula}::${reaction.type}`
+    typeCounts.set(typeKey, (typeCounts.get(typeKey) ?? 0) + 1)
+  }
+
+  const seen = new Map()
+  const labels = new Map()
+
+  for (const reaction of reactions) {
+    const formula = reactionLabel(reaction)
+
+    if ((formulaCounts.get(formula) ?? 0) <= 1) {
+      labels.set(reactionNodeId(reaction), formula)
+      continue
+    }
+
+    const typeKey = `${formula}::${reaction.type}`
+    const typeLabel = getReactionTypeLabel(reaction.type)
+
+    if ((typeCounts.get(typeKey) ?? 0) <= 1) {
+      labels.set(reactionNodeId(reaction), `${formula} (${typeLabel})`)
+      continue
+    }
+
+    const ordinal = (seen.get(typeKey) ?? 0) + 1
+    seen.set(typeKey, ordinal)
+    labels.set(reactionNodeId(reaction), `${formula} (${typeLabel} ${ordinal})`)
+  }
+
+  return labels
+}
 
 function reactionLabel(reaction) {
   const fmt = (arr) =>
@@ -88,7 +135,7 @@ export function FlowGraph({ selectedSpecies, rateRange, timeRange, valueDisplay 
     // the filtered `visibleReactions` would point at the wrong reactions' tracers.
     const rateMap = {}
     reactions.forEach((reaction, index) => {
-      rateMap[reaction.name] = computeIntegratedReactionRate(
+      rateMap[reactionNodeId(reaction)] = computeIntegratedReactionRate(
         reaction,
         index,
         results,
@@ -104,16 +151,18 @@ export function FlowGraph({ selectedSpecies, rateRange, timeRange, valueDisplay 
     const NODE_RX = 8
     const SPECIES_R = 24 // base circle radius — grows with text
 
+    const reactionLabels = buildReactionLabels(reactions)
+
     const reactionNodes = visibleReactions.map((rxn) => {
-      const label = reactionLabel(rxn)
+      const label = reactionLabels.get(reactionNodeId(rxn)) ?? reactionLabel(rxn)
       const textWidth = measureText(label, FONT_SIZE)
       const w = textWidth + PAD_X * 2
       const h = FONT_SIZE + PAD_Y * 2
       return {
-        id: rxn.name,
+        id: reactionNodeId(rxn),
         kind: 'reaction',
         label,
-        rate: rateMap[rxn.name],
+        rate: rateMap[reactionNodeId(rxn)],
         w,
         h,
         // half-extents used for edge clipping
@@ -187,7 +236,12 @@ export function FlowGraph({ selectedSpecies, rateRange, timeRange, valueDisplay 
     }
 
     for (const rxn of visibleReactions) {
-      for (const edge of getReactionEdges(rxn, rateMap[rxn.name], thirdBodyNames)) {
+      for (const edge of getReactionEdges(
+        rxn,
+        rateMap[reactionNodeId(rxn)],
+        thirdBodyNames,
+        reactionNodeId(rxn)
+      )) {
         upsertLink(edge.source, edge.target, edge.value)
       }
     }
