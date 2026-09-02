@@ -71,9 +71,12 @@ const buildReactionLabels = (reactions) => {
   return labels
 }
 
+// An empty side reads as ∅ rather than blank.
+const EMPTY_SIDE = '\u2205'
+
 function reactionLabel(reaction) {
-  const fmt = (entries) =>
-    entries
+  const fmt = (entries) => {
+    const text = entries
       .filter((entry) => isRealSpecies(entry['species name']))
       .map((entry) =>
         entry.coefficient === undefined || entry.coefficient === 1
@@ -81,6 +84,9 @@ function reactionLabel(reaction) {
           : `${entry.coefficient}${entry['species name']}`
       )
       .join(' + ')
+
+    return text || EMPTY_SIDE
+  }
 
   return `${fmt(reactionReactants(reaction))} → ${fmt(reactionProducts(reaction))}`
 }
