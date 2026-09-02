@@ -327,6 +327,79 @@ const extractSpeciesNames = (components) => {
     .filter(Boolean)
 }
 
+// Component arrays supported by the reaction, varying by reaction type.
+export const REACTION_COMPONENT_KEYS = [
+  'reactants',
+  'products',
+  'gas-phase products',
+  'alkoxy products',
+  'nitrate products',
+]
+
+// All species referenced by a reaction across its type-specific component arrays.
+export const getReactionSpeciesNames = (reaction) => {
+  if (!reaction || typeof reaction !== 'object') {
+    return []
+  }
+
+  const referenced = REACTION_COMPONENT_KEYS.flatMap((key) => extractSpeciesNames(reaction[key]))
+
+  // SURFACE reactions reference gas-phase species by bare string name.
+  if (typeof reaction['gas-phase species'] === 'string') {
+    referenced.push(reaction['gas-phase species'])
+  }
+
+  return referenced
+}
+
+// Rewrites reaction species names to match the mechanism's spelling, case-insensitively.
+// This allows upper-cased editor input to reference mechanisms with lower-case species names.
+export const resolveReactionSpeciesNames = (reaction, definedNames = []) => {
+  if (!reaction || typeof reaction !== 'object') {
+    return reaction
+  }
+
+  const byLowerCase = new Map()
+  for (const name of definedNames) {
+    if (typeof name === 'string') {
+      byLowerCase.set(name.toLowerCase(), name)
+    }
+  }
+
+  const resolveName = (name) =>
+    typeof name === 'string' ? (byLowerCase.get(name.toLowerCase()) ?? name) : name
+
+  const resolveComponent = (component) => {
+    if (typeof component === 'string') {
+      return resolveName(component)
+    }
+    if (!component || typeof component !== 'object') {
+      return component
+    }
+    if (component['species name'] !== undefined) {
+      return { ...component, 'species name': resolveName(component['species name']) }
+    }
+    if (component.name !== undefined) {
+      return { ...component, name: resolveName(component.name) }
+    }
+    return component
+  }
+
+  const resolved = { ...reaction }
+
+  for (const key of REACTION_COMPONENT_KEYS) {
+    if (Array.isArray(resolved[key])) {
+      resolved[key] = resolved[key].map(resolveComponent)
+    }
+  }
+
+  if (typeof resolved['gas-phase species'] === 'string') {
+    resolved['gas-phase species'] = resolveName(resolved['gas-phase species'])
+  }
+
+  return resolved
+}
+
 export const validateMechanismPayload = (mechanismPayload) => {
   const speciesNames = new Set(
     (mechanismPayload.species || [])
@@ -339,19 +412,7 @@ export const validateMechanismPayload = (mechanismPayload) => {
   ;(mechanismPayload.reactions || []).forEach((reaction) => {
     if (!reaction || typeof reaction !== 'object') return
 
-    const referenced = [
-      ...extractSpeciesNames(reaction.reactants),
-      ...extractSpeciesNames(reaction.products),
-      ...extractSpeciesNames(reaction['gas-phase products']),
-      ...extractSpeciesNames(reaction['alkoxy products']),
-      ...extractSpeciesNames(reaction['nitrate products']),
-    ]
-
-    if (typeof reaction['gas-phase species'] === 'string') {
-      referenced.push(reaction['gas-phase species'])
-    }
-
-    referenced.forEach((name) => {
+    getReactionSpeciesNames(reaction).forEach((name) => {
       if (!speciesNames.has(name)) {
         unknownSpecies.add(name)
       }

@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { v4 as uuidv4 } from 'uuid'
 import { Button } from '../../ui/button'
 import { parseReactionString } from './reactionUtils'
+import { FIELD_LABEL, TEXT_INPUT } from '../fieldStyles'
 
 export function ArrheniusReactionForm({ onAddReaction }) {
   const [reactants, setReactants] = useState('')
@@ -84,89 +85,91 @@ export function ArrheniusReactionForm({ onAddReaction }) {
       )}
 
       <div>
-        <label className="block text-xs font-semibold text-blue-900 mb-1">
-          Reactants (e.g., "O2 + O" or "2NO2")
+        <label className={FIELD_LABEL}>
+          Reactants
         </label>
         <input
           type="text"
           value={reactants}
           onChange={(e) => setReactants(e.target.value)}
-          placeholder="O2 + O"
-          className="w-full px-3 py-2 border-2 border-white/30 bg-white/10 text-gray-900 placeholder:text-gray-500 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
+          placeholder="e.g., O1D + N2"
+          className={TEXT_INPUT}
         />
       </div>
 
       <div>
-        <label className="block text-xs font-semibold text-blue-900 mb-1">
-          Products (e.g., "O3" or "NO + O2")
+        <label className={FIELD_LABEL}>
+          Products
         </label>
         <input
           type="text"
           value={products}
           onChange={(e) => setProducts(e.target.value)}
-          placeholder="O3"
-          className="w-full px-3 py-2 border-2 border-white/30 bg-white/10 text-gray-900 placeholder:text-gray-500 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
+          placeholder="e.g., O + N2"
+          className={TEXT_INPUT}
         />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         <div>
-          <label className="block text-xs font-semibold text-blue-900 mb-1">
-            Rate Constant A (pre-exponential factor)
+          <label className={FIELD_LABEL}>
+            A (pre-exponential factor)
           </label>
           <input
             type="text"
             value={rateA}
             onChange={(e) => setRateA(e.target.value)}
-            placeholder="1.0e-10"
-            className="w-full px-3 py-2 border-2 border-white/30 bg-white/10 text-gray-900 placeholder:text-gray-500 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
+            placeholder="1.0"
+            className={TEXT_INPUT}
           />
         </div>
         <div>
-          <label className="block text-xs font-semibold text-blue-900 mb-1">Parameter B</label>
+          <label className={FIELD_LABEL}>B (unitless exponential factor)</label>
           <input
             type="text"
             value={rateB}
             onChange={(e) => setRateB(e.target.value)}
             placeholder="0.0"
-            className="w-full px-3 py-2 border-2 border-white/30 bg-white/10 text-gray-900 placeholder:text-gray-500 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
+            className={TEXT_INPUT}
           />
         </div>
         <div>
-          <label className="block text-xs font-semibold text-blue-900 mb-1">Parameter C</label>
+          <label className={FIELD_LABEL}>C (activation threshold)</label>
           <input
             type="text"
             value={rateC}
             onChange={(e) => setRateC(e.target.value)}
             placeholder="0.0"
-            className="w-full px-3 py-2 border-2 border-white/30 bg-white/10 text-gray-900 placeholder:text-gray-500 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
+            className={TEXT_INPUT}
           />
         </div>
         <div>
-          <label className="block text-xs font-semibold text-blue-900 mb-1">Parameter D</label>
+          <label className={FIELD_LABEL}>D (temperature dependence)</label>
           <input
             type="text"
             value={rateD}
             onChange={(e) => setRateD(e.target.value)}
-            placeholder="0.0"
-            className="w-full px-3 py-2 border-2 border-white/30 bg-white/10 text-gray-900 placeholder:text-gray-500 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
+            placeholder="300.0"
+            className={TEXT_INPUT}
           />
         </div>
         <div>
-          <label className="block text-xs font-semibold text-blue-900 mb-1">Parameter E</label>
+          <label className={FIELD_LABEL}>E (pressure dependence)</label>
           <input
             type="text"
             value={rateE}
             onChange={(e) => setRateE(e.target.value)}
             placeholder="0.0"
-            className="w-full px-3 py-2 border-2 border-white/30 bg-white/10 text-gray-900 placeholder:text-gray-500 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
+            className={TEXT_INPUT}
           />
         </div>
       </div>
 
-      <Button onClick={handleAdd} variant="assist" size="default" className="rounded-2xl">
-        Add Reaction
-      </Button>
+      <div className="mt-8 flex justify-center">
+        <Button onClick={handleAdd} variant="assistSecondary" size="lg" className="text-base">
+          Add Reaction
+        </Button>
+      </div>
     </div>
   )
 }

@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { v4 as uuidv4 } from 'uuid'
 import { Button } from '../../ui/button'
 import { parseReactionString } from './reactionUtils'
+import { FIELD_LABEL, TEXT_INPUT } from '../fieldStyles'
 
 export function TernaryChemicalActivationReactionForm({ onAddReaction }) {
   const [reactants, setReactants] = useState('')
@@ -107,123 +108,125 @@ export function TernaryChemicalActivationReactionForm({ onAddReaction }) {
       )}
 
       <div>
-        <label className="block text-xs font-semibold text-blue-900 mb-1">
-          Reactants (e.g., "foo + 2quz")
+        <label className={FIELD_LABEL}>
+          Reactants
         </label>
         <input
           type="text"
           value={reactants}
           onChange={(e) => setReactants(e.target.value)}
-          placeholder="foo + 2quz"
-          className="w-full px-3 py-2 border-2 border-white/30 bg-white/10 text-gray-900 placeholder:text-gray-500 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
+          placeholder="e.g., H2O"
+          className={TEXT_INPUT}
         />
       </div>
 
       <div>
-        <label className="block text-xs font-semibold text-blue-900 mb-1">
-          Products (e.g., "bar + 3.2baz")
+        <label className={FIELD_LABEL}>
+          Products
         </label>
         <input
           type="text"
           value={products}
           onChange={(e) => setProducts(e.target.value)}
-          placeholder="bar + 3.2baz"
-          className="w-full px-3 py-2 border-2 border-white/30 bg-white/10 text-gray-900 placeholder:text-gray-500 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
+          placeholder="e.g., O3"
+          className={TEXT_INPUT}
         />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         <div>
-          <label className="block text-xs font-semibold text-blue-900 mb-1">k0_A (optional)</label>
+          <label className={FIELD_LABEL}>k0_A (low-pressure pre-exponential factor)</label>
           <input
             type="text"
             value={k0A}
             onChange={(e) => setK0A(e.target.value)}
-            placeholder="32.1"
-            className="w-full px-3 py-2 border-2 border-white/30 bg-white/10 text-gray-900 placeholder:text-gray-500 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
+            placeholder="1.0"
+            className={TEXT_INPUT}
           />
         </div>
         <div>
-          <label className="block text-xs font-semibold text-blue-900 mb-1">k0_B (optional)</label>
+          <label className={FIELD_LABEL}>k0_B (low-pres temperature parameter)</label>
           <input
             type="text"
             value={k0B}
             onChange={(e) => setK0B(e.target.value)}
-            placeholder="-2.3"
-            className="w-full px-3 py-2 border-2 border-white/30 bg-white/10 text-gray-900 placeholder:text-gray-500 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
+            placeholder="0.0"
+            className={TEXT_INPUT}
           />
         </div>
         <div>
-          <label className="block text-xs font-semibold text-blue-900 mb-1">k0_C (optional)</label>
+          <label className={FIELD_LABEL}>k0_C (low-pressure exponential factor)</label>
           <input
             type="text"
             value={k0C}
             onChange={(e) => setK0C(e.target.value)}
-            placeholder="102.3"
-            className="w-full px-3 py-2 border-2 border-white/30 bg-white/10 text-gray-900 placeholder:text-gray-500 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
+            placeholder="0.0"
+            className={TEXT_INPUT}
           />
         </div>
         <div>
-          <label className="block text-xs font-semibold text-blue-900 mb-1">
-            kinf_A (optional)
+          <label className={FIELD_LABEL}>
+            kinf_A (high-pres pre-exponential factor)
           </label>
           <input
             type="text"
             value={kinfA}
             onChange={(e) => setKinfA(e.target.value)}
-            placeholder="63.4"
-            className="w-full px-3 py-2 border-2 border-white/30 bg-white/10 text-gray-900 placeholder:text-gray-500 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
+            placeholder="1.0"
+            className={TEXT_INPUT}
           />
         </div>
         <div>
-          <label className="block text-xs font-semibold text-blue-900 mb-1">
-            kinf_B (optional)
+          <label className={FIELD_LABEL}>
+            kinf_B (high-pres temperature parameter)
           </label>
           <input
             type="text"
             value={kinfB}
             onChange={(e) => setKinfB(e.target.value)}
-            placeholder="-1.3"
-            className="w-full px-3 py-2 border-2 border-white/30 bg-white/10 text-gray-900 placeholder:text-gray-500 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
+            placeholder="0.0"
+            className={TEXT_INPUT}
           />
         </div>
         <div>
-          <label className="block text-xs font-semibold text-blue-900 mb-1">
-            kinf_C (optional)
+          <label className={FIELD_LABEL}>
+            kinf_C (high-pressure exponential factor)
           </label>
           <input
             type="text"
             value={kinfC}
             onChange={(e) => setKinfC(e.target.value)}
-            placeholder="908.5"
-            className="w-full px-3 py-2 border-2 border-white/30 bg-white/10 text-gray-900 placeholder:text-gray-500 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
+            placeholder="0.0"
+            className={TEXT_INPUT}
           />
         </div>
         <div>
-          <label className="block text-xs font-semibold text-blue-900 mb-1">Fc (optional)</label>
+          <label className={FIELD_LABEL}>Fc</label>
           <input
             type="text"
             value={fc}
             onChange={(e) => setFc(e.target.value)}
-            placeholder="1.3"
-            className="w-full px-3 py-2 border-2 border-white/30 bg-white/10 text-gray-900 placeholder:text-gray-500 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
+            placeholder="0.6"
+            className={TEXT_INPUT}
           />
         </div>
         <div>
-          <label className="block text-xs font-semibold text-blue-900 mb-1">N (optional)</label>
+          <label className={FIELD_LABEL}>N</label>
           <input
             type="text"
             value={nValue}
             onChange={(e) => setNValue(e.target.value)}
-            placeholder="32.1"
-            className="w-full px-3 py-2 border-2 border-white/30 bg-white/10 text-gray-900 placeholder:text-gray-500 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
+            placeholder="1.0"
+            className={TEXT_INPUT}
           />
         </div>
       </div>
 
-      <Button onClick={handleAdd} variant="assist" size="default" className="rounded-2xl">
-        Add Reaction
-      </Button>
+      <div className="mt-8 flex justify-center">
+        <Button onClick={handleAdd} variant="assistSecondary" size="lg" className="text-base">
+          Add Reaction
+        </Button>
+      </div>
     </div>
   )
 }

@@ -22,6 +22,7 @@ import { resetConditions } from '../redux/slices/conditionsSlice'
 import { resetSimulation } from '../redux/slices/simulationSlice'
 
 import { parseCsvToBlock } from '@ncar/music-box'
+import { buildGeneratedReactionName } from './Mechanism/reactions/reactionUtils'
 import {
   PHASE_PROPERTY_KEYS,
   SPECIES_PROPERTY_KEYS,
@@ -156,29 +157,6 @@ export function ExampleLoader() {
     },
   ]
 
-  const reactionJsonToString = (arr = []) => {
-    return arr
-      .map((item) => {
-        if (typeof item === 'string') {
-          return item.trim().toUpperCase()
-        }
-
-        if (!item || typeof item !== 'object') {
-          return ''
-        }
-
-        const name = item['species name']?.trim()?.toUpperCase() ?? ''
-        const coeff = parseFloat(item['coefficient'])
-
-        if (coeff === 1 || isNaN(coeff)) {
-          return name
-        }
-
-        return `${coeff}${name}`
-      })
-      .join(' + ')
-  }
-
   const loadExample = async (example) => {
     dispatch(resetMechanism())
     dispatch(resetConditions())
@@ -221,27 +199,18 @@ export function ExampleLoader() {
       ? mechanismConfig.reactions
       : []
     mechanismReactions.forEach((reaction) => {
-      const displayReactants = reaction.reactants || reaction['gas-phase species'] || []
-      const displayProducts =
-        reaction.products || reaction['gas-phase products'] || reaction['alkoxy products'] || []
+      // FlowGraph identifies reaction nodes by name, so one is filled in where the mechanism does
+      // not declare one. The editor uses buildGeneratedReactionName to tell the two apart.
+      const declaredName =
+        typeof reaction.name === 'string' && reaction.name.trim().length > 0 ? reaction.name : null
 
-      const normalizedReactants = reactionJsonToString(
-        Array.isArray(displayReactants) ? displayReactants : [displayReactants]
-      ).toUpperCase()
-      const normalizedProducts = reactionJsonToString(displayProducts ?? []).toUpperCase()
-
-      const newReaction = {
-        ...reaction,
-        id: uuidv4(),
-        name:
-          typeof reaction.name === 'string' && reaction.name.trim().length > 0
-            ? reaction.name
-            : normalizedProducts
-              ? `${normalizedReactants} -> ${normalizedProducts}`
-              : `${normalizedReactants} -> (removed)`,
-      }
-
-      dispatch(addReaction(newReaction))
+      dispatch(
+        addReaction({
+          ...reaction,
+          id: uuidv4(),
+          name: declaredName ?? buildGeneratedReactionName(reaction),
+        })
+      )
     })
 
     const options = exampleConfig['box model options'] || {}

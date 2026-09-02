@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { v4 as uuidv4 } from 'uuid'
 import { Button } from '../../ui/button'
 import { parseReactionString } from './reactionUtils'
+import { FIELD_LABEL, TEXT_INPUT } from '../fieldStyles'
 
 export function ScaledReactionForm({ onAddReaction, reactionType, allowEmptyProducts = false }) {
   const [reactants, setReactants] = useState('')
@@ -55,47 +56,49 @@ export function ScaledReactionForm({ onAddReaction, reactionType, allowEmptyProd
       )}
 
       <div>
-        <label className="block text-xs font-semibold text-blue-900 mb-1">
-          Reactants (e.g., "O2 + O" or "2NO2")
+        <label className={FIELD_LABEL}>
+          Reactants
         </label>
         <input
           type="text"
           value={reactants}
           onChange={(e) => setReactants(e.target.value)}
-          placeholder="O2 + O"
-          className="w-full px-3 py-2 border-2 border-white/30 bg-white/10 text-gray-900 placeholder:text-gray-500 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
+          placeholder="e.g., O3"
+          className={TEXT_INPUT}
         />
       </div>
 
       <div>
-        <label className="block text-xs font-semibold text-blue-900 mb-1">
-          Products (e.g., "O3" or "NO + O2")
+        <label className={FIELD_LABEL}>
+          Products
         </label>
         <input
           type="text"
           value={products}
           onChange={(e) => setProducts(e.target.value)}
-          placeholder="O3"
-          className="w-full px-3 py-2 border-2 border-white/30 bg-white/10 text-gray-900 placeholder:text-gray-500 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
+          placeholder="e.g., O + O2"
+          className={TEXT_INPUT}
         />
       </div>
 
       <div>
-        <label className="block text-xs font-semibold text-blue-900 mb-1">
-          Scaling Factor (optional; defaults to 1.0)
+        <label className={FIELD_LABEL}>
+          Scaling factor
         </label>
         <input
           type="text"
           value={scalingFactor}
           onChange={(e) => setScalingFactor(e.target.value)}
-          placeholder="12.3"
-          className="w-full px-3 py-2 border-2 border-white/30 bg-white/10 text-gray-900 placeholder:text-gray-500 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
+          placeholder="1.0"
+          className={TEXT_INPUT}
         />
       </div>
 
-      <Button onClick={handleAdd} variant="assist" size="default" className="rounded-2xl">
-        Add Reaction
-      </Button>
+      <div className="mt-8 flex justify-center">
+        <Button onClick={handleAdd} variant="assistSecondary" size="lg" className="text-base">
+          Add Reaction
+        </Button>
+      </div>
     </div>
   )
 }
