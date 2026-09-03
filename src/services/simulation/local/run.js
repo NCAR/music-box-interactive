@@ -1,7 +1,7 @@
 import { MusicBox } from '@ncar/music-box'
 import { buildLocalSimulationPayload } from './payload'
 import { normalizeSimulationResults } from './results'
-import { buildTracerSpeciesName } from './tracer'
+import { BRANCH_TRACER_SUFFIXES, buildTracerSpeciesName } from './tracer'
 import { store } from '../../../redux/store'
 import {
   setExcludedResults,
@@ -34,7 +34,7 @@ const addProductsToReactions = (reactions) => {
 
     // Handle alkoxy products
     if (Array.isArray(reaction['alkoxy products'])) {
-      const alkoxyProdName = `${prodName}_A`
+      const alkoxyProdName = `${prodName}${BRANCH_TRACER_SUFFIXES[0]}`
       reaction['alkoxy products'].push({ 'species name': alkoxyProdName, coefficient: 1 })
       productSpeciesToAdd.push(alkoxyProdName)
       productConcentrationKeys.push(`CONC.${alkoxyProdName}.mol m-3`)
@@ -42,7 +42,7 @@ const addProductsToReactions = (reactions) => {
 
     // Handle nitrate products
     if (Array.isArray(reaction['nitrate products'])) {
-      const nitrateProdName = `${prodName}_B`
+      const nitrateProdName = `${prodName}${BRANCH_TRACER_SUFFIXES[1]}`
       reaction['nitrate products'].push({ 'species name': nitrateProdName, coefficient: 1 })
       productSpeciesToAdd.push(nitrateProdName)
       productConcentrationKeys.push(`CONC.${nitrateProdName}.mol m-3`)

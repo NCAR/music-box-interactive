@@ -5,6 +5,7 @@ import {
   getReactionEdges,
   getThirdBodyNames,
   isReactionVisible,
+  matchesReactionType,
 } from './flowUtils'
 import { FlowPanel } from './FlowPanel'
 import { useSelector } from 'react-redux'
@@ -36,6 +37,7 @@ export function FlowDiagram() {
   const [rateRange, setRateRange] = useState({ start: 0, end: 0 })
 
   const [selectedSpecies, setSelectedSpecies] = useState([])
+  const [reactionType, setReactionType] = useState('')
 
   // If no simulation results, show placeholder
   const simulation = useSelector((state) => state.simulation)
@@ -55,7 +57,11 @@ export function FlowDiagram() {
     // index taken from the filtered array would read the wrong reaction's tracer.
     const visibleReactions = reactions
       .map((reaction, index) => ({ reaction, index }))
-      .filter(({ reaction }) => isReactionVisible(reaction, selectedSpecies, thirdBodyNames))
+      .filter(
+        ({ reaction }) =>
+          isReactionVisible(reaction, selectedSpecies, thirdBodyNames) &&
+          matchesReactionType(reaction, reactionType)
+      )
 
     if (visibleReactions.length === 0) return
 
@@ -88,6 +94,7 @@ export function FlowDiagram() {
     species,
     simulation.excludedResults,
     selectedSpecies,
+    reactionType,
     timeRange.start,
     timeRange.end,
   ])
@@ -109,6 +116,38 @@ export function FlowDiagram() {
   return (
     <Card>
       <CardContent className="space-y-3 xs:space-y-4">
+        <FlowPanel
+          arrowScaling={arrowScaling}
+          setArrowScaling={setArrowScaling}
+          range={timeRange}
+          setRange={setTimeRange}
+          rateRange={rateRange}
+          setRateRange={setRateRange}
+          selectedSpecies={selectedSpecies}
+          reactionType={reactionType}
+          setReactionType={setReactionType}
+          setSelectedSpecies={setSelectedSpecies}
+          valueDisplay={valueDisplay}
+          setValueDisplay={setValueDisplay}
+        />
+        <div className="border rounded-lg p-2 xs:p-3 sm:p-4 bg-white h-[40rem]">
+          <FlowGraph
+            selectedSpecies={selectedSpecies}
+            reactionType={reactionType}
+            rateRange={{
+              start: rateRange.start,
+              end: rateRange.end,
+              isLogScale: arrowScaling === 'logarithmic',
+              maxArrowWidth: MAX_ARROW_WIDTH,
+            }}
+            timeRange={{
+              start: timeRange.start,
+              end: timeRange.end,
+            }}
+            valueDisplay={valueDisplay}
+          />
+        </div>
+
         {/* Note Box */}
         <div className="flex items-start gap-2 text-sm text-gray-600 bg-blue-50/40 border border-blue-200 rounded-lg p-3 mt-2 xs:mt-3 sm:mt-4">
           <StickyNote className="w-5 h-5 flex-shrink-0 mt-0.5" />
@@ -134,35 +173,6 @@ export function FlowDiagram() {
               </span>
             </CardDescription>
           </div>
-        </div>
-
-        <FlowPanel
-          arrowScaling={arrowScaling}
-          setArrowScaling={setArrowScaling}
-          range={timeRange}
-          setRange={setTimeRange}
-          rateRange={rateRange}
-          setRateRange={setRateRange}
-          selectedSpecies={selectedSpecies}
-          setSelectedSpecies={setSelectedSpecies}
-          valueDisplay={valueDisplay}
-          setValueDisplay={setValueDisplay}
-        />
-        <div className="border rounded-lg p-2 xs:p-3 sm:p-4 bg-white h-[50rem]">
-          <FlowGraph
-            selectedSpecies={selectedSpecies}
-            rateRange={{
-              start: rateRange.start,
-              end: rateRange.end,
-              isLogScale: arrowScaling === 'logarithmic',
-              maxArrowWidth: MAX_ARROW_WIDTH,
-            }}
-            timeRange={{
-              start: timeRange.start,
-              end: timeRange.end,
-            }}
-            valueDisplay={valueDisplay}
-          />
         </div>
       </CardContent>
     </Card>

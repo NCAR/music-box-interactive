@@ -469,6 +469,11 @@ export function ReactionEditor() {
                   options={reactionRegistry.map((type) => ({
                     value: type.type,
                     label: type.label,
+                    disabled: type.type === 'LAMBDA_RATE',
+                    title:
+                      type.type === 'LAMBDA_RATE'
+                        ? 'Lambda rate is unavailable'
+                        : undefined,
                   }))}
                 />
               </div>

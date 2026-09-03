@@ -7,7 +7,12 @@ import {
   getReactionEdges,
   getThirdBodyNames,
   isReactionVisible,
+  matchesReactionType,
+  reactionProducts,
+  reactionReactants,
 } from './flowUtils'
+import { getReactionTypeLabel } from '../Mechanism/reactions/reactionRegistry'
+import { hasDeclaredName } from '../Mechanism/reactions/reactionUtils'
 
 // Edge/arrow color for in-range rate; out-of-range edges are muted to gray instead.
 const ARROW_COLOR = '#3D96C3'
@@ -22,15 +27,79 @@ const REACTION_NODE_ACTIVE_COLOR = '#E6B606'
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
+// Reaction names are not unique: ts1 and carbon_bond_5 contain distinct reactions
+// with the same reactants/products, causing name collisions. Identify nodes by the
+// reaction's own id to avoid merging them and reporting only one reaction's rate.
+const reactionNodeId = (reaction) => reaction.id ?? reaction.name
+
+// Node labels are reaction formulas, so distinct reactions can share the same label.
+// When it happens, they remain separate nodes with independent rates, but colliding labels
+// are qualified by reaction type, then numbered if needed.
+const buildReactionLabels = (reactions) => {
+  const formulaCounts = new Map()
+  const typeCounts = new Map()
+
+  for (const reaction of reactions) {
+    const formula = reactionLabel(reaction)
+    formulaCounts.set(formula, (formulaCounts.get(formula) ?? 0) + 1)
+    const typeKey = `${formula}::${reaction.type}`
+    typeCounts.set(typeKey, (typeCounts.get(typeKey) ?? 0) + 1)
+  }
+
+  const seen = new Map()
+  const labels = new Map()
+
+  for (const reaction of reactions) {
+    const formula = reactionLabel(reaction)
+
+    if ((formulaCounts.get(formula) ?? 0) <= 1) {
+      labels.set(reactionNodeId(reaction), formula)
+      continue
+    }
+
+    // A name the mechanism actually declared is the most useful qualifier -- ts1's heterogeneous
+    // reactions repeat a formula across aerosol surfaces and are distinguished only by name
+    // (het1, het7, het12). Prefer it over the type, which collides for exactly those reactions.
+    if (hasDeclaredName(reaction)) {
+      labels.set(reactionNodeId(reaction), `${formula} (${reaction.name})`)
+      continue
+    }
+
+    const typeKey = `${formula}::${reaction.type}`
+    const typeLabel = getReactionTypeLabel(reaction.type)
+
+    if ((typeCounts.get(typeKey) ?? 0) <= 1) {
+      labels.set(reactionNodeId(reaction), `${formula} (${typeLabel})`)
+      continue
+    }
+
+    // Last resort: same formula, same type, no declared name.
+    const ordinal = (seen.get(typeKey) ?? 0) + 1
+    seen.set(typeKey, ordinal)
+    labels.set(reactionNodeId(reaction), `${formula} (${typeLabel} ${ordinal})`)
+  }
+
+  return labels
+}
+
+// An empty side reads as ∅ rather than blank.
+const EMPTY_SIDE = '\u2205'
+
 function reactionLabel(reaction) {
-  const fmt = (arr) =>
-    arr
-      .filter((s) => isRealSpecies(s['species name']))
-      .map((s) =>
-        s.coefficient === 1 ? s['species name'] : `${s.coefficient}${s['species name']}`
+  const fmt = (entries) => {
+    const text = entries
+      .filter((entry) => isRealSpecies(entry['species name']))
+      .map((entry) =>
+        entry.coefficient === undefined || entry.coefficient === 1
+          ? entry['species name']
+          : `${entry.coefficient}${entry['species name']}`
       )
       .join(' + ')
-  return `${fmt(reaction.reactants)} → ${fmt(reaction.products)}`
+
+    return text || EMPTY_SIDE
+  }
+
+  return `${fmt(reactionReactants(reaction))} → ${fmt(reactionProducts(reaction))}`
 }
 
 /**
@@ -53,7 +122,13 @@ function measureText(text, fontSize = 10) {
 
 // ─── Component ──────────────────────────────────────────────────────────────
 
-export function FlowGraph({ selectedSpecies, rateRange, timeRange, valueDisplay = 'absolute' }) {
+export function FlowGraph({
+  selectedSpecies,
+  rateRange,
+  timeRange,
+  reactionType = '',
+  valueDisplay = 'absolute',
+}) {
   const ref = useRef()
   const tooltipRef = useRef()
   const [selectedNode, setSelectedNode] = useState(null)
@@ -74,8 +149,10 @@ export function FlowGraph({ selectedSpecies, rateRange, timeRange, valueDisplay 
     const isGraphSpecies = (name) => isRealSpecies(name) && !thirdBodyNames.has(name)
 
     // ── 1. Filter visible reactions ───────────────────────────────────
-    const visibleReactions = reactions.filter((rxn) =>
-      isReactionVisible(rxn, selectedSpecies, thirdBodyNames)
+    const visibleReactions = reactions.filter(
+      (rxn) =>
+        isReactionVisible(rxn, selectedSpecies, thirdBodyNames) &&
+        matchesReactionType(rxn, reactionType)
     )
 
     if (visibleReactions.length === 0) return
@@ -88,7 +165,7 @@ export function FlowGraph({ selectedSpecies, rateRange, timeRange, valueDisplay 
     // the filtered `visibleReactions` would point at the wrong reactions' tracers.
     const rateMap = {}
     reactions.forEach((reaction, index) => {
-      rateMap[reaction.name] = computeIntegratedReactionRate(
+      rateMap[reactionNodeId(reaction)] = computeIntegratedReactionRate(
         reaction,
         index,
         results,
@@ -104,16 +181,18 @@ export function FlowGraph({ selectedSpecies, rateRange, timeRange, valueDisplay 
     const NODE_RX = 8
     const SPECIES_R = 24 // base circle radius — grows with text
 
+    const reactionLabels = buildReactionLabels(reactions)
+
     const reactionNodes = visibleReactions.map((rxn) => {
-      const label = reactionLabel(rxn)
+      const label = reactionLabels.get(reactionNodeId(rxn)) ?? reactionLabel(rxn)
       const textWidth = measureText(label, FONT_SIZE)
       const w = textWidth + PAD_X * 2
       const h = FONT_SIZE + PAD_Y * 2
       return {
-        id: rxn.name,
+        id: reactionNodeId(rxn),
         kind: 'reaction',
         label,
-        rate: rateMap[rxn.name],
+        rate: rateMap[reactionNodeId(rxn)],
         w,
         h,
         // half-extents used for edge clipping
@@ -125,10 +204,10 @@ export function FlowGraph({ selectedSpecies, rateRange, timeRange, valueDisplay 
     // ── 4. Collect unique real species involved in visible reactions ───
     const speciesSet = new Set()
     for (const rxn of visibleReactions) {
-      rxn.reactants.forEach((r) => {
+      reactionReactants(rxn).forEach((r) => {
         if (isGraphSpecies(r['species name'])) speciesSet.add(r['species name'])
       })
-      rxn.products.forEach((p) => {
+      reactionProducts(rxn).forEach((p) => {
         if (isGraphSpecies(p['species name'])) speciesSet.add(p['species name'])
       })
     }
@@ -187,7 +266,12 @@ export function FlowGraph({ selectedSpecies, rateRange, timeRange, valueDisplay 
     }
 
     for (const rxn of visibleReactions) {
-      for (const edge of getReactionEdges(rxn, rateMap[rxn.name], thirdBodyNames)) {
+      for (const edge of getReactionEdges(
+        rxn,
+        rateMap[reactionNodeId(rxn)],
+        thirdBodyNames,
+        reactionNodeId(rxn)
+      )) {
         upsertLink(edge.source, edge.target, edge.value)
       }
     }
@@ -466,7 +550,7 @@ export function FlowGraph({ selectedSpecies, rateRange, timeRange, valueDisplay 
 
     sim.alpha(0.4).restart()
     return () => sim.stop()
-  }, [selectedSpecies, rateRange, timeRange, reactions, species, results, valueDisplay])
+  }, [selectedSpecies, reactionType, rateRange, timeRange, reactions, species, results, valueDisplay])
 
   // Sync selectedNode → D3 rate label visibility & rect highlight
   useEffect(() => {
@@ -487,20 +571,30 @@ export function FlowGraph({ selectedSpecies, rateRange, timeRange, valueDisplay 
   useEffect(() => {
     const isMuted = (rate) => rate < rateRange.start || rate > rateRange.end
 
+    // Clamp widths to a finite value at or above BASE. Zero-rate edges yield log(0) = -Infinity,
+    // which SVG rejects, falling back to a 1px stroke; because markers scale with stroke width,
+    // the arrowhead disappears. Clamping preserves a minimum-width arrow.
+    const MIN_RATE = 1e-30
     const edgeStrokeWidth = (rate) => {
       const BASE = 2
       const f = rate ?? 0
       if (f < rateRange.start) return BASE
       if (f > rateRange.end) return rateRange.maxArrowWidth + BASE
+
+      let width = BASE
       if (rateRange.isLogScale) {
-        const lo = Math.log(Math.max(rateRange.start, 1e-30))
-        const hi = Math.log(Math.max(rateRange.end, 1e-30))
+        const lo = Math.log(Math.max(rateRange.start, MIN_RATE))
+        const hi = Math.log(Math.max(rateRange.end, MIN_RATE))
         if (hi === lo) return BASE
-        return ((Math.log(f) - lo) / (hi - lo)) * rateRange.maxArrowWidth + BASE
+        width =
+          ((Math.log(Math.max(f, MIN_RATE)) - lo) / (hi - lo)) * rateRange.maxArrowWidth + BASE
+      } else {
+        const range = rateRange.end - rateRange.start
+        if (range === 0) return BASE
+        width = ((f - rateRange.start) / range) * rateRange.maxArrowWidth + BASE
       }
-      const range = rateRange.end - rateRange.start
-      if (range === 0) return BASE
-      return ((f - rateRange.start) / range) * rateRange.maxArrowWidth + BASE
+
+      return Number.isFinite(width) ? Math.max(BASE, width) : BASE
     }
 
     d3.select(ref.current)
