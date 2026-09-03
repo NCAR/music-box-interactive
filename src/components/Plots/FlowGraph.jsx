@@ -12,6 +12,7 @@ import {
   reactionReactants,
 } from './flowUtils'
 import { getReactionTypeLabel } from '../Mechanism/reactions/reactionRegistry'
+import { hasDeclaredName } from '../Mechanism/reactions/reactionUtils'
 
 // Edge/arrow color for in-range rate; out-of-range edges are muted to gray instead.
 const ARROW_COLOR = '#3D96C3'
@@ -56,6 +57,14 @@ const buildReactionLabels = (reactions) => {
       continue
     }
 
+    // A name the mechanism actually declared is the most useful qualifier -- ts1's heterogeneous
+    // reactions repeat a formula across aerosol surfaces and are distinguished only by name
+    // (het1, het7, het12). Prefer it over the type, which collides for exactly those reactions.
+    if (hasDeclaredName(reaction)) {
+      labels.set(reactionNodeId(reaction), `${formula} (${reaction.name})`)
+      continue
+    }
+
     const typeKey = `${formula}::${reaction.type}`
     const typeLabel = getReactionTypeLabel(reaction.type)
 
@@ -64,6 +73,7 @@ const buildReactionLabels = (reactions) => {
       continue
     }
 
+    // Last resort: same formula, same type, no declared name.
     const ordinal = (seen.get(typeKey) ?? 0) + 1
     seen.set(typeKey, ordinal)
     labels.set(reactionNodeId(reaction), `${formula} (${typeLabel} ${ordinal})`)
