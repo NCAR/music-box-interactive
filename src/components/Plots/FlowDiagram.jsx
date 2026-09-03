@@ -130,7 +130,7 @@ export function FlowDiagram() {
           valueDisplay={valueDisplay}
           setValueDisplay={setValueDisplay}
         />
-        <div className="border rounded-lg p-2 xs:p-3 sm:p-4 bg-white h-[50rem]">
+        <div className="border rounded-lg p-2 xs:p-3 sm:p-4 bg-white h-[40rem]">
           <FlowGraph
             selectedSpecies={selectedSpecies}
             reactionType={reactionType}
