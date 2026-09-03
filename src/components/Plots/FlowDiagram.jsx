@@ -116,33 +116,6 @@ export function FlowDiagram() {
   return (
     <Card>
       <CardContent className="space-y-3 xs:space-y-4">
-        {/* Note Box */}
-        <div className="flex items-start gap-2 text-sm text-gray-600 bg-blue-50/40 border border-blue-200 rounded-lg p-3 mt-2 xs:mt-3 sm:mt-4">
-          <StickyNote className="w-5 h-5 flex-shrink-0 mt-0.5" />
-          <div className="flex flex-col gap-1">
-            <CardDescription className="text-base font-semibold">Notes:</CardDescription>
-            <CardDescription className="text-base flex gap-2">
-              <span>•</span>
-              <span>
-                Each arrow shows the flux — the species production or consumption rate,
-                integrated over the selected time range, in mol m-3, and scaled by that
-                species' stoichiometric coefficient in the reaction.
-              </span>
-            </CardDescription>
-            <CardDescription className="text-base flex gap-2">
-              <span>•</span>
-              <span>Absolute: magnitude of the total {"\u00A0"}{"\u00A0"}|{"\u00A0"}{"\u00A0"} Relative: contribution to the total (%)</span>
-            </CardDescription>
-            <CardDescription className="text-base flex gap-2">
-              <span>•</span>
-              <span>
-                Linear: proportional differences in magnitude {"\u00A0"}{"\u00A0"}|{"\u00A0"}{"\u00A0"} Logarithmic: scaled according to
-                the logarithm of the magnitude.
-              </span>
-            </CardDescription>
-          </div>
-        </div>
-
         <FlowPanel
           arrowScaling={arrowScaling}
           setArrowScaling={setArrowScaling}
@@ -173,6 +146,33 @@ export function FlowDiagram() {
             }}
             valueDisplay={valueDisplay}
           />
+        </div>
+
+        {/* Note Box */}
+        <div className="flex items-start gap-2 text-sm text-gray-600 bg-blue-50/40 border border-blue-200 rounded-lg p-3 mt-2 xs:mt-3 sm:mt-4">
+          <StickyNote className="w-5 h-5 flex-shrink-0 mt-0.5" />
+          <div className="flex flex-col gap-1">
+            <CardDescription className="text-base font-semibold">Notes:</CardDescription>
+            <CardDescription className="text-base flex gap-2">
+              <span>•</span>
+              <span>
+                Each arrow shows the flux — the species production or consumption rate,
+                integrated over the selected time range, in mol m-3, and scaled by that
+                species' stoichiometric coefficient in the reaction.
+              </span>
+            </CardDescription>
+            <CardDescription className="text-base flex gap-2">
+              <span>•</span>
+              <span>Absolute: magnitude of the total {"\u00A0"}{"\u00A0"}|{"\u00A0"}{"\u00A0"} Relative: contribution to the total (%)</span>
+            </CardDescription>
+            <CardDescription className="text-base flex gap-2">
+              <span>•</span>
+              <span>
+                Linear: proportional differences in magnitude {"\u00A0"}{"\u00A0"}|{"\u00A0"}{"\u00A0"} Logarithmic: scaled according to
+                the logarithm of the magnitude.
+              </span>
+            </CardDescription>
+          </div>
         </div>
       </CardContent>
     </Card>

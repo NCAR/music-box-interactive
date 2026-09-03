@@ -8,7 +8,7 @@ import mechanismReducer, { addReaction, addSpecies } from '../src/redux/slices/m
 import conditionsReducer from '../src/redux/slices/conditionsSlice'
 import simulationReducer, { setExcludedResults } from '../src/redux/slices/simulationSlice'
 import { FlowGraph } from '../src/components/Plots/FlowGraph'
-import { buildTracerConcentrationKey } from '../src/services/simulation/local/tracer'
+import { buildTracerConcentrationKeys } from '../src/services/simulation/local/tracer'
 
 // The flow diagram identifies reaction nodes by the reaction's id, not its name.
 
@@ -20,9 +20,13 @@ beforeAll(() => {
 
 const SAME_NAME = 'HNO3 + OH -> NO3'
 
-const reaction = (id, type) => ({
+// The generated fallback name for this formula. Passing it means the reaction has no name of
+// its own, so the label falls through to the type-based qualifiers.
+const GENERATED_NAME = 'HNO3 -> NO3'
+
+const reaction = (id, type, name = GENERATED_NAME) => ({
   id,
-  name: SAME_NAME,
+  name,
   type,
   reactants: [{ 'species name': 'HNO3', coefficient: 1 }],
   products: [{ 'species name': 'NO3', coefficient: 1 }],
@@ -42,8 +46,10 @@ const renderGraph = (reactions = REACTIONS) => {
   reactions.forEach((entry) => store.dispatch(addReaction(entry)))
 
   // Tracer concentrations integrate to 5 for the first reaction and 50 for the second.
-  const first = buildTracerConcentrationKey(0, SAME_NAME)
-  const second = buildTracerConcentrationKey(1, SAME_NAME)
+  // Tracer keys are derived from each reaction's own name and index, as run.js does.
+  const [first, second] = reactions.map(
+    (entry, index) => buildTracerConcentrationKeys(index, entry.name)[0]
+  )
   store.dispatch(
     setExcludedResults([
       { time: 0, concentrations: { [first]: 0, [second]: 0 } },
@@ -194,5 +200,25 @@ describe('flow diagram node identity', () => {
 
     expect(labels).toContain('\u2205 → HNO3')
     expect(labels).toContain('NO3 → \u2205')
+  })
+
+  // ts1's heterogeneous reactions repeat a formula across aerosol surfaces and share a type, so
+  // neither the formula nor the type tells them apart -- only the name the mechanism declares.
+  it('prefers a declared name over the type when labels collide', () => {
+    const { container } = renderGraph([
+      reaction('h1', 'USER_DEFINED', 'het1'),
+      reaction('h2', 'USER_DEFINED', 'het7'),
+      reaction('h3', 'USER_DEFINED', 'het12'),
+    ])
+
+    const labels = [...container.querySelectorAll('text')]
+      .map((node) => node.textContent)
+      .filter((text) => text.includes('→'))
+
+    expect(labels.sort()).toEqual([
+      'HNO3 → NO3 (het1)',
+      'HNO3 → NO3 (het12)',
+      'HNO3 → NO3 (het7)',
+    ])
   })
 })
