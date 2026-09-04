@@ -106,7 +106,7 @@ function FluxReactionChip({ reaction, flux }) {
       <button
         type="button"
         onClick={() => setExpanded(false)}
-        className="flex items-center gap-1.5 rounded text-sm font-semibold font-mono text-assist-secondary-foreground break-words focus:outline-none focus-visible:ring-2 focus-visible:ring-assist-secondary-ring"
+        className="w-full flex items-center justify-center gap-1.5 rounded text-sm font-semibold font-mono text-assist-secondary-foreground break-words text-center focus:outline-none focus-visible:ring-2 focus-visible:ring-assist-secondary-ring"
       >
         <span className="break-words">{formula}</span>
         <ChevronUp className="w-4 h-4 flex-shrink-0" />
