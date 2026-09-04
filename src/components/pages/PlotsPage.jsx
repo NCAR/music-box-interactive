@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import { Card, CardContent } from '../ui/card'
 import { Button } from '../ui/button'
-import { SpeciesPlot, ReactionRatesPlot, EnvironmentPlot, FlowDiagram } from '../Plots'
-import { Atom, FlaskConical, Thermometer, Waypoints } from 'lucide-react'
+import { SpeciesPlot, ReactionRatesPlot, EnvironmentPlot, FlowDiagram, Flux } from '../Plots'
+import { Atom, FlaskConical, Thermometer, Waypoints, Activity } from 'lucide-react'
 
 /**
  * PlotsPage Component
@@ -16,6 +16,7 @@ export function PlotsPage() {
     { id: 'reactions', label: 'Reaction Rates', Icon: FlaskConical, component: ReactionRatesPlot },
     { id: 'environment', label: 'Environment', Icon: Thermometer, component: EnvironmentPlot },
     { id: 'flow-diagram', label: 'Flow Diagram', Icon: Waypoints, component: FlowDiagram },
+    { id: 'flux', label: 'Flux', Icon: Activity, component: Flux },
   ]
 
   const ActiveComponent = tabs.find((t) => t.id === activeTab)?.component

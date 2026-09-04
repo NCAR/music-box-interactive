@@ -2,8 +2,10 @@ import { useState, useRef, useCallback, useMemo, useEffect } from 'react'
 import { useSelector } from 'react-redux'
 import { ChevronDown, Check } from 'lucide-react'
 import { useClickOutside } from '../../hooks/useClickOutside'
-import { getSpeciesDisplayName } from './speciesFormat'
+import { getResultSpeciesNames } from './speciesFormat'
 import { Dropdown } from '../ui/dropdown'
+import { RangeBoundInput } from './RangeBoundInput'
+import { TIME_RANGE_UNITS } from './timeRangeUnits'
 import {
   canonicalReactionType,
   getReactionTypeLabel,
@@ -25,66 +27,6 @@ const ARROW_SCALING_OPTIONS = [
   { id: 'linear', label: 'Linear' },
   { id: 'logarithmic', label: 'Logarithmic' },
 ]
-
-const TIME_RANGE_UNITS = [
-  { id: 'seconds', label: 'Seconds', divisor: 1 },
-  { id: 'hours', label: 'Hours', divisor: 3600 },
-]
-
-// `sigDigits` renders in exponential notation, which is required for integrated rates:
-// they run around 1e-6 to 1e-8, and fixed-point rounding would show 1.8e-7 as "0.000000"
-// and commit a literal 0 on blur. Time values are plain magnitudes and pass no sigDigits.
-const formatBound = (raw, divisor, sigDigits) => {
-  const scaled = raw / divisor
-  return String(sigDigits != null ? scaled.toExponential(sigDigits) : scaled)
-}
-
-// Number input that displays values in the selected time unit while storing them in seconds.
-// Commits are clamped to [min, max], keeping a range's start from crossing its end.
-function RangeBoundInput({ value, divisor = 1, onCommit, className, sigDigits, min, max }) {
-  const displayValue = formatBound(value, divisor, sigDigits)
-  const [draft, setDraft] = useState(displayValue)
-
-  useEffect(() => {
-    setDraft(displayValue)
-  }, [displayValue])
-
-  const commit = () => {
-    // Untouched field: committing would round-trip the *displayed* value back into state,
-    // discarding precision the display omits. Merely focusing and leaving must be lossless.
-    if (draft === displayValue) return
-
-    const parsed = parseFloat(draft)
-    if (isNaN(parsed)) {
-      setDraft(displayValue)
-      return
-    }
-
-    let next = parsed * divisor
-    if (Number.isFinite(min)) next = Math.max(min, next)
-    if (Number.isFinite(max)) next = Math.min(max, next)
-
-    // Re-sync the draft explicitly: a clamped entry often equals the value already in
-    // state, so the `value` prop never changes and the effect above won't fire to
-    // replace the out-of-range text the user typed.
-    setDraft(formatBound(next, divisor, sigDigits))
-    onCommit(next)
-  }
-
-  return (
-    <input
-      type="text"
-      inputMode="decimal"
-      value={draft}
-      onChange={(e) => setDraft(e.target.value)}
-      onBlur={commit}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter') commit()
-      }}
-      className={className}
-    />
-  )
-}
 
 /*
  * FlowPanel Component
@@ -133,19 +75,15 @@ export function FlowPanel({
   const activeReactionType = reactionTypeOptions.some((option) => option.value === reactionType)
     ? reactionType
     : ''
+
+  // The fallback only updates the dropdown display. Reset the shared filter state,
+  // or the graph may keep filtering by a type that the UI shows as "All".
+  useEffect(() => {
+    if (activeReactionType !== reactionType) setReactionType(activeReactionType)
+  }, [activeReactionType, reactionType, setReactionType])
   // Upper bound for Time Range — results never extend past the simulation length.
   const duration = useSelector((state) => state.conditions.basic.duration)
-  const speciesNames = useMemo(() => {
-    if (!Array.isArray(results) || results.length === 0) return []
-    const firstPoint = results[0]
-    const keys =
-      firstPoint?.concentrations && typeof firstPoint.concentrations === 'object'
-        ? Object.keys(firstPoint.concentrations)
-        : Object.keys(firstPoint).filter(
-            (key) => key !== 'time' && key !== 'timestamp' && key !== 'date' && key !== 'concentrations'
-          )
-    return keys.map(getSpeciesDisplayName)
-  }, [results])
+  const speciesNames = useMemo(() => getResultSpeciesNames(results), [results])
   const displaySpecies = selectedSpecies || []
 
   const [initialized, setInitialized] = useState(false)
@@ -214,8 +152,15 @@ export function FlowPanel({
       })
   }, [speciesNames, speciesSearch])
 
-  const visibleFilteredSpecies = filteredSpecies.slice(0, SPECIES_CHIP_VISIBLE)
-  const overflowFilteredSpecies = filteredSpecies.slice(SPECIES_CHIP_VISIBLE)
+  // Selected species stay pinned in the visible row, even beyond the cap, until deselected,
+  // so active filters are never hidden behind "+N others".
+  const baseVisibleFilteredSpecies = filteredSpecies.slice(0, SPECIES_CHIP_VISIBLE)
+  const overflowCandidates = filteredSpecies.slice(SPECIES_CHIP_VISIBLE)
+  const pinnedOverflowSpecies = overflowCandidates.filter((name) => displaySpecies.includes(name))
+  const visibleFilteredSpecies = [...baseVisibleFilteredSpecies, ...pinnedOverflowSpecies]
+  const overflowFilteredSpecies = overflowCandidates.filter(
+    (name) => !displaySpecies.includes(name)
+  )
 
   const allFilteredSelected =
     filteredSpecies.length > 0 && filteredSpecies.every((name) => displaySpecies.includes(name))
