@@ -195,8 +195,16 @@ export function FluxAnalysis() {
     return speciesNames.filter((name) => name.toLowerCase().startsWith(search))
   }, [speciesNames, speciesSearch])
 
-  const visibleSpeciesNames = filteredSpeciesNames.slice(0, SPECIES_VISIBLE)
-  const overflowSpeciesNames = filteredSpeciesNames.slice(SPECIES_VISIBLE)
+  // A species selected from the overflow menu stays visible beyond the cap until deselected.
+  const baseVisibleSpeciesNames = filteredSpeciesNames.slice(0, SPECIES_VISIBLE)
+  const overflowCandidates = filteredSpeciesNames.slice(SPECIES_VISIBLE)
+  const pinnedOverflowSpeciesNames = overflowCandidates.filter((name) =>
+    selectedSpeciesNames.includes(name)
+  )
+  const visibleSpeciesNames = [...baseVisibleSpeciesNames, ...pinnedOverflowSpeciesNames]
+  const overflowSpeciesNames = overflowCandidates.filter(
+    (name) => !selectedSpeciesNames.includes(name)
+  )
 
   const toggleReactionType = (type) => {
     setSelectedReactionTypes((current) =>
