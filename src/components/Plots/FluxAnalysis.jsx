@@ -1,6 +1,6 @@
 import { useMemo, useRef, useState } from 'react'
 import { useSelector } from 'react-redux'
-import { Filter, ChevronDown, ChevronUp, Check, Waypoints } from 'lucide-react'
+import { ChevronDown, ChevronUp, Check, Waypoints } from 'lucide-react'
 import { useClickOutside } from '../../hooks/useClickOutside'
 import { getSpeciesDisplayName } from './speciesFormat'
 import { computeIntegratedReactionRate, reactionReactants, reactionProducts } from './flowUtils'
@@ -275,16 +275,9 @@ export function FluxAnalysis() {
   return (
     <Card>
       <CardContent className="space-y-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2 text-sm font-semibold text-gray-800">
-            <Filter className="w-4 h-4" />
-            Filter
-            <span className="text-gray-300">|</span>
-            <button
-              type="button"
-              onClick={resetFilters}
-              className="text-blue-600 hover:underline font-semibold"
-            >
+        <div className="flex items-center justify-between pt-3">
+          <div className="flex items-center gap-2 text-sm text-gray-800">
+            <button type="button" onClick={resetFilters} className="text-green-700 hover:underline">
               Reset
             </button>
           </div>
@@ -293,7 +286,7 @@ export function FluxAnalysis() {
             <button
               type="button"
               onClick={() => setSortMenuOpen((open) => !open)}
-              className="flex items-center gap-1 text-sm font-semibold text-gray-800 hover:text-gray-900"
+              className="flex items-center gap-1 text-sm text-gray-800 hover:text-gray-900"
             >
               {sortOption.label}
               <ChevronDown className="w-3.5 h-3.5" />
