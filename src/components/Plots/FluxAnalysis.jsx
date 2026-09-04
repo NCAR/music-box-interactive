@@ -4,10 +4,17 @@ import { Filter, ChevronDown, ChevronUp, Check, Waypoints } from 'lucide-react'
 import { useClickOutside } from '../../hooks/useClickOutside'
 import { getSpeciesDisplayName } from './speciesFormat'
 import { computeIntegratedReactionRate, reactionReactants, reactionProducts } from './flowUtils'
+import {
+  canonicalReactionType,
+  getReactionParameters,
+  getReactionTypeLabel,
+} from '../Mechanism/reactions/reactionRegistry'
+import { REACTION_COMPONENT_KEYS } from '../../services/simulation/local/mechanism'
+import { ITEM_PANEL } from '../Mechanism/fieldStyles'
 import { Card, CardContent } from '../ui/card'
 
 // Species rows shown before the list collapses into a "+N others" popover.
-const SPECIES_VISIBLE = 5
+const SPECIES_VISIBLE = 10
 
 const SORT_OPTIONS = [
   { id: 'asc', label: 'Flux: Low to High' },
@@ -29,11 +36,105 @@ const formatComponents = (entries) => {
 const formatReactionFormula = (reaction) =>
   `${formatComponents(reactionReactants(reaction))} → ${formatComponents(reactionProducts(reaction))}`
 
-// Exponential notation only where it helps: flux values span many orders of magnitude.
-const formatFlux = (value) => {
+// Exponential notation only where it helps: rate/flux values span many orders of magnitude.
+const formatValue = (value) => {
+  if (value === undefined || value === null || value === '') return '—'
+  if (typeof value !== 'number') return String(value)
   if (!Number.isFinite(value) || value === 0) return '0'
   const magnitude = Math.abs(value)
   return magnitude < 1e-3 || magnitude >= 1e6 ? value.toExponential(2) : String(value)
+}
+
+// Structural fields aren't rate parameters; everything else on the reaction is shown as one.
+const NON_PARAMETER_KEYS = new Set([
+  'id',
+  'type',
+  'name',
+  'gas phase',
+  'gas-phase species',
+  ...REACTION_COMPONENT_KEYS,
+])
+
+const reactionParameters = (reaction) => {
+  const declared = getReactionParameters(reaction.type)
+  const declaredKeys = declared.map((field) => field.key)
+
+  const carried = Object.entries(reaction).filter(
+    ([key, value]) =>
+      !NON_PARAMETER_KEYS.has(key) &&
+      !key.startsWith('__') &&
+      value !== undefined &&
+      value !== null &&
+      value !== ''
+  )
+
+  return [
+    ...declared.map((field) => ({ ...field, value: reaction[field.key] })),
+    ...carried
+      .filter(([key]) => !declaredKeys.includes(key))
+      .map(([key, value]) => ({ key, value })),
+  ]
+}
+
+// Collapsed: a rectangular chip showing the formula and flux. Click to expand into a panel
+// with the reaction's type and rate parameters.
+function FluxReactionChip({ reaction, flux }) {
+  const [expanded, setExpanded] = useState(false)
+  const formula = formatReactionFormula(reaction)
+  const parameters = reactionParameters(reaction)
+
+  if (!expanded) {
+    return (
+      <button
+        type="button"
+        onClick={() => setExpanded(true)}
+        className={`${ITEM_PANEL} text-left flex flex-col gap-1.5 hover:bg-gray-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-assist-secondary-ring`}
+      >
+        <div className="flex items-center justify-between gap-2">
+          <span className="font-mono text-sm font-semibold text-gray-900 break-words">
+            {formula}
+          </span>
+          <ChevronDown className="w-3.5 h-3.5 flex-shrink-0 text-gray-400" />
+        </div>
+        <span className="text-sm text-gray-600">Flux: {formatValue(flux)} mol m⁻³</span>
+      </button>
+    )
+  }
+
+  return (
+    <div className={ITEM_PANEL}>
+      <button
+        type="button"
+        onClick={() => setExpanded(false)}
+        className="flex items-center gap-1.5 rounded text-sm font-semibold font-mono text-gray-900 break-words focus:outline-none focus-visible:ring-2 focus-visible:ring-assist-secondary-ring"
+      >
+        <span className="break-words">{formula}</span>
+        <ChevronUp className="w-4 h-4 flex-shrink-0" />
+      </button>
+
+      <p className="mt-1 text-sm text-gray-600">Flux: {formatValue(flux)} mol m⁻³</p>
+
+      <div className="mt-3 flex flex-col gap-2">
+        <div className="flex items-center justify-between gap-3 text-sm">
+          <span className="text-gray-500 flex-shrink-0">Type</span>
+          <span className="font-mono text-gray-800 truncate" title={reaction.type}>
+            {reaction.type}
+          </span>
+        </div>
+        {parameters.map((field) => (
+          <div key={field.key} className="flex items-center justify-between gap-3 text-sm">
+            <span className="text-gray-500 flex-shrink-0">{field.key}</span>
+            <span
+              className="font-mono text-gray-800 truncate"
+              title={String(formatValue(field.value))}
+            >
+              {formatValue(field.value)}
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
 }
 
 /*
@@ -49,11 +150,11 @@ export function FluxAnalysis() {
   const [reactionsOpen, setReactionsOpen] = useState(true)
   const [speciesOpen, setSpeciesOpen] = useState(true)
   // Empty selection means "no filter applied" -- every reaction/species passes.
-  const [selectedReactionIds, setSelectedReactionIds] = useState([])
+  const [selectedReactionTypes, setSelectedReactionTypes] = useState([])
   const [selectedSpeciesNames, setSelectedSpeciesNames] = useState([])
   const [speciesSearch, setSpeciesSearch] = useState('')
   const [speciesOverflowOpen, setSpeciesOverflowOpen] = useState(false)
-  const [sortOrder, setSortOrder] = useState('asc')
+  const [sortOrder, setSortOrder] = useState('desc')
   const [sortMenuOpen, setSortMenuOpen] = useState(false)
 
   const speciesOverflowRef = useRef(null)
@@ -83,9 +184,9 @@ export function FluxAnalysis() {
   const visibleSpeciesNames = filteredSpeciesNames.slice(0, SPECIES_VISIBLE)
   const overflowSpeciesNames = filteredSpeciesNames.slice(SPECIES_VISIBLE)
 
-  const toggleReaction = (id) => {
-    setSelectedReactionIds((current) =>
-      current.includes(id) ? current.filter((x) => x !== id) : [...current, id]
+  const toggleReactionType = (type) => {
+    setSelectedReactionTypes((current) =>
+      current.includes(type) ? current.filter((x) => x !== type) : [...current, type]
     )
   }
 
@@ -96,10 +197,21 @@ export function FluxAnalysis() {
   }
 
   const resetFilters = () => {
-    setSelectedReactionIds([])
+    setSelectedReactionTypes([])
     setSelectedSpeciesNames([])
     setSpeciesSearch('')
   }
+
+  const reactionTypeCounts = useMemo(() => {
+    const counts = new Map()
+    for (const reaction of reactions ?? []) {
+      const type = canonicalReactionType(reaction.type || 'UNKNOWN')
+      counts.set(type, (counts.get(type) ?? 0) + 1)
+    }
+    return [...counts.entries()]
+      .map(([type, count]) => ({ type, count, label: getReactionTypeLabel(type) }))
+      .sort((a, b) => a.label.localeCompare(b.label))
+  }, [reactions])
 
   const reactionInvolvesSpecies = (reaction) => {
     if (selectedSpeciesNames.length === 0) return true
@@ -119,7 +231,8 @@ export function FluxAnalysis() {
       .map((reaction, index) => ({ reaction, index }))
       .filter(
         ({ reaction }) =>
-          (selectedReactionIds.length === 0 || selectedReactionIds.includes(reaction.id)) &&
+          (selectedReactionTypes.length === 0 ||
+            selectedReactionTypes.includes(canonicalReactionType(reaction.type))) &&
           reactionInvolvesSpecies(reaction)
       )
       .map(({ reaction, index }) => ({
@@ -135,7 +248,7 @@ export function FluxAnalysis() {
       .sort((a, b) => (sortOrder === 'asc' ? a.flux - b.flux : b.flux - a.flux))
   }, [
     reactions,
-    selectedReactionIds,
+    selectedReactionTypes,
     selectedSpeciesNames,
     simulation.excludedResults,
     duration,
@@ -230,22 +343,20 @@ export function FluxAnalysis() {
 
               {reactionsOpen && (
                 <div className="max-h-64 overflow-y-auto flex flex-col gap-0.5 pr-1">
-                  {(reactions ?? []).map((reaction) => {
-                    const formula = formatReactionFormula(reaction)
-                    const selected = selectedReactionIds.includes(reaction.id)
+                  {reactionTypeCounts.map(({ type, count, label }) => {
+                    const selected = selectedReactionTypes.includes(type)
                     return (
                       <button
-                        key={reaction.id}
+                        key={type}
                         type="button"
-                        onClick={() => toggleReaction(reaction.id)}
-                        title={formula}
-                        className={`text-left text-sm font-mono truncate px-1.5 py-1 rounded ${
+                        onClick={() => toggleReactionType(type)}
+                        className={`text-left text-sm px-1.5 py-1 rounded ${
                           selected
-                            ? 'text-blue-600 font-semibold bg-blue-50'
+                            ? 'text-assist-secondary-foreground font-semibold bg-assist-secondary'
                             : 'text-gray-600 hover:bg-gray-50'
                         }`}
                       >
-                        {formula}
+                        {label} ({count})
                       </button>
                     )
                   })}
@@ -286,7 +397,7 @@ export function FluxAnalysis() {
                           onClick={() => toggleSpecies(name)}
                           className={`text-left text-sm px-1.5 py-1 rounded ${
                             selected
-                              ? 'text-blue-600 font-semibold bg-blue-50'
+                              ? 'text-assist-secondary-foreground font-semibold bg-assist-secondary'
                               : 'text-gray-600 hover:bg-gray-50'
                           }`}
                         >
@@ -335,23 +446,15 @@ export function FluxAnalysis() {
             </div>
           </div>
 
-          {/* Reaction cards */}
-          <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 content-start">
+          {/* Reaction chips */}
+          <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 content-start items-start">
             {visibleReactions.length === 0 ? (
               <p className="text-sm text-gray-500 col-span-full">
                 No reactions match the current filters.
               </p>
             ) : (
               visibleReactions.map(({ reaction, flux }) => (
-                <div
-                  key={reaction.id}
-                  className="rounded-2xl border border-gray-300 bg-white p-4 flex flex-col gap-1.5"
-                >
-                  <span className="font-mono text-sm font-semibold text-gray-900 break-words">
-                    {formatReactionFormula(reaction)}
-                  </span>
-                  <span className="text-sm text-gray-600">Flux: {formatFlux(flux)} mol m⁻³</span>
-                </div>
+                <FluxReactionChip key={reaction.id} reaction={reaction} flux={flux} />
               ))
             )}
           </div>
