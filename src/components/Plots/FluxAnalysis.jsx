@@ -11,6 +11,7 @@ import {
 } from '../Mechanism/reactions/reactionRegistry'
 import { REACTION_COMPONENT_KEYS } from '../../services/simulation/local/mechanism'
 import { ITEM_PANEL } from '../Mechanism/fieldStyles'
+import { RangeBoundInput, TIME_RANGE_UNITS } from './RangeBoundInput'
 import { Card, CardContent } from '../ui/card'
 
 // Species rows shown before the list collapses into a "+N others" popover.
@@ -149,18 +150,31 @@ export function FluxAnalysis() {
 
   const [reactionsOpen, setReactionsOpen] = useState(true)
   const [speciesOpen, setSpeciesOpen] = useState(true)
+  const [timeRangeOpen, setTimeRangeOpen] = useState(true)
   // Empty selection means "no filter applied" -- every reaction/species passes.
   const [selectedReactionTypes, setSelectedReactionTypes] = useState([])
   const [selectedSpeciesNames, setSelectedSpeciesNames] = useState([])
   const [speciesSearch, setSpeciesSearch] = useState('')
   const [speciesOverflowOpen, setSpeciesOverflowOpen] = useState(false)
+  const [timeRange, setTimeRange] = useState({ start: 0, end: duration })
+  const [timeRangeUnitId, setTimeRangeUnitId] = useState('seconds')
+  const [timeRangeUnitMenuOpen, setTimeRangeUnitMenuOpen] = useState(false)
   const [sortOrder, setSortOrder] = useState('desc')
   const [sortMenuOpen, setSortMenuOpen] = useState(false)
 
   const speciesOverflowRef = useRef(null)
   const sortMenuRef = useRef(null)
+  const timeRangeUnitMenuRef = useRef(null)
   useClickOutside(speciesOverflowRef, () => setSpeciesOverflowOpen(false), speciesOverflowOpen)
   useClickOutside(sortMenuRef, () => setSortMenuOpen(false), sortMenuOpen)
+  useClickOutside(
+    timeRangeUnitMenuRef,
+    () => setTimeRangeUnitMenuOpen(false),
+    timeRangeUnitMenuOpen
+  )
+
+  const timeRangeUnit =
+    TIME_RANGE_UNITS.find((unit) => unit.id === timeRangeUnitId) ?? TIME_RANGE_UNITS[0]
 
   const speciesNames = useMemo(() => {
     const results = simulation.results
@@ -200,6 +214,7 @@ export function FluxAnalysis() {
     setSelectedReactionTypes([])
     setSelectedSpeciesNames([])
     setSpeciesSearch('')
+    setTimeRange({ start: 0, end: duration })
   }
 
   const reactionTypeCounts = useMemo(() => {
@@ -224,8 +239,8 @@ export function FluxAnalysis() {
   const visibleReactions = useMemo(() => {
     if (!Array.isArray(reactions)) return []
 
-    const timeStart = 0
-    const timeEnd = duration ?? Infinity
+    const timeStart = timeRange.start ?? 0
+    const timeEnd = timeRange.end ?? duration ?? Infinity
 
     return reactions
       .map((reaction, index) => ({ reaction, index }))
@@ -252,6 +267,8 @@ export function FluxAnalysis() {
     selectedSpeciesNames,
     simulation.excludedResults,
     duration,
+    timeRange.start,
+    timeRange.end,
     sortOrder,
   ])
 
@@ -433,6 +450,81 @@ export function FluxAnalysis() {
                         )}
                       </div>
                     )}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div>
+              <button
+                type="button"
+                onClick={() => setTimeRangeOpen((open) => !open)}
+                className="w-full flex items-center justify-between text-sm font-bold text-gray-900 mb-2"
+              >
+                Time Range
+                {timeRangeOpen ? (
+                  <ChevronUp className="w-4 h-4" />
+                ) : (
+                  <ChevronDown className="w-4 h-4" />
+                )}
+              </button>
+
+              {timeRangeOpen && (
+                <div className="flex flex-col gap-2">
+                  <div className="relative" ref={timeRangeUnitMenuRef}>
+                    <button
+                      type="button"
+                      onClick={() => setTimeRangeUnitMenuOpen((open) => !open)}
+                      className="flex items-center justify-between gap-1 w-full h-8 px-2 border border-gray-300 rounded-lg text-sm text-gray-800 hover:bg-gray-50"
+                    >
+                      {timeRangeUnit.label}
+                      <ChevronDown className="w-3.5 h-3.5 flex-shrink-0" />
+                    </button>
+
+                    {timeRangeUnitMenuOpen && (
+                      <div className="absolute z-10 mt-1 w-full bg-white border border-gray-300 rounded-lg shadow-lg py-1">
+                        {TIME_RANGE_UNITS.map((unit) => (
+                          <button
+                            key={unit.id}
+                            type="button"
+                            onClick={() => {
+                              setTimeRangeUnitId(unit.id)
+                              setTimeRangeUnitMenuOpen(false)
+                            }}
+                            className="w-full flex items-center gap-2 text-left text-sm px-3 py-1.5 text-gray-800 hover:bg-gray-100"
+                          >
+                            <Check
+                              className={`w-3.5 h-3.5 flex-shrink-0 ${
+                                timeRangeUnitId === unit.id ? 'opacity-100' : 'opacity-0'
+                              }`}
+                            />
+                            {unit.label}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="flex items-center border border-gray-300 rounded-lg bg-white">
+                    <RangeBoundInput
+                      value={timeRange.start}
+                      divisor={timeRangeUnit.divisor}
+                      min={0}
+                      max={timeRange.end}
+                      onCommit={(start) => setTimeRange({ start, end: timeRange.end })}
+                      className="w-1/2 h-8 px-2 bg-white text-gray-900 rounded-l-lg text-sm text-center focus:outline-none focus:relative focus:z-10 focus:ring-2 focus:ring-blue-600"
+                    />
+                    <span className="flex items-center justify-center h-8 px-1 text-gray-400 font-normal bg-white">
+                      –
+                    </span>
+                    <RangeBoundInput
+                      value={timeRange.end}
+                      divisor={timeRangeUnit.divisor}
+                      min={timeRange.start}
+                      max={duration}
+                      onCommit={(end) => setTimeRange({ start: timeRange.start, end })}
+                      className="w-1/2 h-8 px-2 bg-white text-gray-900 rounded-r-lg text-sm text-center focus:outline-none focus:relative focus:z-10 focus:ring-2 focus:ring-blue-600"
+                    />
                   </div>
                 </div>
               )}
