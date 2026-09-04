@@ -139,11 +139,11 @@ function FluxReactionChip({ reaction, flux }) {
 }
 
 /*
- * FluxAnalysis Component
+ * Flux Component
  * Filter-and-browse view of reaction flux: a sidebar of reaction/species filters next to a
  * sortable grid of reaction cards, each showing its formula and integrated flux.
  */
-export function FluxAnalysis() {
+export function Flux() {
   const simulation = useSelector((state) => state.simulation)
   const reactions = useSelector((state) => state.mechanism.reactions)
   const duration = useSelector((state) => state.conditions.basic.duration)
