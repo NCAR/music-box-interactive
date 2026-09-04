@@ -4,7 +4,8 @@ import { ChevronDown, Check } from 'lucide-react'
 import { useClickOutside } from '../../hooks/useClickOutside'
 import { getSpeciesDisplayName } from './speciesFormat'
 import { Dropdown } from '../ui/dropdown'
-import { RangeBoundInput, TIME_RANGE_UNITS } from './RangeBoundInput'
+import { RangeBoundInput } from './RangeBoundInput'
+import { TIME_RANGE_UNITS } from './timeRangeUnits'
 import {
   canonicalReactionType,
   getReactionTypeLabel,

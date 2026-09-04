@@ -11,7 +11,8 @@ import {
 } from '../Mechanism/reactions/reactionRegistry'
 import { REACTION_COMPONENT_KEYS } from '../../services/simulation/local/mechanism'
 import { ITEM_PANEL } from '../Mechanism/fieldStyles'
-import { RangeBoundInput, TIME_RANGE_UNITS } from './RangeBoundInput'
+import { RangeBoundInput } from './RangeBoundInput'
+import { TIME_RANGE_UNITS } from './timeRangeUnits'
 import { Card, CardContent } from '../ui/card'
 
 // Species rows shown before the list collapses into a "+N others" popover.
@@ -36,6 +37,16 @@ const formatComponents = (entries) => {
 
 const formatReactionFormula = (reaction) =>
   `${formatComponents(reactionReactants(reaction))} → ${formatComponents(reactionProducts(reaction))}`
+
+// A species filter matches reactions where the species is a reactant or product.
+// An empty filter means no filter is applied. All reactions pass.
+const reactionInvolvesSpecies = (reaction, selectedSpeciesNames) => {
+  if (selectedSpeciesNames.length === 0) return true
+  const names = [...reactionReactants(reaction), ...reactionProducts(reaction)].map(
+    (entry) => entry['species name']
+  )
+  return names.some((name) => selectedSpeciesNames.includes(name))
+}
 
 // Exponential notation only where it helps: rate/flux values span many orders of magnitude.
 const formatValue = (value) => {
@@ -236,14 +247,6 @@ export function Flux() {
       .sort((a, b) => a.label.localeCompare(b.label))
   }, [reactions])
 
-  const reactionInvolvesSpecies = (reaction) => {
-    if (selectedSpeciesNames.length === 0) return true
-    const names = [...reactionReactants(reaction), ...reactionProducts(reaction)].map(
-      (entry) => entry['species name']
-    )
-    return names.some((name) => selectedSpeciesNames.includes(name))
-  }
-
   const visibleReactions = useMemo(() => {
     if (!Array.isArray(reactions)) return []
 
@@ -256,7 +259,7 @@ export function Flux() {
         ({ reaction }) =>
           (selectedReactionTypes.length === 0 ||
             selectedReactionTypes.includes(canonicalReactionType(reaction.type))) &&
-          reactionInvolvesSpecies(reaction)
+          reactionInvolvesSpecies(reaction, selectedSpeciesNames)
       )
       .map(({ reaction, index }) => ({
         reaction,
