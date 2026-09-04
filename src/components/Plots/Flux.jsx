@@ -52,15 +52,16 @@ const reactionInvolvesSpecies = (reaction, selectedSpeciesNames) => {
 const formatValue = (value) => {
   if (value === undefined || value === null || value === '') return '—'
   if (typeof value !== 'number') return String(value)
-  // NaN/Infinity mean the computation failed -- showing them as "0" would hide a real solver
-  // error behind what looks like a legitimate zero-flux reaction.
+
+  // NaN/Infinity indicate a computation failure. Displaying them as 0 would mask a solver
+  // error as a legitimate zero-flux reaction.
   if (!Number.isFinite(value)) return Number.isNaN(value) ? 'N/A' : String(value)
   if (value === 0) return '0'
   const magnitude = Math.abs(value)
   return magnitude < 1e-3 || magnitude >= 1e6 ? value.toExponential(2) : String(value)
 }
 
-// Structural fields aren't rate parameters; everything else on the reaction is shown as one.
+// Structural fields aren't rate parameters. All other reaction fields are shown as rate parameters.
 const NON_PARAMETER_KEYS = new Set([
   'id',
   'type',
@@ -91,8 +92,8 @@ const reactionParameters = (reaction) => {
   ]
 }
 
-// Collapsed: a rectangular chip showing the formula and flux. Click to expand into a panel
-// with the reaction's type and rate parameters.
+// Collapsed: shows the formula and flux in a compact chip.
+// Click to expand and view the reaction type and rate parameters.
 function FluxReactionChip({ reaction, flux }) {
   const [expanded, setExpanded] = useState(false)
   const formula = formatReactionFormula(reaction)
@@ -154,8 +155,8 @@ function FluxReactionChip({ reaction, flux }) {
 
 /*
  * Flux Component
- * Filter-and-browse view of reaction flux: a sidebar of reaction/species filters next to a
- * sortable grid of reaction cards, each showing its formula and integrated flux.
+ * Filterable reaction-flux view with a sidebar for reaction/species filters and a sortable
+ * grid of cards showing each reaction's formula and integrated flux.
  */
 export function Flux() {
   const simulation = useSelector((state) => state.simulation)
@@ -165,7 +166,7 @@ export function Flux() {
   const [reactionsOpen, setReactionsOpen] = useState(true)
   const [speciesOpen, setSpeciesOpen] = useState(true)
   const [timeRangeOpen, setTimeRangeOpen] = useState(true)
-  // Empty selection means "no filter applied" -- every reaction/species passes.
+  // Empty selection means "no filter applied".
   const [selectedReactionTypes, setSelectedReactionTypes] = useState([])
   const [selectedSpeciesNames, setSelectedSpeciesNames] = useState([])
   const [speciesSearch, setSpeciesSearch] = useState('')
@@ -176,8 +177,8 @@ export function Flux() {
   const [sortOrder, setSortOrder] = useState('desc')
   const [sortMenuOpen, setSortMenuOpen] = useState(false)
 
-  // The initial state only captures `duration` at first mount -- if the simulation is rerun
-  // with a different duration while this tab stays mounted, resync to the new full range.
+  // The initial state captures duration only on mount; resync if a rerun changes the duration
+  // while the tab remains mounted.
   useEffect(() => {
     setTimeRange({ start: 0, end: duration })
   }, [duration])

@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react'
 import { formatBound } from './timeRangeUnits'
 
-// Number input that displays values in the selected time unit while storing them in seconds.
-// Commits are clamped to [min, max], keeping a range's start from crossing its end.
+// Displays values in the selected time unit while storing them in seconds.
+// Clamps commits to [min, max] to prevent the range start from exceeding the end.
 export function RangeBoundInput({ value, divisor = 1, onCommit, className, sigDigits, min, max }) {
   const displayValue = formatBound(value, divisor, sigDigits)
   const [draft, setDraft] = useState(displayValue)
@@ -12,8 +12,8 @@ export function RangeBoundInput({ value, divisor = 1, onCommit, className, sigDi
   }, [displayValue])
 
   const commit = () => {
-    // Untouched field: committing would round-trip the *displayed* value back into state,
-    // discarding precision the display omits. Merely focusing and leaving must be lossless.
+    // Untouched field: committing would discard precision omitted from the display.
+    // Focusing and leaving the field should be lossless.
     if (draft === displayValue) return
 
     const parsed = parseFloat(draft)
@@ -26,9 +26,8 @@ export function RangeBoundInput({ value, divisor = 1, onCommit, className, sigDi
     if (Number.isFinite(min)) next = Math.max(min, next)
     if (Number.isFinite(max)) next = Math.min(max, next)
 
-    // Re-sync the draft explicitly: a clamped entry often equals the value already in
-    // state, so the `value` prop never changes and the effect above won't fire to
-    // replace the out-of-range text the user typed.
+    // Re-sync the draft after clamping: state may already contain the clamped value, so the
+    // unchanged value prop won't trigger the effect to replace the out-of-range input.
     setDraft(formatBound(next, divisor, sigDigits))
     onCommit(next)
   }
