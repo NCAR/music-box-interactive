@@ -1,8 +1,8 @@
-import { useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useSelector } from 'react-redux'
 import { ChevronDown, ChevronUp, Check, Waypoints } from 'lucide-react'
 import { useClickOutside } from '../../hooks/useClickOutside'
-import { getSpeciesDisplayName } from './speciesFormat'
+import { getResultSpeciesNames } from './speciesFormat'
 import { computeIntegratedReactionRate, reactionReactants, reactionProducts } from './flowUtils'
 import {
   canonicalReactionType,
@@ -52,7 +52,10 @@ const reactionInvolvesSpecies = (reaction, selectedSpeciesNames) => {
 const formatValue = (value) => {
   if (value === undefined || value === null || value === '') return '—'
   if (typeof value !== 'number') return String(value)
-  if (!Number.isFinite(value) || value === 0) return '0'
+  // NaN/Infinity mean the computation failed -- showing them as "0" would hide a real solver
+  // error behind what looks like a legitimate zero-flux reaction.
+  if (!Number.isFinite(value)) return Number.isNaN(value) ? 'N/A' : String(value)
+  if (value === 0) return '0'
   const magnitude = Math.abs(value)
   return magnitude < 1e-3 || magnitude >= 1e6 ? value.toExponential(2) : String(value)
 }
@@ -173,6 +176,12 @@ export function Flux() {
   const [sortOrder, setSortOrder] = useState('desc')
   const [sortMenuOpen, setSortMenuOpen] = useState(false)
 
+  // The initial state only captures `duration` at first mount -- if the simulation is rerun
+  // with a different duration while this tab stays mounted, resync to the new full range.
+  useEffect(() => {
+    setTimeRange({ start: 0, end: duration })
+  }, [duration])
+
   const speciesOverflowRef = useRef(null)
   const sortMenuRef = useRef(null)
   const timeRangeUnitMenuRef = useRef(null)
@@ -187,18 +196,10 @@ export function Flux() {
   const timeRangeUnit =
     TIME_RANGE_UNITS.find((unit) => unit.id === timeRangeUnitId) ?? TIME_RANGE_UNITS[0]
 
-  const speciesNames = useMemo(() => {
-    const results = simulation.results
-    if (!Array.isArray(results) || results.length === 0) return []
-    const firstPoint = results[0]
-    const keys =
-      firstPoint?.concentrations && typeof firstPoint.concentrations === 'object'
-        ? Object.keys(firstPoint.concentrations)
-        : Object.keys(firstPoint).filter(
-            (key) => key !== 'time' && key !== 'timestamp' && key !== 'date' && key !== 'concentrations'
-          )
-    return keys.map(getSpeciesDisplayName)
-  }, [simulation.results])
+  const speciesNames = useMemo(
+    () => getResultSpeciesNames(simulation.results),
+    [simulation.results]
+  )
 
   const filteredSpeciesNames = useMemo(() => {
     const search = speciesSearch.trim().toLowerCase()
@@ -263,6 +264,9 @@ export function Flux() {
       )
       .map(({ reaction, index }) => ({
         reaction,
+        // Reactions have no `id` field; the position in the unfiltered mechanism array is the
+        // only stable, unique identity available for React's reconciliation key.
+        key: reaction.id ?? index,
         flux: computeIntegratedReactionRate(
           reaction,
           index,
@@ -549,8 +553,8 @@ export function Flux() {
                 No reactions match the current filters.
               </p>
             ) : (
-              visibleReactions.map(({ reaction, flux }) => (
-                <FluxReactionChip key={reaction.id} reaction={reaction} flux={flux} />
+              visibleReactions.map(({ reaction, key, flux }) => (
+                <FluxReactionChip key={key} reaction={reaction} flux={flux} />
               ))
             )}
           </div>

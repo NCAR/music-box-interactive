@@ -2,7 +2,7 @@ import { useState, useRef, useCallback, useMemo, useEffect } from 'react'
 import { useSelector } from 'react-redux'
 import { ChevronDown, Check } from 'lucide-react'
 import { useClickOutside } from '../../hooks/useClickOutside'
-import { getSpeciesDisplayName } from './speciesFormat'
+import { getResultSpeciesNames } from './speciesFormat'
 import { Dropdown } from '../ui/dropdown'
 import { RangeBoundInput } from './RangeBoundInput'
 import { TIME_RANGE_UNITS } from './timeRangeUnits'
@@ -75,19 +75,15 @@ export function FlowPanel({
   const activeReactionType = reactionTypeOptions.some((option) => option.value === reactionType)
     ? reactionType
     : ''
+
+  // The fallback above only fixes the dropdown's own display -- reset the shared filter state
+  // too, or the graph keeps filtering by the now-vanished type while the UI claims "All".
+  useEffect(() => {
+    if (activeReactionType !== reactionType) setReactionType(activeReactionType)
+  }, [activeReactionType, reactionType, setReactionType])
   // Upper bound for Time Range — results never extend past the simulation length.
   const duration = useSelector((state) => state.conditions.basic.duration)
-  const speciesNames = useMemo(() => {
-    if (!Array.isArray(results) || results.length === 0) return []
-    const firstPoint = results[0]
-    const keys =
-      firstPoint?.concentrations && typeof firstPoint.concentrations === 'object'
-        ? Object.keys(firstPoint.concentrations)
-        : Object.keys(firstPoint).filter(
-            (key) => key !== 'time' && key !== 'timestamp' && key !== 'date' && key !== 'concentrations'
-          )
-    return keys.map(getSpeciesDisplayName)
-  }, [results])
+  const speciesNames = useMemo(() => getResultSpeciesNames(results), [results])
   const displaySpecies = selectedSpecies || []
 
   const [initialized, setInitialized] = useState(false)
@@ -156,8 +152,15 @@ export function FlowPanel({
       })
   }, [speciesNames, speciesSearch])
 
-  const visibleFilteredSpecies = filteredSpecies.slice(0, SPECIES_CHIP_VISIBLE)
-  const overflowFilteredSpecies = filteredSpecies.slice(SPECIES_CHIP_VISIBLE)
+  // A species selected from the overflow menu stays pinned in the visible row -- and past the
+  // cap -- until deselected, so a chosen filter is never hidden behind "+N others".
+  const baseVisibleFilteredSpecies = filteredSpecies.slice(0, SPECIES_CHIP_VISIBLE)
+  const overflowCandidates = filteredSpecies.slice(SPECIES_CHIP_VISIBLE)
+  const pinnedOverflowSpecies = overflowCandidates.filter((name) => displaySpecies.includes(name))
+  const visibleFilteredSpecies = [...baseVisibleFilteredSpecies, ...pinnedOverflowSpecies]
+  const overflowFilteredSpecies = overflowCandidates.filter(
+    (name) => !displaySpecies.includes(name)
+  )
 
   const allFilteredSelected =
     filteredSpecies.length > 0 && filteredSpecies.every((name) => displaySpecies.includes(name))
