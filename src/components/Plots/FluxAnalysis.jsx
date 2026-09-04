@@ -102,11 +102,11 @@ function FluxReactionChip({ reaction, flux }) {
   }
 
   return (
-    <div className={ITEM_PANEL}>
+    <div className="w-full rounded-2xl border border-assist-secondary-border bg-assist-secondary p-4 ring-1 ring-assist-secondary-ring">
       <button
         type="button"
         onClick={() => setExpanded(false)}
-        className="flex items-center gap-1.5 rounded text-sm font-semibold font-mono text-gray-900 break-words focus:outline-none focus-visible:ring-2 focus-visible:ring-assist-secondary-ring"
+        className="flex items-center gap-1.5 rounded text-sm font-semibold font-mono text-assist-secondary-foreground break-words focus:outline-none focus-visible:ring-2 focus-visible:ring-assist-secondary-ring"
       >
         <span className="break-words">{formula}</span>
         <ChevronUp className="w-4 h-4 flex-shrink-0" />
