@@ -76,8 +76,8 @@ export function FlowPanel({
     ? reactionType
     : ''
 
-  // The fallback above only fixes the dropdown's own display -- reset the shared filter state
-  // too, or the graph keeps filtering by the now-vanished type while the UI claims "All".
+  // The fallback only updates the dropdown display. Reset the shared filter state,
+  // or the graph may keep filtering by a type that the UI shows as "All".
   useEffect(() => {
     if (activeReactionType !== reactionType) setReactionType(activeReactionType)
   }, [activeReactionType, reactionType, setReactionType])
@@ -152,8 +152,8 @@ export function FlowPanel({
       })
   }, [speciesNames, speciesSearch])
 
-  // A species selected from the overflow menu stays pinned in the visible row -- and past the
-  // cap -- until deselected, so a chosen filter is never hidden behind "+N others".
+  // Selected species stay pinned in the visible row, even beyond the cap, until deselected,
+  // so active filters are never hidden behind "+N others".
   const baseVisibleFilteredSpecies = filteredSpecies.slice(0, SPECIES_CHIP_VISIBLE)
   const overflowCandidates = filteredSpecies.slice(SPECIES_CHIP_VISIBLE)
   const pinnedOverflowSpecies = overflowCandidates.filter((name) => displaySpecies.includes(name))
