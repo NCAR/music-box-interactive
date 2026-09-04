@@ -475,9 +475,9 @@ export function FluxAnalysis() {
                     <button
                       type="button"
                       onClick={() => setTimeRangeUnitMenuOpen((open) => !open)}
-                      className="flex items-center justify-between gap-1 w-full h-8 px-2 border border-gray-300 rounded-lg text-sm text-gray-800 hover:bg-gray-50"
+                      className="flex items-center gap-1 w-full h-8 px-2 border border-gray-300 rounded-lg text-sm text-gray-800 hover:bg-gray-50"
                     >
-                      {timeRangeUnit.label}
+                      <span className="flex-1 text-center">{timeRangeUnit.label}</span>
                       <ChevronDown className="w-3.5 h-3.5 flex-shrink-0" />
                     </button>
 
