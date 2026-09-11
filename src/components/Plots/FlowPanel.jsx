@@ -172,21 +172,21 @@ export function FlowPanel({
       : 'Custom'
 
   return (
-    <div className="flex flex-wrap items-start gap-3 p-2 xs:p-3 sm:p-4 w-full rounded-lg bg-gray-50 text-gray-900 mt-2 xs:mt-3 sm:mt-4">
+    <div className="flex flex-wrap items-start gap-3 p-2 xs:p-3 sm:p-4 w-full rounded-lg bg-surface-alt text-ink mt-2 xs:mt-3 sm:mt-4">
       {/* Row 1: Value Display | Arrow Scaling | Time Range | Flux */}
       <div className="flex flex-wrap items-center justify-between gap-3 w-full text-sm font-semibold">
         <div className="relative" ref={valueDisplayMenuRef}>
             <button
               type="button"
               onClick={() => setValueDisplayMenuOpen((open) => !open)}
-              className="flex items-center justify-between gap-1 w-fit h-8 bg-blue-100/50 text-gray-900 border border-gray-300 rounded-lg text-sm font-bold px-2.5 whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-blue-600 transition-colors duration-200"
+              className="flex items-center justify-between gap-1 w-fit h-8 bg-[#E6F0FA] text-ink border border-border rounded-lg text-sm font-bold px-2.5 whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-action transition-colors duration-200"
             >
               <span className="pr-2">{valueDisplayOption.label}</span>
               <ChevronDown className="w-3.5 h-3.5 flex-shrink-0" />
             </button>
 
             {valueDisplayMenuOpen && (
-              <div className="absolute z-10 mt-1 min-w-[12rem] bg-white border border-gray-300 rounded-lg shadow-lg py-1">
+              <div className="absolute z-10 mt-1 min-w-[12rem] bg-white border border-border rounded-lg shadow-lg py-1">
                 {VALUE_DISPLAY_OPTIONS.map((option) => (
                   <button
                     key={option.id}
@@ -195,7 +195,7 @@ export function FlowPanel({
                       setValueDisplay(option.id)
                       setValueDisplayMenuOpen(false)
                     }}
-                    className="w-full flex items-center gap-2 text-left text-sm font-bold px-3 py-1.5 text-gray-800 hover:bg-gray-100 whitespace-nowrap"
+                    className="w-full flex items-center gap-2 text-left text-sm font-bold px-3 py-1.5 text-ink hover:bg-surface-hover whitespace-nowrap"
                   >
                     <Check
                       className={`w-3.5 h-3.5 flex-shrink-0 ${
@@ -213,14 +213,14 @@ export function FlowPanel({
             <button
               type="button"
               onClick={() => setArrowScalingMenuOpen((open) => !open)}
-              className="flex items-center justify-between gap-1 w-32 h-8 bg-blue-100/50 text-gray-900 border border-gray-300 rounded-lg text-sm font-bold px-2.5 focus:outline-none focus:ring-2 focus:ring-blue-600 transition-colors duration-200"
+              className="flex items-center justify-between gap-1 w-32 h-8 bg-[#E6F0FA] text-ink border border-border rounded-lg text-sm font-bold px-2.5 focus:outline-none focus:ring-2 focus:ring-action transition-colors duration-200"
             >
               <span className="pr-2">{arrowScalingOption.label}</span>
               <ChevronDown className="w-3.5 h-3.5 flex-shrink-0" />
             </button>
 
             {arrowScalingMenuOpen && (
-              <div className="absolute z-10 mt-1 min-w-[9rem] bg-white border border-gray-300 rounded-lg shadow-lg py-1">
+              <div className="absolute z-10 mt-1 min-w-[9rem] bg-white border border-border rounded-lg shadow-lg py-1">
                 {ARROW_SCALING_OPTIONS.map((option) => (
                   <button
                     key={option.id}
@@ -229,7 +229,7 @@ export function FlowPanel({
                       setArrowScaling(option.id)
                       setArrowScalingMenuOpen(false)
                     }}
-                    className="w-full flex items-center gap-2 text-left text-sm font-bold px-3 py-1.5 text-gray-800 hover:bg-gray-100"
+                    className="w-full flex items-center gap-2 text-left text-sm font-bold px-3 py-1.5 text-ink hover:bg-surface-hover"
                   >
                     <Check
                       className={`w-3.5 h-3.5 flex-shrink-0 ${
@@ -245,19 +245,19 @@ export function FlowPanel({
 
         {/* Time Range */}
         <div className="flex items-center gap-2">
-          <div className="flex items-center border border-gray-300 rounded-lg bg-white">
-            <div className="relative border-r border-gray-300" ref={timeRangeUnitMenuRef}>
+          <div className="flex items-center border border-border rounded-lg bg-white">
+            <div className="relative border-r border-border" ref={timeRangeUnitMenuRef}>
               <button
                 type="button"
                 onClick={() => setTimeRangeUnitMenuOpen((open) => !open)}
-                className="flex items-center justify-between gap-1 w-24 h-8 bg-blue-100/50 text-gray-900 rounded-l-lg text-sm font-bold px-2.5 focus:outline-none focus:ring-2 focus:ring-blue-600 transition-colors duration-200"
+                className="flex items-center justify-between gap-1 w-24 h-8 bg-[#E6F0FA] text-ink rounded-l-lg text-sm font-bold px-2.5 focus:outline-none focus:ring-2 focus:ring-action transition-colors duration-200"
               >
                 {timeRangeUnit.label}
                 <ChevronDown className="w-3.5 h-3.5 flex-shrink-0" />
               </button>
 
               {timeRangeUnitMenuOpen && (
-                <div className="absolute z-10 mt-1 min-w-[8rem] bg-white border border-gray-300 rounded-lg shadow-lg py-1">
+                <div className="absolute z-10 mt-1 min-w-[8rem] bg-white border border-border rounded-lg shadow-lg py-1">
                   {TIME_RANGE_UNITS.map((unit) => (
                     <button
                       key={unit.id}
@@ -266,7 +266,7 @@ export function FlowPanel({
                         setTimeRangeUnitId(unit.id)
                         setTimeRangeUnitMenuOpen(false)
                       }}
-                      className="w-full flex items-center gap-2 text-left text-sm font-bold px-3 py-1.5 text-gray-800 hover:bg-gray-100"
+                      className="w-full flex items-center gap-2 text-left text-sm font-bold px-3 py-1.5 text-ink hover:bg-surface-hover"
                     >
                       <Check
                         className={`w-3.5 h-3.5 flex-shrink-0 ${
@@ -286,10 +286,10 @@ export function FlowPanel({
               min={0}
               max={range.end}
               onCommit={(start) => setRange({ start, end: range.end })}
-              className="w-20 h-8 px-2 bg-white text-gray-900 text-sm text-center focus:outline-none focus:relative focus:z-10 focus:ring-2 focus:ring-blue-600"
+              className="w-20 h-8 px-2 bg-white text-ink text-sm text-center focus:outline-none focus:relative focus:z-10 focus:ring-2 focus:ring-action"
             />
 
-            <span className="flex items-center justify-center h-8 px-2 text-gray-500 font-normal bg-white">
+            <span className="flex items-center justify-center h-8 px-2 text-muted font-normal bg-white">
               -
             </span>
 
@@ -299,7 +299,7 @@ export function FlowPanel({
               min={range.start}
               max={duration}
               onCommit={(end) => setRange({ start: range.start, end })}
-              className="w-20 h-8 px-2 bg-white text-gray-900 rounded-r-lg text-sm text-center focus:outline-none focus:relative focus:z-10 focus:ring-2 focus:ring-blue-600"
+              className="w-20 h-8 px-2 bg-white text-ink rounded-r-lg text-sm text-center focus:outline-none focus:relative focus:z-10 focus:ring-2 focus:ring-action"
             />
           </div>
         </div>
@@ -308,17 +308,17 @@ export function FlowPanel({
         <div className="flex items-center gap-2">
           <span>Flux (mol m-3)</span>
 
-          <div className="flex items-center border border-gray-300 rounded-lg bg-white">
+          <div className="flex items-center border border-border rounded-lg bg-white">
             <RangeBoundInput
               value={rateRange.start}
               sigDigits={3}
               min={0}
               max={rateRange.end}
               onCommit={(start) => setRateRange({ start, end: rateRange.end })}
-              className="w-28 h-8 px-2 bg-white text-gray-900 rounded-l-lg text-sm text-center focus:outline-none focus:relative focus:z-10 focus:ring-2 focus:ring-blue-600"
+              className="w-28 h-8 px-2 bg-white text-ink rounded-l-lg text-sm text-center focus:outline-none focus:relative focus:z-10 focus:ring-2 focus:ring-action"
             />
 
-            <span className="flex items-center justify-center h-8 px-2 text-gray-500 font-normal bg-white">
+            <span className="flex items-center justify-center h-8 px-2 text-muted font-normal bg-white">
               -
             </span>
 
@@ -327,7 +327,7 @@ export function FlowPanel({
               sigDigits={3}
               min={rateRange.start}
               onCommit={(end) => setRateRange({ start: rateRange.start, end })}
-              className="w-28 h-8 px-2 bg-white text-gray-900 rounded-r-lg text-sm text-center focus:outline-none focus:relative focus:z-10 focus:ring-2 focus:ring-blue-600"
+              className="w-28 h-8 px-2 bg-white text-ink rounded-r-lg text-sm text-center focus:outline-none focus:relative focus:z-10 focus:ring-2 focus:ring-action"
             />
           </div>
         </div>
@@ -339,29 +339,29 @@ export function FlowPanel({
         value={activeReactionType}
         onChange={setReactionType}
         options={reactionTypeOptions}
-        className="h-8 w-44 flex-shrink-0 border border-gray-300 bg-blue-100/50 px-2.5 text-sm font-bold text-gray-900"
+        className="h-8 w-44 flex-shrink-0 border border-border bg-[#E6F0FA] px-2.5 text-sm font-bold text-ink"
       />
 
-      <div className="flex items-center border border-gray-300 rounded-lg divide-x divide-gray-300 bg-white">
+      <div className="flex items-center border border-border rounded-lg divide-x divide-gray-300 bg-white">
         <div className="relative" ref={selectAllMenuRef}>
           <button
             type="button"
             onClick={() => setSelectAllMenuOpen((open) => !open)}
-            className="flex items-center justify-between gap-1 w-32 h-8 bg-blue-100/50 text-gray-900 rounded-l-lg text-sm font-bold px-2.5 focus:outline-none focus:ring-2 focus:ring-blue-600 transition-colors duration-200"
+            className="flex items-center justify-between gap-1 w-32 h-8 bg-[#E6F0FA] text-ink rounded-l-lg text-sm font-bold px-2.5 focus:outline-none focus:ring-2 focus:ring-action transition-colors duration-200"
           >
             {selectAllStatusLabel}
             <ChevronDown className="w-3.5 h-3.5 flex-shrink-0" />
           </button>
 
           {selectAllMenuOpen && (
-            <div className="absolute z-10 mt-1 min-w-[9rem] bg-white border border-gray-300 rounded-lg shadow-lg py-1">
+            <div className="absolute z-10 mt-1 min-w-[9rem] bg-white border border-border rounded-lg shadow-lg py-1">
               <button
                 type="button"
                 onClick={() => {
                   setSelectedSpecies(filteredSpecies)
                   setSelectAllMenuOpen(false)
                 }}
-                className="w-full flex items-center gap-2 text-left text-sm font-bold px-3 py-1.5 text-gray-800 hover:bg-gray-100"
+                className="w-full flex items-center gap-2 text-left text-sm font-bold px-3 py-1.5 text-ink hover:bg-surface-hover"
               >
                 <Check
                   className={`w-3.5 h-3.5 flex-shrink-0 ${
@@ -376,7 +376,7 @@ export function FlowPanel({
                   setSelectedSpecies([])
                   setSelectAllMenuOpen(false)
                 }}
-                className="w-full flex items-center gap-2 text-left text-sm font-bold px-3 py-1.5 text-gray-800 hover:bg-gray-100"
+                className="w-full flex items-center gap-2 text-left text-sm font-bold px-3 py-1.5 text-ink hover:bg-surface-hover"
               >
                 <Check
                   className={`w-3.5 h-3.5 flex-shrink-0 ${
@@ -397,14 +397,14 @@ export function FlowPanel({
             setSpeciesOverflowOpen(false)
           }}
           placeholder="Search species"
-          className="w-[30rem] h-8 px-3 bg-white text-gray-800 placeholder:text-gray-500 rounded-r-lg text-base font-mono focus:outline-none focus:relative focus:z-10 focus:ring-2 focus:ring-blue-600"
+          className="w-[30rem] h-8 px-3 bg-white text-ink placeholder:text-muted rounded-r-lg text-base font-mono focus:outline-none focus:relative focus:z-10 focus:ring-2 focus:ring-action"
         />
       </div>
       </div>
 
       {/* Row 3: Species chips */}
       <div className="flex flex-wrap items-center gap-1.5 pl-2">
-        <h4 className="font-semibold text-sm xs:text-base text-gray-500 mr-1">
+        <h4 className="font-semibold text-sm xs:text-base text-muted mr-1">
           {displaySpecies.length} selected
         </h4>
         {visibleFilteredSpecies.map((name) => (
@@ -413,8 +413,8 @@ export function FlowPanel({
             onClick={() => toggleSpecies(name)}
             className={`px-2 xs:px-3 py-1 rounded-full text-sm font-medium transition-all ${
               displaySpecies.includes(name)
-                ? 'bg-[#E6807A] text-white shadow-md'
-                : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
+                ? 'bg-action text-white shadow-md'
+                : 'bg-surface-alt text-muted hover:bg-surface-hover'
             }`}
           >
             {name}
@@ -425,23 +425,23 @@ export function FlowPanel({
             <button
               type="button"
               onClick={() => setSpeciesOverflowOpen((open) => !open)}
-              className="px-2 xs:px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-700 border border-gray-300 hover:bg-gray-200 transition-all"
+              className="px-2 xs:px-3 py-1 rounded-full text-sm font-medium bg-surface-alt text-muted border border-border hover:bg-surface-hover transition-all"
             >
               +{overflowFilteredSpecies.length} others
             </button>
 
             {speciesOverflowOpen && (
-              <div className="absolute z-20 mt-1 w-56 max-h-64 overflow-y-auto bg-white border border-gray-300 rounded-lg shadow-lg py-1">
+              <div className="absolute z-20 mt-1 w-56 max-h-64 overflow-y-auto bg-white border border-border rounded-lg shadow-lg py-1">
                 {overflowFilteredSpecies.map((name) => (
                   <button
                     key={name}
                     type="button"
                     onClick={() => toggleSpecies(name)}
-                    className="w-full flex items-center gap-2 text-left text-sm font-medium px-3 py-1.5 hover:bg-gray-100 text-gray-800"
+                    className="w-full flex items-center gap-2 text-left text-sm font-medium px-3 py-1.5 hover:bg-surface-hover text-ink"
                   >
                     <span
                       className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${
-                        displaySpecies.includes(name) ? 'bg-[#E6807A]' : 'bg-gray-300'
+                        displaySpecies.includes(name) ? 'bg-action' : 'bg-border'
                       }`}
                     />
                     <span className="flex-1 truncate">{name}</span>
