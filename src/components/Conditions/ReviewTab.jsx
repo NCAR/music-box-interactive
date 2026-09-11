@@ -58,29 +58,29 @@ export function ReviewTab() {
         <CardContent className="space-y-4">
           {/* Summary Statistics */}
           <div className="grid grid-cols-2 xs:grid-cols-2 sm:grid-cols-4 gap-2 xs:gap-3">
-            <div className="bg-gray-50 border border-gray-200 rounded-lg p-2 xs:p-3">
-              <div className="text-xs xs:text-sm text-gray-700 font-semibold truncate">
+            <div className="bg-surface-alt border border-border rounded-lg p-2 xs:p-3">
+              <div className="text-xs xs:text-sm text-muted font-semibold truncate">
                 Mechanism
               </div>
-              <div className="text-sm xs:text-base sm:text-lg font-bold text-red-600/70 truncate">
+              <div className="text-sm xs:text-base sm:text-lg font-bold text-ink truncate">
                 {mechanism.selectedMechanism ? mechanism.selectedMechanism.toUpperCase() : 'NONE'}
               </div>
             </div>
-            <div className="bg-gray-50 border border-gray-200 rounded-lg p-2 xs:p-3">
-              <div className="text-xs xs:text-sm text-gray-700 font-semibold">Species</div>
-              <div className="text-sm xs:text-base sm:text-lg font-bold text-green-600">
+            <div className="bg-surface-alt border border-border rounded-lg p-2 xs:p-3">
+              <div className="text-xs xs:text-sm text-muted font-semibold">Species</div>
+              <div className="text-sm xs:text-base sm:text-lg font-bold text-ink">
                 {mechanism.species.length}
               </div>
             </div>
-            <div className="bg-gray-50 border border-gray-200 rounded-lg p-2 xs:p-3">
-              <div className="text-xs xs:text-sm text-gray-700 font-semibold">Reactions</div>
-              <div className="text-sm xs:text-base sm:text-lg font-bold text-orange-600">
+            <div className="bg-surface-alt border border-border rounded-lg p-2 xs:p-3">
+              <div className="text-xs xs:text-sm text-muted font-semibold">Reactions</div>
+              <div className="text-sm xs:text-base sm:text-lg font-bold text-ink">
                 {mechanism.reactions.length}
               </div>
             </div>
-            <div className="bg-gray-50 border border-gray-200 rounded-lg p-2 xs:p-3">
-              <div className="text-xs xs:text-sm text-gray-700 font-semibold">Duration</div>
-              <div className="text-lg font-bold text-gray-900">
+            <div className="bg-surface-alt border border-border rounded-lg p-2 xs:p-3">
+              <div className="text-xs xs:text-sm text-muted font-semibold">Duration</div>
+              <div className="text-lg font-bold text-ink">
                 {(conditions.basic.duration / 3600).toFixed(1)}h
               </div>
             </div>
@@ -91,15 +91,15 @@ export function ReviewTab() {
             <h4 className="font-semibold text-sm xs:text-base sm:text-lg mb-2 xs:mb-3">
               Configuration Data
             </h4>
-            <div className="bg-gray-50 border border-gray-200 rounded-lg p-2 xs:p-3 sm:p-4 max-h-96 overflow-auto">
+            <div className="bg-surface-alt border border-border rounded-lg p-2 xs:p-3 sm:p-4 max-h-96 overflow-auto">
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 xs:gap-4">
                 {/* Column 1: Mechanism Section */}
-                <div className="sm:border-r border-gray-200 sm:pr-4 pb-3 sm:pb-0 border-b sm:border-b-0">
-                  <h5 className="font-semibold text-cyan-600 text-sm xs:text-base mb-2 flex items-center gap-2">
+                <div className="sm:border-r border-border sm:pr-4 pb-3 sm:pb-0 border-b sm:border-b-0">
+                  <h5 className="font-semibold text-ink text-sm xs:text-base mb-2 flex items-center gap-2">
                     <Microscope className="w-3 h-3 xs:w-4 xs:h-4" />
                     Mechanism
                   </h5>
-                  <ul className="ml-3 xs:ml-4 space-y-1 text-xs xs:text-sm text-gray-700">
+                  <ul className="ml-3 xs:ml-4 space-y-1 text-xs xs:text-sm text-muted">
                     <li>
                       <span className="font-semibold">Name:</span>{' '}
                       <span className="font-medium">{mechanism.selectedMechanism || 'custom'}</span>
@@ -120,18 +120,18 @@ export function ReviewTab() {
                 </div>
 
                 {/* Column 2: Conditions Section */}
-                <div className="lg:border-r border-gray-200 lg:pr-4 pb-3 lg:pb-0 border-b lg:border-b-0">
-                  <h5 className="font-semibold text-green-600 text-sm xs:text-base mb-2 flex items-center gap-2">
+                <div className="lg:border-r border-border lg:pr-4 pb-3 lg:pb-0 border-b lg:border-b-0">
+                  <h5 className="font-semibold text-ink text-sm xs:text-base mb-2 flex items-center gap-2">
                     <Settings className="w-3 h-3 xs:w-4 xs:h-4" />
                     Conditions
                   </h5>
 
                   {/* Basic Conditions */}
                   <div className="mb-3">
-                    <h6 className="font-bold text-xs xs:text-sm text-gray-700 mb-1">
+                    <h6 className="font-bold text-xs xs:text-sm text-muted mb-1">
                       Basic Settings:
                     </h6>
-                    <ul className="ml-3 xs:ml-4 space-y-1 text-xs xs:text-sm text-gray-700">
+                    <ul className="ml-3 xs:ml-4 space-y-1 text-xs xs:text-sm text-muted">
                       <li>
                         <span className="font-semibold">Temperature:</span>{' '}
                         <span className="font-medium">{conditions.initial.temperature} K</span>
@@ -157,8 +157,8 @@ export function ReviewTab() {
                   {/* Evolving Conditions */}
                   {Object.keys(conditions.evolving || {}).length > 0 && (
                     <div>
-                      <h6 className="font-bold text-xs xs:text-sm text-gray-700 mb-1">Evolving:</h6>
-                      <ul className="ml-3 xs:ml-4 space-y-1 text-xs xs:text-sm text-gray-700">
+                      <h6 className="font-bold text-xs xs:text-sm text-muted mb-1">Evolving:</h6>
+                      <ul className="ml-3 xs:ml-4 space-y-1 text-xs xs:text-sm text-muted">
                         {Object.entries(conditions.evolving).map(([key, value]) => (
                           <li key={key}>
                             <span className="font-semibold">{key}:</span>{' '}
@@ -174,11 +174,11 @@ export function ReviewTab() {
                 <div>
                   {/* Initial Concentrations */}
                   <div className="mb-3 xs:mb-4">
-                    <h5 className="font-bold text-orange-600 text-sm xs:text-base mb-2 flex items-center gap-2">
+                    <h5 className="font-bold text-ink text-sm xs:text-base mb-2 flex items-center gap-2">
                       <FlaskConical className="w-3 h-3 xs:w-4 xs:h-4" />
                       Initial Concentrations
                     </h5>
-                    <ul className="ml-3 xs:ml-4 space-y-1 text-xs xs:text-sm text-gray-700 max-h-48 overflow-y-auto">
+                    <ul className="ml-3 xs:ml-4 space-y-1 text-xs xs:text-sm text-muted max-h-48 overflow-y-auto">
                       {Object.keys(conditions.initial.concentrations).length > 0 ? (
                         Object.entries(conditions.initial.concentrations).map(([species, conc]) => (
                           <li key={species}>
@@ -187,17 +187,17 @@ export function ReviewTab() {
                           </li>
                         ))
                       ) : (
-                        <li className="text-gray-600 italic">No initial concentrations</li>
+                        <li className="text-muted italic">No initial concentrations</li>
                       )}
                     </ul>
                   </div>
 
                   {/* Metadata Section */}
-                  <div className="border-t border-gray-200 pt-2 xs:pt-3">
-                    <h5 className="font-semibold text-gray-700 text-sm xs:text-base mb-2">
+                  <div className="border-t border-border pt-2 xs:pt-3">
+                    <h5 className="font-semibold text-muted text-sm xs:text-base mb-2">
                       Metadata
                     </h5>
-                    <ul className="ml-3 xs:ml-4 space-y-1 text-xs xs:text-sm text-gray-700">
+                    <ul className="ml-3 xs:ml-4 space-y-1 text-xs xs:text-sm text-muted">
                       <li>
                         <span className="font-semibold">Version:</span>{' '}
                         <span className="font-medium">{configuration.metadata.version}</span>
@@ -295,7 +295,7 @@ export function ReviewTab() {
         </CardContent>
       </Card>
 
-      <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 text-xs text-gray-700">
+      <div className="bg-surface-alt border border-border rounded-lg p-3 text-xs text-muted">
         <p className="font-semibold mb-1 flex items-center gap-2">
           <Lightbulb className="w-4 h-4" />
           Next Steps:

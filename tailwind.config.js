@@ -9,8 +9,8 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['Roboto', ...defaultTheme.fontFamily.sans],
-        mono: ['Roboto', ...defaultTheme.fontFamily.mono],
+        sans: ['Poppins', 'Helvetica', 'Arial', ...defaultTheme.fontFamily.sans],
+        mono: ['Poppins', ...defaultTheme.fontFamily.mono],
       },
       screens: {
         'xs': '475px',
@@ -37,6 +37,7 @@ export default {
         'surface-alt': 'var(--color-surface-alt)',
         'surface-hover': 'var(--color-surface-hover)',
         border: 'var(--color-border)',
+        heading: 'var(--color-heading)',
         ink: 'var(--color-ink)',
         muted: 'var(--color-muted)',
         danger: 'var(--color-danger)',

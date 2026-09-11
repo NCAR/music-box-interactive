@@ -58,7 +58,7 @@ function AppContent({ onNavigate }) {
   }
 
   return (
-    <div className="min-h-screen bg-surface-alt relative">
+    <div className="min-h-screen bg-surface relative">
       {/* Responsive sidebar navigation */}
       <Navigation onBackToHome={handleExitApp} />
 
