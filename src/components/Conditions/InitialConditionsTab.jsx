@@ -121,8 +121,8 @@ export function InitialConditionsTab() {
         </CardHeader>
         <CardContent className="space-y-4">
           {/* Add New Species */}
-          <div className="p-4 rounded-xl border-2 border-gray-200">
-            <h4 className="font-bold text-sm mb-3 text-blue-900 flex items-center gap-2">
+          <div className="p-4 backdrop-blur-lg rounded-xl border-2 border-border">
+            <h4 className="font-bold text-sm mb-3 text-ink flex items-center gap-2">
               <Plus className="w-4 h-4" />
               Add New Species
             </h4>
@@ -139,14 +139,14 @@ export function InitialConditionsTab() {
                 placeholder="Species name (e.g., OH, NO3)"
                 value={newSpecies}
                 onChange={(e) => setNewSpecies(e.target.value)}
-                className="px-3 py-2 border-2 border-gray-300 bg-white text-gray-900 placeholder:text-gray-500 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent"
+                className="px-3 py-2 border-2 border-border bg-white text-ink placeholder:text-muted rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-action focus:border-transparent"
               />
               <input
                 type="text"
                 placeholder="Concentration (e.g., 1e-8)"
                 value={newConcentration}
                 onChange={(e) => setNewConcentration(e.target.value)}
-                className="px-3 py-2 border-2 border-gray-300 bg-white text-gray-900 placeholder:text-gray-500 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent"
+                className="px-3 py-2 border-2 border-border bg-white text-ink placeholder:text-muted rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-action focus:border-transparent"
               />
             </div>
 
@@ -163,31 +163,31 @@ export function InitialConditionsTab() {
           {/* Existing Species List */}
           <div className="space-y-2">
             {Object.entries(initial.concentrations).length === 0 ? (
-              <p className="text-center text-gray-500 py-8">
+              <p className="text-center text-muted py-8">
                 No species configured. Add species above.
               </p>
             ) : (
               Object.entries(initial.concentrations).map(([species, concentration]) => (
                 <div
                   key={species}
-                  className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+                  className="flex items-center gap-3 p-3 border border-border rounded-lg bg-surface-alt hover:bg-surface-hover transition-colors"
                 >
                   <div className="flex-1">
-                    <label className="block text-sm font-semibold text-blue-900 mb-1">
+                    <label className="block text-sm font-semibold text-ink mb-1">
                       {species}
                     </label>
                     <input
                       type="text"
                       value={concentration}
                       onChange={(e) => handleConcentrationChange(species, e.target.value)}
-                      className="w-full px-2 py-1 border border-gray-300 bg-white text-gray-900 placeholder:text-gray-500 rounded text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
+                      className="w-full px-2 py-1 border border-border bg-white text-ink placeholder:text-muted rounded text-sm font-mono focus:outline-none focus:ring-2 focus:ring-action"
                     />
                   </div>
                   <Button
                     variant="glass"
                     size="sm"
                     onClick={() => handleRemoveSpecies(species)}
-                    className="rounded-lg text-red-600 hover:bg-red-50"
+                    className="rounded-lg text-danger hover:bg-caution backdrop-blur-lg"
                   >
                     Remove
                   </Button>
@@ -198,7 +198,7 @@ export function InitialConditionsTab() {
         </CardContent>
       </Card>
 
-      <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 text-xs text-gray-700">
+      <div className="bg-surface-alt backdrop-blur-lg border border-border rounded-lg p-3 text-xs text-ink">
         <p className="font-semibold mb-1 flex items-center gap-2">
           <Lightbulb className="w-4 h-4" />
           Tips:
