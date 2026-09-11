@@ -10,7 +10,7 @@ import { resetMechanism, setSelectedMechanism } from '../../redux/slices/mechani
 import { resetConditions, setExampleLoaded } from '../../redux/slices/conditionsSlice'
 import { useToast } from '@/hooks/use-toast'
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert'
-import { Atom, Settings, BarChart3, Rocket, PenLine, FolderOpen, Library } from 'lucide-react'
+import { Rocket, PenLine, FolderOpen, Library } from 'lucide-react'
 import { loadMusicBoxConfig } from '../../services/config/loadMusicBoxConfig'
 import { parseUploadedMusicBoxConfig } from '../../services/config/parseUploadedMusicBoxConfig'
 
@@ -86,42 +86,84 @@ export function DashboardPage() {
     <div className="space-y-4">
       {/* Welcome Section */}
       <Card>
+        <CardHeader className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-1 space-y-0">
+          <div>
+            <CardTitle className="text-xl xs:text-2xl sm:text-3xl">
+              Welcome to MusicBox Interactive
+            </CardTitle>
+            <CardDescription className="text-sm xs:text-base text-gray-700 italic">
+              Atmospheric Chemistry Box Model
+            </CardDescription>
+          </div>
+          <a
+            href="https://github.com/NCAR/musica"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="self-end text-xs text-blue-700 hover:text-blue-900 font-medium underline whitespace-nowrap"
+          >
+            Powered by MUSICA
+          </a>
+        </CardHeader>
+      </Card>
+
+      {/* Step-by-Step Workflow */}
+      <Card>
         <CardHeader>
-          <CardTitle className="text-lg xs:text-xl sm:text-2xl">
-            MusicBox Interactive Dashboard
-          </CardTitle>
-          <CardDescription className="text-sm xs:text-base text-gray-700 italic">
-            Atmospheric Chemistry Simulation Platform powered by MUSICA/MICM
+          <CardTitle>Step-by-Step Workflow</CardTitle>
+          <CardDescription className="text-gray-700">
+            Follow these steps to run your first simulation
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-3 gap-3 xs:gap-4">
-            <div className="p-3 xs:p-4 bg-white/0 backdrop-blur-lg rounded-lg border border-white/20">
-              <div className="mb-2">
-                <Atom className="w-6 h-6 xs:w-7 xs:h-7 sm:w-8 sm:h-8" />
+          <div className="relative">
+            {/* Horizontal Progress Line */}
+            <div className="hidden md:block absolute left-0 right-0 top-5 h-0.5 bg-[linear-gradient(to_right,_#4ade80,_#fb923c,_#a78bfa,_#f472b6)] opacity-30"></div>
+
+            <div className="relative grid grid-cols-1 md:grid-cols-4 gap-6">
+              {/* Step 1 */}
+              <div className="flex flex-col items-center text-center gap-2">
+                <div className="flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-br from-green-500 to-green-700 text-white flex items-center justify-center font-bold shadow-lg border-2 border-white/30 backdrop-blur-lg z-10">
+                  1
+                </div>
+                <h3 className="font-bold text-sm">Define Your Mechanism</h3>
+                <p className="text-xs text-gray-700">
+                  Add chemical species and reactions on the <strong>Mechanism</strong> page.
+                </p>
               </div>
-              <h3 className="font-semibold mb-1 text-sm xs:text-base">Mechanism Editor</h3>
-              <p className="text-xs text-gray-700 italic">
-                Create and edit chemical species and reactions
-              </p>
-            </div>
-            <div className="p-3 xs:p-4 bg-white/0 backdrop-blur-lg rounded-lg border border-white/20">
-              <div className="mb-2">
-                <Settings className="w-6 h-6 xs:w-7 xs:h-7 sm:w-8 sm:h-8" />
+
+              {/* Step 2 */}
+              <div className="flex flex-col items-center text-center gap-2">
+                <div className="flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-br from-orange-500 to-orange-700 text-white flex items-center justify-center font-bold shadow-lg border-2 border-white/30 backdrop-blur-lg z-10">
+                  2
+                </div>
+                <h3 className="font-bold text-sm">Configure Conditions</h3>
+                <p className="text-xs text-gray-700">
+                  Set temperature, pressure, and initial concentrations on the{' '}
+                  <strong>Conditions</strong> page.
+                </p>
               </div>
-              <h3 className="font-semibold mb-1 text-sm xs:text-base">Configure Conditions</h3>
-              <p className="text-xs text-gray-700 italic">
-                Set simulation parameters and initial conditions
-              </p>
-            </div>
-            <div className="p-3 xs:p-4 bg-white/0 backdrop-blur-lg rounded-lg border border-white/20">
-              <div className="mb-2">
-                <BarChart3 className="w-6 h-6 xs:w-7 xs:h-7 sm:w-8 sm:h-8" />
+
+              {/* Step 3 */}
+              <div className="flex flex-col items-center text-center gap-2">
+                <div className="flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-purple-700 text-white flex items-center justify-center font-bold shadow-lg border-2 border-white/30 backdrop-blur-lg z-10">
+                  3
+                </div>
+                <h3 className="font-bold text-sm">Run Simulation</h3>
+                <p className="text-xs text-gray-700">
+                  Click <strong>Run Simulation</strong> in the Review tab under Conditions.
+                </p>
               </div>
-              <h3 className="font-semibold mb-1 text-sm xs:text-base">Visualize Results</h3>
-              <p className="text-xs text-gray-700 italic">
-                Analyze concentration profiles and reaction rates
-              </p>
+
+              {/* Step 4 */}
+              <div className="flex flex-col items-center text-center gap-2">
+                <div className="flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-br from-pink-500 to-pink-700 text-white flex items-center justify-center font-bold shadow-lg border-2 border-white/30 backdrop-blur-lg z-10">
+                  4
+                </div>
+                <h3 className="font-bold text-sm">View Results</h3>
+                <p className="text-xs text-gray-700">
+                  Visualize and export concentration profiles on the <strong>Results</strong> page.
+                </p>
+              </div>
             </div>
           </div>
         </CardContent>
@@ -261,6 +303,76 @@ export function DashboardPage() {
           <ExampleLoader />
         </div>
       )}
+
+      {/* Guide: Need Help */}
+      <Card className="border-2 border-white/20">
+        <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0">
+          <CardTitle>Need More Help?</CardTitle>
+          <a
+            href="https://github.com/NCAR/music-box-interactive/issues/new"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-1.5 text-sm text-blue-700 hover:text-blue-900 font-medium whitespace-nowrap"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              className="w-4 h-4 fill-current"
+              aria-hidden="true"
+            >
+              <path d="M12 .5C5.65.5.5 5.65.5 12c0 5.09 3.29 9.4 7.86 10.93.57.1.78-.25.78-.55 0-.27-.01-1.16-.02-2.11-3.2.7-3.87-1.36-3.87-1.36-.53-1.34-1.29-1.7-1.29-1.7-1.05-.72.08-.7.08-.7 1.17.08 1.78 1.2 1.78 1.2 1.03 1.77 2.71 1.26 3.37.96.1-.75.4-1.26.73-1.55-2.56-.29-5.26-1.28-5.26-5.7 0-1.26.45-2.29 1.19-3.09-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.18 1.18a11.1 11.1 0 0 1 5.79 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.12 3.05.74.8 1.19 1.83 1.19 3.09 0 4.43-2.7 5.41-5.28 5.69.41.36.78 1.07.78 2.15 0 1.55-.01 2.8-.01 3.18 0 .3.21.66.79.55A10.51 10.51 0 0 0 23.5 12c0-6.35-5.15-11.5-11.5-11.5Z" />
+            </svg>
+            Report a Bug
+          </a>
+        </CardHeader>
+        <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+          <div>
+            <h4 className="font-semibold mb-1">Go Further Programmatically</h4>
+            <p className="text-gray-700 mb-2">
+              Build custom workflows with the MusicBox Python or JavaScript APIs.
+            </p>
+            <ul className="space-y-1">
+              <li>
+                <a
+                  href="https://github.com/NCAR/music-box"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-700 hover:text-blue-900 font-medium underline"
+                >
+                  MusicBox Tutorials &amp; Documentation (includes Binder notebooks)
+                </a>
+              </li>
+            </ul>
+          </div>
+          <div>
+            <h4 className="font-semibold mb-1">Build Bigger Models</h4>
+            <p className="text-gray-700 mb-2">
+              For column or global models, use MUSICA and any of its interfaces.
+            </p>
+            <ul className="space-y-1">
+              <li>
+                <a
+                  href="https://ncar.github.io/musica/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-700 hover:text-blue-900 font-medium underline"
+                >
+                  MUSICA Documentation
+                </a>
+              </li>
+              <li>
+                <a
+                  href="https://github.com/NCAR/musica"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-700 hover:text-blue-900 font-medium underline"
+                >
+                  MUSICA GitHub Repository (includes Binder tutorials)
+                </a>
+              </li>
+            </ul>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   )
 }
