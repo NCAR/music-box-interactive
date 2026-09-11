@@ -413,7 +413,7 @@ export function FlowPanel({
             onClick={() => toggleSpecies(name)}
             className={`px-2 xs:px-3 py-1 rounded-full text-sm font-medium transition-all ${
               displaySpecies.includes(name)
-                ? 'bg-action text-white shadow-md'
+                ? 'bg-[#007483] text-white shadow-md'
                 : 'bg-surface-alt text-muted hover:bg-surface-hover'
             }`}
           >
@@ -441,7 +441,7 @@ export function FlowPanel({
                   >
                     <span
                       className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${
-                        displaySpecies.includes(name) ? 'bg-action' : 'bg-border'
+                        displaySpecies.includes(name) ? 'bg-[#007483]' : 'bg-border'
                       }`}
                     />
                     <span className="flex-1 truncate">{name}</span>
