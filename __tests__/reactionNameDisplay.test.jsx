@@ -37,7 +37,9 @@ const loadChapman = async () => {
       </Provider>
     </MemoryRouter>
   )
-  fireEvent.click(screen.getAllByRole('button', { name: /load/i })[1])
+  fireEvent.click(
+    screen.getAllByRole('button').find((button) => /chapman mechanism/i.test(button.textContent))
+  )
   await waitFor(() => expect(store.getState().mechanism.reactions.length).toBeGreaterThan(0))
   unmount()
 
