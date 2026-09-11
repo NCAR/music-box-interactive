@@ -22,7 +22,7 @@ export function Dropdown({ value, options, onChange, className, menuClassName, p
         aria-expanded={open}
         onClick={() => setOpen((isOpen) => !isOpen)}
         className={cn(
-          'flex w-full items-center justify-between gap-2 rounded-lg border-2 border-gray-400 bg-white px-3 py-2 text-left text-sm text-gray-900 transition-colors focus:outline-none focus:border-green-700',
+          'flex w-full items-center justify-between gap-2 rounded-lg border-2 border-border bg-white px-3 py-2 text-left text-sm text-ink transition-colors focus:outline-none focus:border-action',
           className
         )}
       >
@@ -34,7 +34,7 @@ export function Dropdown({ value, options, onChange, className, menuClassName, p
         <div
           role="listbox"
           className={cn(
-            'absolute z-20 mt-1 max-h-72 w-full overflow-y-auto rounded-lg border border-gray-300 bg-white py-1 shadow-lg',
+            'absolute z-20 mt-1 max-h-72 w-full overflow-y-auto rounded-lg border border-border bg-white py-1 shadow-lg',
             menuClassName
           )}
         >
@@ -53,8 +53,8 @@ export function Dropdown({ value, options, onChange, className, menuClassName, p
               className={cn(
                 'flex w-full items-center gap-2 px-3 py-1.5 text-left text-sm',
                 option.disabled
-                  ? 'text-gray-500 cursor-not-allowed'
-                  : 'text-gray-900 hover:bg-gray-100'
+                  ? 'text-muted cursor-not-allowed'
+                  : 'text-ink hover:bg-surface-hover'
               )}
             >
               <Check

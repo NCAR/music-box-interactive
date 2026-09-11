@@ -140,7 +140,7 @@ function AboutPage({ onNavigate }) {
                   <span className="relative z-10 drop-shadow-lg">Launch MusicBox</span>
                   {/* Liquid glass shimmer effect */}
                   <div className="absolute inset-0 bg-gradient-to-br from-white/40 via-white/20 to-transparent opacity-60"></div>
-                  <div className="absolute inset-0 bg-gradient-to-tr from-blue-400/30 via-transparent to-purple-400/30 opacity-50 group-hover:opacity-70 transition-opacity duration-500"></div>
+                  <div className="absolute inset-0 bg-gradient-to-tr from-[#42C0FF]/30 via-transparent to-[#00A2B4]/30 opacity-50 group-hover:opacity-70 transition-opacity duration-500"></div>
                   {/* Animated shimmer */}
                   <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 bg-gradient-to-r from-transparent via-white/40 to-transparent"></div>
                   {/* Glass refraction effect */}

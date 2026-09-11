@@ -35,15 +35,15 @@ const CUSTOM_PILL_MAX_LENGTH = 512
 function pillClassName(active, compact, disabled = false) {
   const base = `${
     compact ? 'px-2.5 py-1 text-[11px]' : 'px-4 py-2 text-[15px]'
-  } font-semibold rounded-full border whitespace-nowrap transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-green-500 flex items-center gap-1.5`
+  } font-semibold rounded-full border whitespace-nowrap transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-assist-secondary-ring flex items-center gap-1.5`
 
   if (active) {
-    return `${base} bg-green-50 border-green-300 text-green-800`
+    return `${base} bg-assist-secondary border-assist-secondary-border text-assist-secondary-foreground`
   }
   if (disabled) {
-    return `${base} bg-gray-100 border-gray-200 text-gray-400 cursor-not-allowed`
+    return `${base} bg-surface-alt border-border text-muted cursor-not-allowed`
   }
-  return `${base} bg-white border-gray-300 text-gray-700 hover:bg-gray-50`
+  return `${base} bg-white border-border text-ink hover:bg-surface-hover`
 }
 
 function AddPillDialog({ label, onCancel, onAdd }) {
