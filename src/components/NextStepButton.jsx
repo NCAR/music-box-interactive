@@ -22,9 +22,9 @@ export function NextStepButton({ to = null, onClick = null, className = '', labe
   return (
     <Button
       onClick={handleClick}
-      variant="assist"
+      variant="primary"
       size="sm"
-      className={`rounded-2xl text-xs xs:text-sm sm:text-base px-3 xs:px-4 sm:px-6 py-1.5 xs:py-2 sm:py-2.5 ${className}`}
+      className={`text-xs xs:text-sm sm:text-base px-3 xs:px-4 sm:px-6 py-1.5 xs:py-2 sm:py-2.5 ${className}`}
     >
       {label}
     </Button>

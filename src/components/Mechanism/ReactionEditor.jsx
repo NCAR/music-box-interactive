@@ -185,12 +185,7 @@ function ReactionChip({ reaction, onRemove, onComponentsSave, onParameterSave })
           <ChevronUp className="w-4 h-4 flex-shrink-0" />
         </button>
 
-        <Button
-          variant="glass"
-          size="sm"
-          onClick={() => onRemove(reaction.id)}
-          className="rounded-lg bg-white text-danger hover:bg-caution"
-        >
+        <Button variant="destructive" size="sm" onClick={() => onRemove(reaction.id)}>
           Remove
         </Button>
       </div>

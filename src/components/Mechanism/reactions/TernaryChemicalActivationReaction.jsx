@@ -223,7 +223,7 @@ export function TernaryChemicalActivationReactionForm({ onAddReaction }) {
       </div>
 
       <div className="mt-8 flex justify-center">
-        <Button onClick={handleAdd} variant="assistSecondary" size="lg" className="text-base">
+        <Button onClick={handleAdd} variant="primary" size="lg" className="text-base">
           Add Reaction
         </Button>
       </div>

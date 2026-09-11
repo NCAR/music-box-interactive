@@ -312,12 +312,7 @@ function SpeciesChip({ species, onPhaseChange, onFieldSave, onRemove }) {
           <ChevronUp className="w-4 h-4 flex-shrink-0" />
         </button>
 
-        <Button
-          variant="glass"
-          size="sm"
-          onClick={() => onRemove(species.name)}
-          className="rounded-lg bg-white text-danger hover:bg-caution"
-        >
+        <Button variant="destructive" size="sm" onClick={() => onRemove(species.name)}>
           Remove
         </Button>
       </div>
@@ -538,12 +533,7 @@ export function SpeciesEditor() {
             </div>
 
             <div className="mt-8 flex justify-center">
-              <Button
-                onClick={handleAddSpecies}
-                variant="assistSecondary"
-                size="lg"
-                className="text-base"
-              >
+              <Button onClick={handleAddSpecies} variant="primary" size="lg" className="text-base">
                 Add species
               </Button>
             </div>

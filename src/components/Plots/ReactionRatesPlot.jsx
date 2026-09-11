@@ -239,24 +239,24 @@ export function ReactionRatesPlot() {
             </h4>
             <div className="flex gap-2">
               <Button
-                variant="glass"
+                variant="secondary"
                 size="sm"
                 onClick={() => {
                   setShowAll(true)
                   setSelectedRates([])
                 }}
-                className="rounded-lg text-xs"
+                className="text-xs"
               >
                 Show All
               </Button>
               <Button
-                variant="glass"
+                variant="secondary"
                 size="sm"
                 onClick={() => {
                   setShowAll(false)
                   setSelectedRates([])
                 }}
-                className="rounded-lg text-xs"
+                className="text-xs"
               >
                 Clear All
               </Button>

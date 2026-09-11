@@ -150,12 +150,7 @@ export function InitialConditionsTab() {
               />
             </div>
 
-            <Button
-              onClick={handleAddSpecies}
-              variant="assist"
-              size="default"
-              className="mt-3 rounded-2xl"
-            >
+            <Button onClick={handleAddSpecies} variant="primary" size="default" className="mt-3">
               Add Species
             </Button>
           </div>
@@ -183,12 +178,7 @@ export function InitialConditionsTab() {
                       className="w-full px-2 py-1 border border-border bg-white text-ink placeholder:text-muted rounded text-sm font-mono focus:outline-none focus:ring-2 focus:ring-action"
                     />
                   </div>
-                  <Button
-                    variant="glass"
-                    size="sm"
-                    onClick={() => handleRemoveSpecies(species)}
-                    className="rounded-lg text-danger hover:bg-caution backdrop-blur-lg"
-                  >
+                  <Button variant="destructive" size="sm" onClick={() => handleRemoveSpecies(species)}>
                     Remove
                   </Button>
                 </div>

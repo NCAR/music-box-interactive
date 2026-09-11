@@ -208,8 +208,8 @@ export function DashboardPage() {
               </p>
               <Button
                 onClick={handleStartFromScratch}
-                variant="glass"
-                className="w-full mt-auto rounded-2xl border-2 text-xs xs:text-sm sm:text-base px-3 xs:px-4 py-2"
+                variant="primary"
+                className="w-full mt-auto text-xs xs:text-sm sm:text-base px-3 xs:px-4 py-2"
               >
                 Create Custom
               </Button>
@@ -232,8 +232,8 @@ export function DashboardPage() {
                 className="hidden"
               />
               <Button
-                variant="glass"
-                className="w-full mt-auto rounded-2xl border-2 cursor-pointer text-xs xs:text-sm sm:text-base px-3 xs:px-4 py-2"
+                variant="primary"
+                className="w-full mt-auto cursor-pointer text-xs xs:text-sm sm:text-base px-3 xs:px-4 py-2"
                 onClick={() => fileInputRef.current?.click()}
               >
                 Upload Config
@@ -251,8 +251,8 @@ export function DashboardPage() {
                 started quickly.
               </p>
               <Button
-                variant="glass"
-                className="w-full mt-auto rounded-2xl border-2 text-xs xs:text-sm sm:text-base px-3 xs:px-4 py-2"
+                variant="primary"
+                className="w-full mt-auto text-xs xs:text-sm sm:text-base px-3 xs:px-4 py-2"
                 onClick={() => {
                   const newShowState = !showExamples
                   setShowExamples(newShowState)
@@ -281,18 +281,10 @@ export function DashboardPage() {
             This will clear any existing configuration. Are you sure you want to continue?
           </AlertDescription>
           <div className="flex gap-3 justify-end">
-            <Button
-              variant="glass"
-              onClick={() => setShowConfirmation(false)}
-              className="glass-button bg-danger text-white hover:bg-danger-hover"
-            >
+            <Button variant="secondary" onClick={() => setShowConfirmation(false)}>
               Cancel
             </Button>
-            <Button
-              variant="glass"
-              onClick={confirmStartFromScratch}
-              className="bg-action text-white hover:bg-action-hover"
-            >
+            <Button variant="destructive" onClick={confirmStartFromScratch}>
               Yes, Start Fresh
             </Button>
           </div>

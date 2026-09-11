@@ -1,3 +1,4 @@
+/* global __APP_VERSION__ */
 import { useState } from 'react'
 import { NavLink } from 'react-router-dom'
 import { Home, Atom, Settings, BarChart3, ArrowLeft } from 'lucide-react'
@@ -74,6 +75,7 @@ export function Navigation({ onBackToHome = null }) {
           <h1 className="text-base sm:text-lg md:text-xl font-bold text-heading text-right [font-variant:small-caps]">
             Music Box Interactive
           </h1>
+          <p className="text-xs text-muted text-right mt-0.5">v{__APP_VERSION__}</p>
         </div>
 
         {/* Navigation Links */}

@@ -356,9 +356,8 @@ export function EvolvingConditionsTab() {
               </CardDescription>
             </div>
             <Button
-              variant={evolving.enabled ? 'action' : 'glass'}
+              variant={evolving.enabled ? 'primary' : 'secondary'}
               onClick={handleToggleEvolving}
-              className="rounded-2xl"
             >
               {evolving.enabled ? 'Enabled ✓' : 'Disabled'}
             </Button>
@@ -409,20 +408,20 @@ export function EvolvingConditionsTab() {
                   className="hidden"
                 />
                 <Button
-                  variant="glass"
+                  variant="secondary"
                   size="sm"
                   onClick={() => fileInputRef.current?.click()}
-                  className="rounded-lg flex-1"
+                  className="flex-1"
                 >
                   <Upload className="w-4 h-4 mr-2" />
                   Import CSV
                 </Button>
                 <Button
-                  variant="glass"
+                  variant="secondary"
                   size="sm"
                   onClick={handleCSVExport}
                   disabled={evolving.times.length === 0}
-                  className="rounded-lg flex-1"
+                  className="flex-1"
                 >
                   <Download className="w-4 h-4 mr-2" />
                   Export CSV
@@ -475,9 +474,9 @@ export function EvolvingConditionsTab() {
                 </div>
                 <Button
                   onClick={handleAddTimePoint}
-                  variant="assist"
+                  variant="primary"
                   size="default"
-                  className="w-full mt-3 rounded-2xl"
+                  className="w-full mt-3"
                 >
                   Add Time Point
                 </Button>
@@ -496,10 +495,10 @@ export function EvolvingConditionsTab() {
                           conditions
                         </p>
                         <Button
-                          variant="glass"
+                          variant="secondary"
                           size="sm"
                           onClick={handleAutoSuggestStart}
-                          className="mt-2 rounded-lg text-xs"
+                          className="mt-2 text-xs"
                         >
                           Add Start Point (t=0s)
                         </Button>
@@ -516,10 +515,10 @@ export function EvolvingConditionsTab() {
                           Conditions will be extrapolated.
                         </p>
                         <Button
-                          variant="glass"
+                          variant="secondary"
                           size="sm"
                           onClick={handleAutoSuggestEnd}
-                          className="mt-2 rounded-lg text-xs"
+                          className="mt-2 text-xs"
                         >
                           Add End Point (t={basicConditions.duration}s)
                         </Button>
@@ -580,10 +579,9 @@ export function EvolvingConditionsTab() {
                             </td>
                             <td className="px-4 py-2 text-right">
                               <Button
-                                variant="glass"
+                                variant="destructive"
                                 size="sm"
                                 onClick={() => handleRemoveTimePoint(index)}
-                                className="rounded-lg text-danger hover:bg-caution backdrop-blur-lg"
                               >
                                 Remove
                               </Button>
