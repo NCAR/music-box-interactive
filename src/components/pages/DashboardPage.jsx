@@ -10,7 +10,7 @@ import { resetMechanism, setSelectedMechanism } from '../../redux/slices/mechani
 import { resetConditions, setExampleLoaded } from '../../redux/slices/conditionsSlice'
 import { useToast } from '@/hooks/use-toast'
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert'
-import { Rocket, PenLine, FolderOpen, Library } from 'lucide-react'
+import { Rocket, PenLine, FolderOpen, Library, Copy } from 'lucide-react'
 import { loadMusicBoxConfig } from '../../services/config/loadMusicBoxConfig'
 import { parseUploadedMusicBoxConfig } from '../../services/config/parseUploadedMusicBoxConfig'
 
@@ -23,6 +23,22 @@ export function DashboardPage() {
   const [showConfirmation, setShowConfirmation] = useState(false)
   const [showExamples, setShowExamples] = useState(false)
   const [showSimulationStatus, setShowSimulationStatus] = useState(false)
+
+  const handleCopyInstallCommand = async (command) => {
+    try {
+      await navigator.clipboard.writeText(command)
+      toast({
+        title: 'Copied to Clipboard!',
+        description: `"${command}" has been copied to your clipboard.`,
+      })
+    } catch (_error) {
+      toast({
+        title: 'Copy Failed',
+        description: 'Failed to copy the command to your clipboard.',
+        variant: 'destructive',
+      })
+    }
+  }
 
   const handleStartFromScratch = () => {
     setShowConfirmation(true)
@@ -83,10 +99,10 @@ export function DashboardPage() {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       {/* Welcome Section */}
       <Card>
-        <CardHeader className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-1 space-y-0">
+        <CardHeader className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-1 space-y-0 p-4 sm:p-5">
           <div>
             <CardTitle className="text-xl xs:text-2xl sm:text-3xl">
               Welcome to MusicBox Interactive
@@ -106,15 +122,18 @@ export function DashboardPage() {
         </CardHeader>
       </Card>
 
-      {/* Step-by-Step Workflow */}
+      {/* Getting Started */}
       <Card>
-        <CardHeader>
-          <CardTitle>Step-by-Step Workflow</CardTitle>
-          <CardDescription className="text-gray-700">
+        <CardHeader className="p-4 sm:p-5">
+          <CardTitle className="flex items-center gap-2 text-lg xs:text-xl sm:text-2xl">
+            <Rocket className="w-5 h-5 xs:w-6 xs:h-6" />
+            Getting Started
+          </CardTitle>
+          <CardDescription className="text-gray-700 italic text-sm xs:text-base">
             Follow these steps to run your first simulation
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-4 px-4 sm:px-5 pt-0 pb-0">
           <div className="relative">
             {/* Horizontal Progress Line */}
             <div className="hidden md:block absolute left-0 right-0 top-5 h-0.5 bg-[linear-gradient(to_right,_#4ade80,_#fb923c,_#a78bfa,_#f472b6)] opacity-30"></div>
@@ -127,8 +146,24 @@ export function DashboardPage() {
                 </div>
                 <h3 className="font-bold text-sm">Define Your Mechanism</h3>
                 <p className="text-xs text-gray-700">
-                  Add chemical species and reactions on the <strong>Mechanism</strong> page.
+                  Choose one of the options below to begin.
                 </p>
+                <svg viewBox="0 0 24 36" className="hidden md:block w-6 h-9" aria-hidden="true">
+                  <defs>
+                    <linearGradient id="step1ArrowGradient" x1="0" y1="0" x2="1" y2="1">
+                      <stop offset="0%" stopColor="#22c55e" />
+                      <stop offset="100%" stopColor="#15803d" />
+                    </linearGradient>
+                  </defs>
+                  <path
+                    d="M12 2 V29 M4 23 L12 32 L20 23"
+                    stroke="url(#step1ArrowGradient)"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    fill="none"
+                  />
+                </svg>
               </div>
 
               {/* Step 2 */}
@@ -166,26 +201,12 @@ export function DashboardPage() {
               </div>
             </div>
           </div>
-        </CardContent>
-      </Card>
 
-      {/* Getting Started Options */}
-      <Card className="border-2 border-white/20">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-lg xs:text-xl sm:text-2xl">
-            <Rocket className="w-5 h-5 xs:w-6 xs:h-6" />
-            Getting Started
-          </CardTitle>
-          <CardDescription className="text-gray-700 italic text-sm xs:text-base">
-            Choose how you want to start using MusicBox
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-3">
           <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-3 gap-3">
             {/* Start from Scratch */}
-            <div className="p-3 xs:p-4 bg-white/0 backdrop-blur-lg rounded-lg border-2 border-white/20">
+            <div className="flex flex-col p-3 xs:p-4 bg-white/0 backdrop-blur-lg rounded-lg border-2 border-white/20">
               <div className="mb-2">
-                <PenLine className="w-8 h-8 xs:w-9 xs:h-9 sm:w-10 sm:h-10" />
+                <PenLine className="w-6 h-6 xs:w-7 xs:h-7 sm:w-8 sm:h-8" />
               </div>
               <h4 className="font-bold mb-2 text-sm xs:text-base">Start from Scratch</h4>
               <p className="text-xs text-gray-700 mb-3 italic">
@@ -194,16 +215,16 @@ export function DashboardPage() {
               <Button
                 onClick={handleStartFromScratch}
                 variant="glass"
-                className="w-full rounded-2xl border-2 text-xs xs:text-sm sm:text-base px-3 xs:px-4 py-2"
+                className="w-full mt-auto rounded-2xl border-2 text-xs xs:text-sm sm:text-base px-3 xs:px-4 py-2"
               >
                 Create Custom
               </Button>
             </div>
 
             {/* Load Configuration */}
-            <div className="p-3 xs:p-4 bg-white/0 backdrop-blur-lg rounded-lg border-2 border-white/20">
+            <div className="flex flex-col p-3 xs:p-4 bg-white/0 backdrop-blur-lg rounded-lg border-2 border-white/20">
               <div className="mb-2">
-                <FolderOpen className="w-8 h-8 xs:w-9 xs:h-9 sm:w-10 sm:h-10" />
+                <FolderOpen className="w-6 h-6 xs:w-7 xs:h-7 sm:w-8 sm:h-8" />
               </div>
               <h4 className="font-bold mb-2 text-sm xs:text-base">Load Configuration</h4>
               <p className="text-xs text-gray-700 mb-3 xs:mb-7 italic">
@@ -218,7 +239,7 @@ export function DashboardPage() {
               />
               <Button
                 variant="glass"
-                className="w-full rounded-2xl border-2 cursor-pointer text-xs xs:text-sm sm:text-base px-3 xs:px-4 py-2"
+                className="w-full mt-auto rounded-2xl border-2 cursor-pointer text-xs xs:text-sm sm:text-base px-3 xs:px-4 py-2"
                 onClick={() => fileInputRef.current?.click()}
               >
                 Upload Config
@@ -226,9 +247,9 @@ export function DashboardPage() {
             </div>
 
             {/* Select Example */}
-            <div className="p-3 xs:p-4 bg-white/0 backdrop-blur-lg rounded-lg border-2 border-white/20">
+            <div className="flex flex-col p-3 xs:p-4 bg-white/0 backdrop-blur-lg rounded-lg border-2 border-white/20">
               <div className="mb-2">
-                <Library className="w-8 h-8 xs:w-9 xs:h-9 sm:w-10 sm:h-10" />
+                <Library className="w-6 h-6 xs:w-7 xs:h-7 sm:w-8 sm:h-8" />
               </div>
               <h4 className="font-bold mb-2 text-sm xs:text-base">Select Example</h4>
               <p className="text-xs text-gray-700 mb-3 italic">
@@ -237,7 +258,7 @@ export function DashboardPage() {
               </p>
               <Button
                 variant="glass"
-                className="w-full rounded-2xl border-2 text-xs xs:text-sm sm:text-base px-3 xs:px-4 py-2"
+                className="w-full mt-auto rounded-2xl border-2 text-xs xs:text-sm sm:text-base px-3 xs:px-4 py-2"
                 onClick={() => {
                   const newShowState = !showExamples
                   setShowExamples(newShowState)
@@ -305,8 +326,8 @@ export function DashboardPage() {
       )}
 
       {/* Guide: Need Help */}
-      <Card className="border-2 border-white/20">
-        <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0">
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0 p-4 sm:p-5">
           <CardTitle>Resources &amp; Support</CardTitle>
           <a
             href="https://github.com/NCAR/music-box-interactive/issues/new"
@@ -324,12 +345,36 @@ export function DashboardPage() {
             Report a Bug
           </a>
         </CardHeader>
-        <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+        <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm p-4 sm:p-5 pt-0">
           <div>
             <h4 className="font-semibold mb-1">Go Further Programmatically</h4>
             <p className="text-gray-700 mb-2">
               Build custom workflows with the MusicBox Python or JavaScript APIs.
             </p>
+            <div className="flex flex-wrap gap-2 mb-2">
+              <div className="flex items-center gap-1.5 text-xs font-mono bg-black/5 border border-white/20 rounded px-2 py-1">
+                <code>pip install acom_music_box</code>
+                <button
+                  type="button"
+                  onClick={() => handleCopyInstallCommand('pip install acom_music_box')}
+                  className="text-gray-700 hover:text-blue-900"
+                  aria-label="Copy pip install command to clipboard"
+                >
+                  <Copy className="w-3 h-3" />
+                </button>
+              </div>
+              <div className="flex items-center gap-1.5 text-xs font-mono bg-black/5 border border-white/20 rounded px-2 py-1">
+                <code>npm install @ncar/music-box</code>
+                <button
+                  type="button"
+                  onClick={() => handleCopyInstallCommand('npm install @ncar/music-box')}
+                  className="text-gray-700 hover:text-blue-900"
+                  aria-label="Copy npm install command to clipboard"
+                >
+                  <Copy className="w-3 h-3" />
+                </button>
+              </div>
+            </div>
             <ul className="space-y-1">
               <li>
                 <a
@@ -348,6 +393,19 @@ export function DashboardPage() {
             <p className="text-gray-700 mb-2">
               For column or global models, use MUSICA and any of its interfaces.
             </p>
+            <div className="flex flex-wrap gap-2 mb-2">
+              <div className="flex items-center gap-1.5 text-xs font-mono bg-black/5 border border-white/20 rounded px-2 py-1">
+                <code>pip install musica</code>
+                <button
+                  type="button"
+                  onClick={() => handleCopyInstallCommand('pip install musica')}
+                  className="text-gray-700 hover:text-blue-900"
+                  aria-label="Copy pip install command to clipboard"
+                >
+                  <Copy className="w-3 h-3" />
+                </button>
+              </div>
+            </div>
             <ul className="space-y-1">
               <li>
                 <a
