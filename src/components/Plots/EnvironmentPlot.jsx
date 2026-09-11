@@ -90,32 +90,32 @@ export function EnvironmentPlot() {
         <CardContent>
           <ResponsiveContainer width="100%" height={300}>
             <LineChart data={envData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#FFFFFF" />
+              <CartesianGrid strokeDasharray="3 3" stroke="#D8D6D2" />
               <XAxis
                 dataKey="timeHours"
                 label={{
                   value: 'Time (hours)',
                   position: 'insideBottom',
                   offset: -5,
-                  style: { fill: '#FFFFFF', fontWeight: 400 },
+                  style: { fill: '#1f2937', fontWeight: 400 },
                 }}
-                stroke="#FFFFFF"
-                tick={{ fontSize: 12, fill: '#FFFFFF' }}
+                stroke="#5f6368"
+                tick={{ fontSize: 12, fill: '#5f6368' }}
               />
               <YAxis
                 label={{
                   value: 'Temperature (K)',
                   angle: -90,
                   position: 'insideLeft',
-                  style: { fill: '#FFFFFF', fontWeight: 400 },
+                  style: { fill: '#1f2937', fontWeight: 400 },
                 }}
-                stroke="#FFFFFF"
-                tick={{ fontSize: 12, fill: '#FFFFFF' }}
+                stroke="#5f6368"
+                tick={{ fontSize: 12, fill: '#5f6368' }}
               />
               <Tooltip
                 contentStyle={{
                   backgroundColor: 'white',
-                  border: '2px solid #e5e7eb',
+                  border: '2px solid #D8D6D2',
                   borderRadius: '8px',
                 }}
               />
@@ -123,7 +123,7 @@ export function EnvironmentPlot() {
               <Line
                 type="monotone"
                 dataKey="temperature"
-                stroke="#ef4444"
+                stroke="#FAA119"
                 strokeWidth={2}
                 dot={false}
                 name="Temperature (K)"
@@ -142,32 +142,32 @@ export function EnvironmentPlot() {
         <CardContent>
           <ResponsiveContainer width="100%" height={300}>
             <LineChart data={envData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+              <CartesianGrid strokeDasharray="3 3" stroke="#D8D6D2" />
               <XAxis
                 dataKey="timeHours"
                 label={{
                   value: 'Time (hours)',
                   position: 'insideBottom',
                   offset: -5,
-                  style: { fill: '#FFFFFF', fontWeight: 400 },
+                  style: { fill: '#1f2937', fontWeight: 400 },
                 }}
-                stroke="#FFFFFF"
-                tick={{ fontSize: 12, fill: '#FFFFFF' }}
+                stroke="#5f6368"
+                tick={{ fontSize: 12, fill: '#5f6368' }}
               />
               <YAxis
                 label={{
                   value: 'Pressure (Pa)',
                   angle: -90,
                   position: 'insideLeft',
-                  style: { fill: '#FFFFFF', fontWeight: 400 },
+                  style: { fill: '#1f2937', fontWeight: 400 },
                 }}
-                stroke="#FFFFFF"
-                tick={{ fontSize: 12, fill: '#FFFFFF' }}
+                stroke="#5f6368"
+                tick={{ fontSize: 12, fill: '#5f6368' }}
               />
               <Tooltip
                 contentStyle={{
                   backgroundColor: 'white',
-                  border: '2px solid #e5e7eb',
+                  border: '2px solid #D8D6D2',
                   borderRadius: '8px',
                 }}
               />
@@ -175,7 +175,7 @@ export function EnvironmentPlot() {
               <Line
                 type="monotone"
                 dataKey="pressure"
-                stroke="#3b82f6"
+                stroke="#0057C2"
                 strokeWidth={2}
                 dot={false}
                 name="Pressure (Pa)"
@@ -186,16 +186,16 @@ export function EnvironmentPlot() {
       </Card>
 
       <div
-        className={`border rounded-lg p-3 text-xs ${hasEvolvingConditions ? 'bg-green-900/20 border-green-400/50' : 'bg-blue-900/20 border-blue-400/50'}`}
+        className={`border rounded-lg p-3 text-xs ${hasEvolvingConditions ? 'bg-[#00A2B4]/20 border-[#00A2B4]/50' : 'bg-[#00357A]/20 border-[#0057C2]/50'}`}
       >
         <p
-          className={`font-semibold mb-1 flex items-center gap-2 ${hasEvolvingConditions ? 'text-green-800' : 'text-blue-900'}`}
+          className="font-semibold mb-1 flex items-center gap-2 text-heading"
         >
           <Info className="w-4 h-4" />
           Environmental Conditions:
         </p>
         {hasEvolvingConditions ? (
-          <ul className="space-y-0.5 ml-4 text-gray-700">
+          <ul className="space-y-0.5 ml-4 text-ink">
             <li>
               • <strong>Evolving conditions enabled</strong> - Temperature and pressure vary over
               time
@@ -211,7 +211,7 @@ export function EnvironmentPlot() {
             <li>• Interpolation method: Step (most recent value at or before each time)</li>
           </ul>
         ) : (
-          <ul className="space-y-0.5 ml-4 text-gray-700">
+          <ul className="space-y-0.5 ml-4 text-ink">
             <li>
               • Temperature: {conditions.initial.temperature} K (
               {(conditions.initial.temperature - 273.15).toFixed(2)}°C) - Constant

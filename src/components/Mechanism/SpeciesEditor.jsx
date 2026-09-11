@@ -73,7 +73,7 @@ function AddPillDialog({ label, onCancel, onAdd }) {
         className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl"
         onClick={(e) => e.stopPropagation()}
       >
-        <label className="block text-sm font-medium text-green-700 mb-1">{label}</label>
+        <label className="block text-sm font-medium text-ink mb-1">{label}</label>
         <input
           type="text"
           autoFocus
@@ -83,9 +83,9 @@ function AddPillDialog({ label, onCancel, onAdd }) {
             if (e.key === 'Enter') handleAdd()
           }}
           maxLength={CUSTOM_PILL_MAX_LENGTH}
-          className="w-full border-0 border-b-2 border-green-600 bg-transparent px-0 py-1.5 text-base text-gray-900 focus:outline-none"
+          className="w-full border-0 border-b-2 border-action bg-transparent px-0 py-1.5 text-base text-ink focus:outline-none"
         />
-        <div className="mt-1 text-right text-xs text-gray-500">
+        <div className="mt-1 text-right text-xs text-muted">
           {draft.length}/{CUSTOM_PILL_MAX_LENGTH}
         </div>
 
@@ -93,7 +93,7 @@ function AddPillDialog({ label, onCancel, onAdd }) {
           <button
             type="button"
             onClick={onCancel}
-            className="rounded px-4 py-2 text-sm font-medium text-green-700 hover:bg-green-50"
+            className="rounded px-4 py-2 text-sm font-medium text-ink hover:bg-surface-hover"
           >
             Cancel
           </button>
@@ -102,7 +102,7 @@ function AddPillDialog({ label, onCancel, onAdd }) {
             onClick={handleAdd}
             disabled={!trimmed}
             className={`rounded px-4 py-2 text-sm font-medium ${
-              trimmed ? 'text-green-700 hover:bg-green-50' : 'text-gray-400 cursor-not-allowed'
+              trimmed ? 'text-action hover:bg-surface-hover' : 'text-muted cursor-not-allowed'
             }`}
           >
             Add
@@ -183,6 +183,32 @@ function PhaseSelector({ value, onChange, size = 'default', allowCustom = true }
         />
       )}
     </div>
+  )
+}
+
+// On/off switch for boolean species properties.
+function Toggle({ checked, label, onChange }) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      onClick={() => onChange(!checked)}
+      className="flex items-center gap-3 rounded text-sm font-semibold text-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-assist-secondary-ring"
+    >
+      {label}
+      <span
+        className={`relative inline-flex h-6 w-11 flex-shrink-0 items-center rounded-full transition-colors ${
+          checked ? 'bg-assist-secondary-ring' : 'bg-border'
+        }`}
+      >
+        <span
+          className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform ${
+            checked ? 'translate-x-[1.375rem]' : 'translate-x-0.5'
+          }`}
+        />
+      </span>
+    </button>
   )
 }
 
@@ -280,7 +306,7 @@ function SpeciesChip({ species, onPhaseChange, onFieldSave, onRemove }) {
         <button
           type="button"
           onClick={() => setExpanded(false)}
-          className="flex items-center gap-1.5 rounded text-base font-semibold text-gray-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-green-500"
+          className="flex items-center gap-1.5 rounded text-base font-semibold text-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-assist-secondary-ring"
         >
           {species.name}
           <ChevronUp className="w-4 h-4 flex-shrink-0" />
@@ -290,7 +316,7 @@ function SpeciesChip({ species, onPhaseChange, onFieldSave, onRemove }) {
           variant="glass"
           size="sm"
           onClick={() => onRemove(species.name)}
-          className="rounded-lg bg-white text-red-600 hover:bg-red-50"
+          className="rounded-lg bg-white text-danger hover:bg-caution"
         >
           Remove
         </Button>
@@ -298,7 +324,7 @@ function SpeciesChip({ species, onPhaseChange, onFieldSave, onRemove }) {
 
       <div className="mt-3 flex flex-col gap-3">
         <div>
-          <label className="mb-1 block text-[11px] uppercase tracking-wide text-gray-700">
+          <label className="mb-1 block text-[11px] uppercase tracking-wide text-muted">
             Phase
           </label>
           {/* No "Others" pill here: editing a species picks among existing phases rather than
@@ -313,7 +339,7 @@ function SpeciesChip({ species, onPhaseChange, onFieldSave, onRemove }) {
 
         {getSpeciesFields(species).map((field) => (
           <div key={field.key} className="flex flex-col gap-1">
-            <label className="text-[11px] uppercase tracking-wide text-gray-700">
+            <label className="text-[11px] uppercase tracking-wide text-muted">
               {field.label}
             </label>
             {field.type === 'boolean' ? (
@@ -452,7 +478,7 @@ export function SpeciesEditor() {
   const speciesChips = (
     <div className={ITEM_LIST}>
       {filteredSpecies.length === 0 ? (
-        <p className="w-full text-center text-gray-500 py-8">No matching species found.</p>
+        <p className="w-full text-center text-muted py-8">No matching species found.</p>
       ) : (
         filteredSpecies.map((sp) => (
           <SpeciesChip
@@ -481,14 +507,14 @@ export function SpeciesEditor() {
           <CardContent>
             <div className="grid grid-cols-1 gap-7">
               <div>
-                <label className="block text-base font-semibold text-gray-800 mb-2">
+                <label className="block text-base font-semibold text-ink mb-2">
                   Choose a phase
                 </label>
                 <PhaseSelector value={newSpeciesPhase} onChange={setNewSpeciesPhase} />
               </div>
 
               <div>
-                <label className="block text-base font-semibold text-gray-800 mb-2">
+                <label className="block text-base font-semibold text-ink mb-2">
                   Species name
                 </label>
                 <input
@@ -501,7 +527,7 @@ export function SpeciesEditor() {
               </div>
 
               <div>
-                <label className="block text-base font-semibold text-gray-800 mb-2">
+                <label className="block text-base font-semibold text-ink mb-2">
                   Add properties
                 </label>
                 <PropertySelector
@@ -540,7 +566,7 @@ export function SpeciesEditor() {
             />
 
             {species.length === 0 ? (
-              <p className="text-center text-gray-500 py-8">
+              <p className="text-center text-muted py-8">
                 No species defined. Add your first species above.
               </p>
             ) : (

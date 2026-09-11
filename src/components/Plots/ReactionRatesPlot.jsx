@@ -27,18 +27,18 @@ export function ReactionRatesPlot() {
 
   // Generate color palette for reaction rates
   const colors = [
-    '#3b82f6',
-    '#ef4444',
-    '#10b981',
-    '#f59e0b',
-    '#8b5cf6',
-    '#ec4899',
-    '#14b8a6',
-    '#f97316',
-    '#6366f1',
-    '#84cc16',
-    '#06b6d4',
-    '#f43f5e',
+    '#0057C2', // NCAR Blue
+    '#FAA119', // Orange
+    '#00A2B4', // UCAR Aqua
+    '#00357A', // Dark Blue
+    '#D9B915', // Yellow (darkened for line visibility)
+    '#34E1F4', // Light Aqua
+    '#C97F10', // Orange (dark)
+    '#42C0FF', // Light Blue
+    '#007483', // UCAR Aqua (dark)
+    '#011837', // Space
+    '#7A5C00', // Yellow (deep)
+    '#1E90D8', // Blue (mid)
   ]
 
   // Extract rate constants from initial concentrations (they're set via setUserDefinedRateParameters)
@@ -171,13 +171,13 @@ export function ReactionRatesPlot() {
       <Card>
         <CardHeader>
           <CardTitle>Reaction Rates</CardTitle>
-          <CardDescription className="text-gray-500 italic">
+          <CardDescription className="text-muted italic">
             View photolysis and user-defined reaction rate parameters
           </CardDescription>
         </CardHeader>
 
         <CardContent>
-          <div className="text-center py-12 text-gray-500">
+          <div className="text-center py-12 text-muted">
             <div className="flex justify-center mb-4">
               <FlaskConical className="w-16 h-16" />
             </div>
@@ -197,14 +197,14 @@ export function ReactionRatesPlot() {
         </CardHeader>
 
         <CardContent>
-          <div className="text-center py-12 text-gray-500">
+          <div className="text-center py-12 text-muted">
             <div className="flex justify-center mb-4">
-              <AlertCircle className="w-16 h-16 text-yellow-500" />
+              <AlertCircle className="w-16 h-16 text-location" />
             </div>
             <p className="text-sm max-w-md mx-auto mb-3">
               This mechanism does not have photolysis or user-defined reactions.
             </p>
-            <div className="text-xs bg-yellow-50 border border-yellow-200 rounded-lg p-3 max-w-md mx-auto">
+            <div className="text-xs bg-[#FFFBEB] border border-location/30 rounded-lg p-3 max-w-md mx-auto">
               <p className="font-semibold mb-1">Troubleshooting:</p>
               <ul className="text-left space-y-1">
                 <li>
@@ -232,9 +232,9 @@ export function ReactionRatesPlot() {
 
       <CardContent className="space-y-4">
         {/* Rate Parameter Filter */}
-        <div className="border rounded-lg p-4 bg-gray-50">
+        <div className="border border-border rounded-lg p-4 bg-surface-alt">
           <div className="flex items-center justify-between mb-3">
-            <h4 className="font-semibold text-sm text-gray-900">
+            <h4 className="font-semibold text-sm text-ink">
               Rate Parameters ({displayRates.length} selected)
             </h4>
             <div className="flex gap-2">
@@ -273,7 +273,7 @@ export function ReactionRatesPlot() {
                   className={`px-3 py-1 rounded-full text-xs font-medium transition-all ${
                     displayRates.includes(rate)
                       ? 'text-white shadow-md'
-                      : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
+                      : 'bg-surface-alt text-muted hover:bg-surface-hover'
                   }`}
                   style={
                     displayRates.includes(rate)
@@ -292,20 +292,20 @@ export function ReactionRatesPlot() {
         {/* Chart */}
         <div className="border rounded-lg p-4 bg-white">
           {chartData.length === 0 ? (
-            <div className="text-center py-12 text-gray-500">
-              <AlertCircle className="w-12 h-12 mx-auto mb-3 text-yellow-500" />
+            <div className="text-center py-12 text-muted">
+              <AlertCircle className="w-12 h-12 mx-auto mb-3 text-location" />
               <p className="text-sm">No chart data available</p>
               <p className="text-xs mt-2">Check console for debugging information</p>
             </div>
           ) : (
             <ResponsiveContainer width="100%" height={500}>
               <LineChart data={chartData} margin={{ top: 5, right: 30, left: 100, bottom: 5 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                <CartesianGrid strokeDasharray="3 3" stroke="#D8D6D2" />
 
                 <XAxis
                   dataKey="timeSeconds"
-                  stroke="#374151"
-                  tick={{ fontSize: 12, fill: '#374151' }}
+                  stroke="#5f6368"
+                  tick={{ fontSize: 12, fill: '#5f6368' }}
                   type="number"
                 >
                   <Label
@@ -320,8 +320,8 @@ export function ReactionRatesPlot() {
                   scale={scaleType}
                   domain={yDomain}
                   allowDataOverflow={false}
-                  stroke="#374151"
-                  tick={{ fontSize: 11, fill: '#374151' }}
+                  stroke="#5f6368"
+                  tick={{ fontSize: 11, fill: '#5f6368' }}
                   tickFormatter={(value) => {
                     if (value === 0 || !isFinite(value)) return '0'
                     if (scaleType === 'log' || Math.abs(value) >= 1000 || Math.abs(value) < 0.01) {
@@ -346,12 +346,12 @@ export function ReactionRatesPlot() {
 
                     return (
                       <div
-                        className="bg-white border-2 border-gray-800 rounded-lg shadow-xl p-3"
+                        className="bg-white border-2 border-ink rounded-lg shadow-xl p-3"
                         style={{ backgroundColor: 'white' }}
                       >
                         <p
-                          className="font-semibold mb-2 text-sm text-gray-900"
-                          style={{ color: '#111827' }}
+                          className="font-semibold mb-2 text-sm text-ink"
+                          style={{ color: '#1f2937' }}
                         >
                           Time: {label?.toLocaleString()} seconds
                         </p>
@@ -367,14 +367,14 @@ export function ReactionRatesPlot() {
                                 style={{ backgroundColor: entry.color }}
                               />
                               <span
-                                className="font-medium text-gray-900"
-                                style={{ color: '#111827' }}
+                                className="font-medium text-ink"
+                                style={{ color: '#1f2937' }}
                               >
                                 {entry.name}:
                               </span>
                               <span
-                                className="font-mono text-gray-900"
-                                style={{ color: '#111827' }}
+                                className="font-mono text-ink"
+                                style={{ color: '#1f2937' }}
                               >
                                 {entry.value?.toExponential(4) || 'N/A'}
                               </span>
@@ -408,7 +408,7 @@ export function ReactionRatesPlot() {
                               className="w-4 h-1 rounded"
                               style={{ backgroundColor: entry.color }}
                             />
-                            <span className="text-sm font-semibold text-gray-900">
+                            <span className="text-sm font-semibold text-ink">
                               {entry.value}
                             </span>
                           </div>
@@ -445,7 +445,7 @@ export function ReactionRatesPlot() {
         </div>
 
         {/* Info Box */}
-        <div className="text-xs text-gray-600 bg-blue-50 border border-blue-200 rounded-lg p-3">
+        <div className="text-xs text-muted bg-[#E6F0FA] border border-[#B8D4EF] rounded-lg p-3">
           <p className="font-semibold mb-1 flex items-center gap-2">
             <Lightbulb className="w-4 h-4" />
             About Reaction Rates:
@@ -459,7 +459,7 @@ export function ReactionRatesPlot() {
             </li>
             <li>• Rate values are constant for this simulation</li>
             <li>
-              • Y-axis scale: <strong className="text-blue-600">{scaleType.toUpperCase()}</strong>
+              • Y-axis scale: <strong className="text-action">{scaleType.toUpperCase()}</strong>
             </li>
             <li>• Future versions will support time-varying rates</li>
           </ul>

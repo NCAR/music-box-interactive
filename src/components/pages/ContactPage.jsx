@@ -44,7 +44,7 @@ function ContactPage({ onNavigate }) {
           <h1 className="text-2xl xs:text-3xl sm:text-4xl md:text-5xl font-bold mb-2 xs:mb-3 sm:mb-4">
             Contact Us
           </h1>
-          <p className="text-sm xs:text-base sm:text-lg md:text-xl text-blue-100 max-w-3xl mx-auto px-2">
+          <p className="text-sm xs:text-base sm:text-lg md:text-xl text-[#42C0FF] max-w-3xl mx-auto px-2">
             Have questions or feedback? We'd love to hear from you
           </p>
         </div>
@@ -57,42 +57,42 @@ function ContactPage({ onNavigate }) {
             <CardContent className="p-4 xs:p-6 sm:p-8">
               <form className="space-y-4 xs:space-y-5 sm:space-y-6">
                 <div>
-                  <label className="block text-xs xs:text-sm font-semibold text-gray-700 mb-1 xs:mb-2">
+                  <label className="block text-xs xs:text-sm font-semibold text-ink mb-1 xs:mb-2">
                     Name
                   </label>
                   <input
                     type="text"
-                    className="w-full px-3 xs:px-4 py-2 xs:py-2.5 sm:py-3 text-sm xs:text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all"
+                    className="w-full px-3 xs:px-4 py-2 xs:py-2.5 sm:py-3 text-sm xs:text-base border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-action focus:border-transparent transition-all"
                     placeholder="Your name"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs xs:text-sm font-semibold text-gray-700 mb-1 xs:mb-2">
+                  <label className="block text-xs xs:text-sm font-semibold text-ink mb-1 xs:mb-2">
                     Email
                   </label>
                   <input
                     type="email"
-                    className="w-full px-3 xs:px-4 py-2 xs:py-2.5 sm:py-3 text-sm xs:text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all"
+                    className="w-full px-3 xs:px-4 py-2 xs:py-2.5 sm:py-3 text-sm xs:text-base border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-action focus:border-transparent transition-all"
                     placeholder="your.email@example.com"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs xs:text-sm font-semibold text-gray-700 mb-1 xs:mb-2">
+                  <label className="block text-xs xs:text-sm font-semibold text-ink mb-1 xs:mb-2">
                     Subject
                   </label>
                   <input
                     type="text"
-                    className="w-full px-3 xs:px-4 py-2 xs:py-2.5 sm:py-3 text-sm xs:text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all"
+                    className="w-full px-3 xs:px-4 py-2 xs:py-2.5 sm:py-3 text-sm xs:text-base border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-action focus:border-transparent transition-all"
                     placeholder="What is this about?"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs xs:text-sm font-semibold text-gray-700 mb-1 xs:mb-2">
+                  <label className="block text-xs xs:text-sm font-semibold text-ink mb-1 xs:mb-2">
                     Message
                   </label>
                   <textarea
                     rows={6}
-                    className="w-full px-3 xs:px-4 py-2 xs:py-2.5 sm:py-3 text-sm xs:text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all resize-none"
+                    className="w-full px-3 xs:px-4 py-2 xs:py-2.5 sm:py-3 text-sm xs:text-base border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-action focus:border-transparent transition-all resize-none"
                     placeholder="Your message..."
                   ></textarea>
                 </div>
@@ -105,20 +105,20 @@ function ContactPage({ onNavigate }) {
 
           {/* Additional Contact Info */}
           <div className="mt-6 xs:mt-8 sm:mt-12 grid grid-cols-1 xs:grid-cols-2 gap-4 xs:gap-6 sm:gap-8">
-            <div className="bg-blue-50 p-4 xs:p-5 sm:p-6 rounded-lg">
-              <h3 className="text-base xs:text-lg font-bold text-[#2c3a50] mb-1 xs:mb-2">Email</h3>
-              <p className="text-gray-700 text-xs xs:text-sm sm:text-base">
+            <div className="bg-[#E6F0FA] p-4 xs:p-5 sm:p-6 rounded-lg">
+              <h3 className="text-base xs:text-lg font-bold text-heading mb-1 xs:mb-2">Email</h3>
+              <p className="text-ink text-xs xs:text-sm sm:text-base">
                 support@musicbox.ncar.edu
               </p>
             </div>
-            <div className="bg-blue-50 p-4 xs:p-5 sm:p-6 rounded-lg">
-              <h3 className="text-base xs:text-lg font-bold text-[#2c3a50] mb-1 xs:mb-2">
+            <div className="bg-[#E6F0FA] p-4 xs:p-5 sm:p-6 rounded-lg">
+              <h3 className="text-base xs:text-lg font-bold text-heading mb-1 xs:mb-2">
                 Location
               </h3>
-              <p className="text-gray-700 text-xs xs:text-sm sm:text-base">
+              <p className="text-ink text-xs xs:text-sm sm:text-base">
                 National Center for Atmospheric Research
               </p>
-              <p className="text-gray-700 text-xs xs:text-sm sm:text-base">
+              <p className="text-ink text-xs xs:text-sm sm:text-base">
                 Boulder, Colorado, USA
               </p>
             </div>
