@@ -2,7 +2,6 @@ import { useState } from 'react'
 import { useDispatch } from 'react-redux'
 import { useNavigate } from 'react-router-dom'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card'
-import { Button } from './ui/button'
 
 import { writeConfigFiles, resolveConditionsFilepathsFromFile } from '@ncar/music-box'
 import { loadMusicBoxConfig } from '../services/config/loadMusicBoxConfig'
@@ -122,30 +121,21 @@ export function ExampleLoader() {
           </div>
         )}
 
-        <div className="grid gap-3">
+        <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-3 gap-3">
           {examples.map((example) => (
-            <div
+            <button
               key={example.id}
-              className="flex items-center justify-between p-4 border border-white/20 rounded-lg bg-white/5 hover:bg-white/10 transition-colors"
+              type="button"
+              onClick={() => loadExample(example)}
+              disabled={loading}
+              className="flex flex-col h-full text-left p-3 xs:p-4 border border-border rounded-lg hover:bg-surface-hover transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-action disabled:pointer-events-none disabled:opacity-50"
             >
-              <div className="flex-1">
-                <h4 className="font-semibold text-sm">{example.name}</h4>
-                <p className="text-xs text-gray-700 mt-1">{example.description}</p>
-                <span className="inline-block mt-2 px-2 py-1 bg-white/5 backdrop-blur-lg border border-white/20 text-gray-900 text-xs font-bold rounded">
-                  {example.mechanism_name}
-                </span>
-              </div>
-
-              <Button
-                variant="glass"
-                size="sm"
-                onClick={() => loadExample(example)}
-                disabled={loading}
-                className="rounded-2xl ml-4"
-              >
-                {loading ? 'Loading...' : 'Load'}
-              </Button>
-            </div>
+              <h4 className="font-semibold text-sm">{example.name}</h4>
+              <p className="text-xs text-gray-700 mt-1">{example.description}</p>
+              <span className="mt-2 text-xs font-bold text-gray-900">
+                {loading ? 'Loading...' : example.mechanism_name}
+              </span>
+            </button>
           ))}
         </div>
 
