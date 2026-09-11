@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { useDispatch } from 'react-redux'
 import { useEffect } from 'react'
 import Navigation from '../Navigation'
@@ -14,11 +14,10 @@ import { resetSimulation } from '../../redux/slices/simulationSlice'
 
 /**
  * AppContent Component
- * Resets simulation state and lands on the Dashboard when the app first loads.
+ * Resets simulation state when the app first loads, without disturbing the current route.
  */
 function AppContent() {
   const dispatch = useDispatch()
-  const navigate = useNavigate()
   const location = useLocation()
 
   // Always start with a fresh state on load.
@@ -26,7 +25,6 @@ function AppContent() {
     dispatch(resetMechanism())
     dispatch(resetConditions())
     dispatch(resetSimulation())
-    navigate('/', { replace: true })
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
