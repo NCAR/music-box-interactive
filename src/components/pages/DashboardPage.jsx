@@ -307,7 +307,7 @@ export function DashboardPage() {
       {/* Guide: Need Help */}
       <Card className="border-2 border-white/20">
         <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0">
-          <CardTitle>Need More Help?</CardTitle>
+          <CardTitle>Resources &amp; Support</CardTitle>
           <a
             href="https://github.com/NCAR/music-box-interactive/issues/new"
             target="_blank"
