@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { NavLink } from 'react-router-dom'
 import { Home, BookOpen, Atom, Settings, BarChart3, ArrowLeft } from 'lucide-react'
 import RunSimulationButton from './RunSimulationButton'
+import DownloadButtons from './DownloadButtons'
 
 /**
  * Navigation Component
@@ -109,8 +110,9 @@ export function Navigation({ onBackToHome = null }) {
           <div className="border-t border-border my-3 sm:my-4"></div>
 
           {/* Run Simulation Button */}
-          <div className="px-1 sm:px-2">
+          <div className="px-1 sm:px-2 space-y-2">
             <RunSimulationButton className="w-full text-sm sm:text-base" />
+            <DownloadButtons />
           </div>
 
           {/* Separator Line */}

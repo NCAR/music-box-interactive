@@ -6,7 +6,6 @@ import {
   Microscope,
   Settings,
   FlaskConical,
-  Download,
   Copy,
   CheckCircle2,
   XCircle,
@@ -14,6 +13,7 @@ import {
   Lightbulb,
 } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
+import { buildDownloadableConfig } from '../../services/config/downloadConfig'
 
 /**
  * ReviewTab Component
@@ -24,38 +24,7 @@ export function ReviewTab() {
   const conditions = useSelector((state) => state.conditions)
   const { toast } = useToast()
 
-  // Build complete configuration object
-  const configuration = {
-    mechanism: {
-      name: mechanism.selectedMechanism || 'custom',
-      species: mechanism.species,
-      reactions: mechanism.reactions,
-      phases: mechanism.phases,
-    },
-    conditions: {
-      basic: conditions.basic,
-      initial: conditions.initial,
-      evolving: conditions.evolving,
-    },
-    metadata: {
-      created: new Date().toISOString(),
-      version: '1.0.0',
-    },
-  }
-
-  const handleDownloadJSON = () => {
-    const blob = new Blob([JSON.stringify(configuration, null, 2)], {
-      type: 'application/json',
-    })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `musicbox-config-${mechanism.selectedMechanism}-${Date.now()}.json`
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
-    URL.revokeObjectURL(url)
-  }
+  const configuration = buildDownloadableConfig({ mechanism, conditions })
 
   const handleCopyToClipboard = async () => {
     try {
@@ -248,14 +217,6 @@ export function ReviewTab() {
 
           {/* Action Buttons */}
           <div className="flex flex-col xs:flex-row gap-2 xs:gap-3">
-            <Button
-              onClick={handleDownloadJSON}
-              variant="glass"
-              className="flex-1 rounded-2xl bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300 text-xs xs:text-sm sm:text-base px-3 xs:px-4 py-2 xs:py-2.5"
-            >
-              <Download className="w-3 h-3 xs:w-4 xs:h-4 mr-1.5 xs:mr-2" />
-              <span className="truncate">Download Configuration</span>
-            </Button>
             <Button
               onClick={handleCopyToClipboard}
               variant="glass"
