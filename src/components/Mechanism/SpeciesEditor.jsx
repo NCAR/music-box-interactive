@@ -5,6 +5,7 @@ import { ChevronDown, ChevronUp } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card'
 import { Button } from '../ui/button'
+import { Toggle } from '../ui/toggle'
 import { addSpecies, updateSpecies, removeSpecies } from '../../redux/slices/mechanismSlice'
 import { addSpeciesIfValid } from './speciesUtils'
 import {
@@ -182,32 +183,6 @@ function PhaseSelector({ value, onChange, size = 'default', allowCustom = true }
         />
       )}
     </div>
-  )
-}
-
-// On/off switch for boolean species properties.
-function Toggle({ checked, label, onChange }) {
-  return (
-    <button
-      type="button"
-      role="switch"
-      aria-checked={checked}
-      onClick={() => onChange(!checked)}
-      className="flex items-center gap-3 rounded text-sm font-semibold text-gray-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-green-500"
-    >
-      {label}
-      <span
-        className={`relative inline-flex h-6 w-11 flex-shrink-0 items-center rounded-full transition-colors ${
-          checked ? 'bg-green-700' : 'bg-gray-300'
-        }`}
-      >
-        <span
-          className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform ${
-            checked ? 'translate-x-[1.375rem]' : 'translate-x-0.5'
-          }`}
-        />
-      </span>
-    </button>
   )
 }
 

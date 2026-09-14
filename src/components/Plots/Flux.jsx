@@ -404,7 +404,7 @@ export function Flux() {
                       setSpeciesOverflowOpen(false)
                     }}
                     placeholder="Search species"
-                    className="w-full h-8 px-2 border border-gray-300 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
+                    className="w-full h-8 px-2 border border-gray-300 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-green-700"
                   />
 
                   <div className="flex flex-col gap-0.5">
@@ -491,7 +491,7 @@ export function Flux() {
                       min={0}
                       max={timeRange.end}
                       onCommit={(start) => setTimeRange({ start, end: timeRange.end })}
-                      className="w-1/2 h-8 px-2 bg-white text-gray-900 rounded-l-lg text-sm text-center focus:outline-none focus:relative focus:z-10 focus:ring-2 focus:ring-blue-600"
+                      className="w-1/2 h-8 px-2 bg-white text-gray-900 rounded-l-lg text-sm text-center focus:outline-none focus:relative focus:z-10 focus:ring-2 focus:ring-green-700"
                     />
                     <span className="flex items-center justify-center h-8 px-1 text-gray-400 font-normal bg-white">
                       –
@@ -503,7 +503,7 @@ export function Flux() {
                       min={timeRange.start}
                       max={duration}
                       onCommit={(end) => setTimeRange({ start: timeRange.start, end })}
-                      className="w-1/2 h-8 px-2 bg-white text-gray-900 rounded-r-lg text-sm text-center focus:outline-none focus:relative focus:z-10 focus:ring-2 focus:ring-blue-600"
+                      className="w-1/2 h-8 px-2 bg-white text-gray-900 rounded-r-lg text-sm text-center focus:outline-none focus:relative focus:z-10 focus:ring-2 focus:ring-green-700"
                     />
                   </div>
                 </div>

@@ -436,14 +436,14 @@ export function EvolvingConditionsTab() {
           ) : (
             <>
               {/* Interpolation Method Selector */}
-              <div className="p-4 bg-white/5 backdrop-blur-lg rounded-xl border border-white/20">
+              <div className="p-4 bg-gray-50 rounded-xl border border-gray-200">
                 <label className="block text-xs font-semibold text-blue-900 mb-2">
                   Interpolation Method
                 </label>
                 <select
                   value={evolving.interpolationMethod || 'linear'}
                   onChange={(e) => dispatch(setInterpolationMethod(e.target.value))}
-                  className="w-full px-3 py-2 border-2 border-white/30 bg-white/10 text-gray-900 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-600"
+                  className="w-full px-3 py-2 border-2 border-gray-300 bg-white text-gray-900 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-600"
                 >
                   <option value="linear">Linear - Smooth transition between points</option>
                   <option value="step">Step - Hold value until next point</option>
@@ -490,7 +490,7 @@ export function EvolvingConditionsTab() {
               </div>
 
               {/* Add Time Point Form */}
-              <div className="p-4 bg-white/0 backdrop-blur-lg rounded-xl border-2 border-white/20">
+              <div className="p-4 rounded-xl border-2 border-gray-200">
                 <h4 className="font-bold text-sm mb-3 text-blue-900 flex items-center gap-2">
                   <Plus className="w-4 h-4" />
                   Add Time Point Manually
@@ -505,7 +505,7 @@ export function EvolvingConditionsTab() {
                       value={newTime}
                       onChange={(e) => setNewTime(e.target.value)}
                       placeholder="0"
-                      className="w-full px-2 py-2 border-2 border-white/30 bg-white/10 text-gray-900 placeholder:text-gray-500 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
+                      className="w-full px-2 py-2 border-2 border-gray-300 bg-white text-gray-900 placeholder:text-gray-500 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
                     />
                   </div>
                   <div>
@@ -517,7 +517,7 @@ export function EvolvingConditionsTab() {
                       value={newTemp}
                       onChange={(e) => setNewTemp(e.target.value)}
                       placeholder="298.15"
-                      className="w-full px-2 py-2 border-2 border-white/30 bg-white/10 text-gray-900 placeholder:text-gray-500 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
+                      className="w-full px-2 py-2 border-2 border-gray-300 bg-white text-gray-900 placeholder:text-gray-500 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
                     />
                   </div>
                   <div>
@@ -529,7 +529,7 @@ export function EvolvingConditionsTab() {
                       value={newPress}
                       onChange={(e) => setNewPress(e.target.value)}
                       placeholder="101325"
-                      className="w-full px-2 py-2 border-2 border-white/30 bg-white/10 text-gray-900 placeholder:text-gray-500 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
+                      className="w-full px-2 py-2 border-2 border-gray-300 bg-white text-gray-900 placeholder:text-gray-500 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
                     />
                   </div>
                 </div>
@@ -612,9 +612,9 @@ export function EvolvingConditionsTab() {
                     No time points configured. Add your first time point above.
                   </p>
                 ) : (
-                  <div className="border border-white/20 rounded-lg overflow-hidden">
+                  <div className="border border-gray-200 rounded-lg overflow-hidden">
                     <table className="w-full text-sm">
-                      <thead className="bg-white/10 backdrop-blur-lg border-b border-white/20">
+                      <thead className="bg-gray-50 border-b border-gray-200">
                         <tr>
                           <th className="text-left px-4 py-2 font-semibold">Time (s)</th>
                           <th className="text-left px-4 py-2 font-semibold">Temperature (K)</th>
@@ -624,7 +624,7 @@ export function EvolvingConditionsTab() {
                       </thead>
                       <tbody>
                         {evolving.times.map((time, index) => (
-                          <tr key={index} className="border-b border-white/10 hover:bg-white/10">
+                          <tr key={index} className="border-b border-gray-200 hover:bg-gray-50">
                             <td className="px-4 py-2 font-mono">{time}</td>
                             <td className="px-4 py-2 font-mono">
                               {evolving.temperature[index]}
@@ -643,7 +643,7 @@ export function EvolvingConditionsTab() {
                                 variant="glass"
                                 size="sm"
                                 onClick={() => handleRemoveTimePoint(index)}
-                                className="rounded-lg text-red-600 hover:bg-red-900/20 backdrop-blur-lg"
+                                className="rounded-lg text-red-600 hover:bg-red-50"
                               >
                                 Remove
                               </Button>
@@ -660,7 +660,7 @@ export function EvolvingConditionsTab() {
         </CardContent>
       </Card>
 
-      <div className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-lg p-3 text-xs text-gray-700">
+      <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 text-xs text-gray-700">
         <p className="font-semibold mb-1 flex items-center gap-2">
           <AlertCircle className="w-4 h-4" />
           Important Notes:

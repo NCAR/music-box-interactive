@@ -89,7 +89,7 @@ export function ReviewTab() {
         <CardContent className="space-y-4">
           {/* Summary Statistics */}
           <div className="grid grid-cols-2 xs:grid-cols-2 sm:grid-cols-4 gap-2 xs:gap-3">
-            <div className="bg-white/5 backdrop-blur-lg border border-white/20 rounded-lg p-2 xs:p-3">
+            <div className="bg-gray-50 border border-gray-200 rounded-lg p-2 xs:p-3">
               <div className="text-xs xs:text-sm text-gray-700 font-semibold truncate">
                 Mechanism
               </div>
@@ -97,19 +97,19 @@ export function ReviewTab() {
                 {mechanism.selectedMechanism ? mechanism.selectedMechanism.toUpperCase() : 'NONE'}
               </div>
             </div>
-            <div className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-lg p-2 xs:p-3">
+            <div className="bg-gray-50 border border-gray-200 rounded-lg p-2 xs:p-3">
               <div className="text-xs xs:text-sm text-gray-700 font-semibold">Species</div>
               <div className="text-sm xs:text-base sm:text-lg font-bold text-green-600">
                 {mechanism.species.length}
               </div>
             </div>
-            <div className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-lg p-2 xs:p-3">
+            <div className="bg-gray-50 border border-gray-200 rounded-lg p-2 xs:p-3">
               <div className="text-xs xs:text-sm text-gray-700 font-semibold">Reactions</div>
               <div className="text-sm xs:text-base sm:text-lg font-bold text-orange-600">
                 {mechanism.reactions.length}
               </div>
             </div>
-            <div className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-lg p-2 xs:p-3">
+            <div className="bg-gray-50 border border-gray-200 rounded-lg p-2 xs:p-3">
               <div className="text-xs xs:text-sm text-gray-700 font-semibold">Duration</div>
               <div className="text-lg font-bold text-gray-900">
                 {(conditions.basic.duration / 3600).toFixed(1)}h
@@ -122,10 +122,10 @@ export function ReviewTab() {
             <h4 className="font-semibold text-sm xs:text-base sm:text-lg mb-2 xs:mb-3">
               Configuration Data
             </h4>
-            <div className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-lg p-2 xs:p-3 sm:p-4 max-h-96 overflow-auto">
+            <div className="bg-gray-50 border border-gray-200 rounded-lg p-2 xs:p-3 sm:p-4 max-h-96 overflow-auto">
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 xs:gap-4">
                 {/* Column 1: Mechanism Section */}
-                <div className="sm:border-r border-white/20 sm:pr-4 pb-3 sm:pb-0 border-b sm:border-b-0">
+                <div className="sm:border-r border-gray-200 sm:pr-4 pb-3 sm:pb-0 border-b sm:border-b-0">
                   <h5 className="font-semibold text-cyan-600 text-sm xs:text-base mb-2 flex items-center gap-2">
                     <Microscope className="w-3 h-3 xs:w-4 xs:h-4" />
                     Mechanism
@@ -151,7 +151,7 @@ export function ReviewTab() {
                 </div>
 
                 {/* Column 2: Conditions Section */}
-                <div className="lg:border-r border-white/20 lg:pr-4 pb-3 lg:pb-0 border-b lg:border-b-0">
+                <div className="lg:border-r border-gray-200 lg:pr-4 pb-3 lg:pb-0 border-b lg:border-b-0">
                   <h5 className="font-semibold text-green-600 text-sm xs:text-base mb-2 flex items-center gap-2">
                     <Settings className="w-3 h-3 xs:w-4 xs:h-4" />
                     Conditions
@@ -224,7 +224,7 @@ export function ReviewTab() {
                   </div>
 
                   {/* Metadata Section */}
-                  <div className="border-t border-white/20 pt-2 xs:pt-3">
+                  <div className="border-t border-gray-200 pt-2 xs:pt-3">
                     <h5 className="font-semibold text-gray-700 text-sm xs:text-base mb-2">
                       Metadata
                     </h5>
@@ -334,7 +334,7 @@ export function ReviewTab() {
         </CardContent>
       </Card>
 
-      <div className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-lg p-3 text-xs text-gray-700">
+      <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 text-xs text-gray-700">
         <p className="font-semibold mb-1 flex items-center gap-2">
           <Lightbulb className="w-4 h-4" />
           Next Steps:

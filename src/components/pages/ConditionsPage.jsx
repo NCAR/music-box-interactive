@@ -2,7 +2,8 @@ import { useState } from 'react'
 import { Card, CardContent } from '../ui/card'
 import { Button } from '../ui/button'
 import {
-  BasicConfigTab,
+  TimeTab,
+  EnvironmentTab,
   InitialConditionsTab,
   EvolvingConditionsTab,
   ReviewTab,
@@ -10,19 +11,18 @@ import {
 
 /**
  * ConditionsPage Component
- * Main page for configuring simulation conditions with 4 tabs
+ * Main page for configuring simulation conditions with 5 tabs
  */
 export function ConditionsPage() {
-  const [activeTab, setActiveTab] = useState('basic') // 'basic' | 'initial' | 'evolving' | 'review'
+  const [activeTab, setActiveTab] = useState('time') // 'time' | 'environment' | 'initial' | 'evolving' | 'review'
 
   const tabs = [
-    { id: 'basic', label: 'Time', component: BasicConfigTab },
+    { id: 'time', label: 'Time', component: TimeTab },
+    { id: 'environment', label: 'Environment', component: EnvironmentTab },
     { id: 'initial', label: 'Initial', component: InitialConditionsTab },
     { id: 'evolving', label: 'Evolving', component: EvolvingConditionsTab },
     { id: 'review', label: 'Review', component: ReviewTab },
   ]
-
-  const ActiveComponent = tabs.find((t) => t.id === activeTab)?.component
 
   return (
     <div className="space-y-4">
@@ -48,8 +48,15 @@ export function ConditionsPage() {
         </CardContent>
       </Card>
 
-      {/* Active Tab Content */}
-      {ActiveComponent && <ActiveComponent />}
+      {/* Tab Content — all tabs stay mounted so switching away and back doesn't reset local state */}
+      {tabs.map((tab) => {
+        const TabComponent = tab.component
+        return (
+          <div key={tab.id} className={activeTab === tab.id ? '' : 'hidden'}>
+            <TabComponent />
+          </div>
+        )
+      })}
     </div>
   )
 }

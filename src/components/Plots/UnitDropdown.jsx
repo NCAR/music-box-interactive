@@ -3,11 +3,14 @@ import { ChevronDown, Check } from 'lucide-react'
 import { useClickOutside } from '../../hooks/useClickOutside'
 import { TIME_RANGE_UNITS } from './timeRangeUnits'
 
-// Shared hours/seconds unit picker for fields that support either unit
-// (the Flux tab's time range, the Conditions tab's duration/time step/output time step).
+// Shared unit picker for fields
+// Flux tab's time range
+// Conditions tab's duration/time step/output time step
+// Environment tabs' temperature/pressure/air density
 export function UnitDropdown({
   unitId,
   onChange,
+  units = TIME_RANGE_UNITS,
   wrapperClassName = 'relative',
   buttonClassName = 'flex items-center gap-1 w-full h-8 px-2 border border-gray-300 rounded-lg text-sm text-gray-800 hover:bg-gray-50',
   centerLabel = false,
@@ -16,7 +19,7 @@ export function UnitDropdown({
   const menuRef = useRef(null)
   useClickOutside(menuRef, () => setOpen(false), open)
 
-  const unit = TIME_RANGE_UNITS.find((u) => u.id === unitId) ?? TIME_RANGE_UNITS[0]
+  const unit = units.find((u) => u.id === unitId) ?? units[0]
 
   return (
     <div className={wrapperClassName} ref={menuRef}>
@@ -29,7 +32,7 @@ export function UnitDropdown({
 
       {open && (
         <div className="absolute z-10 mt-1 w-full bg-white border border-gray-300 rounded-lg shadow-lg py-1">
-          {TIME_RANGE_UNITS.map((u) => (
+          {units.map((u) => (
             <button
               key={u.id}
               type="button"

@@ -8,7 +8,7 @@ import { UnitDropdown } from '../Plots/UnitDropdown'
 import { TIME_RANGE_UNITS, formatBound } from '../Plots/timeRangeUnits'
 
 const NUMBER_INPUT =
-  'w-72 h-9 px-2 border border-gray-400 bg-white/10 text-gray-900 placeholder:text-gray-500 rounded-lg text-sm text-center font-mono focus:outline-none focus:border-green-700 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none'
+  'w-72 h-9 px-2 border border-gray-400 bg-white/10 text-gray-900 placeholder:text-gray-500 rounded-lg text-sm text-center font-mono focus:outline-none focus:ring-2 focus:ring-green-700 focus:border-transparent [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none'
 
 const DROPDOWN_WRAPPER = 'relative w-72 flex-shrink-0'
 const DROPDOWN_BUTTON =
@@ -56,10 +56,10 @@ const FIELDS = [
 ]
 
 /**
- * BasicConfigTab Component
+ * TimeTab Component
  * Manages basic simulation configuration (duration, timestep, output frequency)
  */
-export function BasicConfigTab() {
+export function TimeTab() {
   const dispatch = useDispatch()
   const basic = useSelector((state) => state.conditions.basic)
 
@@ -108,7 +108,7 @@ export function BasicConfigTab() {
         </CardContent>
       </Card>
 
-      <div className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-lg p-2 text-[13px] text-gray-700">
+      <div className="bg-gray-50 border border-gray-200 rounded-lg p-2 text-[13px] text-gray-700">
         <p className="font-semibold mb-1 flex items-center gap-2">
           <PencilLine className="w-4 h-4" />
           Summary:
@@ -122,4 +122,4 @@ export function BasicConfigTab() {
   )
 }
 
-export default BasicConfigTab
+export default TimeTab
