@@ -44,9 +44,7 @@ export function DashboardPage() {
     navigate('/mechanism')
   }
 
-  // Accepts a music-box v1 config (the format @ncar/music-box and the Python
-  // acom_music_box tool both read): a plain .json, or a .zip bundling the JSON with the
-  // CSV files its "conditions.filepaths" names.
+  // Accepts a music-box v1 config: a plain .json, or a .zip bundling it with its CSV files.
   const handleLoadConfiguration = (event) => {
     const file = event.target.files?.[0]
     if (!file) return

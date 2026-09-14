@@ -1,15 +1,11 @@
 import { parseConditions, ConditionsManager } from '@ncar/music-box'
 
-// Shared hydration logic for initial and evolving conditions. Flattening {headers, rows}
-// CSV blocks, and classifying temperature/pressure/concentrations from them, is delegated
-// to @ncar/music-box's own parseConditions()/ConditionsManager -- the same parsing the
-// solver itself uses when it later runs this same conditions object -- instead of
-// re-deriving it from raw column headers here.
+// Shared hydration logic for initial and evolving conditions. Classifying
+// temperature/pressure/concentrations is delegated to @ncar/music-box's
+// parseConditions()/ConditionsManager instead of re-derived from raw headers here.
 //
-// Rate-constant and additionalSeries keys are an exception: they are kept as the raw
-// header string (e.g. "PHOTO.O2_1.s-1"), matching the header ConditionsManager itself
-// would strip the unit from, because buildSolverConditions round-trips those same keys
-// verbatim back into a CSV header when it rebuilds the solver payload later.
+// Rate-constant and additionalSeries keys stay as the raw header string (unit suffix
+// included), since buildSolverConditions writes those same keys back out as a CSV header.
 
 const isRateParamHeader = (header) =>
   header !== 'time.s' && !header.startsWith('ENV.') && !header.startsWith('CONC.')
@@ -17,12 +13,9 @@ const isRateParamHeader = (header) =>
 export function hydrateInitialConditions(exampleFiles) {
   const getValidBlock = (block) => (block?.headers?.length && block?.rows?.length ? block : null)
 
-  // A single-row block is a snapshot, not a time series, so it is always safe to treat as
-  // more initial-condition data -- the same way the three named blocks below already are.
-  // This is what lets an uploaded config (which has no named slots, only `data`) hydrate the
-  // Initial tab the same way a bundled example does. Multi-row blocks are excluded: a
-  // mechanism whose rate parameters genuinely evolve (e.g. Chapman's photolysis rates)
-  // should not also get a static "initial" copy of them from the first row of that series.
+  // A single-row block is a snapshot, not a time series, so it counts as initial-condition
+  // data too. Multi-row blocks are excluded so a genuinely evolving series (e.g. Chapman's
+  // photolysis rates) doesn't also get a static "initial" copy of itself.
   const snapshotBlocks = [
     getValidBlock(exampleFiles?.initial_conditions),
     getValidBlock(exampleFiles?.initial_concentrations),
@@ -33,10 +26,8 @@ export function hydrateInitialConditions(exampleFiles) {
   ].filter(Boolean)
   const snapshotRows = parseConditions({ data: snapshotBlocks })
 
-  // A config's own ENV columns may live only on a multi-row (evolving) block instead of any
-  // single-row snapshot -- e.g. an initial_concentrations.csv with no ENV columns of its own,
-  // borrowing temperature/pressure from the evolving series' first point. Only temperature
-  // and pressure borrow this way; concentrations stay snapshot-only, below.
+  // A config's ENV columns may only live on a multi-row (evolving) block. Borrow
+  // temperature/pressure from its first point; concentrations stay snapshot-only.
   const fallbackEvolvingBlock = (exampleFiles?.data || []).find((block) => {
     const headers = block?.headers || []
     const rows = block?.rows || []
@@ -50,9 +41,8 @@ export function hydrateInitialConditions(exampleFiles) {
 
   const hasHeader = (rows, name) => rows.some((row) => Object.prototype.hasOwnProperty.call(row, name))
 
-  // Snapshot blocks take priority; the fallback only fills in what they left unset. Passing
-  // fallback rows first and snapshot rows second means snapshot values win the accumulation
-  // in getConditionsAtTime, which applies each point in order and lets a later one override.
+  // Fallback rows go first so snapshot rows (added after) win getConditionsAtTime's
+  // accumulation.
   const mergedManager = new ConditionsManager([...fallbackRows, ...snapshotRows])
   const { temperature, pressure } = mergedManager.getConditionsAtTime(0)
 
@@ -87,8 +77,8 @@ export function hydrateInitialConditions(exampleFiles) {
 
 export function hydrateEvolvingConditions(exampleFiles) {
   const boulderBlock = exampleFiles?.boulder
-  // A single row is an initial-condition snapshot, not a time series, even when it happens
-  // to carry ENV.* columns -- require more than one point to call it evolving.
+  // A single row is a snapshot, not a time series -- require more than one point to call
+  // it evolving.
   const fallbackEvolvingBlock = (exampleFiles?.data || []).find((block) => {
     const headers = block?.headers || []
     const rows = block?.rows || []

@@ -2,10 +2,8 @@ import { describe, it, expect } from 'vitest'
 
 import { hydrateInitialConditions, hydrateEvolvingConditions } from '../src/utils/hydrateConditions'
 
-// hydrateConditions.js builds on @ncar/music-box's own parseConditions()/ConditionsManager
-// rather than re-deriving temperature/pressure/concentration classification from raw CSV
-// headers here. These tests pin the observable behavior that the rest of the app (the
-// Initial/Evolving tabs, buildSolverConditions) depends on.
+// Pins hydrateConditions.js's observable behavior -- what the Initial/Evolving tabs and
+// buildSolverConditions depend on.
 
 describe('hydrateInitialConditions', () => {
   it('reads temperature, pressure, and concentrations from a single self-contained block', () => {
@@ -77,9 +75,8 @@ describe('hydrateInitialConditions', () => {
 
   it('lets a snapshot block override a borrowed evolving value for the same quantity', () => {
     const exampleFiles = {
-      // The evolving (multi-row) block is listed first: the fallback finder is a plain
-      // .find() and would otherwise match the single-row snapshot block below first, since
-      // it also happens to carry an ENV.* header.
+      // Listed first: the fallback finder is a plain .find() and would otherwise match
+      // the snapshot block below, which also has an ENV.* header.
       data: [
         {
           headers: ['time.s', 'ENV.temperature.K', 'ENV.pressure.Pa'],

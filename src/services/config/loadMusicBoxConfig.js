@@ -26,12 +26,8 @@ import {
   pickDeclared,
 } from '../simulation/local/speciesProperties'
 
-// Loads a music-box v1 config (the format @ncar/music-box and the Python acom_music_box
-// tool both read: "box model options", "mechanism.species/reactions", and
-// "conditions.data"/"conditions.filepaths") into Redux. `config.conditions.data` must
-// already hold every CSV-derived block inline -- callers resolve `filepaths` before
-// calling this, so this function has one job regardless of whether the data came from
-// a bundled example, a plain JSON upload, or CSVs pulled out of an uploaded zip.
+// Loads a resolved music-box v1 config into Redux. conditions.data must already hold every
+// CSV-derived block inline; callers resolve filepaths before calling this.
 export function loadMusicBoxConfig(config, { dispatch, navigate, meta = {}, csv } = {}) {
   dispatch(resetMechanism())
   dispatch(resetConditions())
@@ -87,8 +83,7 @@ export function loadMusicBoxConfig(config, { dispatch, navigate, meta = {}, csv 
     )
   })
 
-  // parseBoxModelOptions already resolves every unit @ncar/music-box's solver accepts
-  // ("s"/"sec"/"min"/"hr"/"hour"/"day"), the same parsing solve() itself uses.
+  // parseBoxModelOptions handles every time unit the solver accepts.
   const { chemTimeStep, outputTimeStep, simulationLength } = parseBoxModelOptions(config)
   dispatch(setDuration(simulationLength))
   dispatch(setTimeStep(chemTimeStep))

@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card'
 import { Button } from './ui/button'
 
-import { parseCsvToBlock } from '@ncar/music-box'
+import { writeConfigFiles, resolveConditionsFilepathsFromFile } from '@ncar/music-box'
 import { loadMusicBoxConfig } from '../services/config/loadMusicBoxConfig'
 
 import chapmanConfig from '@ncar/music-box/examples/chapman/my_config.json' with { type: 'json' }
@@ -12,14 +12,25 @@ import analyticalConfig from '@ncar/music-box/examples/analytical/my_config.json
 import ts1Config from '@ncar/music-box/examples/ts1/my_config.json' with { type: 'json' }
 import flowTubeConfig from '@ncar/music-box/examples/flow_tube/my_config.json' with { type: 'json' }
 import carbonBond5Config from '@ncar/music-box/examples/carbon_bond_5/my_config.json' with { type: 'json' }
-import chapmanInitialConcentrationsCsv from '@ncar/music-box/examples/chapman/initial_concentrations.csv?raw'
-import chapmanConditionsBoulderCsv from '@ncar/music-box/examples/chapman/conditions_Boulder.csv?raw'
-import ts1InitialConditionsCsv from '@ncar/music-box/examples/ts1/initial_conditions.csv?raw'
-import flowTubeInitialConcentrationsCsv from '@ncar/music-box/examples/flow_tube/initial_concentrations.csv?raw'
-import flowTubeInitialReactionRatesCsv from '@ncar/music-box/examples/flow_tube/initial_reaction_rates.csv?raw'
-import carbonBond5InitialConcentrationsCsv from '@ncar/music-box/examples/carbon_bond_5/initial_concentrations.csv?raw'
-import carbonBond5InitialReactionRatesCsv from '@ncar/music-box/examples/carbon_bond_5/initial_reaction_rates.csv?raw'
-import analyticalInitialConditionsCsv from '@ncar/music-box/examples/analytical/initial_conditions.csv?raw'
+
+// Every bundled example's CSV files, keyed by their absolute module path.
+const exampleCsvModules = import.meta.glob('/node_modules/@ncar/music-box/examples/*/*.csv', {
+  query: '?raw',
+  import: 'default',
+  eager: true,
+})
+
+// Maps one example's CSVs to {relPath: text}, ready for writeConfigFiles.
+function csvFilesForExample(exampleDir) {
+  const marker = `/examples/${exampleDir}/`
+  const files = {}
+  for (const [path, text] of Object.entries(exampleCsvModules)) {
+    const markerIndex = path.indexOf(marker)
+    if (markerIndex === -1) continue
+    files[path.slice(markerIndex + marker.length)] = text
+  }
+  return files
+}
 
 /**
  * ExampleLoader Component
@@ -27,42 +38,6 @@ import analyticalInitialConditionsCsv from '@ncar/music-box/examples/analytical/
  */
 export function ExampleLoader() {
   const navigate = useNavigate()
-
-  const toExampleCsvJson = (content) => {
-    if (typeof content !== 'string' || content.trim().length === 0) {
-      return {}
-    }
-
-    return parseCsvToBlock(content)
-  }
-
-  const buildExampleCsvJson = ({
-    initial_conditions = '',
-    initial_concentrations = '',
-    initial_reaction_rates = '',
-    boulder = '',
-  } = {}) => ({
-    initial_conditions: toExampleCsvJson(initial_conditions),
-    initial_concentrations: toExampleCsvJson(initial_concentrations),
-    initial_reaction_rates: toExampleCsvJson(initial_reaction_rates),
-    boulder: toExampleCsvJson(boulder),
-  })
-
-  const withInlineConditionData = (config, csvContents = []) => {
-    const existingData = Array.isArray(config?.conditions?.data) ? config.conditions.data : []
-    const parsedBlocks = csvContents
-      .filter((content) => typeof content === 'string' && content.trim().length > 0)
-      .map((content) => parseCsvToBlock(content))
-
-    return {
-      ...config,
-      conditions: {
-        ...(config.conditions || {}),
-        data: [...existingData, ...parsedBlocks],
-      },
-    }
-  }
-
   const [loading] = useState(false)
   const [error] = useState(null)
   const dispatch = useDispatch()
@@ -73,24 +48,16 @@ export function ExampleLoader() {
       name: 'Analytical Mechanism',
       description: 'A simple analytical model for demonstration purposes',
       mechanism_name: analyticalConfig.mechanism.name,
-      csv: buildExampleCsvJson({
-        initial_conditions: analyticalInitialConditionsCsv,
-      }),
-      mechanism: withInlineConditionData(analyticalConfig, [analyticalInitialConditionsCsv]),
+      dir: 'analytical',
+      config: analyticalConfig,
     },
     {
       id: 'chapman',
       name: 'Chapman Mechanism',
       description: 'Stratospheric oxygen chemistry with photolysis',
       mechanism_name: chapmanConfig.mechanism.name,
-      csv: buildExampleCsvJson({
-        initial_concentrations: chapmanInitialConcentrationsCsv,
-        boulder: chapmanConditionsBoulderCsv,
-      }),
-      mechanism: withInlineConditionData(chapmanConfig, [
-        chapmanInitialConcentrationsCsv,
-        chapmanConditionsBoulderCsv,
-      ]),
+      dir: 'chapman',
+      config: chapmanConfig,
     },
     {
       id: 'Flow-Tube Wall Loss',
@@ -98,14 +65,8 @@ export function ExampleLoader() {
       description:
         'A simple characterization of wall loss of a-Pinene oxidation products in a flow-tube reactor. ',
       mechanism_name: flowTubeConfig.mechanism.name,
-      csv: buildExampleCsvJson({
-        initial_concentrations: flowTubeInitialConcentrationsCsv,
-        initial_reaction_rates: flowTubeInitialReactionRatesCsv,
-      }),
-      mechanism: withInlineConditionData(flowTubeConfig, [
-        flowTubeInitialConcentrationsCsv,
-        flowTubeInitialReactionRatesCsv,
-      ]),
+      dir: 'flow_tube',
+      config: flowTubeConfig,
     },
     {
       id: 'Full Gas-Phase Mechanism',
@@ -113,14 +74,8 @@ export function ExampleLoader() {
       description:
         'A variant of the Carbon Bond 5 chemical mechanism used in the MONARCH global/regional chemical weather prediction system. The description of the modified version of CB-05 used in MONARCH',
       mechanism_name: carbonBond5Config.mechanism.name,
-      csv: buildExampleCsvJson({
-        initial_concentrations: carbonBond5InitialConcentrationsCsv,
-        initial_reaction_rates: carbonBond5InitialReactionRatesCsv,
-      }),
-      mechanism: withInlineConditionData(carbonBond5Config, [
-        carbonBond5InitialConcentrationsCsv,
-        carbonBond5InitialReactionRatesCsv,
-      ]),
+      dir: 'carbon_bond_5',
+      config: carbonBond5Config,
     },
     {
       id: 'Troposphere-Stratosphere mechanism (TS1)',
@@ -128,18 +83,20 @@ export function ExampleLoader() {
       description:
         'A comprehensive model of the chemistry in the troposphere and stratosphere. Read about its formulation in this paper.',
       mechanism_name: ts1Config.mechanism.name,
-      csv: buildExampleCsvJson({
-        initial_conditions: ts1InitialConditionsCsv,
-      }),
-      mechanism: withInlineConditionData(ts1Config, [ts1InitialConditionsCsv]),
+      dir: 'ts1',
+      config: ts1Config,
     },
   ]
 
-  const loadExample = (example) => {
-    loadMusicBoxConfig(example.mechanism, {
+  const loadExample = async (example) => {
+    // Write the CSVs in, then let @ncar/music-box resolve conditions.filepaths itself.
+    const dir = `/examples/${example.dir}`
+    await writeConfigFiles(dir, csvFilesForExample(example.dir))
+    const config = await resolveConditionsFilepathsFromFile(example.config, dir)
+
+    loadMusicBoxConfig(config, {
       dispatch,
       navigate,
-      csv: example.csv,
       meta: {
         id: example.id,
         name: example.name,

@@ -6,9 +6,8 @@ import { File } from 'node:buffer'
 
 import { parseUploadedMusicBoxConfig } from '../src/services/config/parseUploadedMusicBoxConfig'
 
-// Upload Config must accept the real music-box v1 wire format (@ncar/music-box and the
-// Python acom_music_box tool both read it), including configs that split conditions out
-// into CSV files referenced by "conditions.filepaths" -- which only a .zip can carry.
+// Covers both plain .json and .zip uploads, including conditions split out into CSVs
+// referenced by "conditions.filepaths".
 
 const wireConfig = (overrides = {}) => ({
   'box model options': {
@@ -131,7 +130,9 @@ describe('parseUploadedMusicBoxConfig: zip bundles', () => {
     const zipped = zipSync({ 'my_config.json': strToU8(JSON.stringify(config)) })
     const file = makeFile('bundle.zip', zipped, 'application/zip')
 
-    await expect(parseUploadedMusicBoxConfig(file)).rejects.toThrow(/missing\.csv/)
+    // A missing file surfaces as a read error from music-box's own filesystem, not a
+    // named path.
+    await expect(parseUploadedMusicBoxConfig(file)).rejects.toThrow(/referenced CSV files/)
   })
 
   it('errors when the zip has no JSON configuration file', async () => {
