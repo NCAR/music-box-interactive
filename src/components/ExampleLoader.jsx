@@ -32,6 +32,52 @@ function csvFilesForExample(exampleDir) {
   return files
 }
 
+const examples = [
+  {
+    id: 'analytical',
+    name: 'Analytical Mechanism',
+    description: 'A simple analytical model for demonstration purposes',
+    mechanism_name: analyticalConfig.mechanism.name,
+    dir: 'analytical',
+    config: analyticalConfig,
+  },
+  {
+    id: 'chapman',
+    name: 'Chapman Mechanism',
+    description: 'Stratospheric oxygen chemistry with photolysis',
+    mechanism_name: chapmanConfig.mechanism.name,
+    dir: 'chapman',
+    config: chapmanConfig,
+  },
+  {
+    id: 'Flow-Tube Wall Loss',
+    name: 'Flow-Tube Wall Loss',
+    description:
+      'A simple characterization of wall loss of a-Pinene oxidation products in a flow-tube reactor. ',
+    mechanism_name: flowTubeConfig.mechanism.name,
+    dir: 'flow_tube',
+    config: flowTubeConfig,
+  },
+  {
+    id: 'Full Gas-Phase Mechanism',
+    name: 'Full Gas-Phase Mechanism',
+    description:
+      'A variant of the Carbon Bond 5 chemical mechanism used in the MONARCH global/regional chemical weather prediction system. The description of the modified version of CB-05 used in MONARCH',
+    mechanism_name: carbonBond5Config.mechanism.name,
+    dir: 'carbon_bond_5',
+    config: carbonBond5Config,
+  },
+  {
+    id: 'Troposphere-Stratosphere mechanism (TS1)',
+    name: 'Troposphere-Stratosphere mechanism (TS1)',
+    description:
+      'A comprehensive model of the chemistry in the troposphere and stratosphere. Read about its formulation in this paper.',
+    mechanism_name: ts1Config.mechanism.name,
+    dir: 'ts1',
+    config: ts1Config,
+  },
+]
+
 /**
  * ExampleLoader Component
  * Loads pre-configured example simulations
@@ -41,52 +87,6 @@ export function ExampleLoader() {
   const [loading] = useState(false)
   const [error] = useState(null)
   const dispatch = useDispatch()
-
-  const examples = [
-    {
-      id: 'analytical',
-      name: 'Analytical Mechanism',
-      description: 'A simple analytical model for demonstration purposes',
-      mechanism_name: analyticalConfig.mechanism.name,
-      dir: 'analytical',
-      config: analyticalConfig,
-    },
-    {
-      id: 'chapman',
-      name: 'Chapman Mechanism',
-      description: 'Stratospheric oxygen chemistry with photolysis',
-      mechanism_name: chapmanConfig.mechanism.name,
-      dir: 'chapman',
-      config: chapmanConfig,
-    },
-    {
-      id: 'Flow-Tube Wall Loss',
-      name: 'Flow-Tube Wall Loss',
-      description:
-        'A simple characterization of wall loss of a-Pinene oxidation products in a flow-tube reactor. ',
-      mechanism_name: flowTubeConfig.mechanism.name,
-      dir: 'flow_tube',
-      config: flowTubeConfig,
-    },
-    {
-      id: 'Full Gas-Phase Mechanism',
-      name: 'Full Gas-Phase Mechanism',
-      description:
-        'A variant of the Carbon Bond 5 chemical mechanism used in the MONARCH global/regional chemical weather prediction system. The description of the modified version of CB-05 used in MONARCH',
-      mechanism_name: carbonBond5Config.mechanism.name,
-      dir: 'carbon_bond_5',
-      config: carbonBond5Config,
-    },
-    {
-      id: 'Troposphere-Stratosphere mechanism (TS1)',
-      name: 'Troposphere-Stratosphere mechanism (TS1)',
-      description:
-        'A comprehensive model of the chemistry in the troposphere and stratosphere. Read about its formulation in this paper.',
-      mechanism_name: ts1Config.mechanism.name,
-      dir: 'ts1',
-      config: ts1Config,
-    },
-  ]
 
   const loadExample = async (example) => {
     // Write the CSVs in, then let @ncar/music-box resolve conditions.filepaths itself.
