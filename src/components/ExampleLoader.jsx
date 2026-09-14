@@ -3,31 +3,9 @@ import { useDispatch } from 'react-redux'
 import { useNavigate } from 'react-router-dom'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card'
 import { Button } from './ui/button'
-import { setCurrentExample, setSelectedMechanism } from '../redux/slices/mechanismSlice'
-
-import { addSpecies, addReaction, setMechanism } from '../redux/slices/mechanismSlice'
-import {
-  setDuration,
-  setTimeStep,
-  setOutputFrequency,
-  setConditions,
-  setExampleFiles,
-  setExampleLoaded,
-  setSourceFile,
-} from '../redux/slices/conditionsSlice'
-import { v4 as uuidv4 } from 'uuid'
-
-import { resetMechanism } from '../redux/slices/mechanismSlice'
-import { resetConditions } from '../redux/slices/conditionsSlice'
-import { resetSimulation } from '../redux/slices/simulationSlice'
 
 import { parseCsvToBlock } from '@ncar/music-box'
-import { buildGeneratedReactionName } from './Mechanism/reactions/reactionUtils'
-import {
-  PHASE_PROPERTY_KEYS,
-  SPECIES_PROPERTY_KEYS,
-  pickDeclared,
-} from '../services/simulation/local/speciesProperties'
+import { loadMusicBoxConfig } from '../services/config/loadMusicBoxConfig'
 
 import chapmanConfig from '@ncar/music-box/examples/chapman/my_config.json' with { type: 'json' }
 import analyticalConfig from '@ncar/music-box/examples/analytical/my_config.json' with { type: 'json' }
@@ -157,112 +135,18 @@ export function ExampleLoader() {
     },
   ]
 
-  const loadExample = async (example) => {
-    dispatch(resetMechanism())
-    dispatch(resetConditions())
-    dispatch(resetSimulation())
-
-    const exampleConfig = example.mechanism
-    const mechanismConfig = exampleConfig?.mechanism || {}
-
-    dispatch(setMechanism(exampleConfig))
-
-    // Diffusion coefficient and density belong to PhaseSpecies, so collect them by name
-    // for placement under phases[].species[].
-    const phaseProperties = new Map()
-    for (const phase of Array.isArray(mechanismConfig.phases) ? mechanismConfig.phases : []) {
-      for (const entry of Array.isArray(phase.species) ? phase.species : []) {
-        if (!entry || typeof entry !== 'object' || !entry.name) {
-          continue
-        }
-        const carried = pickDeclared(entry, PHASE_PROPERTY_KEYS)
-        if (Object.keys(carried).length > 0) {
-          phaseProperties.set(entry.name, { ...phaseProperties.get(entry.name), ...carried })
-        }
-      }
-    }
-
-    const mechanismSpecies = Array.isArray(mechanismConfig.species) ? mechanismConfig.species : []
-    mechanismSpecies.forEach((species) => {
-      // Only include declared properties; defaults would make unspecified values look configured.
-      dispatch(
-        addSpecies({
-          name: species.name,
-          phase: species.phase || 'Gas',
-          ...pickDeclared(species, SPECIES_PROPERTY_KEYS),
-          ...(phaseProperties.get(species.name) ?? {}),
-        })
-      )
-    })
-
-    const mechanismReactions = Array.isArray(mechanismConfig.reactions)
-      ? mechanismConfig.reactions
-      : []
-    mechanismReactions.forEach((reaction) => {
-      // FlowGraph identifies reaction nodes by name, so one is filled in where the mechanism does
-      // not declare one. The editor uses buildGeneratedReactionName to tell the two apart.
-      const declaredName =
-        typeof reaction.name === 'string' && reaction.name.trim().length > 0 ? reaction.name : null
-
-      dispatch(
-        addReaction({
-          ...reaction,
-          id: uuidv4(),
-          name: declaredName ?? buildGeneratedReactionName(reaction),
-        })
-      )
-    })
-
-    const options = exampleConfig['box model options'] || {}
-
-    if (options['simulation length [day]'] != null) {
-      dispatch(setDuration(options['simulation length [day]'] * 24 * 3600))
-    } else if (options['simulation length [hour]'] != null) {
-      dispatch(setDuration(options['simulation length [hour]'] * 3600))
-    } else if (options['simulation length [hr]'] != null) {
-      dispatch(setDuration(options['simulation length [hr]'] * 3600))
-    } else if (options['simulation length [sec]'] != null) {
-      dispatch(setDuration(options['simulation length [sec]']))
-    }
-
-    if (options['chemistry time step [min]'] != null) {
-      dispatch(setTimeStep(options['chemistry time step [min]'] * 60))
-    } else if (options['chemistry time step [sec]'] != null) {
-      dispatch(setTimeStep(options['chemistry time step [sec]']))
-    }
-
-    if (options['output time step [min]'] != null) {
-      dispatch(setOutputFrequency(options['output time step [min]'] * 60))
-    } else if (options['output time step [sec]'] != null) {
-      dispatch(setOutputFrequency(options['output time step [sec]']))
-    }
-
-    if (exampleConfig['__source file'] != null) {
-      dispatch(setSourceFile(exampleConfig['__source file']))
-    } else {
-      dispatch(setSourceFile(null))
-    }
-
-    dispatch(setConditions(exampleConfig.conditions))
-    dispatch(
-      setExampleFiles({
-        ...example.csv,
-        data: exampleConfig.conditions?.data || [],
-      })
-    )
-    dispatch(
-      setCurrentExample({
+  const loadExample = (example) => {
+    loadMusicBoxConfig(example.mechanism, {
+      dispatch,
+      navigate,
+      csv: example.csv,
+      meta: {
         id: example.id,
         name: example.name,
         description: example.description,
         mechanism_name: example.mechanism_name,
-        csv: example.csv,
-      })
-    )
-    dispatch(setSelectedMechanism(example.mechanism_name || example.id || 'custom'))
-    dispatch(setExampleLoaded(false))
-
-    navigate('/mechanism')
+      },
+    })
   }
 
   return (
