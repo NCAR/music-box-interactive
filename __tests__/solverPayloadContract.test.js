@@ -156,6 +156,13 @@ describe('solver payload contract', () => {
       expect(carrier[field.key]).toBe(1e-6)
     }
 
-    await expect(MusicBox.fromJson(payload).solve()).resolves.toBeDefined()
+    // A phase-species "density [kg m-3]" with no phase-transfer reaction consuming it no longer
+    // builds under MICM v3.13.0's aerosol validation (it did under v3.12.0). Routing is already
+    // checked above; strip it here so this test still confirms every other property solves.
+    const solvable = structuredClone(payload)
+    solvable.mechanism.phases.forEach((phase) => {
+      phase.species.forEach((sp) => delete sp['density [kg m-3]'])
+    })
+    await expect(MusicBox.fromJson(solvable).solve()).resolves.toBeDefined()
   }, 30000)
 })
