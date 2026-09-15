@@ -1,33 +1,25 @@
 import { parseConditions, ConditionsManager } from '@ncar/music-box'
 
-// Shared hydration logic for initial and evolving conditions. Flattening {headers, rows}
-// CSV blocks, and classifying a column as temperature, a concentration, or a rate constant,
-// is delegated to @ncar/music-box (parseConditions, ConditionsManager) rather than re-derived
-// here -- this app should not need to know the CONC./ENV./PHOTO. column convention itself.
-//
-// A snapshot row's own time.s is read as-is, never invented or rewritten: ConditionsManager
-// only groups rows by whatever time.s they actually have, it does not require time.s === 0.
+// Shared hydration for initial/evolving conditions. Column classification (temperature,
+// concentration, rate constant) comes from @ncar/music-box's ConditionsManager, not a
+// regex here. A row's own time.s is read as-is, never rewritten.
 
-// Every conditions block, regardless of what file (if any) it came from -- the app does not
-// track or key off original CSV filenames or example-specific slots. `conditions` is the
-// music-box v1 conditions object as loaded (state.conditions.conditions), not a separate copy.
+// Every block in conditions.data, whatever file it came from.
 const dataBlocks = (conditions) => conditions?.data || []
 
 export function hydrateInitialConditions(conditions) {
   const blocks = dataBlocks(conditions)
 
-  // A single-row block is a snapshot, not a time series, so it counts as initial-condition
-  // data too. Multi-row blocks are excluded so a genuinely evolving series (e.g. Chapman's
-  // photolysis rates) doesn't also get a static "initial" copy of itself.
+  // A single-row block is a snapshot (initial condition). Multi-row blocks are excluded so
+  // an evolving series isn't also read as a static initial value.
   const snapshotBlocks = blocks.filter(
     (block) => block?.headers?.length && block?.rows?.length === 1
   )
   const snapshotRows = parseConditions({ data: snapshotBlocks })
   const snapshotConds = new ConditionsManager(snapshotRows)
 
-  // A config's ENV columns may only live on a genuinely evolving (multi-row) block. Borrow
-  // temperature/pressure from its earliest point; concentrations and rate constants stay
-  // snapshot-only, so a borrowed point never leaks a rate constant into "initial".
+  // Some configs only set ENV columns on the evolving block. Borrow temperature/pressure
+  // from its earliest point; concentrations and rate constants stay snapshot-only.
   const fallbackEvolvingBlock = blocks.find((block) => {
     const headers = block?.headers || []
     const rows = block?.rows || []
@@ -47,8 +39,7 @@ export function hydrateInitialConditions(conditions) {
         )
       : null
 
-  // The fallback row is listed first so a snapshot row at the same time.s overrides it --
-  // ConditionsManager keeps input order for rows tied on time.s once it sorts by time.
+  // Fallback row goes first so a snapshot at the same time.s overrides it (stable sort).
   const envConds = new ConditionsManager([earliestFallbackRow, ...snapshotRows].filter(Boolean))
   let nextTemperature = null
   let nextPressure = null
@@ -62,8 +53,7 @@ export function hydrateInitialConditions(conditions) {
     Object.assign(nextConcentrations, speciesValues)
   })
 
-  // Raw (unit-suffix-included) headers, since buildSolverConditions writes these same keys
-  // back out as a CSV header for the solver.
+  // Raw header (unit included): buildSolverConditions writes it straight back to a CSV header.
   const nextRateConstants = {}
   snapshotConds.timePoints.forEach((point) => {
     Object.assign(nextRateConstants, point.rawRateParams)
@@ -78,8 +68,7 @@ export function hydrateInitialConditions(conditions) {
 }
 
 export function hydrateEvolvingConditions(conditions) {
-  // A single row is a snapshot, not a time series -- require more than one point to call
-  // it evolving.
+  // Require more than one row to count as evolving, not just a snapshot.
   const evolvingBlock = dataBlocks(conditions).find((block) => {
     const headers = block?.headers || []
     const rows = block?.rows || []

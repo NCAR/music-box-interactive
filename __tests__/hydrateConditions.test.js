@@ -75,8 +75,7 @@ describe('hydrateInitialConditions', () => {
 
   it('lets a snapshot block override a borrowed evolving value for the same quantity', () => {
     const conditions = {
-      // Listed first: the fallback finder is a plain .find() and would otherwise match
-      // the snapshot block below, which also has an ENV.* header.
+      // Listed first, or find() would match this block instead of the snapshot below.
       data: [
         {
           headers: ['time.s', 'ENV.temperature.K', 'ENV.pressure.Pa'],
@@ -96,8 +95,7 @@ describe('hydrateInitialConditions', () => {
   })
 
   it('reads concentrations from a snapshot block whose own time.s is not 0 (TS1-shaped config)', () => {
-    // TS1's real config: an inline block gives temperature/pressure at t=0, while a
-    // separately-referenced CSV gives species concentrations at t=1000.
+    // TS1's real config: temperature/pressure at t=0, species concentrations at t=1000.
     const conditions = {
       data: [
         { headers: ['time.s', 'ENV.temperature.K', 'ENV.pressure.Pa'], rows: [[0, 299.55, 99255.61]] },
@@ -184,8 +182,7 @@ describe('hydrateEvolvingConditions', () => {
   })
 
   it('finds the evolving block regardless of what file it came from', () => {
-    // The app does not track original CSV filenames or key off any per-example slot --
-    // any block shaped like an evolving series is picked up the same way.
+    // No filename or per-example slot tracking -- any evolving-shaped block works the same.
     const conditions = {
       data: [
         {

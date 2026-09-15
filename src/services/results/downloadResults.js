@@ -28,16 +28,12 @@ function formatReactionFormula(reaction) {
   return `${formatComponents(reactantList)} → ${formatComponents(productList)}`
 }
 
-// Builds the three files a results download bundles into a zip:
-// - results.csv: every concentration/environment column, plus each reaction's rate integrated
-//   over the interval starting at that row -- so the last row leaves rate columns blank, since
-//   there is no interval after it.
-// - music_box_config.json: the same config Download Config produces, so results and the
-//   configuration that produced them travel together.
-// - mapping.json: RXN_<index> -> the reaction it refers to, since reaction names are not
-//   unique (see flowUtils.js) and the CSV can only carry the index-based key.
-// `reactions` must be the same array run.js injected tracers into (state.mechanism.reactions),
-// so its indices match the ones computeIntegratedReactionRate expects.
+// Builds the zip's three files:
+// - results.csv: concentration/env columns, plus each reaction's rate over the interval
+//   starting at that row (last row is blank -- no interval after it).
+// - music_box_config.json: same as Download Config.
+// - mapping.json: RXN_<index> -> reaction, since names aren't unique.
+// `reactions` must be the same array run.js injected tracers into, so indices match here.
 export function buildResultsExport({ mechanism, conditions, results, excludedResults, metadata }) {
   const reactions = Array.isArray(mechanism?.reactions) ? mechanism.reactions : []
   const points = Array.isArray(results) ? results : []
