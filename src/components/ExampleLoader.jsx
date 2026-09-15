@@ -3,45 +3,80 @@ import { useDispatch } from 'react-redux'
 import { useNavigate } from 'react-router-dom'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card'
 import { Button } from './ui/button'
-import { setCurrentExample, setSelectedMechanism } from '../redux/slices/mechanismSlice'
 
-import { addSpecies, addReaction, setMechanism } from '../redux/slices/mechanismSlice'
-import {
-  setDuration,
-  setTimeStep,
-  setOutputFrequency,
-  setConditions,
-  setExampleFiles,
-  setExampleLoaded,
-  setSourceFile,
-} from '../redux/slices/conditionsSlice'
-import { v4 as uuidv4 } from 'uuid'
-
-import { resetMechanism } from '../redux/slices/mechanismSlice'
-import { resetConditions } from '../redux/slices/conditionsSlice'
-import { resetSimulation } from '../redux/slices/simulationSlice'
-
-import { parseCsvToBlock } from '@ncar/music-box'
-import { buildGeneratedReactionName } from './Mechanism/reactions/reactionUtils'
-import {
-  PHASE_PROPERTY_KEYS,
-  SPECIES_PROPERTY_KEYS,
-  pickDeclared,
-} from '../services/simulation/local/speciesProperties'
+import { writeConfigFiles, resolveConditionsFilepathsFromFile } from '@ncar/music-box'
+import { loadMusicBoxConfig } from '../services/config/loadMusicBoxConfig'
 
 import chapmanConfig from '@ncar/music-box/examples/chapman/my_config.json' with { type: 'json' }
 import analyticalConfig from '@ncar/music-box/examples/analytical/my_config.json' with { type: 'json' }
 import ts1Config from '@ncar/music-box/examples/ts1/my_config.json' with { type: 'json' }
 import flowTubeConfig from '@ncar/music-box/examples/flow_tube/my_config.json' with { type: 'json' }
 import carbonBond5Config from '@ncar/music-box/examples/carbon_bond_5/my_config.json' with { type: 'json' }
-import chapmanInitialConcentrationsCsv from '@ncar/music-box/examples/chapman/initial_concentrations.csv?raw'
-import chapmanConditionsBoulderCsv from '@ncar/music-box/examples/chapman/conditions_Boulder.csv?raw'
-import ts1InitialConditionsCsv from '@ncar/music-box/examples/ts1/initial_conditions.csv?raw'
-import flowTubeInitialConcentrationsCsv from '@ncar/music-box/examples/flow_tube/initial_concentrations.csv?raw'
-import flowTubeInitialReactionRatesCsv from '@ncar/music-box/examples/flow_tube/initial_reaction_rates.csv?raw'
-import carbonBond5InitialConcentrationsCsv from '@ncar/music-box/examples/carbon_bond_5/initial_concentrations.csv?raw'
-import carbonBond5InitialReactionRatesCsv from '@ncar/music-box/examples/carbon_bond_5/initial_reaction_rates.csv?raw'
-import analyticalInitialConditionsCsv from '@ncar/music-box/examples/analytical/initial_conditions.csv?raw'
+
+// Every bundled example's CSV files, keyed by their absolute module path.
+const exampleCsvModules = import.meta.glob('/node_modules/@ncar/music-box/examples/*/*.csv', {
+  query: '?raw',
+  import: 'default',
+  eager: true,
+})
+
+// Maps one example's CSVs to {relPath: text}, ready for writeConfigFiles.
+function csvFilesForExample(exampleDir) {
+  const marker = `/examples/${exampleDir}/`
+  const files = {}
+  for (const [path, text] of Object.entries(exampleCsvModules)) {
+    const markerIndex = path.indexOf(marker)
+    if (markerIndex === -1) continue
+    files[path.slice(markerIndex + marker.length)] = text
+  }
+  return files
+}
+
+const examples = [
+  {
+    id: 'analytical',
+    name: 'Analytical Mechanism',
+    description: 'A simple analytical model for demonstration purposes',
+    mechanism_name: analyticalConfig.mechanism.name,
+    dir: 'analytical',
+    config: analyticalConfig,
+  },
+  {
+    id: 'chapman',
+    name: 'Chapman Mechanism',
+    description: 'Stratospheric oxygen chemistry with photolysis',
+    mechanism_name: chapmanConfig.mechanism.name,
+    dir: 'chapman',
+    config: chapmanConfig,
+  },
+  {
+    id: 'Flow-Tube Wall Loss',
+    name: 'Flow-Tube Wall Loss',
+    description:
+      'A simple characterization of wall loss of a-Pinene oxidation products in a flow-tube reactor. ',
+    mechanism_name: flowTubeConfig.mechanism.name,
+    dir: 'flow_tube',
+    config: flowTubeConfig,
+  },
+  {
+    id: 'Full Gas-Phase Mechanism',
+    name: 'Full Gas-Phase Mechanism',
+    description:
+      'A variant of the Carbon Bond 5 chemical mechanism used in the MONARCH global/regional chemical weather prediction system. The description of the modified version of CB-05 used in MONARCH',
+    mechanism_name: carbonBond5Config.mechanism.name,
+    dir: 'carbon_bond_5',
+    config: carbonBond5Config,
+  },
+  {
+    id: 'Troposphere-Stratosphere mechanism (TS1)',
+    name: 'Troposphere-Stratosphere mechanism (TS1)',
+    description:
+      'A comprehensive model of the chemistry in the troposphere and stratosphere. Read about its formulation in this paper.',
+    mechanism_name: ts1Config.mechanism.name,
+    dir: 'ts1',
+    config: ts1Config,
+  },
+]
 
 /**
  * ExampleLoader Component
@@ -49,220 +84,26 @@ import analyticalInitialConditionsCsv from '@ncar/music-box/examples/analytical/
  */
 export function ExampleLoader() {
   const navigate = useNavigate()
-
-  const toExampleCsvJson = (content) => {
-    if (typeof content !== 'string' || content.trim().length === 0) {
-      return {}
-    }
-
-    return parseCsvToBlock(content)
-  }
-
-  const buildExampleCsvJson = ({
-    initial_conditions = '',
-    initial_concentrations = '',
-    initial_reaction_rates = '',
-    boulder = '',
-  } = {}) => ({
-    initial_conditions: toExampleCsvJson(initial_conditions),
-    initial_concentrations: toExampleCsvJson(initial_concentrations),
-    initial_reaction_rates: toExampleCsvJson(initial_reaction_rates),
-    boulder: toExampleCsvJson(boulder),
-  })
-
-  const withInlineConditionData = (config, csvContents = []) => {
-    const existingData = Array.isArray(config?.conditions?.data) ? config.conditions.data : []
-    const parsedBlocks = csvContents
-      .filter((content) => typeof content === 'string' && content.trim().length > 0)
-      .map((content) => parseCsvToBlock(content))
-
-    return {
-      ...config,
-      conditions: {
-        ...(config.conditions || {}),
-        data: [...existingData, ...parsedBlocks],
-      },
-    }
-  }
-
   const [loading] = useState(false)
   const [error] = useState(null)
   const dispatch = useDispatch()
 
-  const examples = [
-    {
-      id: 'analytical',
-      name: 'Analytical Mechanism',
-      description: 'A simple analytical model for demonstration purposes',
-      mechanism_name: analyticalConfig.mechanism.name,
-      csv: buildExampleCsvJson({
-        initial_conditions: analyticalInitialConditionsCsv,
-      }),
-      mechanism: withInlineConditionData(analyticalConfig, [analyticalInitialConditionsCsv]),
-    },
-    {
-      id: 'chapman',
-      name: 'Chapman Mechanism',
-      description: 'Stratospheric oxygen chemistry with photolysis',
-      mechanism_name: chapmanConfig.mechanism.name,
-      csv: buildExampleCsvJson({
-        initial_concentrations: chapmanInitialConcentrationsCsv,
-        boulder: chapmanConditionsBoulderCsv,
-      }),
-      mechanism: withInlineConditionData(chapmanConfig, [
-        chapmanInitialConcentrationsCsv,
-        chapmanConditionsBoulderCsv,
-      ]),
-    },
-    {
-      id: 'Flow-Tube Wall Loss',
-      name: 'Flow-Tube Wall Loss',
-      description:
-        'A simple characterization of wall loss of a-Pinene oxidation products in a flow-tube reactor. ',
-      mechanism_name: flowTubeConfig.mechanism.name,
-      csv: buildExampleCsvJson({
-        initial_concentrations: flowTubeInitialConcentrationsCsv,
-        initial_reaction_rates: flowTubeInitialReactionRatesCsv,
-      }),
-      mechanism: withInlineConditionData(flowTubeConfig, [
-        flowTubeInitialConcentrationsCsv,
-        flowTubeInitialReactionRatesCsv,
-      ]),
-    },
-    {
-      id: 'Full Gas-Phase Mechanism',
-      name: 'Full Gas-Phase Mechanism',
-      description:
-        'A variant of the Carbon Bond 5 chemical mechanism used in the MONARCH global/regional chemical weather prediction system. The description of the modified version of CB-05 used in MONARCH',
-      mechanism_name: carbonBond5Config.mechanism.name,
-      csv: buildExampleCsvJson({
-        initial_concentrations: carbonBond5InitialConcentrationsCsv,
-        initial_reaction_rates: carbonBond5InitialReactionRatesCsv,
-      }),
-      mechanism: withInlineConditionData(carbonBond5Config, [
-        carbonBond5InitialConcentrationsCsv,
-        carbonBond5InitialReactionRatesCsv,
-      ]),
-    },
-    {
-      id: 'Troposphere-Stratosphere mechanism (TS1)',
-      name: 'Troposphere-Stratosphere mechanism (TS1)',
-      description:
-        'A comprehensive model of the chemistry in the troposphere and stratosphere. Read about its formulation in this paper.',
-      mechanism_name: ts1Config.mechanism.name,
-      csv: buildExampleCsvJson({
-        initial_conditions: ts1InitialConditionsCsv,
-      }),
-      mechanism: withInlineConditionData(ts1Config, [ts1InitialConditionsCsv]),
-    },
-  ]
-
   const loadExample = async (example) => {
-    dispatch(resetMechanism())
-    dispatch(resetConditions())
-    dispatch(resetSimulation())
+    // Write the CSVs in, then let @ncar/music-box resolve conditions.filepaths itself.
+    const dir = `/examples/${example.dir}`
+    await writeConfigFiles(dir, csvFilesForExample(example.dir))
+    const config = await resolveConditionsFilepathsFromFile(example.config, dir)
 
-    const exampleConfig = example.mechanism
-    const mechanismConfig = exampleConfig?.mechanism || {}
-
-    dispatch(setMechanism(exampleConfig))
-
-    // Diffusion coefficient and density belong to PhaseSpecies, so collect them by name
-    // for placement under phases[].species[].
-    const phaseProperties = new Map()
-    for (const phase of Array.isArray(mechanismConfig.phases) ? mechanismConfig.phases : []) {
-      for (const entry of Array.isArray(phase.species) ? phase.species : []) {
-        if (!entry || typeof entry !== 'object' || !entry.name) {
-          continue
-        }
-        const carried = pickDeclared(entry, PHASE_PROPERTY_KEYS)
-        if (Object.keys(carried).length > 0) {
-          phaseProperties.set(entry.name, { ...phaseProperties.get(entry.name), ...carried })
-        }
-      }
-    }
-
-    const mechanismSpecies = Array.isArray(mechanismConfig.species) ? mechanismConfig.species : []
-    mechanismSpecies.forEach((species) => {
-      // Only include declared properties; defaults would make unspecified values look configured.
-      dispatch(
-        addSpecies({
-          name: species.name,
-          phase: species.phase || 'Gas',
-          ...pickDeclared(species, SPECIES_PROPERTY_KEYS),
-          ...(phaseProperties.get(species.name) ?? {}),
-        })
-      )
-    })
-
-    const mechanismReactions = Array.isArray(mechanismConfig.reactions)
-      ? mechanismConfig.reactions
-      : []
-    mechanismReactions.forEach((reaction) => {
-      // FlowGraph identifies reaction nodes by name, so one is filled in where the mechanism does
-      // not declare one. The editor uses buildGeneratedReactionName to tell the two apart.
-      const declaredName =
-        typeof reaction.name === 'string' && reaction.name.trim().length > 0 ? reaction.name : null
-
-      dispatch(
-        addReaction({
-          ...reaction,
-          id: uuidv4(),
-          name: declaredName ?? buildGeneratedReactionName(reaction),
-        })
-      )
-    })
-
-    const options = exampleConfig['box model options'] || {}
-
-    if (options['simulation length [day]'] != null) {
-      dispatch(setDuration(options['simulation length [day]'] * 24 * 3600))
-    } else if (options['simulation length [hour]'] != null) {
-      dispatch(setDuration(options['simulation length [hour]'] * 3600))
-    } else if (options['simulation length [hr]'] != null) {
-      dispatch(setDuration(options['simulation length [hr]'] * 3600))
-    } else if (options['simulation length [sec]'] != null) {
-      dispatch(setDuration(options['simulation length [sec]']))
-    }
-
-    if (options['chemistry time step [min]'] != null) {
-      dispatch(setTimeStep(options['chemistry time step [min]'] * 60))
-    } else if (options['chemistry time step [sec]'] != null) {
-      dispatch(setTimeStep(options['chemistry time step [sec]']))
-    }
-
-    if (options['output time step [min]'] != null) {
-      dispatch(setOutputFrequency(options['output time step [min]'] * 60))
-    } else if (options['output time step [sec]'] != null) {
-      dispatch(setOutputFrequency(options['output time step [sec]']))
-    }
-
-    if (exampleConfig['__source file'] != null) {
-      dispatch(setSourceFile(exampleConfig['__source file']))
-    } else {
-      dispatch(setSourceFile(null))
-    }
-
-    dispatch(setConditions(exampleConfig.conditions))
-    dispatch(
-      setExampleFiles({
-        ...example.csv,
-        data: exampleConfig.conditions?.data || [],
-      })
-    )
-    dispatch(
-      setCurrentExample({
+    loadMusicBoxConfig(config, {
+      dispatch,
+      navigate,
+      meta: {
         id: example.id,
         name: example.name,
         description: example.description,
         mechanism_name: example.mechanism_name,
-        csv: example.csv,
-      })
-    )
-    dispatch(setSelectedMechanism(example.mechanism_name || example.id || 'custom'))
-    dispatch(setExampleLoaded(false))
-
-    navigate('/mechanism')
+      },
+    })
   }
 
   return (

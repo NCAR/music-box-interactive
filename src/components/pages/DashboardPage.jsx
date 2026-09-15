@@ -1,35 +1,18 @@
 import { useState, useRef } from 'react'
 import { useDispatch } from 'react-redux'
 import { useNavigate } from 'react-router-dom'
-import { v4 as uuidv4 } from 'uuid'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card'
 import { Button } from '../ui/button'
 import ExampleLoader from '../ExampleLoader'
 import SimulationStatus from '../SimulationStatus'
 import CurrentExampleIndicator from '../CurrentExampleIndicator'
-import {
-  resetMechanism,
-  setSelectedMechanism,
-  setSpecies,
-  setReactions,
-  setCurrentExample,
-  setMechanism,
-} from '../../redux/slices/mechanismSlice'
-import {
-  resetConditions,
-  setDuration,
-  setTimeStep,
-  setOutputFrequency,
-  setTemperature,
-  setPressure,
-  setConcentrations,
-  loadConditions,
-  setConditions,
-  setExampleLoaded,
-} from '../../redux/slices/conditionsSlice'
+import { resetMechanism, setSelectedMechanism } from '../../redux/slices/mechanismSlice'
+import { resetConditions, setExampleLoaded } from '../../redux/slices/conditionsSlice'
 import { useToast } from '@/hooks/use-toast'
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert'
 import { Atom, Settings, BarChart3, Rocket, PenLine, FolderOpen, Library } from 'lucide-react'
+import { loadMusicBoxConfig } from '../../services/config/loadMusicBoxConfig'
+import { parseUploadedMusicBoxConfig } from '../../services/config/parseUploadedMusicBoxConfig'
 
 // dashboard with quick actions and example loader
 export function DashboardPage() {
@@ -61,122 +44,42 @@ export function DashboardPage() {
     navigate('/mechanism')
   }
 
+  // Accepts a music-box v1 config: a plain .json, or a .zip bundling it with its CSV files.
   const handleLoadConfiguration = (event) => {
     const file = event.target.files?.[0]
     if (!file) return
+    // Clear the input so re-selecting the same file after an error fires onChange again.
+    event.target.value = ''
 
-    const reader = new FileReader()
-    reader.onload = (e) => {
-      try {
-        const config = JSON.parse(e.target?.result)
+    parseUploadedMusicBoxConfig(file)
+      .then((config) => {
+        setShowExamples(false)
+        setShowSimulationStatus(false)
 
-        // validate config file
-        if (!config.mechanism || !config.conditions) {
-          throw new Error(
-            'Invalid configuration file format. Must contain mechanism and conditions.'
-          )
-        }
-
-        // load mechanism config
-        // uploaded configs always use 'custom' type
-        // actual name is just metadata
-        dispatch(setSelectedMechanism('custom'))
-
-        if (config.mechanism.species && Array.isArray(config.mechanism.species)) {
-          // normalize to uppercase
-          const normalizedSpecies = config.mechanism.species.map((sp) => ({
-            ...sp,
-            name: sp.name.toUpperCase(),
-          }))
-          dispatch(setSpecies(normalizedSpecies))
-        }
-
-        if (config.mechanism.reactions && Array.isArray(config.mechanism.reactions)) {
-          // Add ids for UI operations, but preserve all mechanism keys losslessly.
-          const reactionsWithIds = config.mechanism.reactions.map((reaction) => ({
-            ...reaction,
-            id: reaction.id || uuidv4(),
-          }))
-          dispatch(setReactions(reactionsWithIds))
-        }
-
-        // Keep the original uploaded payload so run-time serialization can remain schema-complete.
-        dispatch(setMechanism(config))
-
-        // mark as uploaded config
-        dispatch(
-          setCurrentExample({
+        loadMusicBoxConfig(config, {
+          dispatch,
+          navigate,
+          meta: {
             id: 'uploaded',
             name: `Uploaded: ${file.name}`,
             description: 'Custom configuration uploaded from file',
-          })
-        )
-
-        // load conditions
-        if (config.conditions.basic) {
-          if (config.conditions.basic.duration !== undefined) {
-            dispatch(setDuration(config.conditions.basic.duration))
-          }
-          if (config.conditions.basic.timeStep !== undefined) {
-            dispatch(setTimeStep(config.conditions.basic.timeStep))
-          }
-          if (config.conditions.basic.outputFrequency !== undefined) {
-            dispatch(setOutputFrequency(config.conditions.basic.outputFrequency))
-          }
-        }
-
-        if (config.conditions.initial) {
-          if (config.conditions.initial.temperature !== undefined) {
-            dispatch(setTemperature(config.conditions.initial.temperature))
-          }
-          if (config.conditions.initial.pressure !== undefined) {
-            dispatch(setPressure(config.conditions.initial.pressure))
-          }
-          if (config.conditions.initial.concentrations) {
-            // normalize concentration names to uppercase
-            const normalizedConcentrations = {}
-            Object.entries(config.conditions.initial.concentrations).forEach(([species, value]) => {
-              normalizedConcentrations[species.toUpperCase()] = value
-            })
-            dispatch(setConcentrations(normalizedConcentrations))
-          }
-        }
-
-        // load evolving conditions if present
-        if (config.conditions.evolving) {
-          // merge in evolving conditions
-          dispatch(
-            loadConditions({
-              evolving: config.conditions.evolving,
-            })
-          )
-        }
-
-        // Preserve source conditions object for solver input.
-        dispatch(setConditions(config.conditions))
-
-        // hide examples/status when loading config
-        setShowExamples(false)
-        setShowSimulationStatus(false)
+          },
+        })
 
         toast({
           variant: 'success',
           title: 'Configuration Loaded Successfully!',
           description: `Loaded ${config.mechanism.species?.length || 0} species and ${config.mechanism.reactions?.length || 0} reactions from ${file.name}`,
         })
-
-        // go to mechanism page to review
-        navigate('/mechanism')
-      } catch (err) {
+      })
+      .catch((err) => {
         toast({
           title: 'Failed to Load Configuration',
           description:
-            err.message || 'Failed to load configuration file. Please check the file format.',
+            err?.message || 'Failed to load configuration file. Please check the file format.',
           variant: 'destructive',
         })
-      }
-    }
-    reader.readAsText(file)
+      })
   }
 
   return (
@@ -262,21 +165,19 @@ export function DashboardPage() {
               </div>
               <h4 className="font-bold mb-2 text-sm xs:text-base">Load Configuration</h4>
               <p className="text-xs text-gray-700 mb-3 xs:mb-7 italic">
-                Load a previously saved configuration file (.json) to continue your work.
+                Load a music-box configuration (.json), or a .zip if it references CSV files.
               </p>
               <input
                 ref={fileInputRef}
                 type="file"
-                accept=".json"
+                accept=".json,.zip"
                 onChange={handleLoadConfiguration}
                 className="hidden"
               />
               <Button
                 variant="glass"
                 className="w-full rounded-2xl border-2 cursor-pointer text-xs xs:text-sm sm:text-base px-3 xs:px-4 py-2"
-                disabled
                 onClick={() => fileInputRef.current?.click()}
-                title="Uploading configurations is disabled"
               >
                 Upload Config
               </Button>

@@ -1,54 +1,64 @@
-// Shared hydration logic for initial and evolving conditions
-export function hydrateInitialConditions(exampleFiles) {
-  const getValidBlock = (block) => (block?.headers?.length && block?.rows?.length ? block : null)
-  const initialConditionsBlock = getValidBlock(exampleFiles?.initial_conditions)
-  const initialConcentrationsBlock = getValidBlock(exampleFiles?.initial_concentrations)
-  const initialReactionRatesBlock = getValidBlock(exampleFiles?.initial_reaction_rates)
-  const fallbackDataBlock = (exampleFiles?.data || []).find((block) => {
+import { parseConditions, ConditionsManager } from '@ncar/music-box'
+
+// Shared hydration for initial/evolving conditions. Column classification (temperature,
+// concentration, rate constant) comes from @ncar/music-box's ConditionsManager, not a
+// regex here. A row's own time.s is read as-is, never rewritten.
+
+// Every block in conditions.data, whatever file it came from.
+const dataBlocks = (conditions) => conditions?.data || []
+
+export function hydrateInitialConditions(conditions) {
+  const blocks = dataBlocks(conditions)
+
+  // A single-row block is a snapshot (initial condition). Multi-row blocks are excluded so
+  // an evolving series isn't also read as a static initial value.
+  const snapshotBlocks = blocks.filter(
+    (block) => block?.headers?.length && block?.rows?.length === 1
+  )
+  const snapshotRows = parseConditions({ data: snapshotBlocks })
+  const snapshotConds = new ConditionsManager(snapshotRows)
+
+  // Some configs only set ENV columns on the evolving block. Borrow temperature/pressure
+  // from its earliest point; concentrations and rate constants stay snapshot-only.
+  const fallbackEvolvingBlock = blocks.find((block) => {
     const headers = block?.headers || []
     const rows = block?.rows || []
     return (
-      rows.length > 0 &&
+      rows.length > 1 &&
       headers.includes('time.s') &&
       headers.some((header) => typeof header === 'string' && header.startsWith('ENV.'))
     )
   })
-  const blocksToHydrate = [
-    initialConditionsBlock,
-    initialConcentrationsBlock,
-    initialReactionRatesBlock,
-  ].filter(Boolean)
-  let nextConcentrations = {}
-  let nextRateConstants = {}
+  const fallbackAllRows = fallbackEvolvingBlock
+    ? parseConditions({ data: [fallbackEvolvingBlock] })
+    : []
+  const earliestFallbackRow =
+    fallbackAllRows.length > 0
+      ? fallbackAllRows.reduce((earliest, row) =>
+          row['time.s'] < earliest['time.s'] ? row : earliest
+        )
+      : null
+
+  // Fallback row goes first so a snapshot at the same time.s overrides it (stable sort).
+  const envConds = new ConditionsManager([earliestFallbackRow, ...snapshotRows].filter(Boolean))
   let nextTemperature = null
   let nextPressure = null
-  blocksToHydrate.forEach((block) => {
-    const headers = block.headers || []
-    const firstRow = block.rows?.[0] || []
-    headers.forEach((header, index) => {
-      const value = firstRow[index]
-      if (header === 'ENV.temperature.K' && Number.isFinite(value)) nextTemperature = value
-      if (header === 'ENV.pressure.Pa' && Number.isFinite(value)) nextPressure = value
-      const concentrationMatch = /^CONC\.([^.]+)\./.exec(header)
-      if (concentrationMatch && Number.isFinite(value))
-        nextConcentrations[concentrationMatch[1]] = value
-      const isTimeColumn = header === 'time.s'
-      const isEnvironmentalColumn = header.startsWith('ENV.')
-      if (!isTimeColumn && !isEnvironmentalColumn && !concentrationMatch && Number.isFinite(value))
-        nextRateConstants[header] = value
-    })
+  envConds.timePoints.forEach((point) => {
+    if (point.temp !== null) nextTemperature = point.temp
+    if (point.pressure !== null) nextPressure = point.pressure
   })
-  if ((nextTemperature === null || nextPressure === null) && fallbackDataBlock) {
-    const headers = fallbackDataBlock.headers || []
-    const firstRow = fallbackDataBlock.rows?.[0] || []
-    headers.forEach((header, index) => {
-      const value = firstRow[index]
-      if (nextTemperature === null && header === 'ENV.temperature.K' && Number.isFinite(value))
-        nextTemperature = value
-      if (nextPressure === null && header === 'ENV.pressure.Pa' && Number.isFinite(value))
-        nextPressure = value
-    })
-  }
+
+  const nextConcentrations = {}
+  Object.values(snapshotConds.concentrationEvents).forEach((speciesValues) => {
+    Object.assign(nextConcentrations, speciesValues)
+  })
+
+  // Raw header (unit included): buildSolverConditions writes it straight back to a CSV header.
+  const nextRateConstants = {}
+  snapshotConds.timePoints.forEach((point) => {
+    Object.assign(nextRateConstants, point.rawRateParams)
+  })
+
   return {
     temperature: nextTemperature,
     pressure: nextPressure,
@@ -57,69 +67,50 @@ export function hydrateInitialConditions(exampleFiles) {
   }
 }
 
-export function hydrateEvolvingConditions(exampleFiles) {
-  const boulderBlock = exampleFiles?.boulder
-  const fallbackEvolvingBlock = (exampleFiles?.data || []).find((block) => {
+export function hydrateEvolvingConditions(conditions) {
+  // Require more than one row to count as evolving, not just a snapshot.
+  const evolvingBlock = dataBlocks(conditions).find((block) => {
     const headers = block?.headers || []
     const rows = block?.rows || []
     return (
-      rows.length > 0 &&
+      rows.length > 1 &&
       headers.includes('time.s') &&
       headers.includes('ENV.pressure.Pa') &&
       headers.includes('ENV.temperature.K')
     )
   })
-  const evolvingBlock =
-    boulderBlock?.headers?.length && boulderBlock?.rows?.length
-      ? boulderBlock
-      : fallbackEvolvingBlock
-  let evolvingHydrated = {
-    enabled: false,
-    times: [],
-    temperature: [],
-    pressure: [],
-    additionalSeries: {},
+
+  const empty = { enabled: false, times: [], temperature: [], pressure: [], additionalSeries: {} }
+
+  if (!evolvingBlock?.headers?.length || !evolvingBlock?.rows?.length) {
+    return empty
   }
-  if (evolvingBlock?.headers?.length && evolvingBlock?.rows?.length) {
-    const timeIndex = evolvingBlock.headers.indexOf('time.s')
-    const pressureIndex = evolvingBlock.headers.indexOf('ENV.pressure.Pa')
-    const temperatureIndex = evolvingBlock.headers.indexOf('ENV.temperature.K')
-    if (timeIndex !== -1 && pressureIndex !== -1 && temperatureIndex !== -1) {
-      const parsedRows = evolvingBlock.rows
-        .map((row) => ({
-          time: row[timeIndex],
-          pressure: row[pressureIndex],
-          temperature: row[temperatureIndex],
-          row,
-        }))
-        .filter(
-          ({ time, pressure, temperature }) =>
-            Number.isFinite(time) && Number.isFinite(pressure) && Number.isFinite(temperature)
-        )
-        .sort((a, b) => a.time - b.time)
-      if (parsedRows.length > 0) {
-        const additionalHeaders = evolvingBlock.headers.filter(
-          (header) =>
-            header !== 'time.s' && header !== 'ENV.pressure.Pa' && header !== 'ENV.temperature.K'
-        )
-        const additionalSeries = Object.fromEntries(
-          additionalHeaders.map((header) => [
-            header,
-            parsedRows.map(({ row }) => {
-              const valueIndex = evolvingBlock.headers.indexOf(header)
-              return row[valueIndex]
-            }),
-          ])
-        )
-        evolvingHydrated = {
-          enabled: true,
-          times: parsedRows.map((row) => row.time),
-          pressure: parsedRows.map((row) => row.pressure),
-          temperature: parsedRows.map((row) => row.temperature),
-          additionalSeries,
-        }
-      }
-    }
+
+  const validRows = parseConditions({ data: [evolvingBlock] })
+    .filter(
+      (row) =>
+        Number.isFinite(row['time.s']) &&
+        Number.isFinite(row['ENV.pressure.Pa']) &&
+        Number.isFinite(row['ENV.temperature.K'])
+    )
+    .sort((a, b) => a['time.s'] - b['time.s'])
+
+  if (validRows.length === 0) {
+    return empty
   }
-  return evolvingHydrated
+
+  const additionalHeaders = evolvingBlock.headers.filter(
+    (header) => header !== 'time.s' && header !== 'ENV.pressure.Pa' && header !== 'ENV.temperature.K'
+  )
+  const additionalSeries = Object.fromEntries(
+    additionalHeaders.map((header) => [header, validRows.map((row) => row[header])])
+  )
+
+  return {
+    enabled: true,
+    times: validRows.map((row) => row['time.s']),
+    pressure: validRows.map((row) => row['ENV.pressure.Pa']),
+    temperature: validRows.map((row) => row['ENV.temperature.K']),
+    additionalSeries,
+  }
 }

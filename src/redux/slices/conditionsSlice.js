@@ -30,14 +30,6 @@ const initialState = {
     rateConstants: {},
   },
 
-  exampleFiles: {
-    initial_conditions: {},
-    initial_concentrations: {},
-    initial_reaction_rates: {},
-    boulder: {},
-    data: [],
-  },
-
   hydration: {
     initialExampleId: null,
     evolvingExampleId: null,
@@ -113,16 +105,6 @@ export const conditionsSlice = createSlice({
       state.evolving.additionalSeries = action.payload || {}
     },
 
-    setExampleFiles: (state, action) => {
-      state.exampleFiles = {
-        initial_conditions: {},
-        initial_concentrations: {},
-        initial_reaction_rates: {},
-        boulder: {},
-        data: [],
-        ...(action.payload || {}),
-      }
-    },
     markInitialHydrated: (state, action) => {
       state.hydration.initialExampleId = action.payload || null
     },
@@ -169,7 +151,6 @@ export const {
   setEvolvingPressure,
   setInterpolationMethod,
   setEvolvingAdditionalSeries,
-  setExampleFiles,
   markInitialHydrated,
   markEvolvingHydrated,
   loadConditions,

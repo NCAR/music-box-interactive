@@ -2,7 +2,7 @@ import React from 'react';
 import { Provider } from 'react-redux';
 import { configureStore } from '@reduxjs/toolkit';
 import mechanismReducer, { setMechanism, setCurrentExample, addSpecies, addReaction } from '../src/redux/slices/mechanismSlice';
-import conditionsReducer, { setConditions, setDuration, setTimeStep, setOutputFrequency, setExampleFiles, setExampleLoaded, setSourceFile } from '../src/redux/slices/conditionsSlice';
+import conditionsReducer, { setConditions, setDuration, setTimeStep, setOutputFrequency, setExampleLoaded, setSourceFile } from '../src/redux/slices/conditionsSlice';
 import simulationReducer from '../src/redux/slices/simulationSlice';
 import { render, fireEvent, waitFor, screen } from '@testing-library/react';
 
@@ -84,7 +84,6 @@ describe('RunSimulationButton (TS1 example)', () => {
     store.dispatch(setTimeStep(stepSeconds(options, "chemistry time step")));
     store.dispatch(setOutputFrequency(stepSeconds(options, "output time step")));
     store.dispatch(setConditions(ts1Example.mechanism.conditions));
-    store.dispatch(setExampleFiles({ ...ts1Example.csv, data: ts1Example.mechanism.conditions?.data || [] }));
     store.dispatch(setExampleLoaded(false));
     store.dispatch(setSourceFile(ts1Example.mechanism["__source file"] || null));
 

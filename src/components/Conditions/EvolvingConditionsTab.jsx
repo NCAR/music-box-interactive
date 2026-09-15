@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui
 import { Button } from '../ui/button'
 import { AlertCircle, Plus, Upload, Download } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
+import { hydrateEvolvingConditions } from '../../utils/hydrateConditions'
 import {
   setEvolvingEnabled,
   setEvolvingTimes,
@@ -21,7 +22,7 @@ export function EvolvingConditionsTab() {
   const evolving = useSelector((state) => state.conditions.evolving)
   const basicConditions = useSelector((state) => state.conditions.basic)
   const initialConditions = useSelector((state) => state.conditions.initial)
-  const exampleFiles = useSelector((state) => state.conditions.exampleFiles)
+  const conditions = useSelector((state) => state.conditions.conditions)
   const hydratedExampleId = useSelector((state) => state.conditions.hydration.evolvingExampleId)
   const currentExample = useSelector((state) => state.mechanism.currentExample)
   const [newTime, setNewTime] = useState('')
@@ -55,75 +56,14 @@ export function EvolvingConditionsTab() {
       return
     }
 
-    const boulderBlock = exampleFiles?.boulder
-    const fallbackDataBlock = (exampleFiles?.data || []).find((block) => {
-      const headers = block?.headers || []
-      const rows = block?.rows || []
-      return (
-        rows.length > 0 &&
-        headers.includes('time.s') &&
-        headers.includes('ENV.pressure.Pa') &&
-        headers.includes('ENV.temperature.K')
-      )
-    })
-    const evolvingBlock =
-      boulderBlock?.headers?.length && boulderBlock?.rows?.length ? boulderBlock : fallbackDataBlock
-    const hasEvolvingRows = evolvingBlock?.headers?.length && evolvingBlock?.rows?.length
-
-    if (!hasEvolvingRows) {
-      dispatch(markEvolvingHydrated(exampleId))
-      return
-    }
-
-    const timeIndex = evolvingBlock.headers.indexOf('time.s')
-    const pressureIndex = evolvingBlock.headers.indexOf('ENV.pressure.Pa')
-    const temperatureIndex = evolvingBlock.headers.indexOf('ENV.temperature.K')
-
-    if (timeIndex === -1 || pressureIndex === -1 || temperatureIndex === -1) {
-      dispatch(markEvolvingHydrated(exampleId))
-      return
-    }
-
-    const parsedRows = evolvingBlock.rows
-      .map((row) => ({
-        time: row[timeIndex],
-        pressure: row[pressureIndex],
-        temperature: row[temperatureIndex],
-        row,
-      }))
-      .filter(
-        ({ time, pressure, temperature }) =>
-          Number.isFinite(time) && Number.isFinite(pressure) && Number.isFinite(temperature)
-      )
-      .sort((a, b) => a.time - b.time)
-
-    if (parsedRows.length === 0) {
-      dispatch(markEvolvingHydrated(exampleId))
-      return
-    }
-
-    const additionalHeaders = evolvingBlock.headers.filter(
-      (header) =>
-        header !== 'time.s' && header !== 'ENV.pressure.Pa' && header !== 'ENV.temperature.K'
-    )
-
-    const additionalSeries = Object.fromEntries(
-      additionalHeaders.map((header) => [
-        header,
-        parsedRows.map(({ row }) => {
-          const valueIndex = evolvingBlock.headers.indexOf(header)
-          return row[valueIndex]
-        }),
-      ])
-    )
-
-    dispatch(setEvolvingEnabled(true))
-    dispatch(setEvolvingTimes(parsedRows.map((row) => row.time)))
-    dispatch(setEvolvingPressure(parsedRows.map((row) => row.pressure)))
-    dispatch(setEvolvingTemperature(parsedRows.map((row) => row.temperature)))
-    dispatch(setEvolvingAdditionalSeries(additionalSeries))
+    const hydrated = hydrateEvolvingConditions(conditions)
+    dispatch(setEvolvingEnabled(hydrated.enabled))
+    dispatch(setEvolvingTimes(hydrated.times))
+    dispatch(setEvolvingPressure(hydrated.pressure))
+    dispatch(setEvolvingTemperature(hydrated.temperature))
+    dispatch(setEvolvingAdditionalSeries(hydrated.additionalSeries))
     dispatch(markEvolvingHydrated(exampleId))
-  }, [currentExample, dispatch, exampleFiles, hydratedExampleId])
+  }, [currentExample, dispatch, conditions, hydratedExampleId])
 
   // validation for time point coverage
   const hasTimeAtZero = evolving.times && evolving.times.includes(0)
