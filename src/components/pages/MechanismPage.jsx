@@ -25,7 +25,7 @@ import {
 export function MechanismPage() {
   const [activeTab, setActiveTab] = useState('species') // 'species' | 'reactions'
   const dispatch = useDispatch()
-  const exampleFiles = useSelector((state) => state.conditions.exampleFiles)
+  const conditions = useSelector((state) => state.conditions.conditions)
   const hydratedInitialId = useSelector((state) => state.conditions.hydration.initialExampleId)
   const hydratedEvolvingId = useSelector((state) => state.conditions.hydration.evolvingExampleId)
   const currentExample = useSelector((state) => state.mechanism.currentExample)
@@ -35,7 +35,7 @@ export function MechanismPage() {
     const exampleId = currentExample?.id
     if (!exampleId) return
     if (hydratedInitialId !== exampleId) {
-      const hydrated = hydrateInitialConditions(exampleFiles)
+      const hydrated = hydrateInitialConditions(conditions)
       if (hydrated.temperature !== null) dispatch(setTemperature(hydrated.temperature))
       if (hydrated.pressure !== null) dispatch(setPressure(hydrated.pressure))
       dispatch(setConcentrations(hydrated.concentrations))
@@ -43,7 +43,7 @@ export function MechanismPage() {
       dispatch(markInitialHydrated(exampleId))
     }
     if (hydratedEvolvingId !== exampleId) {
-      const hydrated = hydrateEvolvingConditions(exampleFiles)
+      const hydrated = hydrateEvolvingConditions(conditions)
       dispatch(setEvolvingEnabled(hydrated.enabled))
       dispatch(setEvolvingTimes(hydrated.times))
       dispatch(setEvolvingTemperature(hydrated.temperature))
@@ -51,7 +51,7 @@ export function MechanismPage() {
       dispatch(setEvolvingAdditionalSeries(hydrated.additionalSeries))
       dispatch(markEvolvingHydrated(exampleId))
     }
-  }, [exampleFiles, currentExample, hydratedInitialId, hydratedEvolvingId, dispatch])
+  }, [conditions, currentExample, hydratedInitialId, hydratedEvolvingId, dispatch])
 
   const tabs = [
     { id: 'species', label: 'Species', component: SpeciesEditor },

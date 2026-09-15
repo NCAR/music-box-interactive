@@ -14,7 +14,6 @@ import {
   setTimeStep,
   setOutputFrequency,
   setConditions,
-  setExampleFiles,
   setExampleLoaded,
   setSourceFile,
 } from '../../redux/slices/conditionsSlice'
@@ -28,7 +27,7 @@ import {
 
 // Loads a resolved music-box v1 config into Redux. conditions.data must already hold every
 // CSV-derived block inline; callers resolve filepaths before calling this.
-export function loadMusicBoxConfig(config, { dispatch, navigate, meta = {}, csv } = {}) {
+export function loadMusicBoxConfig(config, { dispatch, navigate, meta = {} } = {}) {
   dispatch(resetMechanism())
   dispatch(resetConditions())
   dispatch(resetSimulation())
@@ -97,18 +96,11 @@ export function loadMusicBoxConfig(config, { dispatch, navigate, meta = {}, csv 
 
   dispatch(setConditions(config?.conditions))
   dispatch(
-    setExampleFiles({
-      ...(csv || {}),
-      data: config?.conditions?.data || [],
-    })
-  )
-  dispatch(
     setCurrentExample({
       id: meta.id,
       name: meta.name,
       description: meta.description,
       mechanism_name: meta.mechanism_name,
-      csv,
     })
   )
   dispatch(setSelectedMechanism(meta.mechanism_name || meta.id || 'custom'))

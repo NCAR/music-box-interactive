@@ -1,70 +1,72 @@
 import { parseConditions, ConditionsManager } from '@ncar/music-box'
 
-// Shared hydration logic for initial and evolving conditions. Classifying
-// temperature/pressure/concentrations is delegated to @ncar/music-box's
-// parseConditions()/ConditionsManager instead of re-derived from raw headers here.
+// Shared hydration logic for initial and evolving conditions. Flattening {headers, rows}
+// CSV blocks, and classifying a column as temperature, a concentration, or a rate constant,
+// is delegated to @ncar/music-box (parseConditions, ConditionsManager) rather than re-derived
+// here -- this app should not need to know the CONC./ENV./PHOTO. column convention itself.
 //
-// Rate-constant and additionalSeries keys stay as the raw header string (unit suffix
-// included), since buildSolverConditions writes those same keys back out as a CSV header.
+// A snapshot row's own time.s is read as-is, never invented or rewritten: ConditionsManager
+// only groups rows by whatever time.s they actually have, it does not require time.s === 0.
 
-const isRateParamHeader = (header) =>
-  header !== 'time.s' && !header.startsWith('ENV.') && !header.startsWith('CONC.')
+// Every conditions block, regardless of what file (if any) it came from -- the app does not
+// track or key off original CSV filenames or example-specific slots. `conditions` is the
+// music-box v1 conditions object as loaded (state.conditions.conditions), not a separate copy.
+const dataBlocks = (conditions) => conditions?.data || []
 
-export function hydrateInitialConditions(exampleFiles) {
-  const getValidBlock = (block) => (block?.headers?.length && block?.rows?.length ? block : null)
+export function hydrateInitialConditions(conditions) {
+  const blocks = dataBlocks(conditions)
 
   // A single-row block is a snapshot, not a time series, so it counts as initial-condition
   // data too. Multi-row blocks are excluded so a genuinely evolving series (e.g. Chapman's
   // photolysis rates) doesn't also get a static "initial" copy of itself.
-  const snapshotBlocks = [
-    getValidBlock(exampleFiles?.initial_conditions),
-    getValidBlock(exampleFiles?.initial_concentrations),
-    getValidBlock(exampleFiles?.initial_reaction_rates),
-    ...(exampleFiles?.data || []).filter(
-      (block) => block?.headers?.length && block?.rows?.length === 1
-    ),
-  ].filter(Boolean)
+  const snapshotBlocks = blocks.filter(
+    (block) => block?.headers?.length && block?.rows?.length === 1
+  )
   const snapshotRows = parseConditions({ data: snapshotBlocks })
+  const snapshotConds = new ConditionsManager(snapshotRows)
 
-  // A config's ENV columns may only live on a multi-row (evolving) block. Borrow
-  // temperature/pressure from its first point; concentrations stay snapshot-only.
-  const fallbackEvolvingBlock = (exampleFiles?.data || []).find((block) => {
+  // A config's ENV columns may only live on a genuinely evolving (multi-row) block. Borrow
+  // temperature/pressure from its earliest point; concentrations and rate constants stay
+  // snapshot-only, so a borrowed point never leaks a rate constant into "initial".
+  const fallbackEvolvingBlock = blocks.find((block) => {
     const headers = block?.headers || []
     const rows = block?.rows || []
     return (
-      rows.length > 0 &&
+      rows.length > 1 &&
       headers.includes('time.s') &&
       headers.some((header) => typeof header === 'string' && header.startsWith('ENV.'))
     )
   })
-  const fallbackRows = fallbackEvolvingBlock ? parseConditions({ data: [fallbackEvolvingBlock] }) : []
-
-  const hasHeader = (rows, name) => rows.some((row) => Object.prototype.hasOwnProperty.call(row, name))
-
-  // Fallback rows go first so snapshot rows (added after) win getConditionsAtTime's
-  // accumulation.
-  const mergedManager = new ConditionsManager([...fallbackRows, ...snapshotRows])
-  const { temperature, pressure } = mergedManager.getConditionsAtTime(0)
-
-  const nextTemperature =
-    hasHeader(snapshotRows, 'ENV.temperature.K') || hasHeader(fallbackRows, 'ENV.temperature.K')
-      ? temperature
-      : null
-  const nextPressure =
-    hasHeader(snapshotRows, 'ENV.pressure.Pa') || hasHeader(fallbackRows, 'ENV.pressure.Pa')
-      ? pressure
+  const fallbackAllRows = fallbackEvolvingBlock
+    ? parseConditions({ data: [fallbackEvolvingBlock] })
+    : []
+  const earliestFallbackRow =
+    fallbackAllRows.length > 0
+      ? fallbackAllRows.reduce((earliest, row) =>
+          row['time.s'] < earliest['time.s'] ? row : earliest
+        )
       : null
 
-  const snapshotManager = new ConditionsManager(snapshotRows)
-  const nextConcentrations = { ...(snapshotManager.concentrationEvents[0] || {}) }
+  // The fallback row is listed first so a snapshot row at the same time.s overrides it --
+  // ConditionsManager keeps input order for rows tied on time.s once it sorts by time.
+  const envConds = new ConditionsManager([earliestFallbackRow, ...snapshotRows].filter(Boolean))
+  let nextTemperature = null
+  let nextPressure = null
+  envConds.timePoints.forEach((point) => {
+    if (point.temp !== null) nextTemperature = point.temp
+    if (point.pressure !== null) nextPressure = point.pressure
+  })
 
+  const nextConcentrations = {}
+  Object.values(snapshotConds.concentrationEvents).forEach((speciesValues) => {
+    Object.assign(nextConcentrations, speciesValues)
+  })
+
+  // Raw (unit-suffix-included) headers, since buildSolverConditions writes these same keys
+  // back out as a CSV header for the solver.
   const nextRateConstants = {}
-  snapshotRows.forEach((row) => {
-    Object.entries(row).forEach(([header, value]) => {
-      if (isRateParamHeader(header) && Number.isFinite(value)) {
-        nextRateConstants[header] = value
-      }
-    })
+  snapshotConds.timePoints.forEach((point) => {
+    Object.assign(nextRateConstants, point.rawRateParams)
   })
 
   return {
@@ -75,11 +77,10 @@ export function hydrateInitialConditions(exampleFiles) {
   }
 }
 
-export function hydrateEvolvingConditions(exampleFiles) {
-  const boulderBlock = exampleFiles?.boulder
+export function hydrateEvolvingConditions(conditions) {
   // A single row is a snapshot, not a time series -- require more than one point to call
   // it evolving.
-  const fallbackEvolvingBlock = (exampleFiles?.data || []).find((block) => {
+  const evolvingBlock = dataBlocks(conditions).find((block) => {
     const headers = block?.headers || []
     const rows = block?.rows || []
     return (
@@ -89,8 +90,6 @@ export function hydrateEvolvingConditions(exampleFiles) {
       headers.includes('ENV.temperature.K')
     )
   })
-  const evolvingBlock =
-    boulderBlock?.headers?.length && boulderBlock?.rows?.length ? boulderBlock : fallbackEvolvingBlock
 
   const empty = { enabled: false, times: [], temperature: [], pressure: [], additionalSeries: {} }
 

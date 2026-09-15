@@ -7,7 +7,7 @@ import { hydrateInitialConditions, hydrateEvolvingConditions } from '../src/util
 
 describe('hydrateInitialConditions', () => {
   it('reads temperature, pressure, and concentrations from a single self-contained block', () => {
-    const exampleFiles = {
+    const conditions = {
       data: [
         {
           headers: ['time.s', 'ENV.temperature.K', 'ENV.pressure.Pa', 'CONC.A.mol m-3'],
@@ -15,7 +15,7 @@ describe('hydrateInitialConditions', () => {
         },
       ],
     }
-    const result = hydrateInitialConditions(exampleFiles)
+    const result = hydrateInitialConditions(conditions)
     expect(result.temperature).toBe(298.15)
     expect(result.pressure).toBe(101325)
     expect(result.concentrations).toEqual({ A: 1e-6 })
@@ -30,15 +30,15 @@ describe('hydrateInitialConditions', () => {
   })
 
   it('keeps rate-constant keys as the raw header string, unit suffix included', () => {
-    const exampleFiles = {
+    const conditions = {
       data: [{ headers: ['time.s', 'PHOTO.O2_1.s-1'], rows: [[0, 1.47e-12]] }],
     }
-    const result = hydrateInitialConditions(exampleFiles)
+    const result = hydrateInitialConditions(conditions)
     expect(result.rateConstants).toEqual({ 'PHOTO.O2_1.s-1': 1.47e-12 })
   })
 
   it('does not treat a multi-row (evolving) block as an initial snapshot for concentrations or rate constants', () => {
-    const exampleFiles = {
+    const conditions = {
       data: [
         {
           headers: ['time.s', 'ENV.temperature.K', 'PHOTO.O2_1.s-1'],
@@ -49,12 +49,12 @@ describe('hydrateInitialConditions', () => {
         },
       ],
     }
-    const result = hydrateInitialConditions(exampleFiles)
+    const result = hydrateInitialConditions(conditions)
     expect(result.rateConstants).toEqual({})
   })
 
   it('borrows temperature/pressure from an evolving block when no snapshot provides it, without borrowing its rate constants', () => {
-    const exampleFiles = {
+    const conditions = {
       data: [
         { headers: ['time.s', 'CONC.A.mol m-3'], rows: [[0, 1e-6]] },
         {
@@ -66,7 +66,7 @@ describe('hydrateInitialConditions', () => {
         },
       ],
     }
-    const result = hydrateInitialConditions(exampleFiles)
+    const result = hydrateInitialConditions(conditions)
     expect(result.temperature).toBe(217.6)
     expect(result.pressure).toBe(1394.3)
     expect(result.concentrations).toEqual({ A: 1e-6 })
@@ -74,7 +74,7 @@ describe('hydrateInitialConditions', () => {
   })
 
   it('lets a snapshot block override a borrowed evolving value for the same quantity', () => {
-    const exampleFiles = {
+    const conditions = {
       // Listed first: the fallback finder is a plain .find() and would otherwise match
       // the snapshot block below, which also has an ENV.* header.
       data: [
@@ -88,24 +88,41 @@ describe('hydrateInitialConditions', () => {
         { headers: ['time.s', 'ENV.temperature.K'], rows: [[0, 300]] },
       ],
     }
-    const result = hydrateInitialConditions(exampleFiles)
+    const result = hydrateInitialConditions(conditions)
     // Snapshot's own temperature wins over the borrowed evolving-block value.
     expect(result.temperature).toBe(300)
     // Pressure has no snapshot value, so it is still borrowed.
     expect(result.pressure).toBe(1394.3)
   })
 
-  it('honors the named example-loader slots the same as a generic data block', () => {
-    const exampleFiles = {
-      initial_concentrations: {
-        headers: ['time.s', 'ENV.temperature.K', 'ENV.pressure.Pa', 'CONC.O3.mol m-3'],
-        rows: [[0, 217.6, 1394.3, 6.43e-6]],
-      },
-      data: [],
+  it('reads concentrations from a snapshot block whose own time.s is not 0 (TS1-shaped config)', () => {
+    // TS1's real config: an inline block gives temperature/pressure at t=0, while a
+    // separately-referenced CSV gives species concentrations at t=1000.
+    const conditions = {
+      data: [
+        { headers: ['time.s', 'ENV.temperature.K', 'ENV.pressure.Pa'], rows: [[0, 299.55, 99255.61]] },
+        { headers: ['time.s', 'CONC.O3.mol m-3'], rows: [[1000, 5.95e-6]] },
+      ],
     }
-    const result = hydrateInitialConditions(exampleFiles)
+    const result = hydrateInitialConditions(conditions)
+    expect(result.temperature).toBe(299.55)
+    expect(result.pressure).toBe(99255.61)
+    expect(result.concentrations).toEqual({ O3: 5.95e-6 })
+  })
+
+  it('reads a snapshot regardless of which position it sits at in data', () => {
+    const conditions = {
+      data: [
+        { headers: ['time.s', 'CONC.A.mol m-3'], rows: [[0, 1e-6]] },
+        {
+          headers: ['time.s', 'ENV.temperature.K', 'ENV.pressure.Pa', 'CONC.O3.mol m-3'],
+          rows: [[0, 217.6, 1394.3, 6.43e-6]],
+        },
+      ],
+    }
+    const result = hydrateInitialConditions(conditions)
     expect(result.temperature).toBe(217.6)
-    expect(result.concentrations).toEqual({ O3: 6.43e-6 })
+    expect(result.concentrations).toEqual({ A: 1e-6, O3: 6.43e-6 })
   })
 })
 
@@ -117,7 +134,7 @@ describe('hydrateEvolvingConditions', () => {
   })
 
   it('requires more than one row to count as an evolving series', () => {
-    const exampleFiles = {
+    const conditions = {
       data: [
         {
           headers: ['time.s', 'ENV.temperature.K', 'ENV.pressure.Pa'],
@@ -125,12 +142,12 @@ describe('hydrateEvolvingConditions', () => {
         },
       ],
     }
-    const result = hydrateEvolvingConditions(exampleFiles)
+    const result = hydrateEvolvingConditions(conditions)
     expect(result.enabled).toBe(false)
   })
 
   it('builds times/temperature/pressure and preserves raw additionalSeries headers', () => {
-    const exampleFiles = {
+    const conditions = {
       data: [
         {
           headers: ['time.s', 'ENV.pressure.Pa', 'ENV.temperature.K', 'PHOTO.O2_1.s-1'],
@@ -141,7 +158,7 @@ describe('hydrateEvolvingConditions', () => {
         },
       ],
     }
-    const result = hydrateEvolvingConditions(exampleFiles)
+    const result = hydrateEvolvingConditions(conditions)
     expect(result.enabled).toBe(true)
     expect(result.times).toEqual([0, 3600])
     expect(result.temperature).toEqual([217.6, 217.6])
@@ -150,7 +167,7 @@ describe('hydrateEvolvingConditions', () => {
   })
 
   it('sorts out-of-order rows by time', () => {
-    const exampleFiles = {
+    const conditions = {
       data: [
         {
           headers: ['time.s', 'ENV.temperature.K', 'ENV.pressure.Pa'],
@@ -161,31 +178,26 @@ describe('hydrateEvolvingConditions', () => {
         },
       ],
     }
-    const result = hydrateEvolvingConditions(exampleFiles)
+    const result = hydrateEvolvingConditions(conditions)
     expect(result.times).toEqual([0, 3600])
     expect(result.temperature).toEqual([217.6, 220.0])
   })
 
-  it('prefers the named boulder slot over a generic data block', () => {
-    const exampleFiles = {
-      boulder: {
-        headers: ['time.s', 'ENV.temperature.K', 'ENV.pressure.Pa'],
-        rows: [
-          [0, 217.6, 1394.3],
-          [3600, 220.0, 1400.0],
-        ],
-      },
+  it('finds the evolving block regardless of what file it came from', () => {
+    // The app does not track original CSV filenames or key off any per-example slot --
+    // any block shaped like an evolving series is picked up the same way.
+    const conditions = {
       data: [
         {
           headers: ['time.s', 'ENV.temperature.K', 'ENV.pressure.Pa'],
           rows: [
-            [0, 999, 999],
-            [3600, 999, 999],
+            [0, 217.6, 1394.3],
+            [3600, 220.0, 1400.0],
           ],
         },
       ],
     }
-    const result = hydrateEvolvingConditions(exampleFiles)
+    const result = hydrateEvolvingConditions(conditions)
     expect(result.temperature).toEqual([217.6, 220.0])
   })
 })
