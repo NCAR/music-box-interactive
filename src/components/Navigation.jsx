@@ -1,7 +1,7 @@
 /* global __APP_VERSION__ */
 import { useState } from 'react'
 import { NavLink } from 'react-router-dom'
-import { Home, Atom, Settings, BarChart3, ArrowLeft } from 'lucide-react'
+import { Home, Atom, Settings, BarChart3, Info, Bug, MessagesSquare } from 'lucide-react'
 import RunSimulationButton from './RunSimulationButton'
 import DownloadButtons from './DownloadButtons'
 
@@ -9,7 +9,7 @@ import DownloadButtons from './DownloadButtons'
  * Navigation Component
  * Responsive sidebar navigation with mobile hamburger menu
  */
-export function Navigation({ onBackToHome = null }) {
+export function Navigation() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
   const navLinks = [
@@ -18,6 +18,28 @@ export function Navigation({ onBackToHome = null }) {
     { to: '/conditions', label: 'Conditions', Icon: Settings },
     { to: '/plots', label: 'Results', Icon: BarChart3 },
   ]
+
+  const infoLinks = [{ to: '/about', label: 'About', Icon: Info }]
+
+  const communityLinks = [
+    {
+      href: 'https://github.com/NCAR/music-box-interactive/discussions',
+      label: 'Start a Discussion',
+      Icon: MessagesSquare,
+    },
+    {
+      href: 'https://github.com/NCAR/music-box-interactive/issues/new',
+      label: 'Report a Bug',
+      Icon: Bug,
+    },
+  ]
+
+  const navLinkClassName = ({ isActive }) =>
+    `flex items-center space-x-3 px-3 sm:px-4 py-2.5 sm:py-3 font-medium text-sm sm:text-base border-l-4 transition-all duration-300 ${
+      isActive
+        ? 'border-location text-location-foreground font-semibold'
+        : 'border-transparent text-ink hover:bg-surface-hover'
+    }`
 
   const closeMobileMenu = () => setIsMobileMenuOpen(false)
 
@@ -88,13 +110,7 @@ export function Navigation({ onBackToHome = null }) {
                 to={link.to}
                 end={link.to === '/'}
                 onClick={closeMobileMenu}
-                className={({ isActive }) =>
-                  `flex items-center space-x-3 px-3 sm:px-4 py-2.5 sm:py-3 font-medium text-sm sm:text-base border-l-4 transition-all duration-300 ${
-                    isActive
-                      ? 'border-location text-location-foreground font-semibold'
-                      : 'border-transparent text-ink hover:bg-surface-hover'
-                  }`
-                }
+                className={navLinkClassName}
               >
                 <IconComponent className="w-5 h-5 sm:w-6 sm:h-6 flex-shrink-0" />
                 <span className="truncate">{link.label}</span>
@@ -123,17 +139,44 @@ export function Navigation({ onBackToHome = null }) {
                 to={link.to}
                 end={link.to === '/'}
                 onClick={closeMobileMenu}
-                className={({ isActive }) =>
-                  `flex items-center space-x-3 px-3 sm:px-4 py-2.5 sm:py-3 font-medium text-sm sm:text-base border-l-4 transition-all duration-300 ${
-                    isActive
-                      ? 'border-location text-location-foreground font-semibold'
-                      : 'border-transparent text-ink hover:bg-surface-hover'
-                  }`
-                }
+                className={navLinkClassName}
               >
                 <IconComponent className="w-5 h-5 sm:w-6 sm:h-6 flex-shrink-0" />
                 <span className="truncate">{link.label}</span>
               </NavLink>
+            )
+          })}
+        </div>
+
+        {/* About / Community */}
+        <div className="px-3 sm:px-4 py-2 space-y-2 border-t border-border">
+          {infoLinks.map((link) => {
+            const IconComponent = link.Icon
+            return (
+              <NavLink
+                key={link.to}
+                to={link.to}
+                onClick={closeMobileMenu}
+                className={navLinkClassName}
+              >
+                <IconComponent className="w-5 h-5 sm:w-6 sm:h-6 flex-shrink-0" />
+                <span className="truncate">{link.label}</span>
+              </NavLink>
+            )
+          })}
+          {communityLinks.map((link) => {
+            const IconComponent = link.Icon
+            return (
+              <a
+                key={link.href}
+                href={link.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={navLinkClassName({ isActive: false })}
+              >
+                <IconComponent className="w-5 h-5 sm:w-6 sm:h-6 flex-shrink-0" />
+                <span className="truncate">{link.label}</span>
+              </a>
             )
           })}
         </div>
@@ -154,22 +197,6 @@ export function Navigation({ onBackToHome = null }) {
             className="w-full h-14 sm:h-16 object-cover object-top pointer-events-none"
           />
         </div>
-
-        {/* Exit Button */}
-        {onBackToHome && (
-          <div className="p-3 sm:p-4 border-t border-border">
-            <button
-              onClick={() => {
-                closeMobileMenu()
-                onBackToHome()
-              }}
-              className="w-full px-4 py-2.5 sm:py-3 rounded-full font-medium text-sm sm:text-base bg-transparent text-danger hover:bg-caution transition-colors duration-200 flex items-center justify-center space-x-2"
-            >
-              <ArrowLeft className="w-5 h-5" />
-              <span>Exit App</span>
-            </button>
-          </div>
-        )}
       </nav>
     </>
   )

@@ -85,23 +85,3 @@
     scrollbar-width: none;  /* Firefox */
   }
 }
-
-/* 3D Atom Rotation Animation */
-@keyframes atom-rotate-3d {
-  0% {
-    transform: rotateY(0deg) rotateX(0deg);
-  }
-  100% {
-    transform: rotateY(360deg) rotateX(360deg);
-  }
-}
-
-/* Counter-rotation to keep nucleus stationary */
-@keyframes nucleus-counter-rotate {
-  0% {
-    transform: rotateY(0deg) rotateX(0deg);
-  }
-  100% {
-    transform: rotateY(-360deg) rotateX(-360deg);
-  }
-}

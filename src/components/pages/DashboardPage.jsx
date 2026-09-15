@@ -9,7 +9,7 @@ import { resetMechanism, setSelectedMechanism } from '../../redux/slices/mechani
 import { resetConditions, setExampleLoaded } from '../../redux/slices/conditionsSlice'
 import { useToast } from '@/hooks/use-toast'
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert'
-import { Rocket, PenLine, FolderOpen, Library, Copy } from 'lucide-react'
+import { Rocket, PenLine, FolderOpen, Library } from 'lucide-react'
 import { loadMusicBoxConfig } from '../../services/config/loadMusicBoxConfig'
 import { parseUploadedMusicBoxConfig } from '../../services/config/parseUploadedMusicBoxConfig'
 
@@ -21,22 +21,6 @@ export function DashboardPage() {
   const fileInputRef = useRef(null)
   const [showConfirmation, setShowConfirmation] = useState(false)
   const [showExamples, setShowExamples] = useState(false)
-
-  const handleCopyInstallCommand = async (command) => {
-    try {
-      await navigator.clipboard.writeText(command)
-      toast({
-        title: 'Copied to Clipboard!',
-        description: `"${command}" has been copied to your clipboard.`,
-      })
-    } catch (_error) {
-      toast({
-        title: 'Copy Failed',
-        description: 'Failed to copy the command to your clipboard.',
-        variant: 'destructive',
-      })
-    }
-  }
 
   const handleStartFromScratch = () => {
     setShowConfirmation(true)
@@ -307,112 +291,6 @@ export function DashboardPage() {
         </div>
       )}
 
-      {/* Guide: Need Help */}
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0 p-4 sm:p-5">
-          <CardTitle>Resources &amp; Support</CardTitle>
-          <a
-            href="https://github.com/NCAR/music-box-interactive/issues/new"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-1.5 text-sm text-action hover:text-action-hover font-medium whitespace-nowrap"
-          >
-            <svg
-              viewBox="0 0 24 24"
-              className="w-4 h-4 fill-current"
-              aria-hidden="true"
-            >
-              <path d="M12 .5C5.65.5.5 5.65.5 12c0 5.09 3.29 9.4 7.86 10.93.57.1.78-.25.78-.55 0-.27-.01-1.16-.02-2.11-3.2.7-3.87-1.36-3.87-1.36-.53-1.34-1.29-1.7-1.29-1.7-1.05-.72.08-.7.08-.7 1.17.08 1.78 1.2 1.78 1.2 1.03 1.77 2.71 1.26 3.37.96.1-.75.4-1.26.73-1.55-2.56-.29-5.26-1.28-5.26-5.7 0-1.26.45-2.29 1.19-3.09-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.18 1.18a11.1 11.1 0 0 1 5.79 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.12 3.05.74.8 1.19 1.83 1.19 3.09 0 4.43-2.7 5.41-5.28 5.69.41.36.78 1.07.78 2.15 0 1.55-.01 2.8-.01 3.18 0 .3.21.66.79.55A10.51 10.51 0 0 0 23.5 12c0-6.35-5.15-11.5-11.5-11.5Z" />
-            </svg>
-            Report a Bug
-          </a>
-        </CardHeader>
-        <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm p-4 sm:p-5 pt-0">
-          <div>
-            <h4 className="font-semibold mb-1">Go Further Programmatically</h4>
-            <p className="text-muted mb-2">
-              Build custom workflows with the MusicBox Python or JavaScript APIs.
-            </p>
-            <div className="flex flex-wrap gap-2 mb-2">
-              <div className="flex items-center gap-1.5 text-xs font-mono bg-black/5 border border-border rounded px-2 py-1">
-                <code>pip install acom_music_box</code>
-                <button
-                  type="button"
-                  onClick={() => handleCopyInstallCommand('pip install acom_music_box')}
-                  className="text-muted hover:text-action-hover"
-                  aria-label="Copy pip install command to clipboard"
-                >
-                  <Copy className="w-3 h-3" />
-                </button>
-              </div>
-              <div className="flex items-center gap-1.5 text-xs font-mono bg-black/5 border border-border rounded px-2 py-1">
-                <code>npm install @ncar/music-box</code>
-                <button
-                  type="button"
-                  onClick={() => handleCopyInstallCommand('npm install @ncar/music-box')}
-                  className="text-muted hover:text-action-hover"
-                  aria-label="Copy npm install command to clipboard"
-                >
-                  <Copy className="w-3 h-3" />
-                </button>
-              </div>
-            </div>
-            <ul className="space-y-1">
-              <li>
-                <a
-                  href="https://github.com/NCAR/music-box"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-action hover:text-action-hover font-medium underline"
-                >
-                  MusicBox Tutorials &amp; Documentation (includes Binder notebooks)
-                </a>
-              </li>
-            </ul>
-          </div>
-          <div>
-            <h4 className="font-semibold mb-1">Build Bigger Models</h4>
-            <p className="text-muted mb-2">
-              For column or global models, use MUSICA and any of its interfaces.
-            </p>
-            <div className="flex flex-wrap gap-2 mb-2">
-              <div className="flex items-center gap-1.5 text-xs font-mono bg-black/5 border border-border rounded px-2 py-1">
-                <code>pip install musica</code>
-                <button
-                  type="button"
-                  onClick={() => handleCopyInstallCommand('pip install musica')}
-                  className="text-muted hover:text-action-hover"
-                  aria-label="Copy pip install command to clipboard"
-                >
-                  <Copy className="w-3 h-3" />
-                </button>
-              </div>
-            </div>
-            <ul className="space-y-1">
-              <li>
-                <a
-                  href="https://ncar.github.io/musica/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-action hover:text-action-hover font-medium underline"
-                >
-                  MUSICA Documentation
-                </a>
-              </li>
-              <li>
-                <a
-                  href="https://github.com/NCAR/musica"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-action hover:text-action-hover font-medium underline"
-                >
-                  MUSICA GitHub Repository (includes Binder tutorials)
-                </a>
-              </li>
-            </ul>
-          </div>
-        </CardContent>
-      </Card>
     </div>
   )
 }
