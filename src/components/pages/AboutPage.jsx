@@ -117,12 +117,12 @@ function AboutPage({ onNavigate }) {
               <h1 className="text-2xl xs:text-3xl sm:text-4xl md:text-5xl font-bold mb-3 xs:mb-4 sm:mb-6">
                 About MusicBox
               </h1>
-              <p className="text-base xs:text-lg sm:text-xl text-blue-100 mb-4 xs:mb-6 sm:mb-8">
+              <p className="text-base xs:text-lg sm:text-xl text-[#42C0FF] mb-4 xs:mb-6 sm:mb-8">
                 A atmospheric box model
               </p>
 
               {/* What is MusicBox Content */}
-              <div className="space-y-2 xs:space-y-3 sm:space-y-4 text-blue-50">
+              <div className="space-y-2 xs:space-y-3 sm:space-y-4 text-white/90">
                 <p className="leading-relaxed text-xs xs:text-sm sm:text-base">
                   Simulate chamber or flow-tube experiments, recreate field observations, or
                   evaluate the effect of new chemistry in an existing system. MusicBox is designed
@@ -140,7 +140,7 @@ function AboutPage({ onNavigate }) {
                   <span className="relative z-10 drop-shadow-lg">Launch MusicBox</span>
                   {/* Liquid glass shimmer effect */}
                   <div className="absolute inset-0 bg-gradient-to-br from-white/40 via-white/20 to-transparent opacity-60"></div>
-                  <div className="absolute inset-0 bg-gradient-to-tr from-blue-400/30 via-transparent to-purple-400/30 opacity-50 group-hover:opacity-70 transition-opacity duration-500"></div>
+                  <div className="absolute inset-0 bg-gradient-to-tr from-[#42C0FF]/30 via-transparent to-[#00A2B4]/30 opacity-50 group-hover:opacity-70 transition-opacity duration-500"></div>
                   {/* Animated shimmer */}
                   <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 bg-gradient-to-r from-transparent via-white/40 to-transparent"></div>
                   {/* Glass refraction effect */}
@@ -192,7 +192,7 @@ function AboutPage({ onNavigate }) {
                   >
                     {/* Orbit pseudo-element for subtle ring */}
                     <div
-                      className="absolute inset-0 border border-cyan-400/20 rounded-full"
+                      className="absolute inset-0 border border-[#42C0FF]/20 rounded-full"
                       style={{ zIndex: -1 }}
                     ></div>
                     {/* Electron 1 - 3D Sphere */}
@@ -212,10 +212,10 @@ function AboutPage({ onNavigate }) {
                         className="w-full h-full rounded-full"
                         style={{
                           background:
-                            'radial-gradient(circle at 30% 30%, #cffafe, #22d3ee, #0891b2, #0e7490)',
+                            'radial-gradient(circle at 30% 30%, #e0f2ff, #42C0FF, #0057C2, #00357A)',
                           boxShadow: `
-                            0 0 15px rgba(34, 211, 238, 0.8),
-                            0 0 30px rgba(34, 211, 238, 0.4),
+                            0 0 15px rgba(0, 87, 194, 0.8),
+                            0 0 30px rgba(0, 87, 194, 0.4),
                             inset -4px -4px 6px rgba(0, 0, 0, 0.5),
                             inset 3px 3px 6px rgba(255, 255, 255, 0.4)
                           `,
@@ -236,7 +236,7 @@ function AboutPage({ onNavigate }) {
                     }}
                   >
                     <div
-                      className="absolute inset-0 border border-purple-400/20 rounded-full"
+                      className="absolute inset-0 border border-[#00A2B4]/20 rounded-full"
                       style={{ zIndex: -1 }}
                     ></div>
                     {/* Electron 2 - 3D Sphere */}
@@ -256,10 +256,10 @@ function AboutPage({ onNavigate }) {
                         className="w-full h-full rounded-full"
                         style={{
                           background:
-                            'radial-gradient(circle at 30% 30%, #f3e8ff, #c084fc, #9333ea, #7e22ce)',
+                            'radial-gradient(circle at 30% 30%, #e0fbfc, #34E1F4, #00A2B4, #007483)',
                           boxShadow: `
-                            0 0 15px rgba(192, 132, 252, 0.8),
-                            0 0 30px rgba(192, 132, 252, 0.4),
+                            0 0 15px rgba(0, 162, 180, 0.8),
+                            0 0 30px rgba(0, 162, 180, 0.4),
                             inset -4px -4px 6px rgba(0, 0, 0, 0.5),
                             inset 3px 3px 6px rgba(255, 255, 255, 0.4)
                           `,
@@ -280,7 +280,7 @@ function AboutPage({ onNavigate }) {
                     }}
                   >
                     <div
-                      className="absolute inset-0 border border-pink-400/20 rounded-full"
+                      className="absolute inset-0 border border-[#FAA119]/20 rounded-full"
                       style={{ zIndex: -1 }}
                     ></div>
                     {/* Electron 3 - 3D Sphere */}
@@ -300,10 +300,10 @@ function AboutPage({ onNavigate }) {
                         className="w-full h-full rounded-full"
                         style={{
                           background:
-                            'radial-gradient(circle at 30% 30%, #fce7f3, #f472b6, #ec4899, #db2777)',
+                            'radial-gradient(circle at 30% 30%, #ffedd5, #FAA119, #d98a10, #a86b0c)',
                           boxShadow: `
-                            0 0 15px rgba(244, 114, 182, 0.8),
-                            0 0 30px rgba(244, 114, 182, 0.4),
+                            0 0 15px rgba(250, 161, 25, 0.8),
+                            0 0 30px rgba(250, 161, 25, 0.4),
                             inset -4px -4px 6px rgba(0, 0, 0, 0.5),
                             inset 3px 3px 6px rgba(255, 255, 255, 0.4)
                           `,
@@ -324,7 +324,7 @@ function AboutPage({ onNavigate }) {
                     }}
                   >
                     <div
-                      className="absolute inset-0 border border-emerald-400/20 rounded-full"
+                      className="absolute inset-0 border border-[#FFDD31]/20 rounded-full"
                       style={{ zIndex: -1 }}
                     ></div>
                     {/* Electron 4 - 3D Sphere */}
@@ -344,10 +344,10 @@ function AboutPage({ onNavigate }) {
                         className="w-full h-full rounded-full"
                         style={{
                           background:
-                            'radial-gradient(circle at 30% 30%, #d1fae5, #34d399, #10b981, #059669)',
+                            'radial-gradient(circle at 30% 30%, #fffbeb, #FFDD31, #d9b915, #a8900f)',
                           boxShadow: `
-                            0 0 15px rgba(52, 211, 153, 0.8),
-                            0 0 30px rgba(52, 211, 153, 0.4),
+                            0 0 15px rgba(255, 221, 49, 0.8),
+                            0 0 30px rgba(255, 221, 49, 0.4),
                             inset -4px -4px 6px rgba(0, 0, 0, 0.5),
                             inset 3px 3px 6px rgba(255, 255, 255, 0.4)
                           `,
@@ -365,12 +365,12 @@ function AboutPage({ onNavigate }) {
       </div>
 
       {/* Warning Banner */}
-      <div className="bg-yellow-50 border-l-4 border-yellow-400 p-3 xs:p-4 sm:p-6">
+      <div className="bg-[#FFFBEB] border-l-4 border-location p-3 xs:p-4 sm:p-6">
         <div className="max-w-7xl mx-auto px-2 xs:px-4 sm:px-6 lg:px-8">
           <div className="flex">
             <div className="flex-shrink-0">
               <svg
-                className="h-4 w-4 xs:h-5 xs:w-5 text-yellow-400"
+                className="h-4 w-4 xs:h-5 xs:w-5 text-location"
                 viewBox="0 0 20 20"
                 fill="currentColor"
               >
@@ -382,7 +382,7 @@ function AboutPage({ onNavigate }) {
               </svg>
             </div>
             <div className="ml-2 xs:ml-3">
-              <p className="text-xs xs:text-sm text-yellow-700">
+              <p className="text-xs xs:text-sm text-ink">
                 <strong>Note:</strong> MusicBox is currently being tested and is under active
                 development. Features and documentation are continuously being updated.
               </p>
@@ -411,7 +411,7 @@ function AboutPage({ onNavigate }) {
               <div className="relative">
                 <div className="bg-gradient-to-r from-[#35577D]/80 to-[#141E30]/80 backdrop-blur-lg text-white px-3 xs:px-4 sm:px-6 py-2 xs:py-3 sm:py-4 border-b border-white/20">
                   <h3 className="text-xl xs:text-2xl sm:text-3xl font-bold">CAMP</h3>
-                  <p className="text-blue-200 text-sm xs:text-base sm:text-lg mt-0.5 xs:mt-1">
+                  <p className="text-[#42C0FF] text-sm xs:text-base sm:text-lg mt-0.5 xs:mt-1">
                     Chemistry Across Multiple Phases
                   </p>
                 </div>
@@ -428,7 +428,7 @@ function AboutPage({ onNavigate }) {
                     </p>
                   </div>
                   <Button
-                    variant="assist"
+                    variant="primary"
                     size="default"
                     className="rounded-2xl text-xs xs:text-sm sm:text-base"
                   >
@@ -444,7 +444,7 @@ function AboutPage({ onNavigate }) {
               <div className="relative">
                 <div className="bg-gradient-to-r from-[#141E30]/80 to-[#35577D]/80 backdrop-blur-lg text-white px-3 xs:px-4 sm:px-6 py-2 xs:py-3 sm:py-4 border-b border-white/20">
                   <h3 className="text-xl xs:text-2xl sm:text-3xl font-bold">MICM</h3>
-                  <p className="text-green-200 text-sm xs:text-base sm:text-lg mt-0.5 xs:mt-1">
+                  <p className="text-[#34E1F4] text-sm xs:text-base sm:text-lg mt-0.5 xs:mt-1">
                     Model-Independent Chemistry Module
                   </p>
                 </div>
@@ -461,7 +461,7 @@ function AboutPage({ onNavigate }) {
                     </p>
                   </div>
                   <Button
-                    variant="assist"
+                    variant="primary"
                     size="default"
                     className="rounded-2xl text-xs xs:text-sm sm:text-base mt-2 xs:mt-3 sm:mt-4"
                   >
@@ -600,10 +600,10 @@ function AboutPage({ onNavigate }) {
                       alt={sponsor.name}
                       className="h-16 xs:h-20 sm:h-24 w-full object-contain mb-2 xs:mb-3 sm:mb-4"
                     />
-                    <p className="text-xs xs:text-sm font-bold text-gray-800 mb-0.5 xs:mb-1">
+                    <p className="text-xs xs:text-sm font-bold text-ink mb-0.5 xs:mb-1">
                       {sponsor.name}
                     </p>
-                    <p className="text-xs text-black-400">{sponsor.desc}</p>
+                    <p className="text-xs text-muted">{sponsor.desc}</p>
                   </div>
                 </div>
               </div>

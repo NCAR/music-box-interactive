@@ -179,31 +179,26 @@ function ReactionChip({ reaction, onRemove, onComponentsSave, onParameterSave })
         <button
           type="button"
           onClick={() => setExpanded(false)}
-          className="flex items-center gap-1.5 rounded text-base font-semibold font-mono text-gray-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-green-500"
+          className="flex items-center gap-1.5 rounded text-base font-semibold font-mono text-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-assist-secondary-ring"
         >
           {formula}
           <ChevronUp className="w-4 h-4 flex-shrink-0" />
         </button>
 
-        <Button
-          variant="glass"
-          size="sm"
-          onClick={() => onRemove(reaction.id)}
-          className="rounded-lg bg-white text-red-600 hover:bg-red-50"
-        >
+        <Button variant="destructive" size="sm" onClick={() => onRemove(reaction.id)}>
           Remove
         </Button>
       </div>
 
       <div className="mt-3 flex flex-col gap-3">
         <div className="flex flex-col gap-1">
-          <label className="text-[11px] uppercase tracking-wide text-gray-700">Type</label>
-          <p className="text-sm text-gray-700">{reaction.type}</p>
+          <label className="text-[11px] uppercase tracking-wide text-muted">Type</label>
+          <p className="text-sm text-ink">{reaction.type}</p>
         </div>
 
         {componentFields(reaction).map((field) => (
           <div key={field.key} className="flex flex-col gap-1">
-            <label className="text-[11px] uppercase tracking-wide text-gray-700">
+            <label className="text-[11px] uppercase tracking-wide text-muted">
               {field.label}
             </label>
             <input
@@ -226,11 +221,11 @@ function ReactionChip({ reaction, onRemove, onComponentsSave, onParameterSave })
 
         {parameters.length > 0 && (
           <div className="flex flex-col gap-2">
-            <label className="text-[11px] uppercase tracking-wide text-gray-700">Parameters</label>
+            <label className="text-[11px] uppercase tracking-wide text-muted">Parameters</label>
             {parameters.map((field) => (
               <div key={field.key} className="flex items-center gap-3">
                 <span
-                  className="flex-shrink-0 whitespace-nowrap text-sm font-mono text-gray-500"
+                  className="flex-shrink-0 whitespace-nowrap text-sm font-mono text-muted"
                   style={{ width: nameColumnWidth }}
                 >
                   {field.key}
@@ -256,8 +251,8 @@ function ReactionChip({ reaction, onRemove, onComponentsSave, onParameterSave })
 
         {hasDeclaredName(reaction) && (
           <div className="flex flex-col gap-1">
-            <label className="text-[11px] uppercase tracking-wide text-gray-700">Name</label>
-            <p className="text-sm text-gray-700">{reaction.name}</p>
+            <label className="text-[11px] uppercase tracking-wide text-muted">Name</label>
+            <p className="text-sm text-ink">{reaction.name}</p>
           </div>
         )}
       </div>
@@ -432,7 +427,7 @@ export function ReactionEditor() {
   const reactionChips = (
     <div className={ITEM_LIST}>
       {filteredReactions.length === 0 ? (
-        <p className="w-full text-center text-gray-500 py-8">No matching reactions found.</p>
+        <p className="w-full text-center text-muted py-8">No matching reactions found.</p>
       ) : (
         filteredReactions.map((reaction) => (
           <ReactionChip
@@ -459,7 +454,7 @@ export function ReactionEditor() {
           <CardContent>
             <div className="grid grid-cols-1 gap-7">
               <div>
-                <label className="block text-base font-semibold text-gray-800 mb-2">
+                <label className="block text-base font-semibold text-ink mb-2">
                   Choose a reaction
                 </label>
                 <Dropdown
@@ -514,7 +509,7 @@ export function ReactionEditor() {
             />
 
             {reactions.length === 0 ? (
-              <p className="text-center text-gray-500 py-8">
+              <p className="text-center text-muted py-8">
                 No reactions defined. Add your first reaction above.
               </p>
             ) : (

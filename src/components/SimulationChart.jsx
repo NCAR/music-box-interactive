@@ -62,7 +62,7 @@ function ChartLegendContent({ payload, maxVisible, compact }) {
       {visible.map((entry, index) => (
         <div key={`legend-${index}`} className={itemClass} style={{ borderColor: entry.color }}>
           <div className="w-3 h-1 rounded flex-shrink-0" style={{ backgroundColor: entry.color }} />
-          <span className="font-semibold text-gray-900">{entry.value}</span>
+          <span className="font-semibold text-ink">{entry.value}</span>
         </div>
       ))}
       {overflow.length > 0 && (
@@ -70,17 +70,17 @@ function ChartLegendContent({ payload, maxVisible, compact }) {
           <button
             type="button"
             onClick={() => setOpen((o) => !o)}
-            className={`${itemClass} font-semibold text-gray-700 hover:bg-gray-50`}
-            style={{ borderColor: '#d1d5db' }}
+            className={`${itemClass} font-semibold text-muted hover:bg-surface-hover`}
+            style={{ borderColor: '#D8D6D2' }}
           >
             +{overflow.length} others
           </button>
           {open && (
-            <div className="absolute z-20 bottom-full mb-1 left-1/2 -translate-x-1/2 w-56 max-h-64 overflow-y-auto bg-white border border-gray-300 rounded-lg shadow-lg py-1">
+            <div className="absolute z-20 bottom-full mb-1 left-1/2 -translate-x-1/2 w-56 max-h-64 overflow-y-auto bg-white border border-border rounded-lg shadow-lg py-1">
               {overflow.map((entry, index) => (
                 <div
                   key={`legend-overflow-${index}`}
-                  className="flex items-center gap-2 px-3 py-1.5 text-xs text-gray-900"
+                  className="flex items-center gap-2 px-3 py-1.5 text-xs text-ink"
                 >
                   <div
                     className="w-2.5 h-2.5 rounded-full flex-shrink-0"
@@ -112,11 +112,11 @@ function ChartTooltipContent({ active, payload, timeLabel, maxVisible, compact }
 
   return (
     <div
-      className={`bg-white border-2 border-gray-800 rounded-lg shadow-xl ${compact ? 'p-2' : 'p-3'}`}
+      className={`bg-white border-2 border-ink rounded-lg shadow-xl ${compact ? 'p-2' : 'p-3'}`}
       style={{ backgroundColor: 'white' }}
     >
       <p
-        className={`text-gray-500 ${compact ? 'mb-1 text-[10px]' : 'mb-2 text-xs'}`}
+        className={`text-muted ${compact ? 'mb-1 text-[10px]' : 'mb-2 text-xs'}`}
       >
         Time: {timeLabel}
       </p>
@@ -136,10 +136,10 @@ function ChartTooltipContent({ active, payload, timeLabel, maxVisible, compact }
                 className={`${compact ? 'w-2 h-2' : 'w-3 h-3'} rounded-full flex-shrink-0`}
                 style={{ backgroundColor: entry.color }}
               />
-              <span className="font-medium text-gray-900" style={{ color: '#111827' }}>
+              <span className="font-medium text-ink" style={{ color: '#1f2937' }}>
                 {entry.name}:
               </span>
-              <span className="font-mono text-gray-900" style={{ color: '#111827' }}>
+              <span className="font-mono text-ink" style={{ color: '#1f2937' }}>
                 {isValidNumber
                   ? numValue < 1e-19
                     ? compact
@@ -152,7 +152,7 @@ function ChartTooltipContent({ active, payload, timeLabel, maxVisible, compact }
           )
         })}
         {overflowCount > 0 && (
-          <p className="text-xs text-gray-500 italic pt-0.5 pl-1">+{overflowCount} more species</p>
+          <p className="text-xs text-muted italic pt-0.5 pl-1">+{overflowCount} more species</p>
         )}
       </div>
     </div>
@@ -196,22 +196,22 @@ export function SimulationChart({ results, metadata }) {
 
   // Color palette for species
   const colors = [
-    '#3b82f6',
-    '#ef4444',
-    '#10b981',
-    '#f59e0b',
-    '#8b5cf6',
-    '#ec4899',
-    '#14b8a6',
-    '#f97316',
-    '#6366f1',
-    '#84cc16',
-    '#06b6d4',
-    '#f43f5e',
-    '#a855f7',
-    '#22c55e',
-    '#eab308',
-    '#64748b',
+    '#0057C2', // NCAR Blue
+    '#FAA119', // Orange
+    '#00A2B4', // UCAR Aqua
+    '#00357A', // Dark Blue
+    '#D9B915', // Yellow (darkened for line visibility)
+    '#34E1F4', // Light Aqua
+    '#C97F10', // Orange (dark)
+    '#42C0FF', // Light Blue
+    '#007483', // UCAR Aqua (dark)
+    '#011837', // Space
+    '#7A5C00', // Yellow (deep)
+    '#1E90D8', // Blue (mid)
+    '#B36A0E', // Orange (deep)
+    '#4FD1DE', // Aqua (light-mid)
+    '#FFDD31', // Yellow (bright)
+    '#5A6B7D', // neutral blue-gray
   ]
 
   // Extract all species, do not filter by value (show even if all zero)
@@ -355,7 +355,7 @@ export function SimulationChart({ results, metadata }) {
     return (
       <Card>
         <CardContent className="flex items-center justify-center h-96">
-          <div className="text-center text-gray-500">
+          <div className="text-center text-muted">
             <div className="flex justify-center mb-2">
               <BarChart3 className="w-16 h-16" />
             </div>
@@ -370,7 +370,7 @@ export function SimulationChart({ results, metadata }) {
     return (
       <Card>
         <CardContent className="flex items-center justify-center h-96">
-          <div className="text-center text-gray-500">
+          <div className="text-center text-muted">
             <div className="flex justify-center mb-2">
               <Atom className="w-16 h-16" />
             </div>
@@ -385,7 +385,7 @@ export function SimulationChart({ results, metadata }) {
     return (
       <Card>
         <CardContent className="flex items-center justify-center h-96">
-          <div className="text-center text-gray-500">
+          <div className="text-center text-muted">
             <div className="text-4xl mb-2">📉</div>
             <p>Unable to process chart data</p>
           </div>
@@ -399,12 +399,12 @@ export function SimulationChart({ results, metadata }) {
       <CardContent className="space-y-3 xs:space-y-4">
         {/* Warning for insufficient data points */}
         {results.length < 3 && (
-          <div className="bg-yellow-50 border-2 border-yellow-300 rounded-lg p-3 text-sm">
-            <p className="font-semibold text-yellow-800 mb-1 flex items-center gap-2">
+          <div className="bg-[#FFFBEB] border-2 border-location/60 rounded-lg p-3 text-sm">
+            <p className="font-semibold text-heading mb-1 flex items-center gap-2">
               <AlertCircle className="w-4 h-4" />
               Limited Data Points
             </p>
-            <p className="text-yellow-700 text-xs">
+            <p className="text-ink text-xs">
               This simulation produced only {results.length} data point
               {results.length > 1 ? 's' : ''}. For better visualization, consider increasing the
               simulation duration or decreasing the time step.
@@ -413,30 +413,30 @@ export function SimulationChart({ results, metadata }) {
         )}
 
         {/* Species Filter */}
-        <div className="rounded-lg p-2 xs:p-3 sm:p-4 bg-gray-50 mt-2 xs:mt-3 sm:mt-4">
+        <div className="rounded-lg p-2 xs:p-3 sm:p-4 bg-surface-alt mt-2 xs:mt-3 sm:mt-4">
           <div className="flex flex-col xs:flex-row items-start xs:items-center justify-between gap-2 xs:gap-0 mb-3">
             <div className="flex flex-wrap items-center justify-between gap-3 w-full">
-              <div className="flex items-center border border-gray-300 rounded-lg divide-x divide-gray-300 bg-white">
+              <div className="flex items-center border border-border rounded-lg divide-x divide-border bg-white">
                 <div className="relative" ref={selectAllMenuRef}>
                   <button
                     type="button"
                     onClick={() => setSelectAllMenuOpen((open) => !open)}
-                    className={`flex items-center justify-between gap-1 w-32 h-8 bg-blue-100/50 text-gray-900 rounded-l-lg
-                      text-sm font-bold px-2.5 focus:outline-none focus:ring-2 focus:ring-blue-600 transition-colors duration-200`}
+                    className={`flex items-center justify-between gap-1 w-32 h-8 bg-[#E6F0FA] text-ink rounded-l-lg
+                      text-sm font-bold px-2.5 focus:outline-none focus:ring-2 focus:ring-action transition-colors duration-200`}
                   >
                     {selectAllStatusLabel}
                     <ChevronDown className="w-3.5 h-3.5 flex-shrink-0" />
                   </button>
 
                   {selectAllMenuOpen && (
-                    <div className="absolute z-10 mt-1 min-w-[9rem] bg-white border border-gray-300 rounded-lg shadow-lg py-1">
+                    <div className="absolute z-10 mt-1 min-w-[9rem] bg-white border border-border rounded-lg shadow-lg py-1">
                       <button
                         type="button"
                         onClick={() => {
                           setSelectedSpecies(filteredSpecies)
                           setSelectAllMenuOpen(false)
                         }}
-                        className="w-full flex items-center gap-2 text-left text-sm font-bold px-3 py-1.5 text-gray-800 hover:bg-gray-100"
+                        className="w-full flex items-center gap-2 text-left text-sm font-bold px-3 py-1.5 text-ink hover:bg-surface-hover"
                       >
                         <Check
                           className={`w-3.5 h-3.5 flex-shrink-0 ${
@@ -451,7 +451,7 @@ export function SimulationChart({ results, metadata }) {
                           setSelectedSpecies([])
                           setSelectAllMenuOpen(false)
                         }}
-                        className="w-full flex items-center gap-2 text-left text-sm font-bold px-3 py-1.5 text-gray-800 hover:bg-gray-100"
+                        className="w-full flex items-center gap-2 text-left text-sm font-bold px-3 py-1.5 text-ink hover:bg-surface-hover"
                       >
                         <Check
                           className={`w-3.5 h-3.5 flex-shrink-0 ${
@@ -473,24 +473,24 @@ export function SimulationChart({ results, metadata }) {
                     setSpeciesOverflowOpen(false)
                   }}
                   placeholder="Search species"
-                  className="w-[30rem] h-8 px-3 text-gray-800 placeholder:text-gray-500 rounded-r-lg text-base font-mono focus:outline-none focus:relative focus:z-10 focus:ring-2 focus:ring-blue-600"
+                  className="w-[30rem] h-8 px-3 text-ink placeholder:text-muted rounded-r-lg text-base font-mono focus:outline-none focus:relative focus:z-10 focus:ring-2 focus:ring-action"
                 />
               </div>
 
-              <div className="flex items-center border border-gray-300 rounded-lg divide-x divide-gray-300 bg-white">
+              <div className="flex items-center border border-border rounded-lg divide-x divide-border bg-white">
                 <div className="relative" ref={plotUnitMenuRef}>
                   <button
                     type="button"
                     onClick={() => setPlotUnitMenuOpen((open) => !open)}
-                    className={`flex items-center justify-between gap-1 w-24 h-8 bg-blue-100/50 text-gray-800 rounded-l-lg text-sm
-                      font-bold px-2.5 focus:outline-none focus:ring-2 focus:ring-blue-600 transition-colors duration-200`}
+                    className={`flex items-center justify-between gap-1 w-24 h-8 bg-[#E6F0FA] text-ink rounded-l-lg text-sm
+                      font-bold px-2.5 focus:outline-none focus:ring-2 focus:ring-action transition-colors duration-200`}
                   >
                     {plotUnit.label}
                     <ChevronDown className="w-3.5 h-3.5 flex-shrink-0" />
                   </button>
 
                   {plotUnitMenuOpen && (
-                    <div className="absolute z-10 mt-1 min-w-[9rem] bg-white border border-gray-300 rounded-lg shadow-lg py-1">
+                    <div className="absolute z-10 mt-1 min-w-[9rem] bg-white border border-border rounded-lg shadow-lg py-1">
                       {PLOT_UNITS.map((unit) => (
                         <button
                           key={unit.id}
@@ -503,8 +503,8 @@ export function SimulationChart({ results, metadata }) {
                           }}
                           className={`w-full flex items-center gap-2 text-left text-sm font-bold px-3 py-1.5 ${
                             unit.supported
-                              ? 'text-gray-800 hover:bg-gray-100'
-                              : 'text-gray-500 cursor-not-allowed'
+                              ? 'text-ink hover:bg-surface-hover'
+                              : 'text-muted cursor-not-allowed'
                           }`}
                         >
                           <Check
@@ -523,15 +523,15 @@ export function SimulationChart({ results, metadata }) {
                   <button
                     type="button"
                     onClick={() => setTimeUnitMenuOpen((open) => !open)}
-                    className={`flex items-center justify-between gap-1 w-24 h-8 bg-blue-100/50 text-gray-800 rounded-r-lg
-                      text-sm font-bold px-2.5 focus:outline-none focus:ring-2 focus:ring-blue-600 transition-colors duration-200`}
+                    className={`flex items-center justify-between gap-1 w-24 h-8 bg-[#E6F0FA] text-ink rounded-r-lg
+                      text-sm font-bold px-2.5 focus:outline-none focus:ring-2 focus:ring-action transition-colors duration-200`}
                   >
                     {timeUnit.label}
                     <ChevronDown className="w-3.5 h-3.5 flex-shrink-0" />
                   </button>
 
                   {timeUnitMenuOpen && (
-                    <div className="absolute z-10 mt-1 min-w-[9rem] bg-white border border-gray-300 rounded-lg shadow-lg py-1">
+                    <div className="absolute z-10 mt-1 min-w-[9rem] bg-white border border-border rounded-lg shadow-lg py-1">
                       {TIME_UNITS.map((unit) => (
                         <button
                           key={unit.id}
@@ -540,7 +540,7 @@ export function SimulationChart({ results, metadata }) {
                             setTimeUnitId(unit.id)
                             setTimeUnitMenuOpen(false)
                           }}
-                          className="w-full flex items-center gap-2 text-left text-sm font-bold px-3 py-1.5 text-gray-800 hover:bg-gray-100"
+                          className="w-full flex items-center gap-2 text-left text-sm font-bold px-3 py-1.5 text-ink hover:bg-surface-hover"
                         >
                           <Check
                             className={`w-3.5 h-3.5 flex-shrink-0 ${
@@ -558,7 +558,7 @@ export function SimulationChart({ results, metadata }) {
           </div>
 
           <div className="flex flex-wrap items-center gap-1.5 xs:gap-2 pl-2 lg:max-w-[calc(100%-13rem)]">
-            <h4 className="font-semibold text-sm xs:text-base text-gray-500 mr-1">
+            <h4 className="font-semibold text-sm xs:text-base text-muted mr-1">
               {displaySpecies.length} selected
             </h4>
             {visibleFilteredSpecies.map((species) => (
@@ -568,7 +568,7 @@ export function SimulationChart({ results, metadata }) {
                 className={`px-2 xs:px-3 py-1 rounded-full text-sm font-medium transition-all ${
                   displaySpecies.includes(species)
                     ? 'bg-blue-500 text-white shadow-md'
-                    : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
+                    : 'bg-surface-alt text-muted hover:bg-surface-hover'
                 }`}
                 style={
                   displaySpecies.includes(species)
@@ -584,26 +584,26 @@ export function SimulationChart({ results, metadata }) {
                 <button
                   type="button"
                   onClick={() => setSpeciesOverflowOpen((open) => !open)}
-                  className="px-2 xs:px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-700 border border-gray-300 hover:bg-gray-200 transition-all"
+                  className="px-2 xs:px-3 py-1 rounded-full text-sm font-medium bg-surface-alt text-muted border border-border hover:bg-surface-hover transition-all"
                 >
                   +{overflowFilteredSpecies.length} others
                 </button>
 
                 {speciesOverflowOpen && (
-                  <div className="absolute z-20 mt-1 w-56 max-h-64 overflow-y-auto bg-white border border-gray-300 rounded-lg shadow-lg py-1">
+                  <div className="absolute z-20 mt-1 w-56 max-h-64 overflow-y-auto bg-white border border-border rounded-lg shadow-lg py-1">
                     {overflowFilteredSpecies.map((species) => (
                       <button
                         key={species}
                         type="button"
                         onClick={() => toggleSpecies(species)}
-                        className="w-full flex items-center gap-2 text-left text-sm font-medium px-3 py-1.5 hover:bg-gray-100 text-gray-800"
+                        className="w-full flex items-center gap-2 text-left text-sm font-medium px-3 py-1.5 hover:bg-surface-hover text-ink"
                       >
                         <span
                           className="w-2.5 h-2.5 rounded-full flex-shrink-0"
                           style={{
                             backgroundColor: displaySpecies.includes(species)
                               ? colors[allSpecies.indexOf(species) % colors.length]
-                              : '#d1d5db',
+                              : '#D8D6D2',
                           }}
                         />
                         <span className="flex-1 truncate">{getSpeciesDisplayName(species)}</span>
@@ -625,14 +625,14 @@ export function SimulationChart({ results, metadata }) {
         <div className="border rounded-lg p-2 xs:p-3 sm:p-4 bg-white">
           <ResponsiveContainer width="100%" height={450} className="xs:hidden">
             <LineChart data={chartData} margin={{ top: 5, right: 5, left: 5, bottom: 5 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+              <CartesianGrid strokeDasharray="3 3" stroke="#D8D6D2" />
 
               <XAxis
                 dataKey="timeSeconds"
                 domain={timeDomain}
                 ticks={xAxisTicks}
-                stroke="#374151"
-                tick={{ fontSize: 10, fill: '#374151' }}
+                stroke="#5f6368"
+                tick={{ fontSize: 10, fill: '#5f6368' }}
                 type="number"
               >
                 <Label
@@ -649,8 +649,8 @@ export function SimulationChart({ results, metadata }) {
                   (dataMin) => (dataMin > 0 ? dataMin / 10 : 1e-20),
                   (dataMax) => dataMax * 10,
                 ]}
-                stroke="#374151"
-                tick={{ fontSize: 8, fill: '#374151' }}
+                stroke="#5f6368"
+                tick={{ fontSize: 8, fill: '#5f6368' }}
                 tickFormatter={(value) => {
                   if (value === 0 || !isFinite(value)) return '0'
                   return value.toExponential(0)
@@ -698,14 +698,14 @@ export function SimulationChart({ results, metadata }) {
           {/* Larger chart for bigger screens */}
           <ResponsiveContainer width="100%" height={680} className="hidden xs:block">
             <LineChart data={chartData} margin={{ top: 5, right: 30, left: 30, bottom: 5 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+              <CartesianGrid strokeDasharray="3 3" stroke="#D8D6D2" />
 
               <XAxis
                 dataKey="timeSeconds"
                 domain={timeDomain}
                 ticks={xAxisTicks}
-                stroke="#374151"
-                tick={{ fontSize: 12, fill: '#374151' }}
+                stroke="#5f6368"
+                tick={{ fontSize: 12, fill: '#5f6368' }}
                 type="number"
               >
                 <Label
@@ -722,8 +722,8 @@ export function SimulationChart({ results, metadata }) {
                   (dataMin) => (dataMin > 0 ? dataMin / 10 : 1e-20),
                   (dataMax) => dataMax * 10,
                 ]}
-                stroke="#374151"
-                tick={{ fontSize: 11, fill: '#374151' }}
+                stroke="#5f6368"
+                tick={{ fontSize: 11, fill: '#5f6368' }}
                 tickFormatter={(value) => {
                   if (value === 0 || !isFinite(value)) return '0'
                   return value.toExponential(0)
@@ -777,7 +777,7 @@ export function SimulationChart({ results, metadata }) {
         </div>
 
         {/* Summary Box */}
-        <div className="text-sm text-gray-600 bg-blue-50/40 border border-blue-200 rounded-lg p-3">
+        <div className="text-sm text-muted bg-[#E6F0FA]/70 border border-[#B8D4EF] rounded-lg p-3">
           <p className="font-semibold text-base mb-1 flex items-center gap-2">
             <BarChart3 className="w-4 h-4" />
             Summary:

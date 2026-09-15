@@ -3,16 +3,16 @@
 // Text inputs in two sizes: a roomy variant for the add forms,
 // and a compact one for search boxes and per-item value fields.
 export const TEXT_INPUT =
-  'w-full px-4 py-3 border-2 border-gray-400 bg-white/10 text-gray-900 placeholder:text-gray-500 rounded-xl text-base font-mono focus:outline-none focus:border-green-700'
+  'w-full px-4 py-3 border-2 border-border bg-white text-ink placeholder:text-muted rounded-xl text-base font-mono focus:outline-none focus:border-action'
 export const TEXT_INPUT_SM =
-  'px-3 py-2 border-2 border-gray-400 bg-white/10 text-gray-900 placeholder:text-gray-500 rounded-lg text-sm font-mono focus:outline-none focus:border-green-700'
+  'px-3 py-2 border-2 border-border bg-white text-ink placeholder:text-muted rounded-lg text-sm font-mono focus:outline-none focus:border-action'
 
 // Field label, shared by the species property fields and the reaction type forms.
-export const FIELD_LABEL = 'block text-sm font-semibold text-gray-700 mb-2'
+export const FIELD_LABEL = 'block text-sm font-semibold text-ink mb-2'
 
 // As TEXT_INPUT, a step down in type size, for the lambda-function textarea holding code.
 export const TEXT_INPUT_CODE =
-  'px-4 py-3 border-2 border-gray-400 bg-white/10 text-gray-900 placeholder:text-gray-500 rounded-xl text-sm font-mono focus:outline-none focus:border-green-700'
+  'px-4 py-3 border-2 border-border bg-white text-ink placeholder:text-muted rounded-xl text-sm font-mono focus:outline-none focus:border-action'
 
 // The two editors sit side by side above lg and stack below it, where two columns would leave
 // neither enough room.
@@ -29,7 +29,7 @@ export const ITEM_LIST = 'flex min-h-0 flex-1 flex-wrap content-start gap-2 over
 
 // A collapsed item: the same pill language the property selectors use.
 export const ITEM_CHIP =
-  'flex items-center gap-1.5 rounded-full border border-gray-300 bg-white px-4 py-2 text-[15px] font-semibold text-gray-700 transition-colors hover:bg-gray-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-green-500'
+  'flex items-center gap-1.5 rounded-full border border-border bg-white px-4 py-2 text-[15px] font-semibold text-ink transition-colors hover:bg-surface-hover focus:outline-none focus-visible:ring-2 focus-visible:ring-assist-secondary-ring'
 
 // An expanded item, occupying its own row.
-export const ITEM_PANEL = 'w-full rounded-2xl border border-gray-300 bg-white p-4'
+export const ITEM_PANEL = 'w-full rounded-2xl border border-border bg-white p-4'

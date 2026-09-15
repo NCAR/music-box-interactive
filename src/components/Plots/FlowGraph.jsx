@@ -15,15 +15,15 @@ import { getReactionTypeLabel } from '../Mechanism/reactions/reactionRegistry'
 import { hasDeclaredName } from '../Mechanism/reactions/reactionUtils'
 
 // Edge/arrow color for in-range rate; out-of-range edges are muted to gray instead.
-const ARROW_COLOR = '#3D96C3'
-const ARROW_MUTED_COLOR = '#6b7280'
+const ARROW_COLOR = '#0057C2' // NCAR Blue
+const ARROW_MUTED_COLOR = '#5f6368'
 
 // Species node circles: unfilled, outline only
-const SPECIES_OUTLINE_COLOR = '#E6807A'
+const SPECIES_OUTLINE_COLOR = '#00A2B4' // UCAR Aqua
 
 // Reaction node rect fill
-const REACTION_NODE_COLOR = '#FFCA07'
-const REACTION_NODE_ACTIVE_COLOR = '#E6B606'
+const REACTION_NODE_COLOR = '#FFDD31' // Yellow
+const REACTION_NODE_ACTIVE_COLOR = '#FAA119' // Orange
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -606,14 +606,14 @@ export function FlowGraph({
 
   if (!selectedSpecies || selectedSpecies.length === 0) {
     return (
-      <div className="flex items-center justify-center h-full text-gray-600 text-lg">
+      <div className="flex items-center justify-center h-full text-muted text-lg">
         Select species in the panel to view reaction nodes
       </div>
     )
   }
   if (!reactions || reactions.length === 0) {
     return (
-      <div className="flex items-center justify-center h-full text-gray-600 text-lg">
+      <div className="flex items-center justify-center h-full text-muted text-lg">
         No reactions found in mechanism
       </div>
     )

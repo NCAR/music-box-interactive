@@ -1,23 +1,17 @@
 import * as React from 'react'
 import { cn } from '../../lib/utils'
 
+// Three roles cover every action in the app: primary (the main action), secondary
+// (a neutral supporting action), and destructive (removes or clears something).
+// `ghost` stays only as an unstyled base for custom-styled elements like tab selectors.
 const Button = React.forwardRef(
-  ({ className, variant = 'glass', size = 'default', ...props }, ref) => {
+  ({ className, variant = 'primary', size = 'default', ...props }, ref) => {
     const variants = {
-      action:
-        'bg-action text-white hover:bg-action-hover shadow-sm transition-colors duration-200 rounded-full',
-      outline:
-        'border border-border bg-transparent text-ink hover:bg-surface-hover transition-colors duration-200',
+      primary:
+        'bg-white border-2 border-action text-action font-semibold hover:bg-action hover:text-white',
+      secondary: 'bg-white border border-border text-ink font-medium hover:bg-surface-alt',
+      destructive: 'bg-white border border-danger text-danger font-medium hover:bg-caution',
       ghost: 'text-ink hover:bg-surface-hover transition-colors duration-200',
-      link: 'text-action underline-offset-4 hover:underline',
-      glass:
-        'bg-surface-alt border border-border text-ink hover:bg-surface-hover transition-colors duration-200',
-      destructive:
-        'bg-danger text-white hover:bg-danger-hover shadow-sm transition-colors duration-200',
-      assist:
-        'bg-assist text-assist-foreground hover:bg-assist-hover font-bold shadow-sm hover:shadow transition-colors duration-200 rounded-full',
-      assistSecondary:
-        'bg-assist-secondary text-assist-secondary-foreground border border-assist-secondary-border hover:bg-assist-secondary-hover font-semibold transition-colors duration-200 rounded-2xl focus-visible:ring-assist-secondary-ring',
     }
 
     const sizes = {
@@ -30,7 +24,7 @@ const Button = React.forwardRef(
     return (
       <button
         className={cn(
-          'inline-flex items-center justify-center rounded-xl text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-action disabled:pointer-events-none disabled:opacity-50',
+          'inline-flex items-center justify-center rounded-lg text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-action disabled:pointer-events-none disabled:opacity-50',
           variants[variant],
           sizes[size],
           className

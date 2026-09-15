@@ -105,15 +105,15 @@ function FluxReactionChip({ reaction, flux }) {
       <button
         type="button"
         onClick={() => setExpanded(true)}
-        className={`${ITEM_PANEL} text-left flex flex-col gap-1.5 hover:bg-gray-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-assist-secondary-ring`}
+        className={`${ITEM_PANEL} text-left flex flex-col gap-1.5 hover:bg-surface-hover focus:outline-none focus-visible:ring-2 focus-visible:ring-assist-secondary-ring`}
       >
         <div className="flex items-center justify-between gap-2">
-          <span className="font-mono text-sm font-semibold text-gray-900 break-words">
+          <span className="font-mono text-sm font-semibold text-ink break-words">
             {formula}
           </span>
-          <ChevronDown className="w-3.5 h-3.5 flex-shrink-0 text-gray-400" />
+          <ChevronDown className="w-3.5 h-3.5 flex-shrink-0 text-muted" />
         </div>
-        <span className="text-sm text-gray-600">Flux: {formatValue(flux)} mol m⁻³</span>
+        <span className="text-sm text-muted">Flux: {formatValue(flux)} mol m⁻³</span>
       </button>
     )
   }
@@ -129,20 +129,20 @@ function FluxReactionChip({ reaction, flux }) {
         <ChevronUp className="w-4 h-4 flex-shrink-0" />
       </button>
 
-      <p className="mt-1 text-sm text-gray-600">Flux: {formatValue(flux)} mol m⁻³</p>
+      <p className="mt-1 text-sm text-muted">Flux: {formatValue(flux)} mol m⁻³</p>
 
       <div className="mt-3 flex flex-col gap-2">
         <div className="flex items-center justify-between gap-3 text-sm">
-          <span className="text-gray-500 flex-shrink-0">Type</span>
-          <span className="font-mono text-gray-800 truncate" title={reaction.type}>
+          <span className="text-muted flex-shrink-0">Type</span>
+          <span className="font-mono text-ink truncate" title={reaction.type}>
             {reaction.type}
           </span>
         </div>
         {parameters.map((field) => (
           <div key={field.key} className="flex items-center justify-between gap-3 text-sm">
-            <span className="text-gray-500 flex-shrink-0">{field.key}</span>
+            <span className="text-muted flex-shrink-0">{field.key}</span>
             <span
-              className="font-mono text-gray-800 truncate"
+              className="font-mono text-ink truncate"
               title={String(formatValue(field.value))}
             >
               {formatValue(field.value)}
@@ -286,7 +286,7 @@ export function Flux() {
     return (
       <Card>
         <CardContent className="flex items-center justify-center h-96">
-          <div className="text-center text-gray-500">
+          <div className="text-center text-muted">
             <div className="flex justify-center mb-2">
               <Waypoints className="w-12 h-12" />
             </div>
@@ -303,8 +303,8 @@ export function Flux() {
     <Card>
       <CardContent className="space-y-4">
         <div className="flex items-center justify-between pt-3">
-          <div className="flex items-center gap-2 text-sm text-gray-800">
-            <button type="button" onClick={resetFilters} className="text-green-700 hover:underline">
+          <div className="flex items-center gap-2 text-sm text-ink">
+            <button type="button" onClick={resetFilters} className="text-action hover:underline">
               Reset
             </button>
           </div>
@@ -313,14 +313,14 @@ export function Flux() {
             <button
               type="button"
               onClick={() => setSortMenuOpen((open) => !open)}
-              className="flex items-center gap-1 text-sm text-gray-800 hover:text-gray-900"
+              className="flex items-center gap-1 text-sm text-ink hover:text-heading"
             >
               {sortOption.label}
               <ChevronDown className="w-3.5 h-3.5" />
             </button>
 
             {sortMenuOpen && (
-              <div className="absolute right-0 z-10 mt-1 w-44 bg-white border border-gray-300 rounded-lg shadow-lg py-1">
+              <div className="absolute right-0 z-10 mt-1 w-44 bg-white border border-border rounded-lg shadow-lg py-1">
                 {SORT_OPTIONS.map((option) => (
                   <button
                     key={option.id}
@@ -329,7 +329,7 @@ export function Flux() {
                       setSortOrder(option.id)
                       setSortMenuOpen(false)
                     }}
-                    className="w-full flex items-center gap-2 text-left text-sm px-3 py-1.5 text-gray-800 hover:bg-gray-100"
+                    className="w-full flex items-center gap-2 text-left text-sm px-3 py-1.5 text-ink hover:bg-surface-hover"
                   >
                     <Check
                       className={`w-3.5 h-3.5 flex-shrink-0 ${
@@ -351,7 +351,7 @@ export function Flux() {
               <button
                 type="button"
                 onClick={() => setReactionsOpen((open) => !open)}
-                className="w-full flex items-center justify-between text-sm font-bold text-gray-900 mb-2"
+                className="w-full flex items-center justify-between text-sm font-bold text-ink mb-2"
               >
                 Reactions
                 {reactionsOpen ? (
@@ -373,7 +373,7 @@ export function Flux() {
                         className={`text-left text-sm px-1.5 py-1 rounded ${
                           selected
                             ? 'text-assist-secondary-foreground font-semibold bg-assist-secondary'
-                            : 'text-gray-600 hover:bg-gray-50'
+                            : 'text-muted hover:bg-surface-hover'
                         }`}
                       >
                         {label} ({count})
@@ -388,7 +388,7 @@ export function Flux() {
               <button
                 type="button"
                 onClick={() => setSpeciesOpen((open) => !open)}
-                className="w-full flex items-center justify-between text-sm font-bold text-gray-900 mb-2"
+                className="w-full flex items-center justify-between text-sm font-bold text-ink mb-2"
               >
                 Species
                 {speciesOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
@@ -404,7 +404,7 @@ export function Flux() {
                       setSpeciesOverflowOpen(false)
                     }}
                     placeholder="Search species"
-                    className="w-full h-8 px-2 border border-gray-300 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-green-700"
+                    className="w-full h-8 px-2 border border-border rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-action"
                   />
 
                   <div className="flex flex-col gap-0.5">
@@ -418,7 +418,7 @@ export function Flux() {
                           className={`text-left text-sm px-1.5 py-1 rounded ${
                             selected
                               ? 'text-assist-secondary-foreground font-semibold bg-assist-secondary'
-                              : 'text-gray-600 hover:bg-gray-50'
+                              : 'text-muted hover:bg-surface-hover'
                           }`}
                         >
                           {name}
@@ -431,13 +431,13 @@ export function Flux() {
                         <button
                           type="button"
                           onClick={() => setSpeciesOverflowOpen((open) => !open)}
-                          className="text-left text-sm px-1.5 py-1 rounded text-gray-500 hover:bg-gray-50"
+                          className="text-left text-sm px-1.5 py-1 rounded text-muted hover:bg-surface-hover"
                         >
                           +{overflowSpeciesNames.length} others
                         </button>
 
                         {speciesOverflowOpen && (
-                          <div className="absolute z-20 mt-1 w-48 max-h-56 overflow-y-auto bg-white border border-gray-300 rounded-lg shadow-lg py-1">
+                          <div className="absolute z-20 mt-1 w-48 max-h-56 overflow-y-auto bg-white border border-border rounded-lg shadow-lg py-1">
                             {overflowSpeciesNames.map((name) => {
                               const selected = selectedSpeciesNames.includes(name)
                               return (
@@ -445,7 +445,7 @@ export function Flux() {
                                   key={name}
                                   type="button"
                                   onClick={() => toggleSpecies(name)}
-                                  className="w-full flex items-center gap-2 text-left text-sm px-3 py-1.5 text-gray-800 hover:bg-gray-100"
+                                  className="w-full flex items-center gap-2 text-left text-sm px-3 py-1.5 text-ink hover:bg-surface-hover"
                                 >
                                   <Check
                                     className={`w-3.5 h-3.5 flex-shrink-0 ${
@@ -469,7 +469,7 @@ export function Flux() {
               <button
                 type="button"
                 onClick={() => setTimeRangeOpen((open) => !open)}
-                className="w-full flex items-center justify-between text-sm font-bold text-gray-900 mb-2"
+                className="w-full flex items-center justify-between text-sm font-bold text-ink mb-2"
               >
                 Time Range
                 {timeRangeOpen ? (
@@ -483,7 +483,7 @@ export function Flux() {
                 <div className="flex flex-col gap-2">
                   <UnitDropdown unitId={timeRangeUnitId} onChange={setTimeRangeUnitId} />
 
-                  <div className="flex items-center border border-gray-300 rounded-lg bg-white">
+                  <div className="flex items-center border border-border rounded-lg bg-white">
                     <RangeBoundInput
                       value={timeRange.start}
                       divisor={timeRangeUnit.divisor}
@@ -491,9 +491,9 @@ export function Flux() {
                       min={0}
                       max={timeRange.end}
                       onCommit={(start) => setTimeRange({ start, end: timeRange.end })}
-                      className="w-1/2 h-8 px-2 bg-white text-gray-900 rounded-l-lg text-sm text-center focus:outline-none focus:relative focus:z-10 focus:ring-2 focus:ring-green-700"
+                      className="w-1/2 h-8 px-2 bg-white text-ink rounded-l-lg text-sm text-center focus:outline-none focus:relative focus:z-10 focus:ring-2 focus:ring-action"
                     />
-                    <span className="flex items-center justify-center h-8 px-1 text-gray-400 font-normal bg-white">
+                    <span className="flex items-center justify-center h-8 px-1 text-muted font-normal bg-white">
                       –
                     </span>
                     <RangeBoundInput
@@ -503,7 +503,7 @@ export function Flux() {
                       min={timeRange.start}
                       max={duration}
                       onCommit={(end) => setTimeRange({ start: timeRange.start, end })}
-                      className="w-1/2 h-8 px-2 bg-white text-gray-900 rounded-r-lg text-sm text-center focus:outline-none focus:relative focus:z-10 focus:ring-2 focus:ring-green-700"
+                      className="w-1/2 h-8 px-2 bg-white text-ink rounded-r-lg text-sm text-center focus:outline-none focus:relative focus:z-10 focus:ring-2 focus:ring-action"
                     />
                   </div>
                 </div>
@@ -514,7 +514,7 @@ export function Flux() {
           {/* Reaction chips */}
           <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 content-start items-start">
             {visibleReactions.length === 0 ? (
-              <p className="text-sm text-gray-500 col-span-full">
+              <p className="text-sm text-muted col-span-full">
                 No reactions match the current filters.
               </p>
             ) : (

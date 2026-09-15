@@ -102,7 +102,7 @@ export function FlowDiagram() {
     return (
       <Card>
         <CardContent className="flex items-center justify-center h-96">
-          <div className="text-center text-gray-500">
+          <div className="text-center text-muted">
             <div className="flex justify-center mb-2">
               <Waypoints className="w-12 h-12" />
             </div>
@@ -130,7 +130,7 @@ export function FlowDiagram() {
           valueDisplay={valueDisplay}
           setValueDisplay={setValueDisplay}
         />
-        <div className="border rounded-lg p-2 xs:p-3 sm:p-4 bg-white h-[40rem]">
+        <div className="border border-border rounded-lg p-2 xs:p-3 sm:p-4 bg-surface h-[40rem]">
           <FlowGraph
             selectedSpecies={selectedSpecies}
             reactionType={reactionType}
@@ -149,7 +149,7 @@ export function FlowDiagram() {
         </div>
 
         {/* Note Box */}
-        <div className="flex items-start gap-2 text-sm text-gray-600 bg-blue-50/40 border border-blue-200 rounded-lg p-3 mt-2 xs:mt-3 sm:mt-4">
+        <div className="flex items-start gap-2 text-sm text-muted bg-[#E6F0FA] border border-[#B8D4EF] rounded-lg p-3 mt-2 xs:mt-3 sm:mt-4">
           <StickyNote className="w-5 h-5 flex-shrink-0 mt-0.5" />
           <div className="flex flex-col gap-1">
             <CardDescription className="text-base font-semibold">Notes:</CardDescription>

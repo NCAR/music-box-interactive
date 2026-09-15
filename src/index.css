@@ -5,27 +5,27 @@
 @layer base {
   :root {
     /*
-    * This palette is derived from the NCAR color palette. It retains the core colors
-    * (blue, light blue, white, light gray, yellow, and orange) while adjusting
-    * saturation and lightness for a more visually appealing UI.
+    * NCAR brand palette (see docs/ncar-brand for the source guide). Danger/caution stay
+    * as universal error-red conventions since the brand guide does not define one.
     */
-    --color-action: #008BDC;
-    --color-action-hover: #0078BD;
-    --color-location: #FDF6D3;
-    --color-location-foreground: #493E04;
-    --color-assist: #FFE0C2;
-    --color-assist-hover: #F5D4B3;
-    --color-assist-foreground: #351A00;
-    --color-assist-secondary: #F0FDF4;
-    --color-assist-secondary-hover: #DCFCE7;
-    --color-assist-secondary-foreground: #166534;
-    --color-assist-secondary-border: #86EFAC;
-    --color-assist-secondary-ring: #22C55E;
-    --color-surface: #ffffff;
-    --color-surface-alt: #f6f8fc;
-    --color-surface-hover: #f1f3f4;
-    --color-border: #dadce0;
-    --color-ink: #1f1f1f;
+    --color-action: #0057c2; /* NCAR Blue */
+    --color-action-hover: #00357a; /* Dark Blue */
+    --color-location: #ffdd31; /* Yellow accent, active-nav highlight */
+    --color-location-foreground: #00357a; /* Dark Blue, 8.7:1 on Yellow */
+    --color-assist: #faa119; /* Orange accent */
+    --color-assist-hover: #e0930f;
+    --color-assist-foreground: #00357a; /* Dark Blue, 5.7:1 on Orange */
+    --color-assist-secondary: #e6f7f9; /* pale tint of UCAR Aqua */
+    --color-assist-secondary-hover: #cff0f3;
+    --color-assist-secondary-foreground: #00357a; /* Dark Blue */
+    --color-assist-secondary-border: #34e1f4; /* Light Aqua accent */
+    --color-assist-secondary-ring: #00a2b4; /* UCAR Aqua */
+    --color-surface: #ffffff; /* White */
+    --color-surface-alt: #f1f0ee; /* Light Gray */
+    --color-surface-hover: #e5e3df;
+    --color-border: #d8d6d2;
+    --color-heading: #00357a; /* Dark Blue, for titles/headings only */
+    --color-ink: #1f2937; /* neutral dark gray, general body text */
     --color-muted: #5f6368;
     --color-danger: #d93025;
     --color-danger-hover: #b3261e;

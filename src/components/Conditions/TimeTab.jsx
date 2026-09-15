@@ -8,11 +8,11 @@ import { UnitDropdown } from '../Plots/UnitDropdown'
 import { TIME_RANGE_UNITS, formatBound } from '../Plots/timeRangeUnits'
 
 const NUMBER_INPUT =
-  'w-72 h-9 px-2 border border-gray-400 bg-white/10 text-gray-900 placeholder:text-gray-500 rounded-lg text-sm text-center font-mono focus:outline-none focus:ring-2 focus:ring-green-700 focus:border-transparent [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none'
+  'w-72 h-9 px-2 border border-border bg-white text-ink placeholder:text-muted rounded-lg text-sm text-center font-mono focus:outline-none focus:border-action [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none'
 
 const DROPDOWN_WRAPPER = 'relative w-72 flex-shrink-0'
 const DROPDOWN_BUTTON =
-  'flex items-center gap-1 w-full h-9 px-2 border border-gray-300 rounded-lg text-sm text-gray-800 hover:bg-gray-50'
+  'flex items-center gap-1 w-full h-9 px-2 border border-border rounded-lg text-sm text-ink hover:bg-surface-hover'
 
 function getUnit(unitId) {
   return TIME_RANGE_UNITS.find((u) => u.id === unitId) ?? TIME_RANGE_UNITS[0]
@@ -81,7 +81,7 @@ export function TimeTab() {
 
             return (
               <div key={field.key} className="w-72 mx-auto">
-                <label className="block text-base font-semibold text-gray-900 mb-2">
+                <label className="block text-base font-semibold text-ink mb-2">
                   {field.label}
                 </label>
                 <div className="flex flex-col gap-2">
@@ -101,14 +101,14 @@ export function TimeTab() {
                     className={NUMBER_INPUT}
                   />
                 </div>
-                <p className="text-xs text-gray-500 mt-1">{field.help(value, unit.divisor, unit)}</p>
+                <p className="text-xs text-muted mt-1">{field.help(value, unit.divisor, unit)}</p>
               </div>
             )
           })}
         </CardContent>
       </Card>
 
-      <div className="bg-gray-50 border border-gray-200 rounded-lg p-2 text-[13px] text-gray-700">
+      <div className="bg-surface-alt backdrop-blur-lg border border-border rounded-lg p-2 text-[13px] text-ink">
         <p className="font-semibold mb-1 flex items-center gap-2">
           <PencilLine className="w-4 h-4" />
           Summary:
