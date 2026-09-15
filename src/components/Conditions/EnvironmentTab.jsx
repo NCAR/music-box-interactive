@@ -18,10 +18,10 @@ import { PRESSURE_UNITS } from '../Plots/pressureUnits'
 import { DENSITY_UNITS } from '../Plots/densityUnits'
 import { LIST_CARD, LIST_CARD_CONTENT, FIELD_LABEL } from '../Mechanism/fieldStyles'
 
-// Air density is optional, so its values are stored in the evolving slice's generic
+// Air number density is optional, so its values are stored in the evolving slice's generic
 // additionalSeries map, alongside hidden series like PHOTO.*, instead of
 // getting a dedicated array field.
-const DENSITY_SERIES_KEY = 'AIR.density.kg_m3'
+const DENSITY_SERIES_KEY = 'ENV.air number density.mol m-3'
 
 // Unlike the Species editor's equal-width columns, the left column fits its content (like TimeTab),
 // while the right column expands to fill the remaining space.
@@ -38,7 +38,7 @@ const DROPDOWN_BUTTON =
 const DEFAULT_TIME = 0
 const DEFAULT_TEMPERATURE = 298.15
 const DEFAULT_PRESSURE = 101325
-const DEFAULT_DENSITY = 1.225
+const DEFAULT_DENSITY = 40.8738
 
 function getUnit(units, unitId) {
   return units.find((u) => u.id === unitId) ?? units[0]
@@ -80,7 +80,7 @@ export function EnvironmentTab() {
     time: 'seconds',
     temperature: 'K',
     pressure: 'Pa',
-    density: 'kg_m3',
+    density: 'mol_m3',
   })
   const [newTime, setNewTime] = useState('')
   const [newTemperature, setNewTemperature] = useState('')
@@ -245,7 +245,7 @@ export function EnvironmentTab() {
       <Card className="w-fit">
         <CardHeader>
           <CardTitle>Environment condition</CardTitle>
-          <CardDescription>Set temperature and pressure, with optional air density</CardDescription>
+          <CardDescription>Set temperature and pressure, with optional air number density</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="w-72 mx-auto">
@@ -324,7 +324,7 @@ export function EnvironmentTab() {
           <div className="w-72 mx-auto">
             <Toggle
               checked={densityEnabled}
-              label="Air density"
+              label="Air number density"
               onChange={setDensityEnabled}
               size="sm"
             />
@@ -343,7 +343,7 @@ export function EnvironmentTab() {
                   inputMode="decimal"
                   value={newDensity}
                   onChange={(e) => setNewDensity(e.target.value)}
-                  placeholder="1.225"
+                  placeholder="40.8738"
                   className={NUMBER_INPUT}
                 />
               </div>
@@ -410,7 +410,7 @@ export function EnvironmentTab() {
                         <th className="text-left px-4 py-2 font-semibold">Temperature (K)</th>
                         <th className="text-left px-4 py-2 font-semibold">Pressure (Pa)</th>
                         {hasDensityColumn && (
-                          <th className="text-left px-4 py-2 font-semibold">Air density (kg/m³)</th>
+                          <th className="text-left px-4 py-2 font-semibold">Air number density (mol m-3)</th>
                         )}
                       </tr>
                     </thead>
