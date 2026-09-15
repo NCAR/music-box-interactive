@@ -7,7 +7,6 @@ import MechanismPage from './MechanismPage'
 import ConditionsPage from './ConditionsPage'
 import PlotsPage from './PlotsPage'
 import AboutPage from './AboutPage'
-import ContactPage from './ContactPage'
 import { resetMechanism } from '../../redux/slices/mechanismSlice'
 import { resetConditions } from '../../redux/slices/conditionsSlice'
 import { resetSimulation } from '../../redux/slices/simulationSlice'
@@ -48,7 +47,6 @@ function AppContent() {
             <Route path="/conditions" element={<ConditionsPage />} />
             <Route path="/plots" element={<PlotsPage />} />
             <Route path="/about" element={<AboutPage />} />
-            <Route path="/contact" element={<ContactPage />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </div>

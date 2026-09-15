@@ -1,7 +1,7 @@
 /* global __APP_VERSION__ */
 import { useState } from 'react'
 import { NavLink } from 'react-router-dom'
-import { Home, Atom, Settings, BarChart3, Info, Mail } from 'lucide-react'
+import { Home, Atom, Settings, BarChart3, Info, Bug, MessagesSquare } from 'lucide-react'
 import RunSimulationButton from './RunSimulationButton'
 import DownloadButtons from './DownloadButtons'
 
@@ -19,9 +19,19 @@ export function Navigation() {
     { to: '/plots', label: 'Results', Icon: BarChart3 },
   ]
 
-  const infoLinks = [
-    { to: '/about', label: 'About', Icon: Info },
-    { to: '/contact', label: 'Contact', Icon: Mail },
+  const infoLinks = [{ to: '/about', label: 'About', Icon: Info }]
+
+  const communityLinks = [
+    {
+      href: 'https://github.com/NCAR/music-box-interactive/discussions',
+      label: 'Start a Discussion',
+      Icon: MessagesSquare,
+    },
+    {
+      href: 'https://github.com/NCAR/music-box-interactive/issues/new',
+      label: 'Report a Bug',
+      Icon: Bug,
+    },
   ]
 
   const navLinkClassName = ({ isActive }) =>
@@ -138,7 +148,7 @@ export function Navigation() {
           })}
         </div>
 
-        {/* About / Contact */}
+        {/* About / Community */}
         <div className="px-3 sm:px-4 py-2 space-y-2 border-t border-border">
           {infoLinks.map((link) => {
             const IconComponent = link.Icon
@@ -152,6 +162,21 @@ export function Navigation() {
                 <IconComponent className="w-5 h-5 sm:w-6 sm:h-6 flex-shrink-0" />
                 <span className="truncate">{link.label}</span>
               </NavLink>
+            )
+          })}
+          {communityLinks.map((link) => {
+            const IconComponent = link.Icon
+            return (
+              <a
+                key={link.href}
+                href={link.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={navLinkClassName({ isActive: false })}
+              >
+                <IconComponent className="w-5 h-5 sm:w-6 sm:h-6 flex-shrink-0" />
+                <span className="truncate">{link.label}</span>
+              </a>
             )
           })}
         </div>
