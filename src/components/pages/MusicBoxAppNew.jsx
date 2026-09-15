@@ -3,7 +3,6 @@ import { useDispatch } from 'react-redux'
 import { useEffect } from 'react'
 import Navigation from '../Navigation'
 import DashboardPage from './DashboardPage'
-import GuidePage from './GuidePage'
 import MechanismPage from './MechanismPage'
 import ConditionsPage from './ConditionsPage'
 import PlotsPage from './PlotsPage'
@@ -69,7 +68,6 @@ function AppContent({ onNavigate }) {
         <div className="max-w-7xl mx-auto px-2 xs:px-3 sm:px-6 lg:px-8 py-3 xs:py-4 sm:py-6 lg:py-8 pt-14 xs:pt-16 lg:pt-6">
           <Routes>
             <Route path="/" element={<DashboardPage />} />
-            <Route path="/guide" element={<GuidePage />} />
             <Route path="/mechanism" element={<MechanismPage />} />
             <Route path="/conditions" element={<ConditionsPage />} />
             <Route path="/plots" element={<PlotsPage />} />

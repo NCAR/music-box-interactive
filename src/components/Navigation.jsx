@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { NavLink } from 'react-router-dom'
-import { Home, BookOpen, Atom, Settings, BarChart3, ArrowLeft } from 'lucide-react'
+import { Home, Atom, Settings, BarChart3, ArrowLeft } from 'lucide-react'
 import RunSimulationButton from './RunSimulationButton'
 import DownloadButtons from './DownloadButtons'
 
@@ -13,7 +13,6 @@ export function Navigation({ onBackToHome = null }) {
 
   const navLinks = [
     { to: '/', label: 'Dashboard', Icon: Home },
-    { to: '/guide', label: 'Guide', Icon: BookOpen },
     { to: '/mechanism', label: 'Mechanism', Icon: Atom },
     { to: '/conditions', label: 'Conditions', Icon: Settings },
     { to: '/plots', label: 'Results', Icon: BarChart3 },
@@ -84,7 +83,7 @@ export function Navigation({ onBackToHome = null }) {
 
         {/* Navigation Links */}
         <div className="flex-1 py-4 sm:py-5 md:py-6 px-3 sm:px-4 space-y-2 overflow-y-auto">
-          {navLinks.slice(0, 4).map((link) => {
+          {navLinks.slice(0, 3).map((link) => {
             const IconComponent = link.Icon
             return (
               <NavLink
@@ -119,7 +118,7 @@ export function Navigation({ onBackToHome = null }) {
           <div className="border-t border-border my-3 sm:my-4"></div>
 
           {/* Results Link */}
-          {navLinks.slice(4).map((link) => {
+          {navLinks.slice(3).map((link) => {
             const IconComponent = link.Icon
             return (
               <NavLink
