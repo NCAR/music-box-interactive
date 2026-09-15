@@ -15,12 +15,12 @@ export function Toggle({ checked, label, onChange, size = 'default' }) {
       role="switch"
       aria-checked={checked}
       onClick={() => onChange(!checked)}
-      className="flex items-center gap-3 rounded text-sm font-semibold text-gray-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-green-500"
+      className="flex items-center gap-3 rounded text-sm font-semibold text-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-assist-secondary-ring"
     >
       {label}
       <span
         className={`relative inline-flex ${track} flex-shrink-0 items-center rounded-full transition-colors ${
-          checked ? 'bg-green-700' : 'bg-gray-300'
+          checked ? 'bg-assist-secondary-ring' : 'bg-border'
         }`}
       >
         <span

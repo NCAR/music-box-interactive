@@ -186,32 +186,6 @@ function PhaseSelector({ value, onChange, size = 'default', allowCustom = true }
   )
 }
 
-// On/off switch for boolean species properties.
-function Toggle({ checked, label, onChange }) {
-  return (
-    <button
-      type="button"
-      role="switch"
-      aria-checked={checked}
-      onClick={() => onChange(!checked)}
-      className="flex items-center gap-3 rounded text-sm font-semibold text-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-assist-secondary-ring"
-    >
-      {label}
-      <span
-        className={`relative inline-flex h-6 w-11 flex-shrink-0 items-center rounded-full transition-colors ${
-          checked ? 'bg-assist-secondary-ring' : 'bg-border'
-        }`}
-      >
-        <span
-          className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform ${
-            checked ? 'translate-x-[1.375rem]' : 'translate-x-0.5'
-          }`}
-        />
-      </span>
-    </button>
-  )
-}
-
 function PropertySelector({ properties, onChange }) {
   const togglePill = (field) => {
     const next = { ...properties }
