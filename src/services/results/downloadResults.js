@@ -1,5 +1,8 @@
+import { zipSync, strToU8 } from 'fflate'
 import { computeIntegratedReactionRate } from '../../components/Plots/flowUtils'
-import { downloadJson } from '../../utils/downloadJson'
+import { buildDownloadableConfig } from '../config/downloadConfig'
+import { toCsv } from '../../utils/csv'
+import { downloadBlob } from '../../utils/downloadJson'
 
 function formatComponents(components) {
   if (!Array.isArray(components) || components.length === 0) {
@@ -25,61 +28,74 @@ function formatReactionFormula(reaction) {
   return `${formatComponents(reactantList)} → ${formatComponents(productList)}`
 }
 
-// Every concentration/environment column the solver produced, plus each reaction's
-// integrated rate per output interval -- identified against the mechanism's own reaction
-// list via a "RXN_<index>" key, since reaction names are not unique (see flowUtils.js).
+// Builds the three files a results download bundles into a zip:
+// - results.csv: every concentration/environment column, plus each reaction's rate integrated
+//   over the interval starting at that row -- so the last row leaves rate columns blank, since
+//   there is no interval after it.
+// - music_box_config.json: the same config Download Config produces, so results and the
+//   configuration that produced them travel together.
+// - mapping.json: RXN_<index> -> the reaction it refers to, since reaction names are not
+//   unique (see flowUtils.js) and the CSV can only carry the index-based key.
 // `reactions` must be the same array run.js injected tracers into (state.mechanism.reactions),
 // so its indices match the ones computeIntegratedReactionRate expects.
-export function buildResultsExport({ mechanism, results, excludedResults, metadata }) {
+export function buildResultsExport({ mechanism, conditions, results, excludedResults, metadata }) {
   const reactions = Array.isArray(mechanism?.reactions) ? mechanism.reactions : []
   const points = Array.isArray(results) ? results : []
   const tracerPoints = Array.isArray(excludedResults) ? excludedResults : []
 
-  const timeSeries = { 'time.s': points.map((point) => point.time) }
-  const columnKeys = new Set()
+  const concentrationKeys = []
+  const seenKeys = new Set()
   points.forEach((point) => {
-    Object.keys(point.concentrations || {}).forEach((key) => columnKeys.add(key))
-  })
-  for (const key of columnKeys) {
-    timeSeries[key] = points.map((point) => point.concentrations?.[key] ?? null)
-  }
-
-  const integratedReactionRates = { 'interval_start.s': [] }
-  reactions.forEach((_, index) => {
-    integratedReactionRates[`RXN_${index}`] = []
-  })
-  for (let i = 0; i < points.length - 1; i++) {
-    const timeStart = points[i].time
-    const timeEnd = points[i + 1].time
-    integratedReactionRates['interval_start.s'].push(timeStart)
-    reactions.forEach((reaction, index) => {
-      integratedReactionRates[`RXN_${index}`].push(
-        computeIntegratedReactionRate(reaction, index, tracerPoints, timeStart, timeEnd)
-      )
+    Object.keys(point.concentrations || {}).forEach((key) => {
+      if (!seenKeys.has(key)) {
+        seenKeys.add(key)
+        concentrationKeys.push(key)
+      }
     })
-  }
+  })
+  const rateKeys = reactions.map((_, index) => `RXN_${index}`)
 
-  const reactionLegend = reactions.map((reaction, index) => ({
-    key: `RXN_${index}`,
-    id: reaction?.id ?? null,
-    name: reaction?.name ?? null,
-    type: reaction?.type ?? null,
-    formula: formatReactionFormula(reaction),
-  }))
+  const headers = ['time.s', ...concentrationKeys, ...rateKeys]
+  const rows = points.map((point, index) => {
+    const row = [point.time, ...concentrationKeys.map((key) => point.concentrations?.[key] ?? '')]
+    if (index < points.length - 1) {
+      const timeEnd = points[index + 1].time
+      reactions.forEach((reaction, rxnIndex) => {
+        row.push(computeIntegratedReactionRate(reaction, rxnIndex, tracerPoints, point.time, timeEnd))
+      })
+    } else {
+      rateKeys.forEach(() => row.push(''))
+    }
+    return row
+  })
+
+  const mapping = {}
+  reactions.forEach((reaction, index) => {
+    mapping[`RXN_${index}`] = {
+      id: reaction?.id ?? null,
+      name: reaction?.name ?? null,
+      type: reaction?.type ?? null,
+      formula: formatReactionFormula(reaction),
+    }
+  })
 
   return {
-    metadata: {
-      mechanism: metadata?.mechanism || mechanism?.selectedMechanism || 'custom',
-      duration: metadata?.duration ?? null,
-      generatedAt: new Date().toISOString(),
-    },
-    time_series: timeSeries,
-    integrated_reaction_rates: integratedReactionRates,
-    reactions: reactionLegend,
+    resultsCsv: toCsv(headers, rows),
+    config: buildDownloadableConfig({ mechanism, conditions }),
+    mapping,
+    mechanismName: metadata?.mechanism || mechanism?.selectedMechanism || 'custom',
   }
 }
 
 export function downloadSimulationResults(args) {
-  const data = buildResultsExport(args)
-  downloadJson(data, `musicbox-results-${data.metadata.mechanism}-${Date.now()}.json`)
+  const { resultsCsv, config, mapping, mechanismName } = buildResultsExport(args)
+  const zipped = zipSync({
+    'results.csv': strToU8(resultsCsv),
+    'music_box_config.json': strToU8(JSON.stringify(config, null, 2)),
+    'mapping.json': strToU8(JSON.stringify(mapping, null, 2)),
+  })
+  downloadBlob(
+    new Blob([zipped], { type: 'application/zip' }),
+    `musicbox-results-${mechanismName}-${Date.now()}.zip`
+  )
 }

@@ -39,6 +39,7 @@ export function DownloadButtons({ className = '' }) {
         onClick={() =>
           downloadSimulationResults({
             mechanism,
+            conditions,
             results: simulation.results,
             excludedResults: simulation.excludedResults,
             metadata: simulation.metadata,
