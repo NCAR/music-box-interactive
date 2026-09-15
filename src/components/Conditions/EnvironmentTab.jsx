@@ -122,7 +122,7 @@ export function EnvironmentTab() {
     const pressureUnit = getUnit(PRESSURE_UNITS, unitIds.pressure)
     const densityUnit = getUnit(DENSITY_UNITS, unitIds.density)
 
-    // Blank fields fall back to a default already expressed in base units (seconds/K/Pa/kg·m⁻³),
+    // Blank fields fall back to a default already expressed in base units (seconds/K/Pa/mol m-3),
     // so it must bypass unit conversion rather than being treated as a value in the selected unit.
     const time = timeIsBlank ? rawTime : rawTime * timeUnit.divisor
     const temperature = temperatureIsBlank
