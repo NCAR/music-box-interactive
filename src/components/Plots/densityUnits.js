@@ -1,1 +1,1 @@
-export const DENSITY_UNITS = [{ id: 'kg_m3', label: 'kg/m³', divisor: 1 }]
+export const DENSITY_UNITS = [{ id: 'mol_m3', label: 'mol m-3', divisor: 1 }]

@@ -18,17 +18,17 @@ import { PRESSURE_UNITS } from '../Plots/pressureUnits'
 import { DENSITY_UNITS } from '../Plots/densityUnits'
 import { LIST_CARD, LIST_CARD_CONTENT, FIELD_LABEL } from '../Mechanism/fieldStyles'
 
-// Air density is optional, so its values are stored in the evolving slice's generic
+// Air number density is optional, so its values are stored in the evolving slice's generic
 // additionalSeries map, alongside hidden series like PHOTO.*, instead of
 // getting a dedicated array field.
-const DENSITY_SERIES_KEY = 'AIR.density.kg_m3'
+const DENSITY_SERIES_KEY = 'ENV.air number density.mol m-3'
 
 // Unlike the Species editor's equal-width columns, the left column fits its content (like TimeTab),
 // while the right column expands to fill the remaining space.
 const EDITOR_GRID = 'grid grid-cols-1 gap-4 lg:grid-cols-[auto_1fr] lg:items-start'
 
 const NUMBER_INPUT =
-  'w-72 h-9 px-2 border border-gray-400 bg-white/10 text-gray-900 placeholder:text-gray-500 rounded-lg text-sm text-center font-mono focus:outline-none focus:ring-2 focus:ring-green-700 focus:border-transparent [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none'
+  'w-72 h-9 px-2 border border-gray-400 bg-white/10 text-gray-900 placeholder:text-gray-500 rounded-lg text-sm text-center font-mono focus:outline-none focus:ring-2 focus:ring-action focus:border-transparent [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none'
 
 const DROPDOWN_WRAPPER = 'relative w-72 flex-shrink-0'
 const DROPDOWN_BUTTON =
@@ -38,7 +38,9 @@ const DROPDOWN_BUTTON =
 const DEFAULT_TIME = 0
 const DEFAULT_TEMPERATURE = 298.15
 const DEFAULT_PRESSURE = 101325
-const DEFAULT_DENSITY = 1.225
+
+// GAS_CONSTANT (Avogadro x Boltzmann)
+const GAS_CONSTANT = 8.31446261815324
 
 function getUnit(units, unitId) {
   return units.find((u) => u.id === unitId) ?? units[0]
@@ -80,7 +82,7 @@ export function EnvironmentTab() {
     time: 'seconds',
     temperature: 'K',
     pressure: 'Pa',
-    density: 'kg_m3',
+    density: 'mol_m3',
   })
   const [newTime, setNewTime] = useState('')
   const [newTemperature, setNewTemperature] = useState('')
@@ -98,17 +100,13 @@ export function EnvironmentTab() {
     const rawTime = timeIsBlank ? DEFAULT_TIME : parseFloat(newTime)
     const rawTemperature = temperatureIsBlank ? DEFAULT_TEMPERATURE : parseFloat(newTemperature)
     const rawPressure = pressureIsBlank ? DEFAULT_PRESSURE : parseFloat(newPressure)
-    const rawDensity = densityEnabled
-      ? densityIsBlank
-        ? DEFAULT_DENSITY
-        : parseFloat(newDensity)
-      : null
+    const rawDensity = densityEnabled && !densityIsBlank ? parseFloat(newDensity) : null
 
     if (
       isNaN(rawTime) ||
       isNaN(rawTemperature) ||
       isNaN(rawPressure) ||
-      (densityEnabled && isNaN(rawDensity))
+      (densityEnabled && !densityIsBlank && isNaN(rawDensity))
     ) {
       toast({
         title: 'Invalid Input',
@@ -122,14 +120,12 @@ export function EnvironmentTab() {
     const pressureUnit = getUnit(PRESSURE_UNITS, unitIds.pressure)
     const densityUnit = getUnit(DENSITY_UNITS, unitIds.density)
 
-    // Blank fields fall back to a default already expressed in base units (seconds/K/Pa/kg·m⁻³),
-    // so it must bypass unit conversion rather than being treated as a value in the selected unit.
     const time = timeIsBlank ? rawTime : rawTime * timeUnit.divisor
     const temperature = temperatureIsBlank
       ? rawTemperature
       : toKelvin(rawTemperature, unitIds.temperature)
     const pressure = pressureIsBlank ? rawPressure : rawPressure * pressureUnit.divisor
-    const density = densityEnabled ? (densityIsBlank ? rawDensity : rawDensity * densityUnit.divisor) : null
+    const density = densityEnabled && !densityIsBlank ? rawDensity * densityUnit.divisor : null
 
     if (evolving.times.includes(time)) {
       toast({
@@ -240,6 +236,18 @@ export function EnvironmentTab() {
       ? `${formatConversion(parsedNewPressure * getUnit(PRESSURE_UNITS, unitIds.pressure).divisor)} Pa`
       : null
 
+  const previewTemperature =
+    newTemperature.trim() !== '' && !isNaN(parsedNewTemperature)
+      ? toKelvin(parsedNewTemperature, unitIds.temperature)
+      : DEFAULT_TEMPERATURE
+  const previewPressure =
+    newPressure.trim() !== '' && !isNaN(parsedNewPressure)
+      ? parsedNewPressure * getUnit(PRESSURE_UNITS, unitIds.pressure).divisor
+      : DEFAULT_PRESSURE
+  const idealGasDensityPlaceholder = formatConversion(
+    previewPressure / (GAS_CONSTANT * previewTemperature) / getUnit(DENSITY_UNITS, unitIds.density).divisor
+  )
+
   return (
     <div className={EDITOR_GRID}>
       <Card className="w-fit">
@@ -324,7 +332,7 @@ export function EnvironmentTab() {
           <div className="w-72 mx-auto">
             <Toggle
               checked={densityEnabled}
-              label="Air density"
+              label="Air number density"
               onChange={setDensityEnabled}
               size="sm"
             />
@@ -343,9 +351,12 @@ export function EnvironmentTab() {
                   inputMode="decimal"
                   value={newDensity}
                   onChange={(e) => setNewDensity(e.target.value)}
-                  placeholder="1.225"
+                  placeholder={idealGasDensityPlaceholder}
                   className={NUMBER_INPUT}
                 />
+                <p className="text-xs text-gray-500 text-center">
+                  If left blank, the ideal gas law is used
+                </p>
               </div>
             )}
           </div>
@@ -410,7 +421,7 @@ export function EnvironmentTab() {
                         <th className="text-left px-4 py-2 font-semibold">Temperature (K)</th>
                         <th className="text-left px-4 py-2 font-semibold">Pressure (Pa)</th>
                         {hasDensityColumn && (
-                          <th className="text-left px-4 py-2 font-semibold">Air density (kg/m³)</th>
+                          <th className="text-left px-4 py-2 font-semibold">Air number density (mol m-3)</th>
                         )}
                       </tr>
                     </thead>
