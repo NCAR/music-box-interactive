@@ -365,7 +365,7 @@ export function EnvironmentTab() {
             <Button
               onClick={handleAdd}
               variant="assistSecondary"
-              className="h-9 px-8 text-base">
+              className="h-9 px-8 text-base rounded-lg bg-assist-secondary text-assist-secondary-foreground hover:bg-assist-secondary-hover">
               Add condition
             </Button>
           </div>

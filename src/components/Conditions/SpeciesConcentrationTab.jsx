@@ -157,6 +157,19 @@ export function SpeciesConcentrationTab() {
     }, 600)
   }
 
+  const commitConcentration = (species, rawValue) => {
+    const parsed = parseFloat(rawValue)
+    if (isNaN(parsed) || parsed < 0) {
+      toast({
+        title: 'Invalid Input',
+        description: 'Concentration must be a valid number zero or greater',
+        variant: 'destructive',
+      })
+      return
+    }
+    flashUpdated(species)
+  }
+
   const toggleSelected = (species) => {
     setSelectedSpecies((prev) => {
       const next = new Set(prev)
@@ -169,12 +182,22 @@ export function SpeciesConcentrationTab() {
     })
   }
 
+  const allVisibleSelected =
+    visibleSpeciesEntries.length > 0 &&
+    visibleSpeciesEntries.every(([species]) => selectedSpecies.has(species))
+
   const toggleSelectAll = () => {
-    setSelectedSpecies((prev) =>
-      prev.size === visibleSpeciesEntries.length
-        ? new Set()
-        : new Set(visibleSpeciesEntries.map(([species]) => species))
-    )
+    setSelectedSpecies((prev) => {
+      const next = new Set(prev)
+      visibleSpeciesEntries.forEach(([species]) => {
+        if (allVisibleSelected) {
+          next.delete(species)
+        } else {
+          next.add(species)
+        }
+      })
+      return next
+    })
   }
 
   const handleRemoveSelected = () => {
@@ -270,7 +293,7 @@ export function SpeciesConcentrationTab() {
             <Button
               onClick={handleAdd}
               variant="assistSecondary"
-              className="h-9 px-8 text-base rounded-lg bg-white text-heading hover:bg-assist-secondary">
+              className="h-9 px-8 text-base rounded-lg bg-assist-secondary text-assist-secondary-foreground hover:bg-assist-secondary-hover">
               Add species
             </Button>
           </div>
@@ -320,7 +343,7 @@ export function SpeciesConcentrationTab() {
                     <th className="w-10 px-4 py-2">
                       <input
                         type="checkbox"
-                        checked={selectedSpecies.size === visibleSpeciesEntries.length}
+                        checked={allVisibleSelected}
                         onChange={toggleSelectAll}
                         aria-label="Select all species"
                         className="accent-action"
@@ -351,11 +374,11 @@ export function SpeciesConcentrationTab() {
                           onKeyDown={(e) => {
                             if (e.key === 'Enter') {
                               e.preventDefault()
-                              flashUpdated(species)
+                              commitConcentration(species, e.target.value)
                               e.target.blur()
                             }
                           }}
-                          onBlur={() => flashUpdated(species)}
+                          onBlur={(e) => commitConcentration(species, e.target.value)}
                           className={`w-full px-2 py-1 border rounded text-sm font-mono focus:outline-none focus:ring-2 focus:ring-action transition-colors duration-300 ${
                             justUpdatedSpecies === species
                               ? 'border-action bg-assist-secondary'
