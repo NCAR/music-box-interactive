@@ -39,6 +39,9 @@ const DEFAULT_TIME = 0
 const DEFAULT_TEMPERATURE = 298.15
 const DEFAULT_PRESSURE = 101325
 
+// GAS_CONSTANT (Avogadro x Boltzmann)
+const GAS_CONSTANT = 8.31446261815324
+
 function getUnit(units, unitId) {
   return units.find((u) => u.id === unitId) ?? units[0]
 }
@@ -233,12 +236,24 @@ export function EnvironmentTab() {
       ? `${formatConversion(parsedNewPressure * getUnit(PRESSURE_UNITS, unitIds.pressure).divisor)} Pa`
       : null
 
+  const previewTemperature =
+    newTemperature.trim() !== '' && !isNaN(parsedNewTemperature)
+      ? toKelvin(parsedNewTemperature, unitIds.temperature)
+      : DEFAULT_TEMPERATURE
+  const previewPressure =
+    newPressure.trim() !== '' && !isNaN(parsedNewPressure)
+      ? parsedNewPressure * getUnit(PRESSURE_UNITS, unitIds.pressure).divisor
+      : DEFAULT_PRESSURE
+  const idealGasDensityPlaceholder = formatConversion(
+    previewPressure / (GAS_CONSTANT * previewTemperature) / getUnit(DENSITY_UNITS, unitIds.density).divisor
+  )
+
   return (
     <div className={EDITOR_GRID}>
       <Card className="w-fit">
         <CardHeader>
           <CardTitle>Environment condition</CardTitle>
-          <CardDescription>Set temperature and pressure, with optional air number density</CardDescription>
+          <CardDescription>Set temperature and pressure, with optional air density</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="w-72 mx-auto">
@@ -336,8 +351,12 @@ export function EnvironmentTab() {
                   inputMode="decimal"
                   value={newDensity}
                   onChange={(e) => setNewDensity(e.target.value)}
+                  placeholder={idealGasDensityPlaceholder}
                   className={NUMBER_INPUT}
                 />
+                <p className="text-xs text-gray-500 text-center">
+                  If left blank, the ideal gas law is used
+                </p>
               </div>
             )}
           </div>
