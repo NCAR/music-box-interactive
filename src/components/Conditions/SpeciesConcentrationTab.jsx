@@ -14,12 +14,24 @@ import {
 } from '../../redux/slices/conditionsSlice'
 import { useToast } from '@/hooks/use-toast'
 import { LIST_CARD, LIST_CARD_CONTENT, FIELD_LABEL, TEXT_INPUT_SM } from '../Mechanism/fieldStyles'
+import { UnitDropdown } from '../Plots/UnitDropdown'
 
 // Matches EnvironmentTab: the left column fits its content, the right column expands.
 const EDITOR_GRID = 'grid grid-cols-1 gap-4 lg:grid-cols-[auto_1fr] lg:items-start'
 
 const TEXT_INPUT =
   'w-full h-9 px-2 border border-gray-400 bg-white/10 text-gray-900 placeholder:text-gray-500 rounded-lg text-sm text-center font-mono focus:outline-none focus:ring-2 focus:ring-action focus:border-transparent'
+
+const DROPDOWN_WRAPPER = 'relative w-full flex-shrink-0'
+const DROPDOWN_BUTTON =
+  'flex items-center gap-1 w-full h-9 px-2 border border-gray-300 rounded-lg text-sm text-gray-800 hover:bg-gray-50'
+
+const CONCENTRATION_UNITS = [
+  { id: 'mol_m3', label: 'mol m-3' },
+  { id: 'ppb', label: 'ppb' },
+]
+
+const GAS_CONSTANT = 8.31446261815324
 
 /**
  * SpeciesConcentrationTab Component
@@ -37,6 +49,7 @@ export function SpeciesConcentrationTab() {
 
   const [newSpecies, setNewSpecies] = useState('')
   const [newConcentration, setNewConcentration] = useState('')
+  const [concentrationUnitId, setConcentrationUnitId] = useState('mol_m3')
   const [selectedSpecies, setSelectedSpecies] = useState(new Set())
   const [justUpdatedSpecies, setJustUpdatedSpecies] = useState(null)
   const [speciesSearch, setSpeciesSearch] = useState('')
@@ -66,7 +79,13 @@ export function SpeciesConcentrationTab() {
 
   const mechanismSpeciesNames = new Set(mechanismSpecies.map((species) => species.name))
 
-  // Species with no initial concentration default to 0 mol m-3,
+  const airDensityMolM3 = initial.pressure / (GAS_CONSTANT * initial.temperature)
+  const toMolM3 = (value, unitId) =>
+    unitId === 'ppb' ? value * 1e-9 * airDensityMolM3 : value
+  const fromMolM3 = (valueMolM3, unitId) =>
+    unitId === 'ppb' ? valueMolM3 / (1e-9 * airDensityMolM3) : valueMolM3
+
+  // Species with no initial concentration default to 0,
   // which may be intentional but is worth flagging.
   const missingSpecies = mechanismSpecies
     .map((species) => species.name)
@@ -127,10 +146,11 @@ export function SpeciesConcentrationTab() {
       return
     }
 
-    dispatch(setConcentration({ species, value }))
+    const unitLabel = CONCENTRATION_UNITS.find((u) => u.id === concentrationUnitId)?.label
+    dispatch(setConcentration({ species, value: toMolM3(value, concentrationUnitId) }))
     toast({
       title: 'Species Added',
-      description: `Added ${species} at concentration ${value}`,
+      description: `Added ${species} at concentration ${value} ${unitLabel}`,
       variant: 'success',
     })
     setNewSpecies('')
@@ -145,7 +165,7 @@ export function SpeciesConcentrationTab() {
   const handleConcentrationChange = (species, value) => {
     const parsed = parseFloat(value)
     if (!isNaN(parsed) && parsed >= 0) {
-      dispatch(setConcentration({ species, value: parsed }))
+      dispatch(setConcentration({ species, value: toMolM3(parsed, concentrationUnitId) }))
     }
   }
 
@@ -248,7 +268,7 @@ export function SpeciesConcentrationTab() {
           {missingSpecies.length > 0 && (
             <div className="p-3 border border-border bg-surface-alt rounded-lg text-xs text-ink">
               <p className="font-semibold mb-1.5 text-center">
-                {missingSpecies.length} not set, default to 0 mol m-3
+                {missingSpecies.length} not set, default to 0
               </p>
               {visibleMissingSpecies.length === 0 ? (
                 <p className="text-muted">No matches for "{newSpecies.trim()}".</p>
@@ -270,22 +290,32 @@ export function SpeciesConcentrationTab() {
           )}
 
           <div className="w-full">
-            <label className={FIELD_LABEL}>Concentration (mol m-3)</label>
-            <input
-              ref={concentrationInputRef}
-              type="text"
-              inputMode="decimal"
-              value={newConcentration}
-              onChange={(e) => setNewConcentration(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  e.preventDefault()
-                  handleAdd()
-                }
-              }}
-              placeholder="1e-8"
-              className={TEXT_INPUT}
-            />
+            <label className={FIELD_LABEL}>Concentration</label>
+            <div className="flex flex-col gap-2">
+              <UnitDropdown
+                unitId={concentrationUnitId}
+                onChange={setConcentrationUnitId}
+                units={CONCENTRATION_UNITS}
+                wrapperClassName={DROPDOWN_WRAPPER}
+                buttonClassName={DROPDOWN_BUTTON}
+                centerLabel
+              />
+              <input
+                ref={concentrationInputRef}
+                type="text"
+                inputMode="decimal"
+                value={newConcentration}
+                onChange={(e) => setNewConcentration(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault()
+                    handleAdd()
+                  }
+                }}
+                placeholder="1e-8"
+                className={TEXT_INPUT}
+              />
+            </div>
           </div>
 
           <div className="h-0.5" />
@@ -337,7 +367,7 @@ export function SpeciesConcentrationTab() {
             </p>
           ) : (
             <div className="border border-gray-200 rounded-lg overflow-auto">
-              <table className="w-full text-sm">
+              <table className="w-full table-fixed text-sm">
                 <thead className="bg-assist-secondary text-assist-secondary-foreground">
                   <tr>
                     <th className="w-10 px-4 py-2">
@@ -349,8 +379,11 @@ export function SpeciesConcentrationTab() {
                         className="accent-action"
                       />
                     </th>
-                    <th className="text-left px-4 py-2 font-semibold">Species</th>
-                    <th className="text-left px-4 py-2 font-semibold">Concentration (mol m-3)</th>
+                    <th className="w-1/2 text-left px-4 py-2 font-semibold">Species</th>
+                    <th className="text-left px-4 py-2 font-semibold">
+                      Concentration (
+                      {CONCENTRATION_UNITS.find((u) => u.id === concentrationUnitId)?.label})
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
@@ -369,7 +402,7 @@ export function SpeciesConcentrationTab() {
                       <td className="px-4 py-2 font-mono">
                         <input
                           type="text"
-                          value={concentration}
+                          value={fromMolM3(concentration, concentrationUnitId)}
                           onChange={(e) => handleConcentrationChange(species, e.target.value)}
                           onKeyDown={(e) => {
                             if (e.key === 'Enter') {
