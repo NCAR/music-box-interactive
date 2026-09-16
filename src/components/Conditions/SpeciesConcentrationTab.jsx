@@ -50,6 +50,7 @@ export function SpeciesConcentrationTab() {
   const [concentrationUnitId, setConcentrationUnitId] = useState('mol_m3')
   const [selectedSpecies, setSelectedSpecies] = useState(new Set())
   const [justUpdatedSpecies, setJustUpdatedSpecies] = useState(null)
+  const [rowDrafts, setRowDrafts] = useState({})
   const [speciesSearch, setSpeciesSearch] = useState('')
   const concentrationInputRef = useRef(null)
 
@@ -161,10 +162,7 @@ export function SpeciesConcentrationTab() {
   }
 
   const handleConcentrationChange = (species, value) => {
-    const parsed = parseFloat(value)
-    if (!isNaN(parsed) && parsed >= 0) {
-      dispatch(setConcentration({ species, value: toMolM3(parsed, concentrationUnitId) }))
-    }
+    setRowDrafts((prev) => ({ ...prev, [species]: value }))
   }
 
   // Brief visual confirmation that a row's edit was committed
@@ -185,6 +183,12 @@ export function SpeciesConcentrationTab() {
       })
       return
     }
+    dispatch(setConcentration({ species, value: toMolM3(parsed, concentrationUnitId) }))
+    setRowDrafts((prev) => {
+      const next = { ...prev }
+      delete next[species]
+      return next
+    })
     flashUpdated(species)
   }
 
@@ -292,7 +296,10 @@ export function SpeciesConcentrationTab() {
             <div className="flex flex-col gap-2">
               <UnitDropdown
                 unitId={concentrationUnitId}
-                onChange={setConcentrationUnitId}
+                onChange={(id) => {
+                  setConcentrationUnitId(id)
+                  setRowDrafts({})
+                }}
                 units={CONCENTRATION_UNITS}
                 wrapperClassName={DROPDOWN_WRAPPER}
                 buttonClassName={DROPDOWN_BUTTON}
@@ -334,16 +341,18 @@ export function SpeciesConcentrationTab() {
             <div>
               <CardTitle>{speciesEntries.length} species</CardTitle>
             </div>
-            {selectedSpecies.size > 0 && (
-              <Button
-                variant="glass"
-                size="sm"
-                onClick={handleRemoveSelected}
-                className="rounded-lg bg-white text-red-600 hover:bg-red-50 flex-shrink-0"
-              >
-                Remove selected ({selectedSpecies.size})
-              </Button>
-            )}
+            {/* Always mounted (just hidden) so the header's height never shifts when the
+                first checkbox is checked */}
+            <Button
+              variant="glass"
+              size="sm"
+              onClick={handleRemoveSelected}
+              className={`rounded-lg bg-white text-red-600 hover:bg-red-50 flex-shrink-0 ${
+                selectedSpecies.size === 0 ? 'invisible' : ''
+              }`}
+            >
+              Remove selected ({selectedSpecies.size})
+            </Button>
           </div>
         </CardHeader>
         <CardContent className={LIST_CARD_CONTENT}>
@@ -400,7 +409,9 @@ export function SpeciesConcentrationTab() {
                       <td className="px-4 py-2 font-mono">
                         <input
                           type="text"
-                          value={fromMolM3(concentration, concentrationUnitId)}
+                          value={
+                            rowDrafts[species] ?? fromMolM3(concentration, concentrationUnitId)
+                          }
                           onChange={(e) => handleConcentrationChange(species, e.target.value)}
                           onKeyDown={(e) => {
                             if (e.key === 'Enter') {
