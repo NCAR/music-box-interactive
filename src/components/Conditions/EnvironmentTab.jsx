@@ -28,7 +28,7 @@ const DENSITY_SERIES_KEY = 'ENV.air number density.mol m-3'
 const EDITOR_GRID = 'grid grid-cols-1 gap-4 lg:grid-cols-[auto_1fr] lg:items-start'
 
 const NUMBER_INPUT =
-  'w-72 h-9 px-2 border border-gray-400 bg-white/10 text-gray-900 placeholder:text-gray-500 rounded-lg text-sm text-center font-mono focus:outline-none focus:ring-2 focus:ring-green-700 focus:border-transparent [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none'
+  'w-72 h-9 px-2 border border-gray-400 bg-white/10 text-gray-900 placeholder:text-gray-500 rounded-lg text-sm text-center font-mono focus:outline-none focus:ring-2 focus:ring-action focus:border-transparent [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none'
 
 const DROPDOWN_WRAPPER = 'relative w-72 flex-shrink-0'
 const DROPDOWN_BUTTON =
@@ -38,7 +38,6 @@ const DROPDOWN_BUTTON =
 const DEFAULT_TIME = 0
 const DEFAULT_TEMPERATURE = 298.15
 const DEFAULT_PRESSURE = 101325
-const DEFAULT_DENSITY = 40.8738
 
 function getUnit(units, unitId) {
   return units.find((u) => u.id === unitId) ?? units[0]
@@ -98,17 +97,13 @@ export function EnvironmentTab() {
     const rawTime = timeIsBlank ? DEFAULT_TIME : parseFloat(newTime)
     const rawTemperature = temperatureIsBlank ? DEFAULT_TEMPERATURE : parseFloat(newTemperature)
     const rawPressure = pressureIsBlank ? DEFAULT_PRESSURE : parseFloat(newPressure)
-    const rawDensity = densityEnabled
-      ? densityIsBlank
-        ? DEFAULT_DENSITY
-        : parseFloat(newDensity)
-      : null
+    const rawDensity = densityEnabled && !densityIsBlank ? parseFloat(newDensity) : null
 
     if (
       isNaN(rawTime) ||
       isNaN(rawTemperature) ||
       isNaN(rawPressure) ||
-      (densityEnabled && isNaN(rawDensity))
+      (densityEnabled && !densityIsBlank && isNaN(rawDensity))
     ) {
       toast({
         title: 'Invalid Input',
@@ -122,14 +117,12 @@ export function EnvironmentTab() {
     const pressureUnit = getUnit(PRESSURE_UNITS, unitIds.pressure)
     const densityUnit = getUnit(DENSITY_UNITS, unitIds.density)
 
-    // Blank fields fall back to a default already expressed in base units (seconds/K/Pa/mol m-3),
-    // so it must bypass unit conversion rather than being treated as a value in the selected unit.
     const time = timeIsBlank ? rawTime : rawTime * timeUnit.divisor
     const temperature = temperatureIsBlank
       ? rawTemperature
       : toKelvin(rawTemperature, unitIds.temperature)
     const pressure = pressureIsBlank ? rawPressure : rawPressure * pressureUnit.divisor
-    const density = densityEnabled ? (densityIsBlank ? rawDensity : rawDensity * densityUnit.divisor) : null
+    const density = densityEnabled && !densityIsBlank ? rawDensity * densityUnit.divisor : null
 
     if (evolving.times.includes(time)) {
       toast({
@@ -343,7 +336,6 @@ export function EnvironmentTab() {
                   inputMode="decimal"
                   value={newDensity}
                   onChange={(e) => setNewDensity(e.target.value)}
-                  placeholder="40.8738"
                   className={NUMBER_INPUT}
                 />
               </div>
