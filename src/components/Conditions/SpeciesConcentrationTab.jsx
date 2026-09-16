@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card'
 import { Button } from '../ui/button'
@@ -19,7 +19,7 @@ import { LIST_CARD, LIST_CARD_CONTENT, FIELD_LABEL, TEXT_INPUT_SM } from '../Mec
 const EDITOR_GRID = 'grid grid-cols-1 gap-4 lg:grid-cols-[auto_1fr] lg:items-start'
 
 const TEXT_INPUT =
-  'w-72 h-9 px-2 border border-gray-400 bg-white/10 text-gray-900 placeholder:text-gray-500 rounded-lg text-sm text-center font-mono focus:outline-none focus:ring-2 focus:ring-action focus:border-transparent'
+  'w-full h-9 px-2 border border-gray-400 bg-white/10 text-gray-900 placeholder:text-gray-500 rounded-lg text-sm text-center font-mono focus:outline-none focus:ring-2 focus:ring-action focus:border-transparent'
 
 /**
  * SpeciesConcentrationTab Component
@@ -38,8 +38,9 @@ export function SpeciesConcentrationTab() {
   const [newSpecies, setNewSpecies] = useState('')
   const [newConcentration, setNewConcentration] = useState('')
   const [selectedSpecies, setSelectedSpecies] = useState(new Set())
-  const [showMissing, setShowMissing] = useState(false)
+  const [justUpdatedSpecies, setJustUpdatedSpecies] = useState(null)
   const [speciesSearch, setSpeciesSearch] = useState('')
+  const concentrationInputRef = useRef(null)
 
   useEffect(() => {
     const exampleId = currentExample?.id
@@ -63,11 +64,18 @@ export function SpeciesConcentrationTab() {
     ? speciesEntries.filter(([species]) => species.toLowerCase().includes(speciesQuery))
     : speciesEntries
 
-  // Species with no initial concentration default to 0 mol m-3, 
+  const mechanismSpeciesNames = new Set(mechanismSpecies.map((species) => species.name))
+
+  // Species with no initial concentration default to 0 mol m-3,
   // which may be intentional but is worth flagging.
   const missingSpecies = mechanismSpecies
     .map((species) => species.name)
     .filter((name) => initial.concentrations[name] === undefined)
+
+  const newSpeciesQuery = newSpecies.trim().toLowerCase()
+  const visibleMissingSpecies = newSpeciesQuery
+    ? missingSpecies.filter((name) => name.toLowerCase().includes(newSpeciesQuery))
+    : missingSpecies
 
   const handleAdd = () => {
     const species = newSpecies.trim()
@@ -82,11 +90,29 @@ export function SpeciesConcentrationTab() {
       return
     }
 
+    if (!mechanismSpeciesNames.has(species)) {
+      toast({
+        title: 'Unknown Species',
+        description: `"${species}" is not in the selected mechanism`,
+        variant: 'destructive',
+      })
+      return
+    }
+
     const value = parseFloat(newConcentration)
     if (isNaN(value)) {
       toast({
         title: 'Invalid Input',
         description: 'Concentration must be a valid number',
+        variant: 'destructive',
+      })
+      return
+    }
+
+    if (value < 0) {
+      toast({
+        title: 'Invalid Input',
+        description: 'Concentration must be zero or greater',
         variant: 'destructive',
       })
       return
@@ -111,11 +137,24 @@ export function SpeciesConcentrationTab() {
     setNewConcentration('')
   }
 
+  const handleSelectMissing = (species) => {
+    setNewSpecies(species)
+    concentrationInputRef.current?.focus()
+  }
+
   const handleConcentrationChange = (species, value) => {
     const parsed = parseFloat(value)
-    if (!isNaN(parsed)) {
+    if (!isNaN(parsed) && parsed >= 0) {
       dispatch(setConcentration({ species, value: parsed }))
     }
+  }
+
+  // Brief visual confirmation that a row's edit was committed
+  const flashUpdated = (species) => {
+    setJustUpdatedSpecies(species)
+    setTimeout(() => {
+      setJustUpdatedSpecies((current) => (current === species ? null : current))
+    }, 600)
   }
 
   const toggleSelected = (species) => {
@@ -158,30 +197,69 @@ export function SpeciesConcentrationTab() {
 
   return (
     <div className={EDITOR_GRID}>
-      <Card className="w-fit">
+      <Card className="w-[26rem]">
         <CardHeader>
           <CardTitle>Species concentration</CardTitle>
-          <CardDescription>Set initial concentrations for chemical species</CardDescription>
+          <CardDescription className="whitespace-nowrap">
+            Set initial concentrations for chemical species
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="w-72 mx-auto">
+          <div className="w-full">
             <label className={FIELD_LABEL}>Species</label>
             <input
               type="text"
               value={newSpecies}
               onChange={(e) => setNewSpecies(e.target.value)}
-              placeholder="e.g., O2"
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault()
+                  concentrationInputRef.current?.focus()
+                }
+              }}
+              placeholder="Search or enter species name"
               className={TEXT_INPUT}
             />
           </div>
 
-          <div className="w-72 mx-auto">
+          {missingSpecies.length > 0 && (
+            <div className="p-3 border border-border bg-surface-alt rounded-lg text-xs text-ink">
+              <p className="font-semibold mb-1.5 text-center">
+                {missingSpecies.length} not set, default to 0 mol m-3
+              </p>
+              {visibleMissingSpecies.length === 0 ? (
+                <p className="text-muted">No matches for "{newSpecies.trim()}".</p>
+              ) : (
+                <div className="flex flex-wrap gap-1.5 max-h-32 overflow-y-auto">
+                  {visibleMissingSpecies.map((name) => (
+                    <button
+                      key={name}
+                      type="button"
+                      onClick={() => handleSelectMissing(name)}
+                      className="px-2 py-0.5 rounded-full bg-white border border-border font-mono hover:bg-action hover:text-white hover:border-action transition-colors"
+                    >
+                      {name}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          <div className="w-full">
             <label className={FIELD_LABEL}>Concentration (mol m-3)</label>
             <input
+              ref={concentrationInputRef}
               type="text"
               inputMode="decimal"
               value={newConcentration}
               onChange={(e) => setNewConcentration(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault()
+                  handleAdd()
+                }
+              }}
               placeholder="1e-8"
               className={TEXT_INPUT}
             />
@@ -192,37 +270,10 @@ export function SpeciesConcentrationTab() {
             <Button
               onClick={handleAdd}
               variant="assistSecondary"
-              className="h-9 px-8 text-base">
+              className="h-9 px-8 text-base rounded-lg bg-white text-heading hover:bg-assist-secondary">
               Add species
             </Button>
           </div>
-
-          {missingSpecies.length > 0 && (
-            <div className="w-72 mx-auto">
-              <button
-                type="button"
-                onClick={() => setShowMissing((prev) => !prev)}
-                className="w-full text-xs font-semibold px-2 py-1 rounded-full border border-border bg-surface-alt text-muted hover:bg-surface-hover"
-              >
-                {missingSpecies.length} not set (default to 0)
-              </button>
-              {showMissing && (
-                <div className="mt-2 p-3 border border-border bg-surface-alt rounded-lg text-xs text-ink">
-                  <p className="font-semibold mb-1.5">Not set, default to 0 mol m-3:</p>
-                  <div className="flex flex-wrap gap-1.5 max-h-32 overflow-y-auto">
-                    {missingSpecies.map((name) => (
-                      <span
-                        key={name}
-                        className="px-2 py-0.5 rounded-full bg-white border border-border font-mono"
-                      >
-                        {name}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
         </CardContent>
       </Card>
 
@@ -272,7 +323,7 @@ export function SpeciesConcentrationTab() {
                         checked={selectedSpecies.size === visibleSpeciesEntries.length}
                         onChange={toggleSelectAll}
                         aria-label="Select all species"
-                        className="accent-green-700"
+                        className="accent-action"
                       />
                     </th>
                     <th className="text-left px-4 py-2 font-semibold">Species</th>
@@ -288,7 +339,7 @@ export function SpeciesConcentrationTab() {
                           checked={selectedSpecies.has(species)}
                           onChange={() => toggleSelected(species)}
                           aria-label={`Select ${species}`}
-                          className="accent-green-700"
+                          className="accent-action"
                         />
                       </td>
                       <td className="px-4 py-2 font-mono font-semibold">{species}</td>
@@ -297,7 +348,19 @@ export function SpeciesConcentrationTab() {
                           type="text"
                           value={concentration}
                           onChange={(e) => handleConcentrationChange(species, e.target.value)}
-                          className="w-full px-2 py-1 border border-gray-300 bg-white rounded text-sm font-mono focus:outline-none focus:ring-2 focus:ring-action"
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault()
+                              flashUpdated(species)
+                              e.target.blur()
+                            }
+                          }}
+                          onBlur={() => flashUpdated(species)}
+                          className={`w-full px-2 py-1 border rounded text-sm font-mono focus:outline-none focus:ring-2 focus:ring-action transition-colors duration-300 ${
+                            justUpdatedSpecies === species
+                              ? 'border-action bg-assist-secondary'
+                              : 'border-gray-300 bg-white'
+                          }`}
                         />
                       </td>
                     </tr>
@@ -308,21 +371,6 @@ export function SpeciesConcentrationTab() {
           )}
         </CardContent>
       </Card>
-
-      <div className="lg:col-span-2 bg-surface-alt backdrop-blur-lg border border-border rounded-lg p-3 text-xs text-ink">
-        <p className="font-semibold mb-1 flex items-center gap-2">
-          <Lightbulb className="w-4 h-4" />
-          Tips:
-        </p>
-        <ul className="space-y-0.5 ml-4">
-          <li>• Use scientific notation for small values (e.g., 1e-8)</li>
-          <li>• Concentrations are in mol m-3 (molar concentration)</li>
-          <li>
-            • Species must exist in the selected mechanism
-            {selectedMechanism ? `: ${selectedMechanism}` : ''}
-          </li>
-        </ul>
-      </div>
     </div>
   )
 }
