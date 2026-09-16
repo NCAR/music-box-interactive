@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card'
 import { Button } from '../ui/button'
-import { Lightbulb } from 'lucide-react'
 import { hydrateInitialConditions } from '../../utils/hydrateConditions'
 import {
   setTemperature,
@@ -44,7 +43,6 @@ export function SpeciesConcentrationTab() {
   const conditions = useSelector((state) => state.conditions.conditions)
   const hydratedExampleId = useSelector((state) => state.conditions.hydration.initialExampleId)
   const currentExample = useSelector((state) => state.mechanism.currentExample)
-  const selectedMechanism = useSelector((state) => state.mechanism.selectedMechanism)
   const mechanismSpecies = useSelector((state) => state.mechanism.species)
 
   const [newSpecies, setNewSpecies] = useState('')
