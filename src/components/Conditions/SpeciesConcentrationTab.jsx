@@ -19,7 +19,7 @@ import { LIST_CARD, LIST_CARD_CONTENT, FIELD_LABEL, TEXT_INPUT_SM } from '../Mec
 const EDITOR_GRID = 'grid grid-cols-1 gap-4 lg:grid-cols-[auto_1fr] lg:items-start'
 
 const TEXT_INPUT =
-  'w-72 h-9 px-2 border border-gray-400 bg-white/10 text-gray-900 placeholder:text-gray-500 rounded-lg text-sm text-center font-mono focus:outline-none focus:ring-2 focus:ring-green-700 focus:border-transparent'
+  'w-72 h-9 px-2 border border-gray-400 bg-white/10 text-gray-900 placeholder:text-gray-500 rounded-lg text-sm text-center font-mono focus:outline-none focus:ring-2 focus:ring-action focus:border-transparent'
 
 /**
  * SpeciesConcentrationTab Component
@@ -297,7 +297,7 @@ export function SpeciesConcentrationTab() {
                           type="text"
                           value={concentration}
                           onChange={(e) => handleConcentrationChange(species, e.target.value)}
-                          className="w-full px-2 py-1 border border-gray-300 bg-white rounded text-sm font-mono focus:outline-none focus:ring-2 focus:ring-green-700"
+                          className="w-full px-2 py-1 border border-gray-300 bg-white rounded text-sm font-mono focus:outline-none focus:ring-2 focus:ring-action"
                         />
                       </td>
                     </tr>
