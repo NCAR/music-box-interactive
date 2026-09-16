@@ -1,4 +1,3 @@
-import { useEffect, useState } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card'
 import { Button } from '../ui/button'
@@ -33,10 +32,12 @@ export function SpeciesConcentrationTab() {
   const hydratedExampleId = useSelector((state) => state.conditions.hydration.initialExampleId)
   const currentExample = useSelector((state) => state.mechanism.currentExample)
   const selectedMechanism = useSelector((state) => state.mechanism.selectedMechanism)
+  const mechanismSpecies = useSelector((state) => state.mechanism.species)
 
   const [newSpecies, setNewSpecies] = useState('')
   const [newConcentration, setNewConcentration] = useState('')
   const [selectedSpecies, setSelectedSpecies] = useState(new Set())
+  const [showMissing, setShowMissing] = useState(false)
 
   useEffect(() => {
     const exampleId = currentExample?.id
@@ -54,6 +55,12 @@ export function SpeciesConcentrationTab() {
   }, [currentExample, dispatch, conditions, hydratedExampleId])
 
   const speciesEntries = Object.entries(initial.concentrations)
+
+  // Species with no initial concentration default to 0 mol m-3, 
+  // which may be intentional but is worth flagging.
+  const missingSpecies = mechanismSpecies
+    .map((species) => species.name)
+    .filter((name) => initial.concentrations[name] === undefined)
 
   const handleAdd = () => {
     const species = newSpecies.trim()
@@ -162,7 +169,7 @@ export function SpeciesConcentrationTab() {
           </div>
 
           <div className="w-72 mx-auto">
-            <label className={FIELD_LABEL}>Concentration (mol/mol)</label>
+            <label className={FIELD_LABEL}>Concentration (mol m-3)</label>
             <input
               type="text"
               inputMode="decimal"
@@ -188,8 +195,17 @@ export function SpeciesConcentrationTab() {
       <Card className={LIST_CARD}>
         <CardHeader>
           <div className="flex items-center justify-between gap-3">
-            <div>
+            <div className="flex items-center gap-2">
               <CardTitle>{speciesEntries.length} species</CardTitle>
+              {missingSpecies.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setShowMissing((prev) => !prev)}
+                  className="text-xs font-semibold px-2 py-1 rounded-full border border-border bg-surface-alt text-muted hover:bg-surface-hover"
+                >
+                  {missingSpecies.length} not set (default to 0)
+                </button>
+              )}
             </div>
             {selectedSpecies.size > 0 && (
               <Button
@@ -204,6 +220,21 @@ export function SpeciesConcentrationTab() {
           </div>
         </CardHeader>
         <CardContent className={LIST_CARD_CONTENT}>
+          {showMissing && missingSpecies.length > 0 && (
+            <div className="mb-3 p-3 border border-border bg-surface-alt rounded-lg text-xs text-ink">
+              <p className="font-semibold mb-1.5">Not set, default to 0 mol m-3:</p>
+              <div className="flex flex-wrap gap-1.5 max-h-32 overflow-y-auto">
+                {missingSpecies.map((name) => (
+                  <span
+                    key={name}
+                    className="px-2 py-0.5 rounded-full bg-white border border-border font-mono"
+                  >
+                    {name}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
           {speciesEntries.length === 0 ? (
             <p className="text-center text-gray-500 py-8">
               No species configured. Add species on the left.
@@ -223,7 +254,7 @@ export function SpeciesConcentrationTab() {
                       />
                     </th>
                     <th className="text-left px-4 py-2 font-semibold">Species</th>
-                    <th className="text-left px-4 py-2 font-semibold">Concentration (mol/mol)</th>
+                    <th className="text-left px-4 py-2 font-semibold">Concentration (mol m-3)</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -263,7 +294,7 @@ export function SpeciesConcentrationTab() {
         </p>
         <ul className="space-y-0.5 ml-4">
           <li>• Use scientific notation for small values (e.g., 1e-8)</li>
-          <li>• Concentrations are in mol/mol (mixing ratio)</li>
+          <li>• Concentrations are in mol m-3 (molar concentration)</li>
           <li>
             • Species must exist in the selected mechanism
             {selectedMechanism ? `: ${selectedMechanism}` : ''}
