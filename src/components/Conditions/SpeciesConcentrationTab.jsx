@@ -13,7 +13,7 @@ import {
   markInitialHydrated,
 } from '../../redux/slices/conditionsSlice'
 import { useToast } from '@/hooks/use-toast'
-import { LIST_CARD, LIST_CARD_CONTENT, FIELD_LABEL } from '../Mechanism/fieldStyles'
+import { LIST_CARD, LIST_CARD_CONTENT, FIELD_LABEL, TEXT_INPUT_SM } from '../Mechanism/fieldStyles'
 
 // Matches EnvironmentTab: the left column fits its content, the right column expands.
 const EDITOR_GRID = 'grid grid-cols-1 gap-4 lg:grid-cols-[auto_1fr] lg:items-start'
@@ -39,6 +39,7 @@ export function SpeciesConcentrationTab() {
   const [newConcentration, setNewConcentration] = useState('')
   const [selectedSpecies, setSelectedSpecies] = useState(new Set())
   const [showMissing, setShowMissing] = useState(false)
+  const [speciesSearch, setSpeciesSearch] = useState('')
 
   useEffect(() => {
     const exampleId = currentExample?.id
@@ -56,6 +57,11 @@ export function SpeciesConcentrationTab() {
   }, [currentExample, dispatch, conditions, hydratedExampleId])
 
   const speciesEntries = Object.entries(initial.concentrations)
+
+  const speciesQuery = speciesSearch.trim().toLowerCase()
+  const visibleSpeciesEntries = speciesQuery
+    ? speciesEntries.filter(([species]) => species.toLowerCase().includes(speciesQuery))
+    : speciesEntries
 
   // Species with no initial concentration default to 0 mol m-3, 
   // which may be intentional but is worth flagging.
@@ -126,9 +132,9 @@ export function SpeciesConcentrationTab() {
 
   const toggleSelectAll = () => {
     setSelectedSpecies((prev) =>
-      prev.size === speciesEntries.length
+      prev.size === visibleSpeciesEntries.length
         ? new Set()
-        : new Set(speciesEntries.map(([species]) => species))
+        : new Set(visibleSpeciesEntries.map(([species]) => species))
     )
   }
 
@@ -190,23 +196,41 @@ export function SpeciesConcentrationTab() {
               Add species
             </Button>
           </div>
+
+          {missingSpecies.length > 0 && (
+            <div className="w-72 mx-auto">
+              <button
+                type="button"
+                onClick={() => setShowMissing((prev) => !prev)}
+                className="w-full text-xs font-semibold px-2 py-1 rounded-full border border-border bg-surface-alt text-muted hover:bg-surface-hover"
+              >
+                {missingSpecies.length} not set (default to 0)
+              </button>
+              {showMissing && (
+                <div className="mt-2 p-3 border border-border bg-surface-alt rounded-lg text-xs text-ink">
+                  <p className="font-semibold mb-1.5">Not set, default to 0 mol m-3:</p>
+                  <div className="flex flex-wrap gap-1.5 max-h-32 overflow-y-auto">
+                    {missingSpecies.map((name) => (
+                      <span
+                        key={name}
+                        className="px-2 py-0.5 rounded-full bg-white border border-border font-mono"
+                      >
+                        {name}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </CardContent>
       </Card>
 
       <Card className={LIST_CARD}>
         <CardHeader>
           <div className="flex items-center justify-between gap-3">
-            <div className="flex items-center gap-2">
+            <div>
               <CardTitle>{speciesEntries.length} species</CardTitle>
-              {missingSpecies.length > 0 && (
-                <button
-                  type="button"
-                  onClick={() => setShowMissing((prev) => !prev)}
-                  className="text-xs font-semibold px-2 py-1 rounded-full border border-border bg-surface-alt text-muted hover:bg-surface-hover"
-                >
-                  {missingSpecies.length} not set (default to 0)
-                </button>
-              )}
             </div>
             {selectedSpecies.size > 0 && (
               <Button
@@ -221,24 +245,21 @@ export function SpeciesConcentrationTab() {
           </div>
         </CardHeader>
         <CardContent className={LIST_CARD_CONTENT}>
-          {showMissing && missingSpecies.length > 0 && (
-            <div className="mb-3 p-3 border border-border bg-surface-alt rounded-lg text-xs text-ink">
-              <p className="font-semibold mb-1.5">Not set, default to 0 mol m-3:</p>
-              <div className="flex flex-wrap gap-1.5 max-h-32 overflow-y-auto">
-                {missingSpecies.map((name) => (
-                  <span
-                    key={name}
-                    className="px-2 py-0.5 rounded-full bg-white border border-border font-mono"
-                  >
-                    {name}
-                  </span>
-                ))}
-              </div>
-            </div>
-          )}
+          <input
+            type="text"
+            value={speciesSearch}
+            onChange={(e) => setSpeciesSearch(e.target.value)}
+            placeholder="Search species by name"
+            className={`w-full mb-3 ${TEXT_INPUT_SM}`}
+          />
+
           {speciesEntries.length === 0 ? (
             <p className="text-center text-gray-500 py-8">
               No species configured. Add species on the left.
+            </p>
+          ) : visibleSpeciesEntries.length === 0 ? (
+            <p className="text-center text-gray-500 py-8">
+              No species match "{speciesSearch}".
             </p>
           ) : (
             <div className="border border-gray-200 rounded-lg overflow-auto">
@@ -248,7 +269,7 @@ export function SpeciesConcentrationTab() {
                     <th className="w-10 px-4 py-2">
                       <input
                         type="checkbox"
-                        checked={selectedSpecies.size === speciesEntries.length}
+                        checked={selectedSpecies.size === visibleSpeciesEntries.length}
                         onChange={toggleSelectAll}
                         aria-label="Select all species"
                         className="accent-green-700"
@@ -259,7 +280,7 @@ export function SpeciesConcentrationTab() {
                   </tr>
                 </thead>
                 <tbody>
-                  {speciesEntries.map(([species, concentration]) => (
+                  {visibleSpeciesEntries.map(([species, concentration]) => (
                     <tr key={species} className="border-b border-gray-200 hover:bg-gray-50">
                       <td className="px-4 py-2">
                         <input
