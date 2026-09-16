@@ -3,7 +3,7 @@ export const normalizeSimulationResults = (raw) => {
   if (raw && typeof raw === 'object' && raw.columns && raw.data) {
     const { columns, data } = raw
     const timeColumn = columns[0]
-    const speciesColumns = columns.slice(1)
+    const speciesColumns = columns.slice(1).filter((col) => col.startsWith('CONC.'))
 
     if (!data[timeColumn] || !Array.isArray(data[timeColumn])) {
       return []
