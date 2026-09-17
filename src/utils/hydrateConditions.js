@@ -68,49 +68,67 @@ export function hydrateInitialConditions(conditions) {
 }
 
 export function hydrateEvolvingConditions(conditions) {
-  // Require more than one row to count as evolving, not just a snapshot.
-  const evolvingBlock = dataBlocks(conditions).find((block) => {
+  const empty = { enabled: false, times: [], temperature: [], pressure: [], additionalSeries: {} }
+  const isEnvOnlyHeader = (header) =>
+    header === 'time.s' || header === 'ENV.temperature.K' || header === 'ENV.pressure.Pa'
+
+  const relevantBlocks = dataBlocks(conditions).filter((block) => {
     const headers = block?.headers || []
     const rows = block?.rows || []
-    return (
-      rows.length > 1 &&
-      headers.includes('time.s') &&
-      headers.includes('ENV.pressure.Pa') &&
-      headers.includes('ENV.temperature.K')
-    )
+    if (!headers.includes('time.s')) return false
+    if (rows.length > 1) return true
+    return headers.some((header) => !isEnvOnlyHeader(header) && !header.startsWith('CONC.'))
   })
 
-  const empty = { enabled: false, times: [], temperature: [], pressure: [], additionalSeries: {} }
-
-  if (!evolvingBlock?.headers?.length || !evolvingBlock?.rows?.length) {
+  if (relevantBlocks.length === 0) {
     return empty
   }
 
-  const validRows = parseConditions({ data: [evolvingBlock] })
-    .filter(
-      (row) =>
-        Number.isFinite(row['time.s']) &&
-        Number.isFinite(row['ENV.pressure.Pa']) &&
-        Number.isFinite(row['ENV.temperature.K'])
-    )
-    .sort((a, b) => a['time.s'] - b['time.s'])
+  const rows = parseConditions({ data: relevantBlocks }).filter((row) =>
+    Number.isFinite(row['time.s'])
+  )
 
-  if (validRows.length === 0) {
+  if (rows.length === 0) {
     return empty
   }
 
-  const additionalHeaders = evolvingBlock.headers.filter(
-    (header) => header !== 'time.s' && header !== 'ENV.pressure.Pa' && header !== 'ENV.temperature.K'
+  const byTime = new Map()
+  for (const row of rows) {
+    const t = row['time.s']
+    byTime.set(t, { ...(byTime.get(t) || {}), ...row })
+  }
+  const mergedRows = [...byTime.values()].sort((a, b) => a['time.s'] - b['time.s'])
+
+  // Left blank (null) when a row doesn't set it
+  const times = mergedRows.map((row) => row['time.s'])
+  const temperature = mergedRows.map((row) =>
+    Number.isFinite(row['ENV.temperature.K']) ? row['ENV.temperature.K'] : null
+  )
+  const pressure = mergedRows.map((row) =>
+    Number.isFinite(row['ENV.pressure.Pa']) ? row['ENV.pressure.Pa'] : null
+  )
+
+  const allHeaders = new Set()
+  relevantBlocks.forEach((block) => (block.headers || []).forEach((header) => allHeaders.add(header)))
+  const additionalHeaders = [...allHeaders].filter(
+    (header) =>
+      header !== 'time.s' &&
+      header !== 'ENV.temperature.K' &&
+      header !== 'ENV.pressure.Pa' &&
+      !header.startsWith('CONC.')
   )
   const additionalSeries = Object.fromEntries(
-    additionalHeaders.map((header) => [header, validRows.map((row) => row[header])])
+    additionalHeaders.map((header) => [
+      header,
+      mergedRows.map((row) => (row[header] !== undefined ? row[header] : null)),
+    ])
   )
 
   return {
     enabled: true,
-    times: validRows.map((row) => row['time.s']),
-    pressure: validRows.map((row) => row['ENV.pressure.Pa']),
-    temperature: validRows.map((row) => row['ENV.temperature.K']),
+    times,
+    temperature,
+    pressure,
     additionalSeries,
   }
 }

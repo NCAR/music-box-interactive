@@ -5,7 +5,7 @@ import {
   TimeTab,
   EnvironmentTab,
   SpeciesConcentrationTab,
-  EvolvingConditionsTab,
+  ReactionTab,
   ReviewTab,
 } from '../Conditions'
 
@@ -14,13 +14,13 @@ import {
  * Main page for configuring simulation conditions with 5 tabs
  */
 export function ConditionsPage() {
-  const [activeTab, setActiveTab] = useState('time') // 'time' | 'environment' | 'species' | 'evolving' | 'review'
+  const [activeTab, setActiveTab] = useState('time') // 'time' | 'environment' | 'species' | 'reaction' | 'review'
 
   const tabs = [
     { id: 'time', label: 'Time', component: TimeTab },
     { id: 'environment', label: 'Environment', component: EnvironmentTab },
     { id: 'species', label: 'Species', component: SpeciesConcentrationTab },
-    { id: 'evolving', label: 'Evolving', component: EvolvingConditionsTab },
+    { id: 'reaction', label: 'Reaction', component: ReactionTab },
     { id: 'review', label: 'Review', component: ReviewTab },
   ]
 

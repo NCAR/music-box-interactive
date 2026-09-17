@@ -442,10 +442,14 @@ export function EnvironmentTab() {
                             </td>
                             <td className="px-4 py-2 font-mono">{formatConversion(time)}</td>
                             <td className="px-4 py-2 font-mono">
-                              {formatConversion(evolving.temperature[index])}
+                              {evolving.temperature[index] != null
+                                ? formatConversion(evolving.temperature[index])
+                                : '—'}
                             </td>
                             <td className="px-4 py-2 font-mono">
-                              {formatConversion(evolving.pressure[index])}
+                              {evolving.pressure[index] != null
+                                ? formatConversion(evolving.pressure[index])
+                                : '—'}
                             </td>
                             {hasDensityColumn && (
                               <td className="px-4 py-2 font-mono">
