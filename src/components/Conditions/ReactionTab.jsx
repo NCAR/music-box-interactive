@@ -32,6 +32,8 @@ const stripPropertyUnit = (prop) => {
   return lastDot === -1 ? prop : prop.slice(0, lastDot)
 }
 
+const hasName = (reaction) => typeof reaction.name === 'string' && reaction.name.trim() !== ''
+
 const REACTION_TYPES = [
   { id: 'PHOTOLYSIS', label: 'Photolysis', prefix: 'PHOTO' },
   { id: 'SURFACE_REACTION', label: 'Surface', prefix: 'SURF' },
@@ -62,12 +64,13 @@ export function ReactionTab() {
 
   const reactionTypeCounts = REACTION_TYPES.map((type) => ({
     ...type,
-    count: mechanismReactions.filter((reaction) => canonicalReactionType(reaction.type) === type.id)
-      .length,
+    count: mechanismReactions.filter(
+      (reaction) => canonicalReactionType(reaction.type) === type.id && hasName(reaction)
+    ).length,
   }))
 
   const reactionsOfType = mechanismReactions.filter(
-    (reaction) => canonicalReactionType(reaction.type) === reactionTypeId
+    (reaction) => canonicalReactionType(reaction.type) === reactionTypeId && hasName(reaction)
   )
 
   const reactionQuery = reactionSearch.trim().toLowerCase()
@@ -75,11 +78,17 @@ export function ReactionTab() {
     ? reactionsOfType.filter((reaction) => reaction.name.toLowerCase().includes(reactionQuery))
     : reactionsOfType
 
+  // Recomputes from its actual source deps (mechanismReactions/reactionTypeId) rather than
+  // depending on the derived reactionsOfType array
   useEffect(() => {
-    if (!reactionsOfType.some((reaction) => reaction.name === reactionName)) {
-      setReactionName(reactionsOfType[0]?.name ?? '')
-    }
-
+    const currentReactionsOfType = mechanismReactions.filter(
+      (reaction) => canonicalReactionType(reaction.type) === reactionTypeId && hasName(reaction)
+    )
+    setReactionName((prev) =>
+      currentReactionsOfType.some((reaction) => reaction.name === prev)
+        ? prev
+        : (currentReactionsOfType[0]?.name ?? '')
+    )
   }, [reactionTypeId, mechanismReactions])
 
   const surfacePrefix = isSurface && reactionName ? `SURF.${reactionName}.` : null
@@ -103,11 +112,12 @@ export function ReactionTab() {
       : [{ key: existingKey ?? bareKey, label: 'Value' }]
     : []
 
+  // Clear on evolvingTimes changing
   useEffect(() => {
     setRowDrafts({})
     setJustUpdatedCell(null)
     setSelectedIndices(new Set())
-  }, [reactionName, reactionTypeId])
+  }, [reactionName, reactionTypeId, evolvingTimes])
 
   const cellDraftKey = (key, index) => `${key}::${index}`
 
