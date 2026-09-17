@@ -131,7 +131,7 @@ describe('hydrateEvolvingConditions', () => {
     expect(result.times).toEqual([])
   })
 
-  it('requires more than one row to count as an evolving series', () => {
+  it('excludes a lone ENV-only single-row snapshot -- that is just the static initial condition', () => {
     const conditions = {
       data: [
         {
@@ -142,6 +142,59 @@ describe('hydrateEvolvingConditions', () => {
     }
     const result = hydrateEvolvingConditions(conditions)
     expect(result.enabled).toBe(false)
+    expect(result.times).toEqual([])
+  })
+
+  it('matches TS1\'s real shape: an ENV-only snapshot at t=0 is excluded, but a t=1000 snapshot carrying rate data is included with its own ENV values', () => {
+    const conditions = {
+      data: [
+        { headers: ['time.s', 'ENV.temperature.K', 'ENV.pressure.Pa'], rows: [[0, 299.55169, 99255.61]] },
+        {
+          headers: ['time.s', 'ENV.pressure.Pa', 'ENV.temperature.K', 'PHOTO.jno2'],
+          rows: [[1000, 1013.199, 287.45, 1.47e-12]],
+        },
+      ],
+    }
+    const result = hydrateEvolvingConditions(conditions)
+    expect(result.enabled).toBe(true)
+    expect(result.times).toEqual([1000])
+    expect(result.temperature).toEqual([287.45])
+    expect(result.pressure).toEqual([1013.199])
+    expect(result.additionalSeries).toEqual({ 'PHOTO.jno2': [1.47e-12] })
+  })
+
+  it('still folds a rate-parameter snapshot with no ENV columns of its own into the series', () => {
+    const conditions = {
+      data: [
+        { headers: ['time.s', 'ENV.temperature.K', 'ENV.pressure.Pa'], rows: [[0, 299.55, 99255.61]] },
+        { headers: ['time.s', 'PHOTO.O2_1.s-1'], rows: [[1000, 1.47e-12]] },
+      ],
+    }
+    const result = hydrateEvolvingConditions(conditions)
+    expect(result.enabled).toBe(true)
+    // The t=0 block is ENV-only, so it's excluded; only the qualifying t=1000 point shows up.
+    expect(result.times).toEqual([1000])
+    expect(result.temperature).toEqual([null])
+    expect(result.pressure).toEqual([null])
+    expect(result.additionalSeries).toEqual({ 'PHOTO.O2_1.s-1': [1.47e-12] })
+  })
+
+  it('excludes CONC.* columns -- those belong to the Species tab, not this series', () => {
+    const conditions = {
+      data: [{ headers: ['time.s', 'ENV.temperature.K', 'CONC.O3.mol m-3'], rows: [[0, 298.15, 5.95e-6]] }],
+    }
+    const result = hydrateEvolvingConditions(conditions)
+    expect(result.additionalSeries).toEqual({})
+  })
+
+  it('leaves temperature/pressure blank (null) when no block ever sets them, but keeps the point', () => {
+    const conditions = {
+      data: [{ headers: ['time.s', 'PHOTO.O2_1.s-1'], rows: [[0, 1.47e-12]] }],
+    }
+    const result = hydrateEvolvingConditions(conditions)
+    expect(result.times).toEqual([0])
+    expect(result.temperature).toEqual([null])
+    expect(result.pressure).toEqual([null])
   })
 
   it('builds times/temperature/pressure and preserves raw additionalSeries headers', () => {
