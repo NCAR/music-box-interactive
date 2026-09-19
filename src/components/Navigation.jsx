@@ -1,6 +1,7 @@
 /* global __APP_VERSION__ */
 import { useState } from 'react'
 import { NavLink } from 'react-router-dom'
+import { useSelector } from 'react-redux'
 import { Home, SlidersHorizontal, Atom, Settings, BarChart3, Info, Bug, MessagesSquare } from 'lucide-react'
 import RunSimulationButton from './RunSimulationButton'
 import DownloadButtons from './DownloadButtons'
@@ -11,13 +12,25 @@ import DownloadButtons from './DownloadButtons'
  */
 export function Navigation() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const hasResults = useSelector((state) => Boolean(state.simulation.results))
 
   const navLinks = [
     { to: '/', label: 'Dashboard', Icon: Home },
-    { to: '/explore', label: 'Explore', Icon: SlidersHorizontal },
     { to: '/mechanism', label: 'Mechanism', Icon: Atom },
     { to: '/conditions', label: 'Conditions', Icon: Settings },
+  ]
+
+  // Explore replays the mechanism live as sliders move; it stays greyed out until a first
+  // run gives it a mechanism and baseline conditions to start from.
+  const resultsLinks = [
     { to: '/plots', label: 'Results', Icon: BarChart3 },
+    {
+      to: '/explore',
+      label: 'Explore',
+      Icon: SlidersHorizontal,
+      disabled: !hasResults,
+      disabledReason: 'Run a simulation first to explore its results interactively',
+    },
   ]
 
   const infoLinks = [{ to: '/about', label: 'About', Icon: Info }]
@@ -43,6 +56,37 @@ export function Navigation() {
     }`
 
   const closeMobileMenu = () => setIsMobileMenuOpen(false)
+
+  const renderNavLink = (link) => {
+    const IconComponent = link.Icon
+
+    if (link.disabled) {
+      return (
+        <div
+          key={link.to}
+          className="flex items-center space-x-3 px-3 sm:px-4 py-2.5 sm:py-3 font-medium text-sm sm:text-base border-l-4 border-transparent text-muted opacity-50 cursor-not-allowed"
+          title={link.disabledReason}
+          aria-disabled="true"
+        >
+          <IconComponent className="w-5 h-5 sm:w-6 sm:h-6 flex-shrink-0" />
+          <span className="truncate">{link.label}</span>
+        </div>
+      )
+    }
+
+    return (
+      <NavLink
+        key={link.to}
+        to={link.to}
+        end={link.to === '/'}
+        onClick={closeMobileMenu}
+        className={navLinkClassName}
+      >
+        <IconComponent className="w-5 h-5 sm:w-6 sm:h-6 flex-shrink-0" />
+        <span className="truncate">{link.label}</span>
+      </NavLink>
+    )
+  }
 
   return (
     <>
@@ -103,21 +147,7 @@ export function Navigation() {
 
         {/* Navigation Links */}
         <div className="flex-1 py-4 sm:py-5 md:py-6 px-3 sm:px-4 space-y-2 overflow-y-auto">
-          {navLinks.slice(0, 4).map((link) => {
-            const IconComponent = link.Icon
-            return (
-              <NavLink
-                key={link.to}
-                to={link.to}
-                end={link.to === '/'}
-                onClick={closeMobileMenu}
-                className={navLinkClassName}
-              >
-                <IconComponent className="w-5 h-5 sm:w-6 sm:h-6 flex-shrink-0" />
-                <span className="truncate">{link.label}</span>
-              </NavLink>
-            )
-          })}
+          {navLinks.map(renderNavLink)}
 
           {/* Separator Line */}
           <div className="border-t border-border my-3 sm:my-4"></div>
@@ -131,22 +161,8 @@ export function Navigation() {
           {/* Separator Line */}
           <div className="border-t border-border my-3 sm:my-4"></div>
 
-          {/* Results Link */}
-          {navLinks.slice(4).map((link) => {
-            const IconComponent = link.Icon
-            return (
-              <NavLink
-                key={link.to}
-                to={link.to}
-                end={link.to === '/'}
-                onClick={closeMobileMenu}
-                className={navLinkClassName}
-              >
-                <IconComponent className="w-5 h-5 sm:w-6 sm:h-6 flex-shrink-0" />
-                <span className="truncate">{link.label}</span>
-              </NavLink>
-            )
-          })}
+          {/* Results & Explore Links */}
+          {resultsLinks.map(renderNavLink)}
         </div>
 
         {/* About / Community */}
