@@ -270,6 +270,18 @@ export function ExplorePage() {
   // latency while dragging for no benefit.
   const scheduleRun = triggerRun
 
+  const updateValueFor = useCallback(
+    (id, v) => {
+      if (id === 'env:temperature') dispatch(setTemperatureEverywhere(v))
+      else if (id === 'env:pressure') dispatch(setPressureEverywhere(v))
+      else if (id.startsWith('rate:')) {
+        dispatch(setRateConstant({ name: id.slice('rate:'.length), value: v }))
+      } else dispatch(setConcentration({ species: id.slice('species:'.length), value: v }))
+      scheduleRun()
+    },
+    [dispatch, scheduleRun]
+  )
+
   // Auto-run once whenever a (new) mechanism is loaded, so Explore shows a live chart
   // immediately rather than waiting for the first slider drag. The persistent solver is tied
   // to the mechanism it was compiled from, so it must be torn down first -- reusing it across
@@ -356,13 +368,13 @@ export function ExplorePage() {
                 const range = ranges[def.id] ?? defaultRangeFor(value)
                 const step = Math.abs(range.max - range.min) / 1000 || 1e-15
 
-                const handleValueChange = (v) => {
-                  if (def.id === 'env:temperature') dispatch(setTemperatureEverywhere(v))
-                  else if (def.id === 'env:pressure') dispatch(setPressureEverywhere(v))
-                  else if (def.id.startsWith('rate:')) {
-                    dispatch(setRateConstant({ name: def.id.slice('rate:'.length), value: v }))
-                  } else dispatch(setConcentration({ species: def.id.slice('species:'.length), value: v }))
-                  scheduleRun()
+                const handleRangeChange = (next) => {
+                  setRanges((prev) => ({ ...prev, [def.id]: next }))
+                  // Keep the value draggable within its new bounds -- otherwise a narrowed
+                  // range leaves the slider's actual value stranded outside [min, max], and
+                  // the native range input can no longer be dragged back into range.
+                  const clamped = Math.min(Math.max(value, next.min), next.max)
+                  if (clamped !== value) updateValueFor(def.id, clamped)
                 }
 
                 return (
@@ -373,8 +385,8 @@ export function ExplorePage() {
                     value={value}
                     range={range}
                     step={step}
-                    onValueChange={handleValueChange}
-                    onRangeChange={(next) => setRanges((prev) => ({ ...prev, [def.id]: next }))}
+                    onValueChange={(v) => updateValueFor(def.id, v)}
+                    onRangeChange={handleRangeChange}
                     onRemove={() => toggleEnabled(def.id)}
                   />
                 )
