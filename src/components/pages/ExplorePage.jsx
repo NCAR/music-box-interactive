@@ -95,13 +95,15 @@ function SliderRow({ label, valueLabel, value, range, step, onValueChange, onRan
         <BoundField
           label={`${label} minimum`}
           value={range.min}
-          onCommit={(min) => onRangeChange({ ...range, min })}
+          // A native range input with min > max collapses to a single fixed position and
+          // stops being draggable, so Min can never be pushed past the current Max.
+          onCommit={(min) => onRangeChange({ ...range, min: Math.min(min, range.max) })}
         />
         <span className="text-[10px] text-muted flex-shrink-0 ml-auto">Max</span>
         <BoundField
           label={`${label} maximum`}
           value={range.max}
-          onCommit={(max) => onRangeChange({ ...range, max })}
+          onCommit={(max) => onRangeChange({ ...range, max: Math.max(max, range.min) })}
         />
       </div>
     </div>
