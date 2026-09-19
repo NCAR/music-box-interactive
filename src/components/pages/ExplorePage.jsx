@@ -41,6 +41,23 @@ function nudgeBelow(x) {
   return x - (Math.abs(x) || FALLBACK_MAX_FOR_ZERO) * 0.1
 }
 
+// Standard scientific notation re-normalizes each number to its own exponent, so a value 10%
+// below a power of ten (9e-19 vs 1e-18) reads as a different order of magnitude even though it
+// barely moved. exponentOf reads that exponent off toExponential() rather than log10, which is
+// unreliable right at a power-of-ten boundary.
+function exponentOf(x) {
+  return parseInt(x.toExponential().split('e')[1], 10)
+}
+
+// Format a bound against the larger-magnitude bound's exponent, so two close bounds display
+// under one shared power of ten (e.g. 0.900e-18 next to 1.000e-18) instead of jumping exponents.
+function formatBound(value, referenceMagnitude) {
+  if (value === 0) return '0'
+  if (referenceMagnitude === 0) return value.toExponential(3)
+  const exponent = exponentOf(referenceMagnitude)
+  return `${(value / 10 ** exponent).toFixed(3)}e${exponent}`
+}
+
 function formatValue(value, unit) {
   if (unit === 'K') return `${value.toFixed(1)} K`
   if (unit === 'Pa') return `${Math.round(value)} Pa`
@@ -54,9 +71,10 @@ function formatValue(value, unit) {
 // numeric value would refuse to show those keystrokes (the prop wouldn't have changed, so React
 // re-renders the old text right back), making scientific notation impossible to type. This only
 // commits upward (onCommit) once the text parses to a finite number; the field keeps showing
-// whatever was actually typed regardless.
-function BoundField({ label, value, onCommit }) {
-  const [text, setText] = useState(() => String(value))
+// whatever was actually typed regardless -- initialText only seeds the very first render (or a
+// remount forced by a `key` change), it is never re-applied over live typing.
+function BoundField({ label, initialText, onCommit }) {
+  const [text, setText] = useState(initialText)
 
   return (
     <input
@@ -87,6 +105,7 @@ function SliderRow({
   onRangeChange,
   onRemove,
 }) {
+  const referenceMagnitude = Math.max(Math.abs(range.min), Math.abs(range.max))
   return (
     <div className="mb-4">
       <div className="flex items-center justify-between gap-2 mb-1.5">
@@ -117,7 +136,7 @@ function SliderRow({
         <BoundField
           key={minKey}
           label={`${label} minimum`}
-          value={range.min}
+          initialText={formatBound(range.min, referenceMagnitude)}
           onCommit={(min) => {
             const crossesMax = min >= range.max
             onRangeChange({
@@ -131,7 +150,7 @@ function SliderRow({
         <BoundField
           key={maxKey}
           label={`${label} maximum`}
-          value={range.max}
+          initialText={formatBound(range.max, referenceMagnitude)}
           onCommit={(max) => {
             const crossesMin = max <= range.min
             onRangeChange({
