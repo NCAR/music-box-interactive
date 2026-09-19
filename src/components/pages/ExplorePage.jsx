@@ -75,7 +75,18 @@ function BoundField({ label, value, onCommit }) {
   )
 }
 
-function SliderRow({ label, valueLabel, value, range, step, onValueChange, onRangeChange, onRemove }) {
+function SliderRow({
+  label,
+  valueLabel,
+  value,
+  range,
+  step,
+  minKey,
+  maxKey,
+  onValueChange,
+  onRangeChange,
+  onRemove,
+}) {
   return (
     <div className="mb-4">
       <div className="flex items-center justify-between gap-2 mb-1.5">
@@ -104,19 +115,31 @@ function SliderRow({ label, valueLabel, value, range, step, onValueChange, onRan
       <div className="flex items-center gap-1.5 mt-1">
         <span className="text-[10px] text-muted flex-shrink-0">Min</span>
         <BoundField
+          key={minKey}
           label={`${label} minimum`}
           value={range.min}
-          onCommit={(min) =>
-            onRangeChange({ min, max: min >= range.max ? nudgeAbove(min) : range.max })
-          }
+          onCommit={(min) => {
+            const crossesMax = min >= range.max
+            onRangeChange({
+              min,
+              max: crossesMax ? nudgeAbove(min) : range.max,
+              nudged: crossesMax ? 'max' : null,
+            })
+          }}
         />
         <span className="text-[10px] text-muted flex-shrink-0 ml-auto">Max</span>
         <BoundField
+          key={maxKey}
           label={`${label} maximum`}
           value={range.max}
-          onCommit={(max) =>
-            onRangeChange({ min: max <= range.min ? nudgeBelow(max) : range.min, max })
-          }
+          onCommit={(max) => {
+            const crossesMin = max <= range.min
+            onRangeChange({
+              min: crossesMin ? nudgeBelow(max) : range.min,
+              max,
+              nudged: crossesMin ? 'min' : null,
+            })
+          }}
         />
       </div>
     </div>
@@ -196,6 +219,10 @@ export function ExplorePage() {
 
   const [enabledIds, setEnabledIds] = useState(null)
   const [ranges, setRanges] = useState({})
+  // Bumped for a bound whenever it gets auto-nudged by editing its sibling, forcing that
+  // BoundField to remount so its displayed text picks up the new value. BoundField otherwise
+  // never re-reads its value prop once mounted (see its own comment above).
+  const [boundKeys, setBoundKeys] = useState({})
   const [pickerOpen, setPickerOpen] = useState(false)
   const [pickerSearch, setPickerSearch] = useState('')
   const pickerRef = useRef(null)
@@ -205,6 +232,7 @@ export function ExplorePage() {
   useEffect(() => {
     setEnabledIds(null)
     setRanges({})
+    setBoundKeys({})
   }, [mechanismData.currentExample?.id])
 
   useEffect(() => {
@@ -381,10 +409,17 @@ export function ExplorePage() {
               enabledDefs.map((def) => {
                 const value = getValueFor(def.id)
                 const range = ranges[def.id] ?? defaultRangeFor(value)
+                const keys = boundKeys[def.id] ?? { min: 0, max: 0 }
                 const step = Math.abs(range.max - range.min) / 1000 || 1e-15
 
-                const handleRangeChange = (next) => {
+                const handleRangeChange = ({ nudged, ...next }) => {
                   setRanges((prev) => ({ ...prev, [def.id]: next }))
+                  if (nudged) {
+                    setBoundKeys((prev) => {
+                      const cur = prev[def.id] ?? { min: 0, max: 0 }
+                      return { ...prev, [def.id]: { ...cur, [nudged]: cur[nudged] + 1 } }
+                    })
+                  }
                   // Keep the value draggable within its new bounds -- otherwise a narrowed
                   // range leaves the slider's actual value stranded outside [min, max], and
                   // the native range input can no longer be dragged back into range.
@@ -400,6 +435,8 @@ export function ExplorePage() {
                     value={value}
                     range={range}
                     step={step}
+                    minKey={keys.min}
+                    maxKey={keys.max}
                     onValueChange={(v) => updateValueFor(def.id, v)}
                     onRangeChange={handleRangeChange}
                     onRemove={() => toggleEnabled(def.id)}
