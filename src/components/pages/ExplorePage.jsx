@@ -134,7 +134,7 @@ function SliderRow({
       <div className="flex items-center gap-1.5 mt-1">
         <span className="text-[10px] text-muted flex-shrink-0">Min</span>
         <BoundField
-          key={minKey}
+          key={`min-${minKey}`}
           label={`${label} minimum`}
           initialText={formatBound(range.min, referenceMagnitude)}
           onCommit={(min) => {
@@ -148,7 +148,7 @@ function SliderRow({
         />
         <span className="text-[10px] text-muted flex-shrink-0 ml-auto">Max</span>
         <BoundField
-          key={maxKey}
+          key={`max-${maxKey}`}
           label={`${label} maximum`}
           initialText={formatBound(range.max, referenceMagnitude)}
           onCommit={(max) => {
