@@ -2,7 +2,17 @@
 import { useState } from 'react'
 import { NavLink } from 'react-router-dom'
 import { useSelector } from 'react-redux'
-import { Home, SlidersHorizontal, Atom, Settings, BarChart3, Info, Bug, MessagesSquare } from 'lucide-react'
+import {
+  Home,
+  SlidersHorizontal,
+  Atom,
+  Settings,
+  BarChart3,
+  Mountain,
+  Info,
+  Bug,
+  MessagesSquare,
+} from 'lucide-react'
 import RunSimulationButton from './RunSimulationButton'
 import DownloadButtons from './DownloadButtons'
 
@@ -20,8 +30,8 @@ export function Navigation() {
     { to: '/conditions', label: 'Conditions', Icon: Settings },
   ]
 
-  // Explore replays the mechanism live as sliders move; it stays greyed out until a first
-  // run gives it a mechanism and baseline conditions to start from.
+  // Explore and Isopleths both replay the mechanism against new conditions; each stays greyed
+  // out until a first run gives it a mechanism and baseline conditions to start from.
   const resultsLinks = [
     { to: '/plots', label: 'Results', Icon: BarChart3 },
     {
@@ -30,6 +40,13 @@ export function Navigation() {
       Icon: SlidersHorizontal,
       disabled: !hasResults,
       disabledReason: 'Run a simulation first to explore its results interactively',
+    },
+    {
+      to: '/isopleths',
+      label: 'Isopleths',
+      Icon: Mountain,
+      disabled: !hasResults,
+      disabledReason: 'Run a simulation first to scan it across a grid of conditions',
     },
   ]
 

@@ -4,6 +4,7 @@ import { useEffect } from 'react'
 import Navigation from '../Navigation'
 import DashboardPage from './DashboardPage'
 import ExplorePage from './ExplorePage'
+import IsoplethsPage from './IsoplethsPage'
 import MechanismPage from './MechanismPage'
 import ConditionsPage from './ConditionsPage'
 import PlotsPage from './PlotsPage'
@@ -45,6 +46,7 @@ function AppContent() {
           <Routes>
             <Route path="/" element={<DashboardPage />} />
             <Route path="/explore" element={<ExplorePage />} />
+            <Route path="/isopleths" element={<IsoplethsPage />} />
             <Route path="/mechanism" element={<MechanismPage />} />
             <Route path="/conditions" element={<ConditionsPage />} />
             <Route path="/plots" element={<PlotsPage />} />

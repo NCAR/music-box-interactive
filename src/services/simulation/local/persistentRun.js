@@ -29,13 +29,15 @@ export const resetPersistentSolver = () => {
 }
 
 /**
- * Like runLocalSimulation, but keeps the compiled solver alive across calls instead of
- * rebuilding it every time. Only correct to call repeatedly for the *same* mechanism -- the
- * caller is responsible for calling resetPersistentSolver() first when the mechanism changes,
- * since this function has no way to detect that on its own (a plain object identity check
- * would break under Redux's own re-render/reconciliation).
+ * Compiles-or-updates the persistent solver, runs it, and returns normalized/filtered results
+ * without touching Redux. Shared by runPersistentSimulation (below) and by callers that need to
+ * run the solver many times in a row -- e.g. an isopleth grid scan -- without each call
+ * overwriting the shared `simulation` slice that Results and Explore both read.
+ *
+ * Same reuse contract as runPersistentSimulation: only correct to call repeatedly for the same
+ * mechanism; the caller must call resetPersistentSolver() first when the mechanism changes.
  */
-export const runPersistentSimulation = async ({ mechanismData, conditions }) => {
+export const solvePersistentQuiet = async ({ mechanismData, conditions }) => {
   const { payload, mechanismLabel, productConcentrationKeys } = buildTracedSimulationPayload({
     mechanismData,
     conditions,
@@ -58,6 +60,22 @@ export const runPersistentSimulation = async ({ mechanismData, conditions }) => 
     normalizedPoints,
     productConcentrationKeys
   )
+
+  return { filteredResults, excludedResults, mechanismLabel, payload }
+}
+
+/**
+ * Like runLocalSimulation, but keeps the compiled solver alive across calls instead of
+ * rebuilding it every time. Only correct to call repeatedly for the *same* mechanism -- the
+ * caller is responsible for calling resetPersistentSolver() first when the mechanism changes,
+ * since this function has no way to detect that on its own (a plain object identity check
+ * would break under Redux's own re-render/reconciliation).
+ */
+export const runPersistentSimulation = async ({ mechanismData, conditions }) => {
+  const { filteredResults, excludedResults, mechanismLabel, payload } = await solvePersistentQuiet({
+    mechanismData,
+    conditions,
+  })
 
   if (filteredResults.length > 0) {
     store.dispatch(setResults(filteredResults))
