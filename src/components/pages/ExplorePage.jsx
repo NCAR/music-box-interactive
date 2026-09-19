@@ -30,6 +30,17 @@ function defaultRangeFor(value) {
   return { min: 0, max }
 }
 
+// A native range input with max <= min collapses to a single fixed position and cannot be
+// dragged. When editing one bound would cross the other, widen the untouched bound by 10%
+// instead of snapping it flush -- that keeps the range draggable and keeps the edited bound at
+// exactly the value the user typed.
+function nudgeAbove(x) {
+  return x + (Math.abs(x) || FALLBACK_MAX_FOR_ZERO) * 0.1
+}
+function nudgeBelow(x) {
+  return x - (Math.abs(x) || FALLBACK_MAX_FOR_ZERO) * 0.1
+}
+
 function formatValue(value, unit) {
   if (unit === 'K') return `${value.toFixed(1)} K`
   if (unit === 'Pa') return `${Math.round(value)} Pa`
@@ -95,15 +106,17 @@ function SliderRow({ label, valueLabel, value, range, step, onValueChange, onRan
         <BoundField
           label={`${label} minimum`}
           value={range.min}
-          // A native range input with min > max collapses to a single fixed position and
-          // stops being draggable, so Min can never be pushed past the current Max.
-          onCommit={(min) => onRangeChange({ ...range, min: Math.min(min, range.max) })}
+          onCommit={(min) =>
+            onRangeChange({ min, max: min >= range.max ? nudgeAbove(min) : range.max })
+          }
         />
         <span className="text-[10px] text-muted flex-shrink-0 ml-auto">Max</span>
         <BoundField
           label={`${label} maximum`}
           value={range.max}
-          onCommit={(max) => onRangeChange({ ...range, max: Math.max(max, range.min) })}
+          onCommit={(max) =>
+            onRangeChange({ min: max <= range.min ? nudgeBelow(max) : range.min, max })
+          }
         />
       </div>
     </div>
