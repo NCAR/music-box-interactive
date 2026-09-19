@@ -159,6 +159,27 @@ function ChartTooltipContent({ active, payload, timeLabel, maxVisible, compact }
   )
 }
 
+// Matches this project's Tailwind "xs" breakpoint (tailwind.config.js). Tracked in JS instead
+// of rendering both a compact and a full chart and hiding one with CSS -- Recharts/React's
+// reconciliation cost for a large chart is real, and paying it twice on every update (once for
+// a tree that's never even visible) roughly doubles render time for nothing.
+const XS_BREAKPOINT_QUERY = '(min-width: 475px)'
+
+function useIsCompactChart() {
+  const [isCompact, setIsCompact] = useState(() =>
+    typeof window === 'undefined' ? false : !window.matchMedia(XS_BREAKPOINT_QUERY).matches
+  )
+
+  useEffect(() => {
+    const mql = window.matchMedia(XS_BREAKPOINT_QUERY)
+    const handleChange = (e) => setIsCompact(!e.matches)
+    mql.addEventListener('change', handleChange)
+    return () => mql.removeEventListener('change', handleChange)
+  }, [])
+
+  return isCompact
+}
+
 /**
  * SimulationChart Component
  * Displays atmospheric chemistry concentration data with interactive controls
@@ -168,6 +189,7 @@ function ChartTooltipContent({ active, payload, timeLabel, maxVisible, compact }
  * @param {Object} props.metadata - Simulation metadata (mechanism, duration, etc.)
  */
 export function SimulationChart({ results, metadata }) {
+  const isCompact = useIsCompactChart()
   const [speciesSearch, setSpeciesSearch] = useState('')
   const [selectedSpecies, setSelectedSpecies] = useState([])
   const [initialized, setInitialized] = useState(false)
@@ -229,11 +251,17 @@ export function SimulationChart({ results, metadata }) {
     return speciesNames
   }, [results])
 
-  // Reset initialization when results change
+  // A rerun of the same mechanism (e.g. dragging a slider on the Explore tab) produces a new
+  // `results` array on every run without changing which species exist. Resetting selection off
+  // `results` identity would wipe out the user's picks on every drag; keying off the actual
+  // species set instead only resets when a genuinely different mechanism is loaded.
+  const speciesSignature = allSpecies.join('|')
+
+  // Reset initialization when the set of species changes
   useEffect(() => {
     setInitialized(false)
     setSelectedSpecies([])
-  }, [results])
+  }, [speciesSignature])
 
   // Select all species by default
   useEffect(() => {
@@ -241,7 +269,7 @@ export function SimulationChart({ results, metadata }) {
       setSelectedSpecies(allSpecies)
       setInitialized(true)
     }
-  }, [allSpecies, results, selectedSpecies.length, initialized])
+  }, [allSpecies, selectedSpecies.length, initialized])
 
   // Format data for chart
   const chartData = useMemo(() => {
@@ -623,8 +651,15 @@ export function SimulationChart({ results, metadata }) {
 
         {/* Chart */}
         <div className="border rounded-lg p-2 xs:p-3 sm:p-4 bg-white">
-          <ResponsiveContainer width="100%" height={450} className="xs:hidden">
-            <LineChart data={chartData} margin={{ top: 5, right: 5, left: 5, bottom: 5 }}>
+          <ResponsiveContainer width="100%" height={isCompact ? 450 : 680}>
+            <LineChart
+              data={chartData}
+              margin={
+                isCompact
+                  ? { top: 5, right: 5, left: 5, bottom: 5 }
+                  : { top: 5, right: 30, left: 30, bottom: 5 }
+              }
+            >
               <CartesianGrid strokeDasharray="3 3" stroke="#D8D6D2" />
 
               <XAxis
@@ -632,14 +667,14 @@ export function SimulationChart({ results, metadata }) {
                 domain={timeDomain}
                 ticks={xAxisTicks}
                 stroke="#5f6368"
-                tick={{ fontSize: 10, fill: '#5f6368' }}
+                tick={{ fontSize: isCompact ? 10 : 12, fill: '#5f6368' }}
                 type="number"
               >
                 <Label
                   value={timeUnit.axisLabel}
                   position="insideBottom"
                   offset={-5}
-                  style={{ fill: '#1f2937', fontWeight: 600, fontSize: 11 }}
+                  style={{ fill: '#1f2937', fontWeight: 600, fontSize: isCompact ? 11 : 14 }}
                 />
               </XAxis>
 
@@ -650,94 +685,23 @@ export function SimulationChart({ results, metadata }) {
                   (dataMax) => dataMax * 10,
                 ]}
                 stroke="#5f6368"
-                tick={{ fontSize: 8, fill: '#5f6368' }}
+                tick={{ fontSize: isCompact ? 8 : 11, fill: '#5f6368' }}
                 tickFormatter={(value) => {
                   if (value === 0 || !isFinite(value)) return '0'
                   return value.toExponential(0)
                 }}
                 allowDataOverflow={false}
-                width={38}
-              />
-
-              <Tooltip
-                wrapperStyle={{ zIndex: 10 }}
-                content={({ active, payload, label }) => (
-                  <ChartTooltipContent
-                    active={active}
-                    payload={payload}
-                    timeLabel={`${
-                      timeUnit.divisor === 1 ? label?.toLocaleString() : label?.toFixed(2)
-                    } ${timeUnit.suffix}`}
-                    maxVisible={TOOLTIP_VISIBLE_COMPACT}
-                    compact
+                width={isCompact ? 38 : 70}
+              >
+                {!isCompact && (
+                  <Label
+                    value={plotUnit.axisLabel}
+                    angle={-90}
+                    position="insideLeft"
+                    offset={10}
+                    style={{ fill: '#1f2937', fontWeight: 600, fontSize: 13, textAnchor: 'middle' }}
                   />
                 )}
-              />
-
-              <Legend
-                wrapperStyle={{ paddingTop: '16px' }}
-                content={<ChartLegendContent maxVisible={LEGEND_VISIBLE_COMPACT} compact />}
-              />
-
-              {displaySpecies.map((species) => (
-                <Line
-                  key={species}
-                  type="monotone"
-                  dataKey={species}
-                  stroke={colors[allSpecies.indexOf(species) % colors.length]}
-                  strokeWidth={2}
-                  dot={results.length <= 10 ? { r: 3 } : false}
-                  name={getSpeciesDisplayName(species)}
-                  connectNulls
-                  isAnimationActive={false}
-                />
-              ))}
-            </LineChart>
-          </ResponsiveContainer>
-
-          {/* Larger chart for bigger screens */}
-          <ResponsiveContainer width="100%" height={680} className="hidden xs:block">
-            <LineChart data={chartData} margin={{ top: 5, right: 30, left: 30, bottom: 5 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#D8D6D2" />
-
-              <XAxis
-                dataKey="timeSeconds"
-                domain={timeDomain}
-                ticks={xAxisTicks}
-                stroke="#5f6368"
-                tick={{ fontSize: 12, fill: '#5f6368' }}
-                type="number"
-              >
-                <Label
-                  value={timeUnit.axisLabel}
-                  position="insideBottom"
-                  offset={-5}
-                  style={{ fill: '#1f2937', fontWeight: 600, fontSize: 14 }}
-                />
-              </XAxis>
-
-              <YAxis
-                scale="log"
-                domain={[
-                  (dataMin) => (dataMin > 0 ? dataMin / 10 : 1e-20),
-                  (dataMax) => dataMax * 10,
-                ]}
-                stroke="#5f6368"
-                tick={{ fontSize: 11, fill: '#5f6368' }}
-                tickFormatter={(value) => {
-                  if (value === 0 || !isFinite(value)) return '0'
-                  return value.toExponential(0)
-                }}
-                allowDataOverflow={false}
-                width={70}
-              >
-                <Label
-                  value={plotUnit.axisLabel}
-                  angle={-90}
-                  position="insideLeft"
-                  offset={10}
-                  style={{ fill: '#1f2937', fontWeight: 600, fontSize: 13, textAnchor: 'middle' }}
-                />
               </YAxis>
 
               <Tooltip
@@ -748,15 +712,21 @@ export function SimulationChart({ results, metadata }) {
                     payload={payload}
                     timeLabel={`${
                       timeUnit.divisor === 1 ? label?.toLocaleString() : label?.toFixed(2)
-                    } ${timeUnit.label.toLowerCase()}`}
-                    maxVisible={TOOLTIP_VISIBLE}
+                    } ${isCompact ? timeUnit.suffix : timeUnit.label.toLowerCase()}`}
+                    maxVisible={isCompact ? TOOLTIP_VISIBLE_COMPACT : TOOLTIP_VISIBLE}
+                    compact={isCompact}
                   />
                 )}
               />
 
               <Legend
-                wrapperStyle={{ paddingTop: '20px' }}
-                content={<ChartLegendContent maxVisible={LEGEND_VISIBLE} />}
+                wrapperStyle={{ paddingTop: isCompact ? '16px' : '20px' }}
+                content={
+                  <ChartLegendContent
+                    maxVisible={isCompact ? LEGEND_VISIBLE_COMPACT : LEGEND_VISIBLE}
+                    compact={isCompact}
+                  />
+                }
               />
 
               {displaySpecies.map((species) => (
@@ -765,8 +735,8 @@ export function SimulationChart({ results, metadata }) {
                   type="monotone"
                   dataKey={species}
                   stroke={colors[allSpecies.indexOf(species) % colors.length]}
-                  strokeWidth={3}
-                  dot={results.length <= 10 ? { r: 4 } : false}
+                  strokeWidth={isCompact ? 2 : 3}
+                  dot={results.length <= 10 ? { r: isCompact ? 3 : 4 } : false}
                   name={getSpeciesDisplayName(species)}
                   connectNulls
                   isAnimationActive={false}

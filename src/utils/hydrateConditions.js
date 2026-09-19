@@ -68,7 +68,11 @@ export function hydrateInitialConditions(conditions) {
 }
 
 export function hydrateEvolvingConditions(conditions) {
-  // Require more than one row to count as evolving, not just a snapshot.
+  // Require more than one row to count as evolving, not just a snapshot. Some examples (e.g.
+  // Analytical) carry a legacy single-row conditions block alongside their real initial-conditions
+  // CSV; without this check it gets mistaken for an evolving series and its (stale) values
+  // silently win over the real initial conditions -- see ConditionsManager's "inline data takes
+  // precedence" merge in the music-box package.
   const evolvingBlock = dataBlocks(conditions).find((block) => {
     const headers = block?.headers || []
     const rows = block?.rows || []

@@ -79,7 +79,7 @@ export function DashboardPage() {
   }
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-10">
       {/* Welcome Section */}
       <Card>
         <CardHeader className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-1 space-y-0 p-4 sm:p-5">

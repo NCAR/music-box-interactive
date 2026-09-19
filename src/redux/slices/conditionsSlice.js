@@ -65,6 +65,24 @@ export const conditionsSlice = createSlice({
     setPressure: (state, action) => {
       state.initial.pressure = action.payload
     },
+    // Some examples ship an evolving ENV.temperature.K/ENV.pressure.Pa series (e.g. Chapman's
+    // Boulder conditions) that the solver treats as authoritative from t=0 onward -- see
+    // ConditionsManager's "inline data takes precedence" merge. Setting initial.temperature
+    // alone would be silently overridden by that series, so these also flatten it to a
+    // constant at the new value, for callers (like Explore) that want the change to actually
+    // take effect for the whole run.
+    setTemperatureEverywhere: (state, action) => {
+      state.initial.temperature = action.payload
+      if (Array.isArray(state.evolving.temperature) && state.evolving.temperature.length > 0) {
+        state.evolving.temperature = state.evolving.temperature.map(() => action.payload)
+      }
+    },
+    setPressureEverywhere: (state, action) => {
+      state.initial.pressure = action.payload
+      if (Array.isArray(state.evolving.pressure) && state.evolving.pressure.length > 0) {
+        state.evolving.pressure = state.evolving.pressure.map(() => action.payload)
+      }
+    },
     setConcentrations: (state, action) => {
       state.initial.concentrations = action.payload
     },
@@ -140,6 +158,8 @@ export const {
   setOutputFrequency,
   setTemperature,
   setPressure,
+  setTemperatureEverywhere,
+  setPressureEverywhere,
   setConcentrations,
   setConcentration,
   removeConcentration,
