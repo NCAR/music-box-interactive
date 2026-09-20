@@ -23,8 +23,7 @@ import {
 import { UnitDropdown } from '../Plots/UnitDropdown'
 import { CONCENTRATION_UNITS, airDensityMolM3, toMolM3, fromMolM3 } from '../../utils/concentrationUnits'
 
-// The one property with a unit choice; its key is fixed to mol m-3, so ppb input is converted
-// before it's stored or saved.
+// A unit choice
 const CONCENTRATION_PILL = 'Constant concentration'
 import { SPECIES_PROPERTIES } from '../../services/simulation/local/speciesProperties'
 
@@ -240,7 +239,6 @@ function PropertySelector({ properties, onChange, concentrationUnitId, onConcent
               />
             ) : field.pill === CONCENTRATION_PILL ? (
               <div key={field.pill}>
-                {/* No unit in the label here -- the dropdown is the unit now. */}
                 <label className={FIELD_LABEL}>{field.pill}</label>
                 <div className="flex flex-col gap-2">
                   <UnitDropdown
@@ -374,8 +372,6 @@ function SpeciesChip({ species, onPhaseChange, onFieldSave, onRemove, airDensity
                   centerLabel
                 />
                 <input
-                  // Remounts on unit change so the displayed value re-converts instead of
-                  // keeping whatever was last typed under the previous unit.
                   key={concentrationUnitId}
                   type="text"
                   defaultValue={fromMolM3(field.value, concentrationUnitId, airDensity) ?? ''}
@@ -385,7 +381,7 @@ function SpeciesChip({ species, onPhaseChange, onFieldSave, onRemove, airDensity
                       onFieldSave(species.name, field, '')
                       return
                     }
-                    const parsed = Number.parseFloat(raw)
+                    const parsed = Number(raw)
                     onFieldSave(
                       species.name,
                       field,
@@ -448,22 +444,30 @@ export function SpeciesEditor() {
     .sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' }))
 
   const handleAddSpecies = () => {
-    // Constant concentration is the one property with a unit choice; its key is fixed to
-    // mol m-3, so a ppb entry is converted here, before the generic parseFloat in
-    // addSpeciesIfValid. A non-numeric value is passed through so that still reports its
-    // own "must be a valid number" error rather than silently becoming NaN.
     const rawConcentration = newSpeciesProperties[CONCENTRATION_PILL]
-    const parsedConcentration =
-      typeof rawConcentration === 'string' ? Number.parseFloat(rawConcentration.trim()) : NaN
-    const convertedProperties =
-      addFormConcentrationUnitId === 'ppb' && !Number.isNaN(parsedConcentration)
-        ? {
-            ...newSpeciesProperties,
-            [CONCENTRATION_PILL]: String(
-              toMolM3(parsedConcentration, addFormConcentrationUnitId, airDensity)
-            ),
-          }
-        : newSpeciesProperties
+    const trimmedConcentration =
+      typeof rawConcentration === 'string' ? rawConcentration.trim() : ''
+    let convertedProperties = newSpeciesProperties
+
+    if (trimmedConcentration !== '') {
+      const parsedConcentration = Number(trimmedConcentration)
+      if (Number.isNaN(parsedConcentration)) {
+        toast({
+          title: 'Error',
+          description: 'Constant concentration must be a valid number',
+          variant: 'destructive',
+        })
+        return
+      }
+      if (addFormConcentrationUnitId === 'ppb') {
+        convertedProperties = {
+          ...newSpeciesProperties,
+          [CONCENTRATION_PILL]: String(
+            toMolM3(parsedConcentration, addFormConcentrationUnitId, airDensity)
+          ),
+        }
+      }
+    }
 
     const added = addSpeciesIfValid({
       species,
