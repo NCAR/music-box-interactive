@@ -43,7 +43,7 @@ const PROPERTY_PILL_GRID = 'grid grid-cols-1 sm:grid-cols-2 justify-items-start 
 // Shared pill styling for the phase and property selectors.
 function pillClassName(active, compact, disabled = false) {
   const base = `${
-    compact ? 'px-2.5 py-1 text-[11px]' : 'px-4 py-2 text-[15px]'
+    compact ? 'px-2.5 py-1 text-[11px]' : 'h-9 px-4 py-2 text-[15px]'
   } rounded-full border whitespace-nowrap transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-assist-secondary-ring flex items-center gap-1.5`
 
   if (active) {
