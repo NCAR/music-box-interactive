@@ -165,8 +165,12 @@ export function BranchedReactionForm({ onAddReaction }) {
         </div>
       </div>
 
-      <div className="mt-8 flex justify-center">
-        <Button onClick={handleAdd} variant="primary" size="lg" className="text-base">
+      <div className="pt-8 flex justify-center">
+        <Button
+          onClick={handleAdd}
+          variant="assistSecondary"
+          className="h-11 px-8 text-base rounded-lg bg-assist-secondary text-assist-secondary-foreground hover:bg-assist-secondary-hover"
+        >
           Add Reaction
         </Button>
       </div>
