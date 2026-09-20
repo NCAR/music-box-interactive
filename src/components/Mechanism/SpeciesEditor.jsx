@@ -9,7 +9,6 @@ import { Toggle } from '../ui/toggle'
 import { addSpecies, updateSpecies, removeSpecies } from '../../redux/slices/mechanismSlice'
 import { addSpeciesIfValid } from './speciesUtils'
 import {
-  EDITOR_GRID,
   FIELD_LABEL,
   ITEM_CHIP,
   ITEM_LIST,
@@ -27,9 +26,12 @@ const DISABLED_PHASE_OPTIONS = ['Aqueous']
 
 const CUSTOM_PILL_MAX_LENGTH = 512
 
-// Shared text-input styling in two sizes: a roomy variant for the add-species form,
-// and a compact variant for the search box and per-species value fields.
+// The add form width is determined by the widest property row.
+const SPECIES_EDITOR_GRID =
+  'grid grid-cols-1 gap-4 lg:grid-cols-[auto_minmax(0,1fr)] lg:items-start'
 
+// Use a two-column layout to size the add card based on the two widest pills.
+const PROPERTY_PILL_GRID = 'grid grid-cols-1 sm:grid-cols-2 justify-items-start gap-2'
 
 // Shared pill styling for the phase and property selectors.
 function pillClassName(active, compact, disabled = false) {
@@ -205,7 +207,7 @@ function PropertySelector({ properties, onChange }) {
 
   return (
     <div>
-      <div className="flex flex-wrap items-center gap-2">
+      <div className={PROPERTY_PILL_GRID}>
         {SPECIES_PROPERTIES.map((field) => (
           <button
             key={field.pill}
@@ -466,7 +468,7 @@ export function SpeciesEditor() {
     <div className="space-y-4">
       {/* Add form and species list are separate cards, side by side on wide screens. They
           stack below lg, where two columns would leave neither enough room. */}
-      <div className={EDITOR_GRID}>
+      <div className={SPECIES_EDITOR_GRID}>
         <Card>
           <CardHeader>
             <CardTitle>Add species</CardTitle>
