@@ -1,7 +1,3 @@
-// Shared by any field that lets a concentration be entered as mol m-3 or ppb: Conditions >
-// Species and the mechanism's "Constant concentration" species property. ppb is a mixing
-// ratio, so converting it to mol m-3 needs the local air density, which the ideal gas law
-// gives from temperature and pressure.
 export const GAS_CONSTANT = 8.31446261815324 // J / (mol K)
 
 export const CONCENTRATION_UNITS = [
