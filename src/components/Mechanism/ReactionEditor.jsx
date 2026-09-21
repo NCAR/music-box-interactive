@@ -460,7 +460,7 @@ export function ReactionEditor() {
                 <Dropdown
                   value={reactionType}
                   onChange={setReactionType}
-                  className="px-4 py-3 rounded-xl text-base"
+                  className="h-10 px-2 rounded-lg text-base"
                   options={reactionRegistry.map((type) => ({
                     value: type.type,
                     label: type.label,
