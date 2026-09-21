@@ -92,7 +92,7 @@ export function ArrheniusReactionForm({ onAddReaction }) {
           type="text"
           value={reactants}
           onChange={(e) => setReactants(e.target.value)}
-          placeholder="e.g., O1D + N2"
+          placeholder="O1D + N2"
           className={TEXT_INPUT}
         />
       </div>
@@ -105,7 +105,7 @@ export function ArrheniusReactionForm({ onAddReaction }) {
           type="text"
           value={products}
           onChange={(e) => setProducts(e.target.value)}
-          placeholder="e.g., O + N2"
+          placeholder="O + N2"
           className={TEXT_INPUT}
         />
       </div>

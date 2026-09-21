@@ -63,7 +63,7 @@ export function ScaledReactionForm({ onAddReaction, reactionType, allowEmptyProd
           type="text"
           value={reactants}
           onChange={(e) => setReactants(e.target.value)}
-          placeholder="e.g., O3"
+          placeholder="O3"
           className={TEXT_INPUT}
         />
       </div>
@@ -76,7 +76,7 @@ export function ScaledReactionForm({ onAddReaction, reactionType, allowEmptyProd
           type="text"
           value={products}
           onChange={(e) => setProducts(e.target.value)}
-          placeholder="e.g., O + O2"
+          placeholder="O + O2"
           className={TEXT_INPUT}
         />
       </div>

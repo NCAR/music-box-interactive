@@ -95,7 +95,7 @@ export function BranchedReactionForm({ onAddReaction }) {
           type="text"
           value={reactants}
           onChange={(e) => setReactants(e.target.value)}
-          placeholder="e.g., C4H9O2 + NO"
+          placeholder="C4H9O2 + NO"
           className={TEXT_INPUT}
         />
       </div>
@@ -106,7 +106,7 @@ export function BranchedReactionForm({ onAddReaction }) {
           type="text"
           value={alkoxyProducts}
           onChange={(e) => setAlkoxyProducts(e.target.value)}
-          placeholder="e.g., C4H9O + NO2"
+          placeholder="C4H9O + NO2"
           className={TEXT_INPUT}
         />
       </div>
@@ -117,7 +117,7 @@ export function BranchedReactionForm({ onAddReaction }) {
           type="text"
           value={nitrateProducts}
           onChange={(e) => setNitrateProducts(e.target.value)}
-          placeholder="e.g., C4H9ONO2"
+          placeholder="C4H9ONO2"
           className={TEXT_INPUT}
         />
       </div>

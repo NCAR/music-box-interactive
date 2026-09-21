@@ -84,7 +84,7 @@ export function LambdaRateReactionForm({ onAddReaction }) {
           type="text"
           value={reactants}
           onChange={(e) => setReactants(e.target.value)}
-          placeholder="e.g., O2 + O"
+          placeholder="O2 + O"
           className={TEXT_INPUT}
         />
       </div>
@@ -97,7 +97,7 @@ export function LambdaRateReactionForm({ onAddReaction }) {
           type="text"
           value={products}
           onChange={(e) => setProducts(e.target.value)}
-          placeholder="e.g., O3"
+          placeholder="O3"
           className={TEXT_INPUT}
         />
       </div>

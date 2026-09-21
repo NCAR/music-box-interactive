@@ -213,7 +213,7 @@ function ReactionChip({ reaction, onRemove, onComponentsSave, onParameterSave })
                   e.currentTarget.blur()
                 }
               }}
-              placeholder="e.g., O1D + N2"
+              placeholder="O1D + N2"
               className={`w-full ${TEXT_INPUT_SM} font-mono`}
             />
           </div>

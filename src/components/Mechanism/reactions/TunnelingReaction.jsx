@@ -84,7 +84,7 @@ export function TunnelingReactionForm({ onAddReaction }) {
           type="text"
           value={reactants}
           onChange={(e) => setReactants(e.target.value)}
-          placeholder="e.g., CH2O + OH"
+          placeholder="CH2O + OH"
           className={TEXT_INPUT}
         />
       </div>
@@ -97,7 +97,7 @@ export function TunnelingReactionForm({ onAddReaction }) {
           type="text"
           value={products}
           onChange={(e) => setProducts(e.target.value)}
-          placeholder="e.g., CHO + H2O"
+          placeholder="CHO + H2O"
           className={TEXT_INPUT}
         />
       </div>

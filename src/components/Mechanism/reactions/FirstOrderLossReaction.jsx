@@ -55,7 +55,7 @@ export function FirstOrderLossReactionForm({ onAddReaction }) {
           type="text"
           value={reactants}
           onChange={(e) => setReactants(e.target.value)}
-          placeholder="e.g., C"
+          placeholder="C"
           className={TEXT_INPUT}
         />
       </div>

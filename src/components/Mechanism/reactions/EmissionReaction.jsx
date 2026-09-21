@@ -58,7 +58,7 @@ export function EmissionReactionForm({ onAddReaction }) {
           type="text"
           value={products}
           onChange={(e) => setProducts(e.target.value)}
-          placeholder="e.g., O3"
+          placeholder="O3"
           className={TEXT_INPUT}
         />
       </div>
