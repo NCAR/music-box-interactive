@@ -12,25 +12,20 @@ import {
   markInitialHydrated,
 } from '../../redux/slices/conditionsSlice'
 import { useToast } from '@/hooks/use-toast'
-import { LIST_CARD, LIST_CARD_CONTENT, FIELD_LABEL, TEXT_INPUT_SM } from '../Mechanism/fieldStyles'
+import {
+  LIST_CARD,
+  LIST_CARD_CONTENT,
+  FIELD_LABEL,
+  TEXT_INPUT,
+  TEXT_INPUT_SM,
+  DROPDOWN_WRAPPER,
+  DROPDOWN_BUTTON,
+} from '../Mechanism/fieldStyles'
 import { UnitDropdown } from '../Plots/UnitDropdown'
+import { CONCENTRATION_UNITS, airDensityMolM3, toMolM3, fromMolM3 } from '../../utils/concentrationUnits'
 
 // Matches EnvironmentTab: the left column fits its content, the right column expands.
 const EDITOR_GRID = 'grid grid-cols-1 gap-4 lg:grid-cols-[auto_1fr] lg:items-start'
-
-const TEXT_INPUT =
-  'w-full h-9 px-2 border border-gray-400 bg-white/10 text-gray-900 placeholder:text-gray-500 rounded-lg text-sm text-center font-mono focus:outline-none focus:ring-2 focus:ring-action focus:border-transparent'
-
-const DROPDOWN_WRAPPER = 'relative w-full flex-shrink-0'
-const DROPDOWN_BUTTON =
-  'flex items-center gap-1 w-full h-9 px-2 border border-gray-300 rounded-lg text-sm text-gray-800 hover:bg-gray-50'
-
-const CONCENTRATION_UNITS = [
-  { id: 'mol_m3', label: 'mol m-3' },
-  { id: 'ppb', label: 'ppb' },
-]
-
-const GAS_CONSTANT = 8.31446261815324
 
 /**
  * SpeciesConcentrationTab Component
@@ -78,11 +73,7 @@ export function SpeciesConcentrationTab() {
 
   const mechanismSpeciesNames = new Set(mechanismSpecies.map((species) => species.name))
 
-  const airDensityMolM3 = initial.pressure / (GAS_CONSTANT * initial.temperature)
-  const toMolM3 = (value, unitId) =>
-    unitId === 'ppb' ? value * 1e-9 * airDensityMolM3 : value
-  const fromMolM3 = (valueMolM3, unitId) =>
-    unitId === 'ppb' ? valueMolM3 / (1e-9 * airDensityMolM3) : valueMolM3
+  const airDensity = airDensityMolM3(initial.pressure, initial.temperature)
 
   // Species with no initial concentration default to 0,
   // which may be intentional but is worth flagging.
@@ -146,7 +137,7 @@ export function SpeciesConcentrationTab() {
     }
 
     const unitLabel = CONCENTRATION_UNITS.find((u) => u.id === concentrationUnitId)?.label
-    dispatch(setConcentration({ species, value: toMolM3(value, concentrationUnitId) }))
+    dispatch(setConcentration({ species, value: toMolM3(value, concentrationUnitId, airDensity) }))
     toast({
       title: 'Species Added',
       description: `Added ${species} at concentration ${value} ${unitLabel}`,
@@ -183,7 +174,7 @@ export function SpeciesConcentrationTab() {
       })
       return
     }
-    dispatch(setConcentration({ species, value: toMolM3(parsed, concentrationUnitId) }))
+    dispatch(setConcentration({ species, value: toMolM3(parsed, concentrationUnitId, airDensity) }))
     setRowDrafts((prev) => {
       const next = { ...prev }
       delete next[species]
@@ -328,7 +319,7 @@ export function SpeciesConcentrationTab() {
             <Button
               onClick={handleAdd}
               variant="assistSecondary"
-              className="h-9 px-8 text-base rounded-lg bg-assist-secondary text-assist-secondary-foreground hover:bg-assist-secondary-hover">
+              className="h-11 px-8 text-base rounded-lg bg-assist-secondary text-assist-secondary-foreground hover:bg-assist-secondary-hover">
               Add species
             </Button>
           </div>
@@ -410,7 +401,8 @@ export function SpeciesConcentrationTab() {
                         <input
                           type="text"
                           value={
-                            rowDrafts[species] ?? fromMolM3(concentration, concentrationUnitId)
+                            rowDrafts[species] ??
+                            fromMolM3(concentration, concentrationUnitId, airDensity)
                           }
                           onChange={(e) => handleConcentrationChange(species, e.target.value)}
                           onKeyDown={(e) => {

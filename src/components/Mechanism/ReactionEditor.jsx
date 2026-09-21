@@ -490,7 +490,7 @@ export function ReactionEditor() {
             <Dropdown
               value={activeType}
               onChange={setTypeFilter}
-              className="mb-3 h-10"
+              className="mb-3 h-9"
               options={[
                 { value: '', label: `All reaction types (${reactions.length})` },
                 ...availableTypes.map((type) => ({
@@ -505,7 +505,7 @@ export function ReactionEditor() {
               value={reactionSearch}
               onChange={(e) => setReactionSearch(e.target.value)}
               placeholder="Search reactions by species"
-              className={`w-full mb-5 h-10 ${TEXT_INPUT_SM}`}
+              className={`w-full mb-5 ${TEXT_INPUT_SM}`}
             />
 
             {reactions.length === 0 ? (
