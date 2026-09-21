@@ -6,3 +6,4 @@ export {
   resetPersistentSolver,
   solvePersistentQuiet,
 } from './local/persistentRun'
+export { runVectorizedGridScan, GridScanCancelled } from './local/vectorizedGridScan'

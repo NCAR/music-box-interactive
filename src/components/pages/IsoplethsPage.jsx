@@ -4,7 +4,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui
 import { Button } from '../ui/button'
 import ErrorBoundary from '../ErrorBoundary'
 import IsoplethChart from '../IsoplethChart'
-import { solvePersistentQuiet, resetPersistentSolver } from '../../services/simulation/localSolver'
+import {
+  solvePersistentQuiet,
+  resetPersistentSolver,
+  runVectorizedGridScan,
+  GridScanCancelled,
+} from '../../services/simulation/localSolver'
 import { getSpeciesDisplayName } from '../Plots/speciesFormat'
 import { Mountain, XCircle } from 'lucide-react'
 
@@ -137,9 +142,13 @@ export function IsoplethsPage() {
   const [maxPercent, setMaxPercent] = useState(DEFAULT_MAX_PERCENT)
   const [resolution, setResolution] = useState(DEFAULT_RESOLUTION)
   const [isRunning, setIsRunning] = useState(false)
+  // A 0..1 fraction, not a cell count -- the fast vectorized path (see runVectorizedGridScan)
+  // solves every cell together, so "N of M cells done" no longer means anything; a shared
+  // fraction works for both that path and the sequential fallback.
   const [progress, setProgress] = useState(0)
   const [grid, setGrid] = useState(null)
   const [runError, setRunError] = useState(null)
+  const [usedFallback, setUsedFallback] = useState(false)
   const cancelRef = useRef(false)
 
   // A species picked for one axis disappears from the other's list, rather than merely
@@ -200,6 +209,7 @@ export function IsoplethsPage() {
     const xList = [...xSpecies]
     const yList = [...ySpecies]
     const outList = [...outputSpecies]
+    const outNames = outList.map(getSpeciesDisplayName)
     const clampedResolution = Math.min(MAX_RESOLUTION, Math.max(MIN_RESOLUTION, resolution))
     const minFactor = Math.max(0.01, minPercent / 100)
     const maxFactor = Math.max(minFactor, maxPercent / 100)
@@ -212,45 +222,75 @@ export function IsoplethsPage() {
       yList.map((name) => [name, conditions.initial.concentrations[name] ?? 0])
     )
 
+    // Row-major, matching values[row][col]: cell i = row * clampedResolution + col. Built once
+    // up front so both the fast path and the sequential fallback solve the exact same cells.
+    const conditionsList = []
+    for (let row = 0; row < clampedResolution; row++) {
+      for (let col = 0; col < clampedResolution; col++) {
+        const scaledConcentrations = { ...conditions.initial.concentrations }
+        xList.forEach((name) => {
+          scaledConcentrations[name] = xBaseline[name] * factors[col]
+        })
+        yList.forEach((name) => {
+          scaledConcentrations[name] = yBaseline[name] * factors[row]
+        })
+        conditionsList.push({
+          ...conditions,
+          initial: { ...conditions.initial, concentrations: scaledConcentrations },
+        })
+      }
+    }
+
     cancelRef.current = false
     setIsRunning(true)
     setRunError(null)
     setProgress(0)
+    setUsedFallback(false)
 
     const values = Array.from({ length: clampedResolution }, () =>
       new Array(clampedResolution).fill(null)
     )
 
     try {
-      for (let row = 0; row < clampedResolution; row++) {
-        for (let col = 0; col < clampedResolution; col++) {
+      try {
+        // One batched, vectorized solve for the whole grid -- see runVectorizedGridScan's own
+        // comment for why this can be orders of magnitude faster than solving cell by cell.
+        const perCellResults = await runVectorizedGridScan({
+          mechanismData,
+          conditionsList,
+          onProgress: setProgress,
+          isCancelled: () => cancelRef.current,
+        })
+        perCellResults.forEach((cellResult, i) => {
+          const row = Math.floor(i / clampedResolution)
+          const col = i % clampedResolution
+          values[row][col] = outNames.reduce((sum, name) => sum + (cellResult[name] ?? 0), 0)
+        })
+      } catch (error) {
+        if (error instanceof GridScanCancelled) {
+          setIsRunning(false)
+          return
+        }
+
+        // The fast path can't handle this mechanism (or hit some other failure) -- fall back to
+        // solving one cell at a time through the ordinary MusicBox-based path.
+        setUsedFallback(true)
+        for (let i = 0; i < conditionsList.length; i++) {
           if (cancelRef.current) {
             setIsRunning(false)
             return
           }
-
-          const scaledConcentrations = { ...conditions.initial.concentrations }
-          xList.forEach((name) => {
-            scaledConcentrations[name] = xBaseline[name] * factors[col]
-          })
-          yList.forEach((name) => {
-            scaledConcentrations[name] = yBaseline[name] * factors[row]
-          })
-
-          const scanConditions = {
-            ...conditions,
-            initial: { ...conditions.initial, concentrations: scaledConcentrations },
-          }
-
+          const row = Math.floor(i / clampedResolution)
+          const col = i % clampedResolution
           // Sequential by necessity: the solver is a single reused instance, not parallelizable.
           const { filteredResults } = await solvePersistentQuiet({
             mechanismData,
-            conditions: scanConditions,
+            conditions: conditionsList[i],
           })
           const last = filteredResults[filteredResults.length - 1]
           const total = outList.reduce((sum, key) => sum + (last?.concentrations?.[key] ?? 0), 0)
           values[row][col] = total
-          setProgress((prev) => prev + 1)
+          setProgress((i + 1) / conditionsList.length)
         }
       }
 
@@ -259,7 +299,7 @@ export function IsoplethsPage() {
           resolution: clampedResolution,
           xLabel: xList.map(getSpeciesDisplayName).join(' + '),
           yLabel: yList.map(getSpeciesDisplayName).join(' + '),
-          outputLabel: outList.map(getSpeciesDisplayName).join(' + '),
+          outputLabel: outNames.join(' + '),
           xFactors: factors,
           yFactors: factors,
           values,
@@ -297,8 +337,6 @@ export function IsoplethsPage() {
       </Card>
     )
   }
-
-  const total = grid ? grid.resolution * grid.resolution : resolution * resolution
 
   return (
     <div className="space-y-4">
@@ -395,12 +433,13 @@ export function IsoplethsPage() {
                 <div className="h-2 bg-surface-alt rounded-full overflow-hidden">
                   <div
                     className="h-full bg-action transition-all"
-                    style={{ width: `${total > 0 ? (progress / total) * 100 : 0}%` }}
+                    style={{ width: `${Math.round(progress * 100)}%` }}
                   />
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-[10px] text-muted">
-                    Running {progress} / {total}
+                    {Math.round(progress * 100)}%
+                    {usedFallback ? ' (standard solver -- fast path unavailable)' : ''}
                   </span>
                   <button
                     type="button"
