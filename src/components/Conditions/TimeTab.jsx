@@ -7,6 +7,7 @@ import { RangeBoundInput } from '../Plots/RangeBoundInput'
 import { UnitDropdown } from '../Plots/UnitDropdown'
 import { TIME_RANGE_UNITS, formatBound } from '../Plots/timeRangeUnits'
 import { TEXT_INPUT_SM } from '../Mechanism/fieldStyles'
+import { useToast } from '@/hooks/use-toast'
 
 const NUMBER_INPUT = `w-72 ${TEXT_INPUT_SM}`
 
@@ -31,7 +32,7 @@ const FIELDS = [
   {
     key: 'duration',
     label: 'Simulation time',
-    min: 0,
+    getMin: () => 0,
     action: setDuration,
     defaultUnit: 'hours',
     help: () => 'Set how long you want the simulation to run',
@@ -39,7 +40,7 @@ const FIELDS = [
   {
     key: 'timeStep',
     label: 'Time step',
-    min: 1,
+    getMin: () => 1,
     action: setTimeStep,
     defaultUnit: 'seconds',
     help: () => 'Set the time interval between steps',
@@ -47,7 +48,8 @@ const FIELDS = [
   {
     key: 'outputFrequency',
     label: 'Output time step',
-    min: 1,
+    // Output can only be saved on simulation steps.
+    getMin: (basic) => basic.timeStep,
     action: setOutputFrequency,
     defaultUnit: 'seconds',
     help: (value, divisor, unit) =>
@@ -62,6 +64,7 @@ const FIELDS = [
 export function TimeTab() {
   const dispatch = useDispatch()
   const basic = useSelector((state) => state.conditions.basic)
+  const { toast } = useToast()
 
   const [unitIds, setUnitIds] = useState(() =>
     Object.fromEntries(FIELDS.map((field) => [field.key, field.defaultUnit]))
@@ -96,8 +99,21 @@ export function TimeTab() {
                     value={value}
                     divisor={unit.divisor}
                     decimals={4}
-                    min={field.min}
+                    min={field.getMin(basic)}
                     onCommit={(next) => dispatch(field.action(next))}
+                    flashOnCommit
+                    onBelowMin={
+                      field.key === 'outputFrequency'
+                        ? () => {
+                            const timeStepUnit = getUnit(unitIds.timeStep)
+                            toast({
+                              title: 'Invalid output time step',
+                              description: `Output time step must be greater than or equal to simulation time step.`,
+                              variant: 'destructive',
+                            })
+                          }
+                        : undefined
+                    }
                     className={NUMBER_INPUT}
                   />
                 </div>
