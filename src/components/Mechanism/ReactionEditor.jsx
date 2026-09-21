@@ -174,7 +174,7 @@ function ReactionChip({ reaction, onRemove, onComponentsSave, onParameterSave })
   }
 
   return (
-    <div className={ITEM_PANEL}>
+    <div className={`${ITEM_PANEL.replace('w-full', 'w-[calc(50%-0.25rem)]')}`}>
       <div className="flex items-start justify-between gap-3">
         <button
           type="button"
@@ -214,7 +214,7 @@ function ReactionChip({ reaction, onRemove, onComponentsSave, onParameterSave })
                 }
               }}
               placeholder="O1D + N2"
-              className={`w-full ${TEXT_INPUT_SM} font-mono`}
+              className={`w-full ${TEXT_INPUT_SM.replace('text-center', 'text-left')} font-mono`}
             />
           </div>
         ))}
@@ -242,7 +242,7 @@ function ReactionChip({ reaction, onRemove, onComponentsSave, onParameterSave })
                       e.currentTarget.blur()
                     }
                   }}
-                  className={`w-full ${TEXT_INPUT_SM} font-mono`}
+                  className={`w-full ${TEXT_INPUT_SM.replace('text-center', 'text-left')} font-mono`}
                 />
               </div>
             ))}
@@ -505,7 +505,7 @@ export function ReactionEditor() {
               value={reactionSearch}
               onChange={(e) => setReactionSearch(e.target.value)}
               placeholder="Search reactions by species"
-              className={`w-full mb-5 ${TEXT_INPUT_SM}`}
+              className={`w-full mb-5 ${TEXT_INPUT_SM.replace('text-center', 'text-left')}`}
             />
 
             {reactions.length === 0 ? (

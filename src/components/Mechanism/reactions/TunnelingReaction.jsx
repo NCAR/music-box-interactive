@@ -85,7 +85,7 @@ export function TunnelingReactionForm({ onAddReaction }) {
           value={reactants}
           onChange={(e) => setReactants(e.target.value)}
           placeholder="CH2O + OH"
-          className={TEXT_INPUT}
+          className={TEXT_INPUT.replace('text-center', 'text-left')}
         />
       </div>
 
@@ -98,7 +98,7 @@ export function TunnelingReactionForm({ onAddReaction }) {
           value={products}
           onChange={(e) => setProducts(e.target.value)}
           placeholder="CHO + H2O"
-          className={TEXT_INPUT}
+          className={TEXT_INPUT.replace('text-center', 'text-left')}
         />
       </div>
 
@@ -111,7 +111,7 @@ export function TunnelingReactionForm({ onAddReaction }) {
             value={paramA}
             onChange={(e) => setParamA(e.target.value)}
             placeholder="1.0"
-            className={TEXT_INPUT}
+            className={TEXT_INPUT.replace('text-center', 'text-left')}
           />
         </div>
         <div>
@@ -121,7 +121,7 @@ export function TunnelingReactionForm({ onAddReaction }) {
             value={paramB}
             onChange={(e) => setParamB(e.target.value)}
             placeholder="0.0"
-            className={TEXT_INPUT}
+            className={TEXT_INPUT.replace('text-center', 'text-left')}
           />
         </div>
         <div>
@@ -131,7 +131,7 @@ export function TunnelingReactionForm({ onAddReaction }) {
             value={paramC}
             onChange={(e) => setParamC(e.target.value)}
             placeholder="0.0"
-            className={TEXT_INPUT}
+            className={TEXT_INPUT.replace('text-center', 'text-left')}
           />
         </div>
       </div>

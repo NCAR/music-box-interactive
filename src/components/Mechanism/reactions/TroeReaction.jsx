@@ -116,7 +116,7 @@ export function TroeReactionForm({ onAddReaction }) {
           value={reactants}
           onChange={(e) => setReactants(e.target.value)}
           placeholder="NO2"
-          className={TEXT_INPUT}
+          className={TEXT_INPUT.replace('text-center', 'text-left')}
         />
       </div>
 
@@ -129,7 +129,7 @@ export function TroeReactionForm({ onAddReaction }) {
           value={products}
           onChange={(e) => setProducts(e.target.value)}
           placeholder="O3"
-          className={TEXT_INPUT}
+          className={TEXT_INPUT.replace('text-center', 'text-left')}
         />
       </div>
 
@@ -141,7 +141,7 @@ export function TroeReactionForm({ onAddReaction }) {
             value={k0A}
             onChange={(e) => setK0A(e.target.value)}
             placeholder="1.0"
-            className={TEXT_INPUT}
+            className={TEXT_INPUT.replace('text-center', 'text-left')}
           />
         </div>
         <div>
@@ -151,7 +151,7 @@ export function TroeReactionForm({ onAddReaction }) {
             value={k0B}
             onChange={(e) => setK0B(e.target.value)}
             placeholder="0.0"
-            className={TEXT_INPUT}
+            className={TEXT_INPUT.replace('text-center', 'text-left')}
           />
         </div>
         <div>
@@ -161,7 +161,7 @@ export function TroeReactionForm({ onAddReaction }) {
             value={k0C}
             onChange={(e) => setK0C(e.target.value)}
             placeholder="0.0"
-            className={TEXT_INPUT}
+            className={TEXT_INPUT.replace('text-center', 'text-left')}
           />
         </div>
         <div>
@@ -173,7 +173,7 @@ export function TroeReactionForm({ onAddReaction }) {
             value={kinfA}
             onChange={(e) => setKinfA(e.target.value)}
             placeholder="1.0"
-            className={TEXT_INPUT}
+            className={TEXT_INPUT.replace('text-center', 'text-left')}
           />
         </div>
         <div>
@@ -185,7 +185,7 @@ export function TroeReactionForm({ onAddReaction }) {
             value={kinfB}
             onChange={(e) => setKinfB(e.target.value)}
             placeholder="0.0"
-            className={TEXT_INPUT}
+            className={TEXT_INPUT.replace('text-center', 'text-left')}
           />
         </div>
         <div>
@@ -197,7 +197,7 @@ export function TroeReactionForm({ onAddReaction }) {
             value={kinfC}
             onChange={(e) => setKinfC(e.target.value)}
             placeholder="0.0"
-            className={TEXT_INPUT}
+            className={TEXT_INPUT.replace('text-center', 'text-left')}
           />
         </div>
         <div>
@@ -207,7 +207,7 @@ export function TroeReactionForm({ onAddReaction }) {
             value={fc}
             onChange={(e) => setFc(e.target.value)}
             placeholder="0.6"
-            className={TEXT_INPUT}
+            className={TEXT_INPUT.replace('text-center', 'text-left')}
           />
         </div>
         <div>
@@ -217,7 +217,7 @@ export function TroeReactionForm({ onAddReaction }) {
             value={nValue}
             onChange={(e) => setNValue(e.target.value)}
             placeholder="1.0"
-            className={TEXT_INPUT}
+            className={TEXT_INPUT.replace('text-center', 'text-left')}
           />
         </div>
       </div>

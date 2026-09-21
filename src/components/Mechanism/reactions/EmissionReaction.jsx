@@ -59,7 +59,7 @@ export function EmissionReactionForm({ onAddReaction }) {
           value={products}
           onChange={(e) => setProducts(e.target.value)}
           placeholder="O3"
-          className={TEXT_INPUT}
+          className={TEXT_INPUT.replace('text-center', 'text-left')}
         />
       </div>
 
@@ -73,7 +73,7 @@ export function EmissionReactionForm({ onAddReaction }) {
             value={emissionScaling}
             onChange={(e) => setEmissionScaling(e.target.value)}
             placeholder="1.0"
-            className={TEXT_INPUT}
+            className={TEXT_INPUT.replace('text-center', 'text-left')}
           />
         </div>
       </div>

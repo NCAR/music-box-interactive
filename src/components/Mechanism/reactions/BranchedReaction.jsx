@@ -96,7 +96,7 @@ export function BranchedReactionForm({ onAddReaction }) {
           value={reactants}
           onChange={(e) => setReactants(e.target.value)}
           placeholder="C4H9O2 + NO"
-          className={TEXT_INPUT}
+          className={TEXT_INPUT.replace('text-center', 'text-left')}
         />
       </div>
 
@@ -107,7 +107,7 @@ export function BranchedReactionForm({ onAddReaction }) {
           value={alkoxyProducts}
           onChange={(e) => setAlkoxyProducts(e.target.value)}
           placeholder="C4H9O + NO2"
-          className={TEXT_INPUT}
+          className={TEXT_INPUT.replace('text-center', 'text-left')}
         />
       </div>
 
@@ -118,7 +118,7 @@ export function BranchedReactionForm({ onAddReaction }) {
           value={nitrateProducts}
           onChange={(e) => setNitrateProducts(e.target.value)}
           placeholder="C4H9ONO2"
-          className={TEXT_INPUT}
+          className={TEXT_INPUT.replace('text-center', 'text-left')}
         />
       </div>
 
@@ -130,7 +130,7 @@ export function BranchedReactionForm({ onAddReaction }) {
             value={xValue}
             onChange={(e) => setXValue(e.target.value)}
             placeholder="1.0"
-            className={TEXT_INPUT}
+            className={TEXT_INPUT.replace('text-center', 'text-left')}
           />
         </div>
         <div>
@@ -140,7 +140,7 @@ export function BranchedReactionForm({ onAddReaction }) {
             value={yValue}
             onChange={(e) => setYValue(e.target.value)}
             placeholder="0.0"
-            className={TEXT_INPUT}
+            className={TEXT_INPUT.replace('text-center', 'text-left')}
           />
         </div>
         <div>
@@ -150,7 +150,7 @@ export function BranchedReactionForm({ onAddReaction }) {
             value={a0Value}
             onChange={(e) => setA0Value(e.target.value)}
             placeholder="1.0"
-            className={TEXT_INPUT}
+            className={TEXT_INPUT.replace('text-center', 'text-left')}
           />
         </div>
         <div>
@@ -160,7 +160,7 @@ export function BranchedReactionForm({ onAddReaction }) {
             value={nValue}
             onChange={(e) => setNValue(e.target.value)}
             placeholder="0"
-            className={TEXT_INPUT}
+            className={TEXT_INPUT.replace('text-center', 'text-left')}
           />
         </div>
       </div>
