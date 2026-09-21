@@ -105,10 +105,9 @@ export function TimeTab() {
                     onBelowMin={
                       field.key === 'outputFrequency'
                         ? () => {
-                            const timeStepUnit = getUnit(unitIds.timeStep)
                             toast({
                               title: 'Invalid output time step',
-                              description: `Output time step must be greater than or equal to simulation time step.`,
+                              description: 'Output time step must be greater than or equal to simulation time step.',
                               variant: 'destructive',
                             })
                           }
