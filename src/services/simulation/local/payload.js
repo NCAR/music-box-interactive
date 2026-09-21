@@ -1,3 +1,5 @@
+import { mechanismConfiguration } from '@ncar/musica'
+import { MusicBox } from '@ncar/music-box'
 import { buildSolverConditions } from './conditions'
 import {
   buildPhases,
@@ -8,21 +10,6 @@ import {
   serializeSpecies,
   validateMechanismPayload,
 } from './mechanism'
-
-const toSolverSpecies = (species = []) => {
-  return species.map((sp) => {
-    if (!sp || typeof sp !== 'object') {
-      return sp
-    }
-
-    return {
-      ...sp,
-      'is third body': Object.prototype.hasOwnProperty.call(sp, 'is third body')
-        ? sp['is third body']
-        : false,
-    }
-  })
-}
 
 export const buildLocalSimulationPayload = ({ mechanismData, conditions }) => {
   const sourceMechanism = mechanismData.mechanism?.mechanism || {}
@@ -49,27 +36,39 @@ export const buildLocalSimulationPayload = ({ mechanismData, conditions }) => {
 
   const phases = buildPhases(sourceMechanism, reconciledSpecies)
 
-  const payload = {
-    'box model options': {
-      grid: 'box',
-      'chemistry time step [sec]': conditions.basic.timeStep,
-      'output time step [sec]': conditions.basic.outputFrequency,
-      'simulation length [sec]': conditions.basic.duration,
-    },
-    conditions: buildSolverConditions(conditions),
-    mechanism: {
-      ...sourceMechanism,
-      name:
-        sourceMechanism.name ||
-        mechanismData.currentExample?.name ||
-        mechanismData.currentExample ||
-        'custom',
-      reactions: reconciledReactions,
-      species: toSolverSpecies(species),
-      phases,
-      version: sourceMechanism.version || '1.0.0',
-    },
-  }
+  const mechanismInstance = new mechanismConfiguration.Mechanism({
+    name:
+      sourceMechanism.name ||
+      mechanismData.currentExample?.name ||
+      mechanismData.currentExample ||
+      'custom',
+    version: sourceMechanism.version || '1.0.0',
+    species,
+    phases,
+    reactions: reconciledReactions,
+  })
+
+  // Mechanism's constructor only recognizes name/version/species/phases/reactions -- any other
+  // top-level mechanism property from an uploaded config (there is no other_properties support
+  // here, unlike every other builder class) is merged in directly instead of being dropped.
+  const {
+    name: _name,
+    version: _version,
+    species: _species,
+    phases: _phases,
+    reactions: _reactions,
+    ...otherMechanismProperties
+  } = sourceMechanism
+  const box = new MusicBox()
+  box.chemTimeStep = conditions.basic.timeStep
+  box.outputTimeStep = conditions.basic.outputFrequency
+  box.simulationLength = conditions.basic.duration
+  box.loadMechanism({
+    getJSON: () => ({ ...otherMechanismProperties, ...mechanismInstance.getJSON() }),
+  })
+  box.loadConditions(buildSolverConditions(conditions))
+
+  const payload = box.toJson()
 
   if (
     !payload.mechanism ||

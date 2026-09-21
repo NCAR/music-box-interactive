@@ -1,23 +1,13 @@
 import { downloadJson } from '../../utils/downloadJson'
-import { buildSolverConditions } from '../simulation/local/conditions'
+import { buildLocalSimulationPayload } from '../simulation/local/payload'
 
-// Builds the real music-box v1 wire format, so a downloaded config can be re-uploaded.
-// Reuses buildSolverConditions, the same function Run Simulation uses, so the two match.
-// Works with an empty mechanism too, as a blank template.
+// Builds the same payload Run Simulation solves -- assembled via musica's own builder classes,
+// not hand-written -- so a downloaded config always matches what MusicBox actually runs.
 export function buildDownloadableConfig({ mechanism, conditions }) {
+  const { payload } = buildLocalSimulationPayload({ mechanismData: mechanism, conditions })
+
   return {
-    'box model options': {
-      'chemistry time step [sec]': conditions.basic.timeStep,
-      'output time step [sec]': conditions.basic.outputFrequency,
-      'simulation length [sec]': conditions.basic.duration,
-    },
-    conditions: buildSolverConditions(conditions),
-    mechanism: {
-      name: mechanism.selectedMechanism || 'custom',
-      species: mechanism.species,
-      reactions: mechanism.reactions,
-      phases: mechanism.phases,
-    },
+    ...payload,
     // Not part of the wire format; readers ignore it.
     metadata: {
       created: new Date().toISOString(),
