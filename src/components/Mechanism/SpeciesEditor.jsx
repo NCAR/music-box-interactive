@@ -9,7 +9,6 @@ import { Toggle } from '../ui/toggle'
 import { addSpecies, updateSpecies, removeSpecies } from '../../redux/slices/mechanismSlice'
 import { addSpeciesIfValid } from './speciesUtils'
 import {
-  EDITOR_GRID,
   FIELD_LABEL,
   ITEM_CHIP,
   ITEM_LIST,
@@ -18,7 +17,14 @@ import {
   LIST_CARD_CONTENT,
   TEXT_INPUT,
   TEXT_INPUT_SM,
+  DROPDOWN_WRAPPER,
+  DROPDOWN_BUTTON,
 } from './fieldStyles'
+import { UnitDropdown } from '../Plots/UnitDropdown'
+import { CONCENTRATION_UNITS, airDensityMolM3, toMolM3, fromMolM3 } from '../../utils/concentrationUnits'
+
+// A unit choice
+const CONCENTRATION_PILL = 'Constant concentration'
 import { SPECIES_PROPERTIES } from '../../services/simulation/local/speciesProperties'
 
 // Fixed phase segments; anything else is entered as a custom "Others" phase
@@ -27,15 +33,18 @@ const DISABLED_PHASE_OPTIONS = ['Aqueous']
 
 const CUSTOM_PILL_MAX_LENGTH = 512
 
-// Shared text-input styling in two sizes: a roomy variant for the add-species form,
-// and a compact variant for the search box and per-species value fields.
+// The add form width is determined by the widest property row.
+const SPECIES_EDITOR_GRID =
+  'grid grid-cols-1 gap-4 lg:grid-cols-[auto_minmax(0,1fr)] lg:items-start'
 
+// Use a two-column layout to size the add card based on the two widest pills.
+const PROPERTY_PILL_GRID = 'grid grid-cols-1 sm:grid-cols-2 justify-items-start gap-2'
 
 // Shared pill styling for the phase and property selectors.
 function pillClassName(active, compact, disabled = false) {
   const base = `${
-    compact ? 'px-2.5 py-1 text-[11px]' : 'px-4 py-2 text-[15px]'
-  } font-semibold rounded-full border whitespace-nowrap transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-assist-secondary-ring flex items-center gap-1.5`
+    compact ? 'px-2.5 py-1 text-[11px]' : 'h-9 px-4 py-2 text-[15px]'
+  } rounded-full border whitespace-nowrap transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-assist-secondary-ring flex items-center gap-1.5`
 
   if (active) {
     return `${base} bg-assist-secondary border-assist-secondary-border text-assist-secondary-foreground`
@@ -186,7 +195,7 @@ function PhaseSelector({ value, onChange, size = 'default', allowCustom = true }
   )
 }
 
-function PropertySelector({ properties, onChange }) {
+function PropertySelector({ properties, onChange, concentrationUnitId, onConcentrationUnitChange }) {
   const togglePill = (field) => {
     const next = { ...properties }
     if (field.pill in next) {
@@ -205,7 +214,7 @@ function PropertySelector({ properties, onChange }) {
 
   return (
     <div>
-      <div className="flex flex-wrap items-center gap-2">
+      <div className={PROPERTY_PILL_GRID}>
         {SPECIES_PROPERTIES.map((field) => (
           <button
             key={field.pill}
@@ -228,6 +237,27 @@ function PropertySelector({ properties, onChange }) {
                 checked={properties[field.pill] === true}
                 onChange={(checked) => setPropertyValue(field.pill, checked)}
               />
+            ) : field.pill === CONCENTRATION_PILL ? (
+              <div key={field.pill}>
+                <label className={FIELD_LABEL}>{field.pill}</label>
+                <div className="flex flex-col gap-2">
+                  <UnitDropdown
+                    unitId={concentrationUnitId}
+                    onChange={onConcentrationUnitChange}
+                    units={CONCENTRATION_UNITS}
+                    wrapperClassName={DROPDOWN_WRAPPER}
+                    buttonClassName={DROPDOWN_BUTTON}
+                    centerLabel
+                  />
+                  <input
+                    type="text"
+                    value={properties[field.pill]}
+                    onChange={(e) => setPropertyValue(field.pill, e.target.value)}
+                    placeholder={field.placeholder}
+                    className={TEXT_INPUT.replace('text-center', 'text-left')}
+                  />
+                </div>
+              </div>
             ) : (
               <div key={field.pill}>
                 <label className={FIELD_LABEL}>
@@ -238,7 +268,7 @@ function PropertySelector({ properties, onChange }) {
                   value={properties[field.pill]}
                   onChange={(e) => setPropertyValue(field.pill, e.target.value)}
                   placeholder={field.placeholder}
-                  className={TEXT_INPUT}
+                  className={TEXT_INPUT.replace('text-center', 'text-left')}
                 />
               </div>
             )
@@ -258,8 +288,10 @@ function getSpeciesFields(species) {
 // A species renders as a collapsed chip showing only its name. Clicking it unfolds the phase
 // and property values in place; an expanded chip claims a full row of the wrapping list so its
 // controls have room. Expansion is local state -- opening one leaves the others alone.
-function SpeciesChip({ species, onPhaseChange, onFieldSave, onRemove }) {
+function SpeciesChip({ species, onPhaseChange, onFieldSave, onRemove, airDensity }) {
   const [expanded, setExpanded] = useState(false)
+  // Its own unit choice: display only, converted back to the stored mol m-3 value on save.
+  const [concentrationUnitId, setConcentrationUnitId] = useState('mol_m3')
 
   if (!expanded) {
     return (
@@ -275,18 +307,24 @@ function SpeciesChip({ species, onPhaseChange, onFieldSave, onRemove }) {
   }
 
   return (
-    <div className={ITEM_PANEL}>
+    // Width is capped by the property fields’ max-w-xs
+    <div className={`${ITEM_PANEL} max-w-xs`}>
       <div className="flex items-start justify-between gap-3">
         <button
           type="button"
           onClick={() => setExpanded(false)}
-          className="flex items-center gap-1.5 rounded text-base font-semibold text-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-assist-secondary-ring"
+          className="flex items-center gap-1.5 rounded text-base text-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-assist-secondary-ring"
         >
           {species.name}
           <ChevronUp className="w-4 h-4 flex-shrink-0" />
         </button>
 
-        <Button variant="destructive" size="sm" onClick={() => onRemove(species.name)}>
+        <Button
+          variant="destructive"
+          size="sm"
+          onClick={() => onRemove(species.name)}
+          className="h-auto px-2.5 py-1 text-[11px]"
+        >
           Remove
         </Button>
       </div>
@@ -306,18 +344,67 @@ function SpeciesChip({ species, onPhaseChange, onFieldSave, onRemove }) {
           />
         </div>
 
-        {getSpeciesFields(species).map((field) => (
-          <div key={field.key} className="flex flex-col gap-1">
-            <label className="text-[11px] uppercase tracking-wide text-muted">
-              {field.label}
-            </label>
-            {field.type === 'boolean' ? (
+        {getSpeciesFields(species).map((field) =>
+          field.type === 'boolean' ? (
+            <div key={field.key} className="flex flex-col gap-1">
+              <label className="text-[11px] uppercase tracking-wide text-muted">
+                {field.label}
+              </label>
               <Toggle
                 label={field.value ? 'Yes' : 'No'}
                 checked={field.value === true}
                 onChange={(checked) => onFieldSave(species.name, field, checked)}
               />
-            ) : (
+            </div>
+          ) : field.pill === CONCENTRATION_PILL ? (
+            <div key={field.key} className="flex flex-col gap-1">
+              {/* No unit in the label here -- the dropdown is the unit now. */}
+              <label className="text-[11px] uppercase tracking-wide text-muted">
+                {field.pill}
+              </label>
+              <div className="flex flex-col gap-2 max-w-xs">
+                <UnitDropdown
+                  unitId={concentrationUnitId}
+                  onChange={setConcentrationUnitId}
+                  units={CONCENTRATION_UNITS}
+                  wrapperClassName={DROPDOWN_WRAPPER}
+                  buttonClassName={DROPDOWN_BUTTON}
+                  centerLabel
+                />
+                <input
+                  key={concentrationUnitId}
+                  type="text"
+                  defaultValue={fromMolM3(field.value, concentrationUnitId, airDensity) ?? ''}
+                  onBlur={(e) => {
+                    const raw = e.target.value.trim()
+                    if (!raw) {
+                      onFieldSave(species.name, field, '')
+                      return
+                    }
+                    const parsed = Number(raw)
+                    onFieldSave(
+                      species.name,
+                      field,
+                      Number.isNaN(parsed)
+                        ? raw
+                        : String(toMolM3(parsed, concentrationUnitId, airDensity))
+                    )
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.currentTarget.blur()
+                    }
+                  }}
+                  placeholder={field.placeholder}
+                  className={TEXT_INPUT_SM.replace('text-center', 'text-left')}
+                />
+              </div>
+            </div>
+          ) : (
+            <div key={field.key} className="flex flex-col gap-1">
+              <label className="text-[11px] uppercase tracking-wide text-muted">
+                {field.label}
+              </label>
               <input
                 type="text"
                 defaultValue={field.value ?? ''}
@@ -328,11 +415,11 @@ function SpeciesChip({ species, onPhaseChange, onFieldSave, onRemove }) {
                   }
                 }}
                 placeholder={field.placeholder}
-                className={`w-full max-w-xs ${TEXT_INPUT_SM}`}
+                className={`w-full max-w-xs ${TEXT_INPUT_SM.replace('text-center', 'text-left')}`}
               />
-            )}
-          </div>
-        ))}
+            </div>
+          )
+        )}
       </div>
     </div>
   )
@@ -341,11 +428,14 @@ function SpeciesChip({ species, onPhaseChange, onFieldSave, onRemove }) {
 export function SpeciesEditor() {
   const dispatch = useDispatch()
   const species = useSelector((state) => state.mechanism.species)
+  const initialConditions = useSelector((state) => state.conditions.initial)
   const { toast } = useToast()
+  const airDensity = airDensityMolM3(initialConditions.pressure, initialConditions.temperature)
 
   const [newSpeciesName, setNewSpeciesName] = useState('')
   const [newSpeciesPhase, setNewSpeciesPhase] = useState('')
   const [newSpeciesProperties, setNewSpeciesProperties] = useState({})
+  const [addFormConcentrationUnitId, setAddFormConcentrationUnitId] = useState('mol_m3')
   const [speciesSearch, setSpeciesSearch] = useState('')
   const speciesQuery = speciesSearch.trim().toLowerCase()
   // Sorted case-insensitively with natural numeric ordering (e.g., C2H6 before C10H22).
@@ -354,11 +444,36 @@ export function SpeciesEditor() {
     .sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' }))
 
   const handleAddSpecies = () => {
+    const rawConcentration = newSpeciesProperties[CONCENTRATION_PILL]
+    const trimmedConcentration =
+      typeof rawConcentration === 'string' ? rawConcentration.trim() : ''
+    let convertedProperties = newSpeciesProperties
+
+    if (trimmedConcentration !== '') {
+      const parsedConcentration = Number(trimmedConcentration)
+      if (Number.isNaN(parsedConcentration)) {
+        toast({
+          title: 'Error',
+          description: 'Constant concentration must be a valid number',
+          variant: 'destructive',
+        })
+        return
+      }
+      if (addFormConcentrationUnitId === 'ppb') {
+        convertedProperties = {
+          ...newSpeciesProperties,
+          [CONCENTRATION_PILL]: String(
+            toMolM3(parsedConcentration, addFormConcentrationUnitId, airDensity)
+          ),
+        }
+      }
+    }
+
     const added = addSpeciesIfValid({
       species,
       newSpeciesName,
       newSpeciesPhase,
-      newSpeciesProperties,
+      newSpeciesProperties: convertedProperties,
       speciesProperties: SPECIES_PROPERTIES,
       dispatch,
       toast,
@@ -456,6 +571,7 @@ export function SpeciesEditor() {
             onPhaseChange={handlePhaseSave}
             onFieldSave={handleFieldSave}
             onRemove={handleRemoveSpecies}
+            airDensity={airDensity}
           />
         ))
       )}
@@ -466,7 +582,7 @@ export function SpeciesEditor() {
     <div className="space-y-4">
       {/* Add form and species list are separate cards, side by side on wide screens. They
           stack below lg, where two columns would leave neither enough room. */}
-      <div className={EDITOR_GRID}>
+      <div className={SPECIES_EDITOR_GRID}>
         <Card>
           <CardHeader>
             <CardTitle>Add species</CardTitle>
@@ -484,14 +600,14 @@ export function SpeciesEditor() {
 
               <div>
                 <label className="block text-base font-semibold text-ink mb-2">
-                  Species name
+                  Type species
                 </label>
                 <input
                   type="text"
                   value={newSpeciesName}
                   onChange={(e) => setNewSpeciesName(e.target.value)}
-                  placeholder="e.g., N2"
-                  className={TEXT_INPUT}
+                  placeholder="species name"
+                  className={TEXT_INPUT.replace('text-center', 'text-left')}
                 />
               </div>
 
@@ -502,12 +618,19 @@ export function SpeciesEditor() {
                 <PropertySelector
                   properties={newSpeciesProperties}
                   onChange={setNewSpeciesProperties}
+                  concentrationUnitId={addFormConcentrationUnitId}
+                  onConcentrationUnitChange={setAddFormConcentrationUnitId}
                 />
               </div>
             </div>
 
             <div className="mt-8 flex justify-center">
-              <Button onClick={handleAddSpecies} variant="primary" size="lg" className="text-base">
+              <Button
+                onClick={handleAddSpecies}
+                variant="primary"
+                size="lg"
+                className="text-base font-normal border-0 bg-assist-secondary text-assist-secondary-foreground hover:bg-assist-secondary-hover hover:text-assist-secondary-foreground"
+              >
                 Add species
               </Button>
             </div>
@@ -526,7 +649,7 @@ export function SpeciesEditor() {
               value={speciesSearch}
               onChange={(e) => setSpeciesSearch(e.target.value)}
               placeholder="Search species by name"
-              className={`w-full mb-5 ${TEXT_INPUT_SM}`}
+              className={`w-[90%] mb-5 ${TEXT_INPUT_SM.replace('text-center', 'text-left')}`}
             />
 
             {species.length === 0 ? (

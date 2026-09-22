@@ -20,7 +20,7 @@ export function Toggle({ checked, label, onChange, size = 'default' }) {
       {label}
       <span
         className={`relative inline-flex ${track} flex-shrink-0 items-center rounded-full transition-colors ${
-          checked ? 'bg-assist-secondary-ring' : 'bg-border'
+          checked ? 'bg-assist-secondary-hover' : 'bg-border'
         }`}
       >
         <span

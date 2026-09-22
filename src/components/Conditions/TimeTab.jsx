@@ -6,9 +6,9 @@ import { setDuration, setTimeStep, setOutputFrequency } from '../../redux/slices
 import { RangeBoundInput } from '../Plots/RangeBoundInput'
 import { UnitDropdown } from '../Plots/UnitDropdown'
 import { TIME_RANGE_UNITS, formatBound } from '../Plots/timeRangeUnits'
+import { TEXT_INPUT_SM } from '../Mechanism/fieldStyles'
 
-const NUMBER_INPUT =
-  'w-72 h-9 px-2 border border-border bg-white text-ink placeholder:text-muted rounded-lg text-sm text-center font-mono focus:outline-none focus:border-action [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none'
+const NUMBER_INPUT = `w-72 ${TEXT_INPUT_SM}`
 
 const DROPDOWN_WRAPPER = 'relative w-72 flex-shrink-0'
 const DROPDOWN_BUTTON =
