@@ -279,6 +279,7 @@ export function Flux() {
     setSelectedSpeciesNames([])
     setSpeciesSearch('')
     setTimeRange({ start: 0, end: duration })
+    setSelectedReactionKeys([])
   }
 
   const reactionTypeCounts = useMemo(() => {
