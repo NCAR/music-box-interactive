@@ -66,8 +66,8 @@ export function SurfaceReactionForm({ onAddReaction }) {
           type="text"
           value={gasPhaseSpecies}
           onChange={(e) => setGasPhaseSpecies(e.target.value)}
-          placeholder="e.g., NO2"
-          className={TEXT_INPUT}
+          placeholder="NO2"
+          className={TEXT_INPUT.replace('text-center', 'text-left')}
         />
       </div>
 
@@ -79,8 +79,8 @@ export function SurfaceReactionForm({ onAddReaction }) {
           type="text"
           value={gasPhaseProducts}
           onChange={(e) => setGasPhaseProducts(e.target.value)}
-          placeholder="e.g., 0.5OH + 0.5NO + 0.5HNO3"
-          className={TEXT_INPUT}
+          placeholder="0.5OH + 0.5NO + 0.5HNO3"
+          className={TEXT_INPUT.replace('text-center', 'text-left')}
         />
       </div>
 
@@ -93,7 +93,7 @@ export function SurfaceReactionForm({ onAddReaction }) {
           value={reactionProbability}
           onChange={(e) => setReactionProbability(e.target.value)}
           placeholder="1.0"
-          className={TEXT_INPUT}
+          className={TEXT_INPUT.replace('text-center', 'text-left')}
         />
       </div>
 
