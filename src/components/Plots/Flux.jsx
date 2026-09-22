@@ -214,6 +214,7 @@ export function Flux() {
   const [sortOrder, setSortOrder] = useState('desc')
   const [sortMenuOpen, setSortMenuOpen] = useState(false)
   const [selectedReactionKeys, setSelectedReactionKeys] = useState([])
+  const [plotted, setPlotted] = useState(false)
 
   // The initial state captures duration only on mount; resync if a rerun changes the duration
   // while the tab remains mounted.
@@ -267,11 +268,13 @@ export function Flux() {
     setSelectedReactionKeys((current) =>
       current.includes(key) ? current.filter((x) => x !== key) : [...current, key]
     )
+    setPlotted(false)
   }
 
   // TODO: wire up to an actual chart once the plot design is settled.
   const handlePlotSelected = () => {
     console.log('Plot selected reactions:', selectedReactionKeys)
+    setPlotted(true)
   }
 
   const resetFilters = () => {
@@ -280,6 +283,7 @@ export function Flux() {
     setSpeciesSearch('')
     setTimeRange({ start: 0, end: duration })
     setSelectedReactionKeys([])
+    setPlotted(false)
   }
 
   const reactionTypeCounts = useMemo(() => {
@@ -368,9 +372,11 @@ export function Flux() {
               variant="primary"
               size="sm"
               onClick={handlePlotSelected}
-              className={`gap-1.5 font-normal border-0 bg-assist-secondary-ring text-white hover:bg-assist-secondary-ring hover:opacity-90 ${
-                selectedReactionKeys.length === 0 ? 'invisible' : ''
-              }`}
+              className={`gap-1.5 font-normal border-assist-secondary-ring ${
+                plotted
+                  ? 'bg-assist-secondary-ring text-white hover:bg-assist-secondary-ring hover:text-white'
+                  : 'text-assist-secondary-ring hover:bg-white hover:text-assist-secondary-ring'
+              } ${selectedReactionKeys.length === 0 ? 'invisible' : ''}`}
             >
               Plot ({selectedReactionKeys.length})
             </Button>
