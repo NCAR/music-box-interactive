@@ -286,7 +286,6 @@ export function Flux() {
     setSelectedReactionKeys((current) =>
       current.includes(key) ? current.filter((x) => x !== key) : [...current, key]
     )
-    setPlotted(false)
   }
 
   // TODO: wire up to an actual chart once the plot design is settled.
