@@ -233,6 +233,11 @@ export function Flux() {
   const [sortMenuOpen, setSortMenuOpen] = useState(false)
   const [selectedReactionKeys, setSelectedReactionKeys] = useState([])
   const [plotted, setPlotted] = useState(false)
+  // key -> index into CHART_COLORS. Assigned once per reaction while it's selected and freed on
+  // deselect, so a reaction keeps its color for as long as it's plotted -- position in
+  // selectedReactionKeys shifts on every deselect, so deriving color from array index would
+  // repaint every reaction after the removed one.
+  const [colorAssignments, setColorAssignments] = useState(new Map())
 
   // The initial state captures duration only on mount; resync if a rerun changes the duration
   // while the tab remains mounted.
@@ -286,10 +291,21 @@ export function Flux() {
     setSelectedReactionKeys((current) =>
       current.includes(key) ? current.filter((x) => x !== key) : [...current, key]
     )
+    setColorAssignments((current) => {
+      const next = new Map(current)
+      if (next.has(key)) {
+        next.delete(key)
+        return next
+      }
+      const used = new Set(next.values())
+      let colorIndex = 0
+      while (used.has(colorIndex) && colorIndex < CHART_COLORS.length) colorIndex++
+      if (colorIndex < CHART_COLORS.length) next.set(key, colorIndex)
+      return next
+    })
   }
 
   const handlePlotSelected = () => {
-    console.log('Plot selected reactions:', selectedReactionKeys)
     setPlotted(true)
   }
 
@@ -299,6 +315,7 @@ export function Flux() {
     setSpeciesSearch('')
     setTimeRange({ start: 0, end: duration })
     setSelectedReactionKeys([])
+    setColorAssignments(new Map())
     setPlotted(false)
   }
 
@@ -373,12 +390,18 @@ export function Flux() {
 
   const chartSeries = useMemo(
     () =>
-      plottedReactionEntries.slice(0, CHART_COLORS.length).map((entry, i) => ({
-        ...entry,
-        color: CHART_COLORS[i],
-        label: formatReactionFormula(entry.reaction),
-      })),
-    [plottedReactionEntries]
+      plottedReactionEntries
+        .map((entry) => {
+          const colorIndex = colorAssignments.get(entry.key)
+          if (colorIndex === undefined) return null
+          return {
+            ...entry,
+            color: CHART_COLORS[colorIndex],
+            label: formatReactionFormula(entry.reaction),
+          }
+        })
+        .filter(Boolean),
+    [plottedReactionEntries, colorAssignments]
   )
 
   const hiddenSeriesCount = plottedReactionEntries.length - chartSeries.length
