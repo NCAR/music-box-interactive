@@ -158,3 +158,48 @@ export function computeIntegratedReactionRate(
   return matched ? total : 0
 }
 
+/**
+ * Time series of cumulative reacted amount within [timeStart, timeEnd], one row per results
+ * sample, one column per tracked reaction -- the series counterpart to
+ * computeIntegratedReactionRate, which only reads the two endpoints. Each column is
+ * normalized to zero at the window start, so its value at any point is directly comparable to
+ * computeIntegratedReactionRate's result for that same window.
+ *
+ * `trackedReactions` is `{ key, reaction, index }[]`; `index` must be each reaction's position
+ * in the UNFILTERED mechanism reactions array, same requirement as computeIntegratedReactionRate.
+ */
+export function computeReactionSeries(trackedReactions, results, timeStart, timeEnd) {
+  if (!Array.isArray(results)) return []
+
+  const tracked = trackedReactions.map(({ key, reaction, index }) => ({
+    key,
+    concKeys: buildTracerConcentrationKeys(index, reaction?.name),
+  }))
+
+  const baselines = new Map()
+  const points = []
+
+  for (const timeEntry of results) {
+    const t = timeEntry.time
+    if (t < timeStart || t > timeEnd) continue
+
+    const point = { time: t }
+    for (const { key, concKeys } of tracked) {
+      let total = 0
+      let matched = false
+      for (const concKey of concKeys) {
+        const value = timeEntry.concentrations?.[concKey]
+        if (typeof value !== 'number') continue
+        matched = true
+        total += value
+      }
+      if (!matched) continue
+      if (!baselines.has(key)) baselines.set(key, total)
+      point[key] = total - baselines.get(key)
+    }
+    points.push(point)
+  }
+
+  return points
+}
+

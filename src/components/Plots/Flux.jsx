@@ -1,9 +1,25 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useSelector } from 'react-redux'
 import { ChevronDown, ChevronUp, Check, Waypoints } from 'lucide-react'
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+  Label,
+} from 'recharts'
 import { useClickOutside } from '../../hooks/useClickOutside'
 import { getResultSpeciesNames } from './speciesFormat'
-import { computeIntegratedReactionRate, reactionReactants, reactionProducts } from './flowUtils'
+import {
+  computeIntegratedReactionRate,
+  computeReactionSeries,
+  reactionReactants,
+  reactionProducts,
+} from './flowUtils'
 import {
   canonicalReactionType,
   getReactionParameters,
@@ -16,6 +32,8 @@ import { TIME_RANGE_UNITS } from './timeRangeUnits'
 import { UnitDropdown } from './UnitDropdown'
 import { Card, CardContent } from '../ui/card'
 import { Button } from '../ui/button'
+import { CHART_COLORS } from '../chartColors'
+import { ChartLegendContent, ChartTooltipContent } from '../SimulationChart'
 
 // Species rows shown before the list collapses into a "+N others" popover.
 const SPECIES_VISIBLE = 10
@@ -336,6 +354,47 @@ export function Flux() {
     sortOrder,
   ])
 
+  // Keyed off the full unfiltered mechanism, not visibleReactions -- a reaction stays plottable
+  // after it's checked even if a later filter change hides its chip.
+  const reactionEntriesByKey = useMemo(() => {
+    const map = new Map()
+    ;(reactions ?? []).forEach((reaction, index) => {
+      map.set(reaction.id ?? index, { reaction, index })
+    })
+    return map
+  }, [reactions])
+
+  const plottedReactionEntries = useMemo(
+    () =>
+      selectedReactionKeys
+        .map((key) => {
+          const entry = reactionEntriesByKey.get(key)
+          return entry ? { key, ...entry } : null
+        })
+        .filter(Boolean),
+    [selectedReactionKeys, reactionEntriesByKey]
+  )
+
+  // Capped at CHART_COLORS.length: past that, colors can't stay adjacent-pair distinguishable.
+  const chartSeries = useMemo(
+    () =>
+      plottedReactionEntries.slice(0, CHART_COLORS.length).map((entry, i) => ({
+        ...entry,
+        color: CHART_COLORS[i],
+        label: formatReactionFormula(entry.reaction),
+      })),
+    [plottedReactionEntries]
+  )
+
+  const hiddenSeriesCount = plottedReactionEntries.length - chartSeries.length
+
+  const chartData = useMemo(() => {
+    if (!plotted || chartSeries.length === 0) return []
+    const timeStart = timeRange.start ?? 0
+    const timeEnd = timeRange.end ?? duration ?? Infinity
+    return computeReactionSeries(chartSeries, simulation.excludedResults, timeStart, timeEnd)
+  }, [plotted, chartSeries, simulation.excludedResults, timeRange.start, timeRange.end, duration])
+
   if (!simulation.results || simulation.status !== 'succeeded') {
     return (
       <Card>
@@ -354,8 +413,9 @@ export function Flux() {
   const sortOption = SORT_OPTIONS.find((option) => option.id === sortOrder) ?? SORT_OPTIONS[0]
 
   return (
-    <Card>
-      <CardContent className="space-y-4">
+    <div className="space-y-4">
+      <Card>
+        <CardContent className="space-y-4">
         <div className="flex flex-col lg:flex-row lg:items-center gap-2 lg:gap-4 pt-3">
           <div className="w-full lg:w-64 lg:flex-shrink-0">
             <button
@@ -585,7 +645,7 @@ export function Flux() {
           </div>
 
           <div className="flex-1 lg:relative">
-            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 content-start items-start lg:absolute lg:inset-0 lg:overflow-y-auto lg:pr-1">
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 content-start items-start lg:absolute lg:inset-0 lg:overflow-y-auto lg:p-1">
               {visibleReactions.length === 0 ? (
                 <p className="text-sm text-muted col-span-full">
                   No reactions match the current filters.
@@ -604,7 +664,101 @@ export function Flux() {
             </div>
           </div>
         </div>
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
+
+      {plotted && chartSeries.length > 0 && (
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between gap-3 mb-3">
+              {hiddenSeriesCount > 0 && (
+                <p className="text-xs text-muted">
+                  Showing the first {chartSeries.length} of {plottedReactionEntries.length}{' '}
+                  selected reactions -- more than that isn't distinguishable by color.
+                </p>
+              )}
+            </div>
+
+            <div className="max-w-[80%] mx-auto">
+              <ResponsiveContainer width="100%" height={512}>
+                <LineChart data={chartData} margin={{ top: 5, right: 30, left: 30, bottom: 5 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#D8D6D2" />
+
+                  <XAxis
+                    dataKey="time"
+                    type="number"
+                    domain={['dataMin', 'dataMax']}
+                    stroke="#5f6368"
+                    tick={{ fontSize: 12, fill: '#5f6368' }}
+                    tickFormatter={(t) => formatValue(t / timeRangeUnit.divisor)}
+                  >
+                    <Label
+                      value={`Time (${timeRangeUnit.label.toLowerCase()})`}
+                      position="insideBottom"
+                      offset={-5}
+                      style={{ fill: '#1f2937', fontWeight: 600, fontSize: 14 }}
+                    />
+                  </XAxis>
+
+                  <YAxis
+                    stroke="#5f6368"
+                    tick={{ fontSize: 11, fill: '#5f6368' }}
+                    tickFormatter={(v) => {
+                      if (v === 0 || !isFinite(v)) return '0'
+                      return v.toExponential(0)
+                    }}
+                    allowDataOverflow={false}
+                    width={70}
+                  >
+                    <Label
+                      value="Flux (mol m⁻³)"
+                      angle={-90}
+                      position="insideLeft"
+                      offset={10}
+                      style={{ fill: '#1f2937', fontWeight: 600, fontSize: 13, textAnchor: 'middle' }}
+                    />
+                  </YAxis>
+
+                  <Tooltip
+                    wrapperStyle={{ zIndex: 10 }}
+                    content={({ active, payload, label }) => (
+                      <ChartTooltipContent
+                        active={active}
+                        payload={payload}
+                        timeLabel={`${
+                          timeRangeUnit.divisor === 1
+                            ? label?.toLocaleString()
+                            : (label / timeRangeUnit.divisor)?.toFixed(2)
+                        } ${timeRangeUnit.label.toLowerCase()}`}
+                        maxVisible={chartSeries.length}
+                      />
+                    )}
+                  />
+
+                  <Legend
+                    wrapperStyle={{ paddingTop: '20px' }}
+                    content={<ChartLegendContent maxVisible={chartSeries.length} />}
+                  />
+
+                  {chartSeries.map((series) => (
+                    <Line
+                      key={series.key}
+                      type="monotone"
+                      dataKey={series.key}
+                      name={series.label}
+                      stroke={series.color}
+                      strokeWidth={3}
+                      dot={chartData.length <= 10 ? { r: 4 } : false}
+                      connectNulls
+                      isAnimationActive={false}
+                    />
+                  ))}
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+    </div>
   )
 }
