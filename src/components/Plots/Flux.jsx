@@ -288,7 +288,6 @@ export function Flux() {
     )
   }
 
-  // TODO: wire up to an actual chart once the plot design is settled.
   const handlePlotSelected = () => {
     console.log('Plot selected reactions:', selectedReactionKeys)
     setPlotted(true)
@@ -353,8 +352,6 @@ export function Flux() {
     sortOrder,
   ])
 
-  // Keyed off the full unfiltered mechanism, not visibleReactions -- a reaction stays plottable
-  // after it's checked even if a later filter change hides its chip.
   const reactionEntriesByKey = useMemo(() => {
     const map = new Map()
     ;(reactions ?? []).forEach((reaction, index) => {
@@ -374,7 +371,6 @@ export function Flux() {
     [selectedReactionKeys, reactionEntriesByKey]
   )
 
-  // Capped at CHART_COLORS.length: past that, colors can't stay adjacent-pair distinguishable.
   const chartSeries = useMemo(
     () =>
       plottedReactionEntries.slice(0, CHART_COLORS.length).map((entry, i) => ({

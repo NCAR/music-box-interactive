@@ -159,14 +159,10 @@ export function computeIntegratedReactionRate(
 }
 
 /**
- * Time series of cumulative reacted amount within [timeStart, timeEnd], one row per results
- * sample, one column per tracked reaction -- the series counterpart to
- * computeIntegratedReactionRate, which only reads the two endpoints. Each column is
- * normalized to zero at the window start, so its value at any point is directly comparable to
- * computeIntegratedReactionRate's result for that same window.
- *
- * `trackedReactions` is `{ key, reaction, index }[]`; `index` must be each reaction's position
- * in the UNFILTERED mechanism reactions array, same requirement as computeIntegratedReactionRate.
+ * Computes a time series of cumulative reaction amounts over a specified time window:
+ * - One row per results sample and one column per tracked reaction.
+ * - Each reaction starts at 0 at timeStart.
+ * - Values at any time are directly comparable to computeIntegratedReactionRate for that same window.
  */
 export function computeReactionSeries(trackedReactions, results, timeStart, timeEnd) {
   if (!Array.isArray(results)) return []
