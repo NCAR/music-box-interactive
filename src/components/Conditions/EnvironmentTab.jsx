@@ -17,6 +17,7 @@ import { TEMPERATURE_UNITS, toKelvin } from '../Plots/temperatureUnits'
 import { PRESSURE_UNITS } from '../Plots/pressureUnits'
 import { DENSITY_UNITS } from '../Plots/densityUnits'
 import { LIST_CARD, LIST_CARD_CONTENT, FIELD_LABEL } from '../Mechanism/fieldStyles'
+import { cn } from '../../lib/utils'
 
 // Air number density is optional, so its values are stored in the evolving slice's generic
 // additionalSeries map, alongside hidden series like PHOTO.*, instead of
@@ -34,6 +35,10 @@ const DROPDOWN_WRAPPER = 'relative w-72 flex-shrink-0'
 const DROPDOWN_BUTTON =
   'flex items-center gap-1 w-full h-9 px-2 border border-gray-300 rounded-lg text-sm text-gray-800 hover:bg-gray-50'
 
+// An editable table cell
+const CELL_INPUT =
+  'w-full px-2 py-1 border rounded text-sm font-mono border-gray-300 bg-white focus:outline-none focus:ring-2 focus:ring-action transition-colors duration-300'
+
 // Matches each field's placeholder when the field is left blank.
 const DEFAULT_TIME = 0
 const DEFAULT_TEMPERATURE = 298.15
@@ -44,6 +49,10 @@ const GAS_CONSTANT = 8.31446261815324
 
 function getUnit(units, unitId) {
   return units.find((u) => u.id === unitId) ?? units[0]
+}
+
+function idealGasDensity(pressure, temperature) {
+  return pressure / (GAS_CONSTANT * temperature)
 }
 
 function formatConversion(value, decimals = 4) {
@@ -90,6 +99,8 @@ export function EnvironmentTab() {
   const [densityEnabled, setDensityEnabled] = useState(false)
   const [newDensity, setNewDensity] = useState('')
   const [selectedIndices, setSelectedIndices] = useState(new Set())
+  const [rowDrafts, setRowDrafts] = useState({})
+  const [justUpdatedCell, setJustUpdatedCell] = useState(null)
 
   const handleAdd = () => {
     const timeIsBlank = newTime.trim() === ''
@@ -125,7 +136,11 @@ export function EnvironmentTab() {
       ? rawTemperature
       : toKelvin(rawTemperature, unitIds.temperature)
     const pressure = pressureIsBlank ? rawPressure : rawPressure * pressureUnit.divisor
-    const density = densityEnabled && !densityIsBlank ? rawDensity * densityUnit.divisor : null
+    const density = densityEnabled
+      ? !densityIsBlank
+        ? rawDensity * densityUnit.divisor
+        : idealGasDensity(pressure, temperature)
+      : null
 
     if (evolving.times.includes(time)) {
       toast({
@@ -217,6 +232,88 @@ export function EnvironmentTab() {
     setSelectedIndices(new Set())
   }
 
+  const cellKey = (field, index) => `${field}:${index}`
+
+  const handleCellDraftChange = (field, index, value) => {
+    setRowDrafts((prev) => ({ ...prev, [cellKey(field, index)]: value }))
+  }
+
+  const clearCellDraft = (field, index) => {
+    setRowDrafts((prev) => {
+      const next = { ...prev }
+      delete next[cellKey(field, index)]
+      return next
+    })
+  }
+
+  // Brief visual confirmation that a cell's edit was committed
+  const flashCell = (field, index) => {
+    const key = cellKey(field, index)
+    setJustUpdatedCell(key)
+    setTimeout(() => {
+      setJustUpdatedCell((current) => (current === key ? null : current))
+    }, 600)
+  }
+
+  const commitTemperature = (index, rawValue) => {
+    const parsed = parseFloat(rawValue)
+    if (isNaN(parsed)) {
+      toast({
+        title: 'Invalid Input',
+        description: 'Temperature must be a valid number',
+        variant: 'destructive',
+      })
+      return
+    }
+    const next = [...evolving.temperature]
+    next[index] = parsed
+    dispatch(setEvolvingTemperature(next))
+    clearCellDraft('temperature', index)
+    flashCell('temperature', index)
+  }
+
+  const commitPressure = (index, rawValue) => {
+    const parsed = parseFloat(rawValue)
+    if (isNaN(parsed)) {
+      toast({
+        title: 'Invalid Input',
+        description: 'Pressure must be a valid number',
+        variant: 'destructive',
+      })
+      return
+    }
+    const next = [...evolving.pressure]
+    next[index] = parsed
+    dispatch(setEvolvingPressure(next))
+    clearCellDraft('pressure', index)
+    flashCell('pressure', index)
+  }
+
+  const commitDensity = (index, rawValue) => {
+    const isBlank = rawValue.trim() === ''
+    const parsed = isBlank
+      ? idealGasDensity(evolving.pressure[index], evolving.temperature[index])
+      : parseFloat(rawValue)
+    if (!isBlank && isNaN(parsed)) {
+      toast({
+        title: 'Invalid Input',
+        description: 'Air number density must be a valid number',
+        variant: 'destructive',
+      })
+      return
+    }
+    const existing = Array.isArray(evolving.additionalSeries?.[DENSITY_SERIES_KEY])
+      ? evolving.additionalSeries[DENSITY_SERIES_KEY]
+      : new Array(evolving.times.length).fill(null)
+    const next = [...existing]
+    next[index] = parsed
+    dispatch(
+      setEvolvingAdditionalSeries({ ...evolving.additionalSeries, [DENSITY_SERIES_KEY]: next })
+    )
+    clearCellDraft('density', index)
+    flashCell('density', index)
+  }
+
   // Live “stored as” hints, shown only for non-base units.
   const parsedNewTime = parseFloat(newTime)
   const timeConversion =
@@ -245,7 +342,7 @@ export function EnvironmentTab() {
       ? parsedNewPressure * getUnit(PRESSURE_UNITS, unitIds.pressure).divisor
       : DEFAULT_PRESSURE
   const idealGasDensityPlaceholder = formatConversion(
-    previewPressure / (GAS_CONSTANT * previewTemperature) / getUnit(DENSITY_UNITS, unitIds.density).divisor
+    idealGasDensity(previewPressure, previewTemperature) / getUnit(DENSITY_UNITS, unitIds.density).divisor
   )
 
   return (
@@ -442,14 +539,86 @@ export function EnvironmentTab() {
                             </td>
                             <td className="px-4 py-2 font-mono">{formatConversion(time)}</td>
                             <td className="px-4 py-2 font-mono">
-                              {formatConversion(evolving.temperature[index])}
+                              <input
+                                type="text"
+                                inputMode="decimal"
+                                value={
+                                  rowDrafts[cellKey('temperature', index)] ??
+                                  formatConversion(evolving.temperature[index])
+                                }
+                                onChange={(e) =>
+                                  handleCellDraftChange('temperature', index, e.target.value)
+                                }
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter') {
+                                    e.preventDefault()
+                                    commitTemperature(index, e.target.value)
+                                    e.target.blur()
+                                  }
+                                }}
+                                onBlur={(e) => commitTemperature(index, e.target.value)}
+                                className={cn(
+                                  CELL_INPUT,
+                                  justUpdatedCell === cellKey('temperature', index) &&
+                                    'border-action bg-assist-secondary'
+                                )}
+                              />
                             </td>
                             <td className="px-4 py-2 font-mono">
-                              {formatConversion(evolving.pressure[index])}
+                              <input
+                                type="text"
+                                inputMode="decimal"
+                                value={
+                                  rowDrafts[cellKey('pressure', index)] ??
+                                  formatConversion(evolving.pressure[index])
+                                }
+                                onChange={(e) =>
+                                  handleCellDraftChange('pressure', index, e.target.value)
+                                }
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter') {
+                                    e.preventDefault()
+                                    commitPressure(index, e.target.value)
+                                    e.target.blur()
+                                  }
+                                }}
+                                onBlur={(e) => commitPressure(index, e.target.value)}
+                                className={cn(
+                                  CELL_INPUT,
+                                  justUpdatedCell === cellKey('pressure', index) &&
+                                    'border-action bg-assist-secondary'
+                                )}
+                              />
                             </td>
                             {hasDensityColumn && (
                               <td className="px-4 py-2 font-mono">
-                                {density != null ? formatConversion(density) : '—'}
+                                <input
+                                  type="text"
+                                  inputMode="decimal"
+                                  value={
+                                    rowDrafts[cellKey('density', index)] ??
+                                    (density != null ? formatConversion(density) : '')
+                                  }
+                                  onChange={(e) =>
+                                    handleCellDraftChange('density', index, e.target.value)
+                                  }
+                                  placeholder={formatConversion(
+                                    idealGasDensity(evolving.pressure[index], evolving.temperature[index])
+                                  )}
+                                  onKeyDown={(e) => {
+                                    if (e.key === 'Enter') {
+                                      e.preventDefault()
+                                      commitDensity(index, e.target.value)
+                                      e.target.blur()
+                                    }
+                                  }}
+                                  onBlur={(e) => commitDensity(index, e.target.value)}
+                                  className={cn(
+                                    CELL_INPUT,
+                                    justUpdatedCell === cellKey('density', index) &&
+                                      'border-action bg-assist-secondary'
+                                  )}
+                                />
                               </td>
                             )}
                           </tr>
