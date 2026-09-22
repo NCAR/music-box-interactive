@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useSelector } from 'react-redux'
-import { ChevronDown, ChevronUp, Check, Waypoints, LineChart } from 'lucide-react'
+import { ChevronDown, ChevronUp, Check, Waypoints } from 'lucide-react'
 import { useClickOutside } from '../../hooks/useClickOutside'
 import { getResultSpeciesNames } from './speciesFormat'
 import { computeIntegratedReactionRate, reactionReactants, reactionProducts } from './flowUtils'
@@ -351,51 +351,62 @@ export function Flux() {
   return (
     <Card>
       <CardContent className="space-y-4">
-        <div className="flex items-center justify-between pt-3">
-          <div className="flex items-center gap-3 text-sm text-ink">
-            <button type="button" onClick={resetFilters} className="text-action hover:underline">
-              Reset
-            </button>
-            {selectedReactionKeys.length > 0 && (
-              <Button variant="primary" size="sm" onClick={handlePlotSelected} className="gap-1.5">
-                <LineChart className="w-3.5 h-3.5" />
-                Plot ({selectedReactionKeys.length})
-              </Button>
-            )}
-          </div>
-
-          <div className="relative" ref={sortMenuRef}>
+        <div className="flex flex-col lg:flex-row lg:items-center gap-2 lg:gap-4 pt-3">
+          <div className="w-full lg:w-64 lg:flex-shrink-0">
             <button
               type="button"
-              onClick={() => setSortMenuOpen((open) => !open)}
-              className="flex items-center gap-1 text-sm text-ink hover:text-heading"
+              onClick={resetFilters}
+              className="text-sm text-action hover:underline"
             >
-              {sortOption.label}
-              <ChevronDown className="w-3.5 h-3.5" />
+              Reset
             </button>
+          </div>
 
-            {sortMenuOpen && (
-              <div className="absolute right-0 z-10 mt-1 w-44 bg-white border border-border rounded-lg shadow-lg py-1">
-                {SORT_OPTIONS.map((option) => (
-                  <button
-                    key={option.id}
-                    type="button"
-                    onClick={() => {
-                      setSortOrder(option.id)
-                      setSortMenuOpen(false)
-                    }}
-                    className="w-full flex items-center gap-2 text-left text-sm px-3 py-1.5 text-ink hover:bg-surface-hover"
-                  >
-                    <Check
-                      className={`w-3.5 h-3.5 flex-shrink-0 ${
-                        sortOrder === option.id ? 'opacity-100' : 'opacity-0'
-                      }`}
-                    />
-                    {option.label}
-                  </button>
-                ))}
-              </div>
-            )}
+          <div className="flex flex-1 items-center justify-between">
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={handlePlotSelected}
+              className={`gap-1.5 font-normal border-0 bg-assist-secondary-ring text-white hover:bg-assist-secondary-ring hover:opacity-90 ${
+                selectedReactionKeys.length === 0 ? 'invisible' : ''
+              }`}
+            >
+              Plot ({selectedReactionKeys.length})
+            </Button>
+
+            <div className="relative" ref={sortMenuRef}>
+              <button
+                type="button"
+                onClick={() => setSortMenuOpen((open) => !open)}
+                className="flex items-center gap-1 text-sm text-ink hover:text-heading"
+              >
+                {sortOption.label}
+                <ChevronDown className="w-3.5 h-3.5" />
+              </button>
+
+              {sortMenuOpen && (
+                <div className="absolute right-0 z-10 mt-1 w-44 bg-white border border-border rounded-lg shadow-lg py-1">
+                  {SORT_OPTIONS.map((option) => (
+                    <button
+                      key={option.id}
+                      type="button"
+                      onClick={() => {
+                        setSortOrder(option.id)
+                        setSortMenuOpen(false)
+                      }}
+                      className="w-full flex items-center gap-2 text-left text-sm px-3 py-1.5 text-ink hover:bg-surface-hover"
+                    >
+                      <Check
+                        className={`w-3.5 h-3.5 flex-shrink-0 ${
+                          sortOrder === option.id ? 'opacity-100' : 'opacity-0'
+                        }`}
+                      />
+                      {option.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
