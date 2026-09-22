@@ -584,23 +584,24 @@ export function Flux() {
             </div>
           </div>
 
-          {/* Reaction chips */}
-          <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 content-start items-start">
-            {visibleReactions.length === 0 ? (
-              <p className="text-sm text-muted col-span-full">
-                No reactions match the current filters.
-              </p>
-            ) : (
-              visibleReactions.map(({ reaction, key, flux }) => (
-                <FluxReactionChip
-                  key={key}
-                  reaction={reaction}
-                  flux={flux}
-                  checked={selectedReactionKeys.includes(key)}
-                  onToggleCheck={() => toggleReactionSelection(key)}
-                />
-              ))
-            )}
+          <div className="flex-1 lg:relative">
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 content-start items-start lg:absolute lg:inset-0 lg:overflow-y-auto lg:pr-1">
+              {visibleReactions.length === 0 ? (
+                <p className="text-sm text-muted col-span-full">
+                  No reactions match the current filters.
+                </p>
+              ) : (
+                visibleReactions.map(({ reaction, key, flux }) => (
+                  <FluxReactionChip
+                    key={key}
+                    reaction={reaction}
+                    flux={flux}
+                    checked={selectedReactionKeys.includes(key)}
+                    onToggleCheck={() => toggleReactionSelection(key)}
+                  />
+                ))
+              )}
+            </div>
           </div>
         </div>
       </CardContent>
