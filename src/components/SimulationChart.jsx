@@ -196,23 +196,24 @@ export function SimulationChart({ results, metadata }) {
 
   // Color palette for species
   const colors = [
-    '#0057C2', // NCAR Blue
-    '#FAA119', // Orange
-    '#00A2B4', // UCAR Aqua
-    '#00357A', // Dark Blue
-    '#D9B915', // Yellow (darkened for line visibility)
-    '#34E1F4', // Light Aqua
-    '#C97F10', // Orange (dark)
-    '#42C0FF', // Light Blue
-    '#007483', // UCAR Aqua (dark)
-    '#011837', // Space
-    '#7A5C00', // Yellow (deep)
-    '#1E90D8', // Blue (mid)
-    '#B36A0E', // Orange (deep)
-    '#4FD1DE', // Aqua (light-mid)
-    '#FFDD31', // Yellow (bright)
-    '#5A6B7D', // neutral blue-gray
+    '#3b82f6',
+    '#ef4444',
+    '#10b981',
+    '#f59e0b',
+    '#8b5cf6',
+    '#ec4899',
+    '#14b8a6',
+    '#f97316',
+    '#6366f1',
+    '#84cc16',
+    '#06b6d4',
+    '#f43f5e',
+    '#a855f7',
+    '#22c55e',
+    '#eab308',
+    '#64748b',
   ]
+
 
   // Extract all species, do not filter by value (show even if all zero)
   const allSpecies = useMemo(() => {
