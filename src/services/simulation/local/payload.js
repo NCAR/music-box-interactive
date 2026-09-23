@@ -1,5 +1,4 @@
-import { mechanismConfiguration } from '@ncar/musica'
-import { MusicBox } from '@ncar/music-box'
+import { MusicBox, mechanismConfiguration } from '@ncar/music-box'
 import { buildSolverConditions } from './conditions'
 import {
   buildPhases,

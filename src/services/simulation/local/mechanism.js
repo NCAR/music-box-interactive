@@ -1,4 +1,4 @@
-import { mechanismConfiguration } from '@ncar/musica'
+import { mechanismConfiguration } from '@ncar/music-box'
 import { PHASE_PROPERTY_KEYS } from './speciesProperties'
 
 const { types, reactionTypes } = mechanismConfiguration
