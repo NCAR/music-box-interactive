@@ -14,7 +14,7 @@ export const TEXT_INPUT_CODE =
 
 // The two editors sit side by side above lg and stack below it, where two columns would leave
 // neither enough room.
-export const EDITOR_GRID = 'grid grid-cols-1 gap-4 lg:grid-cols-2 lg:items-start'
+export const EDITOR_GRID = 'grid grid-cols-1 gap-4 lg:grid-cols-[0.7fr_1.3fr] lg:items-start'
 
 // Keep the list column fixed so only the list itself scrolls.
 export const LIST_CARD = 'flex flex-col lg:h-[calc(100vh-10rem)] lg:min-h-[24rem]'

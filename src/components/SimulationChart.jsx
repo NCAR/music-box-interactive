@@ -14,6 +14,7 @@ import { BarChart3, Atom, AlertCircle, ChevronDown, Check } from 'lucide-react'
 import { Card, CardContent, CardDescription } from './ui/card'
 import { getSpeciesDisplayName } from './Plots/speciesFormat'
 import { useClickOutside } from '../hooks/useClickOutside'
+import { CHART_COLORS } from './chartColors'
 
 // X-axis time unit options
 const TIME_UNITS = [
@@ -43,7 +44,7 @@ const TOOLTIP_VISIBLE_COMPACT = 6
 const TOOLTIP_VISIBLE = 25
 
 // Legend entries, with overflow shown in a "+N others" overlay.
-function ChartLegendContent({ payload, maxVisible, compact }) {
+export function ChartLegendContent({ payload, maxVisible, compact }) {
   const [open, setOpen] = useState(false)
   const overflowRef = useRef(null)
   const closeOverflow = useCallback(() => setOpen(false), [])
@@ -99,7 +100,7 @@ function ChartLegendContent({ payload, maxVisible, compact }) {
 
 // Tooltip entries sorted by value, with overflow shown as a "+N more" note.
 // No interaction since the tooltip disappears on mouse-out.
-function ChartTooltipContent({ active, payload, timeLabel, maxVisible, compact }) {
+export function ChartTooltipContent({ active, payload, timeLabel, maxVisible, compact }) {
   if (!active || !payload?.length) return null
 
   const sorted = [...payload].sort((a, b) => {
@@ -193,26 +194,6 @@ export function SimulationChart({ results, metadata }) {
   useClickOutside(timeUnitMenuRef, closeTimeUnitMenu, timeUnitMenuOpen)
   useClickOutside(selectAllMenuRef, closeSelectAllMenu, selectAllMenuOpen)
   useClickOutside(speciesOverflowRef, closeSpeciesOverflow, speciesOverflowOpen)
-
-  // Color palette for species
-  const colors = [
-    '#0057C2', // NCAR Blue
-    '#FAA119', // Orange
-    '#00A2B4', // UCAR Aqua
-    '#00357A', // Dark Blue
-    '#D9B915', // Yellow (darkened for line visibility)
-    '#34E1F4', // Light Aqua
-    '#C97F10', // Orange (dark)
-    '#42C0FF', // Light Blue
-    '#007483', // UCAR Aqua (dark)
-    '#011837', // Space
-    '#7A5C00', // Yellow (deep)
-    '#1E90D8', // Blue (mid)
-    '#B36A0E', // Orange (deep)
-    '#4FD1DE', // Aqua (light-mid)
-    '#FFDD31', // Yellow (bright)
-    '#5A6B7D', // neutral blue-gray
-  ]
 
   // Extract all species, do not filter by value (show even if all zero)
   const allSpecies = useMemo(() => {
@@ -572,7 +553,7 @@ export function SimulationChart({ results, metadata }) {
                 }`}
                 style={
                   displaySpecies.includes(species)
-                    ? { backgroundColor: colors[allSpecies.indexOf(species) % colors.length] }
+                    ? { backgroundColor: CHART_COLORS[allSpecies.indexOf(species) % CHART_COLORS.length] }
                     : {}
                 }
               >
@@ -602,7 +583,7 @@ export function SimulationChart({ results, metadata }) {
                           className="w-2.5 h-2.5 rounded-full flex-shrink-0"
                           style={{
                             backgroundColor: displaySpecies.includes(species)
-                              ? colors[allSpecies.indexOf(species) % colors.length]
+                              ? CHART_COLORS[allSpecies.indexOf(species) % CHART_COLORS.length]
                               : '#D8D6D2',
                           }}
                         />
@@ -684,7 +665,7 @@ export function SimulationChart({ results, metadata }) {
                   key={species}
                   type="monotone"
                   dataKey={species}
-                  stroke={colors[allSpecies.indexOf(species) % colors.length]}
+                  stroke={CHART_COLORS[allSpecies.indexOf(species) % CHART_COLORS.length]}
                   strokeWidth={2}
                   dot={results.length <= 10 ? { r: 3 } : false}
                   name={getSpeciesDisplayName(species)}
@@ -764,7 +745,7 @@ export function SimulationChart({ results, metadata }) {
                   key={species}
                   type="monotone"
                   dataKey={species}
-                  stroke={colors[allSpecies.indexOf(species) % colors.length]}
+                  stroke={CHART_COLORS[allSpecies.indexOf(species) % CHART_COLORS.length]}
                   strokeWidth={3}
                   dot={results.length <= 10 ? { r: 4 } : false}
                   name={getSpeciesDisplayName(species)}

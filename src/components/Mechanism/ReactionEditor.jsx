@@ -174,7 +174,7 @@ function ReactionChip({ reaction, onRemove, onComponentsSave, onParameterSave })
   }
 
   return (
-    <div className={ITEM_PANEL}>
+    <div className={`${ITEM_PANEL.replace('w-full', 'w-[calc(50%-0.25rem)]')}`}>
       <div className="flex items-start justify-between gap-3">
         <button
           type="button"
@@ -213,8 +213,8 @@ function ReactionChip({ reaction, onRemove, onComponentsSave, onParameterSave })
                   e.currentTarget.blur()
                 }
               }}
-              placeholder="e.g., O1D + N2"
-              className={`w-full ${TEXT_INPUT_SM} font-mono`}
+              placeholder="O1D + N2"
+              className={`w-full ${TEXT_INPUT_SM.replace('text-center', 'text-left')} font-mono`}
             />
           </div>
         ))}
@@ -242,7 +242,7 @@ function ReactionChip({ reaction, onRemove, onComponentsSave, onParameterSave })
                       e.currentTarget.blur()
                     }
                   }}
-                  className={`w-full ${TEXT_INPUT_SM} font-mono`}
+                  className={`w-full ${TEXT_INPUT_SM.replace('text-center', 'text-left')} font-mono`}
                 />
               </div>
             ))}
@@ -460,7 +460,7 @@ export function ReactionEditor() {
                 <Dropdown
                   value={reactionType}
                   onChange={setReactionType}
-                  className="px-4 py-3 rounded-xl text-base"
+                  className="h-10 px-2 rounded-lg text-base"
                   options={reactionRegistry.map((type) => ({
                     value: type.type,
                     label: type.label,
@@ -490,7 +490,7 @@ export function ReactionEditor() {
             <Dropdown
               value={activeType}
               onChange={setTypeFilter}
-              className="mb-3 h-9"
+              className="mb-3 h-9 w-[95%]"
               options={[
                 { value: '', label: `All reaction types (${reactions.length})` },
                 ...availableTypes.map((type) => ({
@@ -505,7 +505,7 @@ export function ReactionEditor() {
               value={reactionSearch}
               onChange={(e) => setReactionSearch(e.target.value)}
               placeholder="Search reactions by species"
-              className={`w-full mb-5 ${TEXT_INPUT_SM}`}
+              className={`w-[95%] mb-5 ${TEXT_INPUT_SM.replace('text-center', 'text-left')}`}
             />
 
             {reactions.length === 0 ? (

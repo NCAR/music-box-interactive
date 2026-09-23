@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { formatBound } from './timeRangeUnits'
+import { cn } from '../../lib/utils'
 
 // Displays values in the selected time unit while storing them in seconds.
 // Clamps commits to [min, max] to prevent the range start from exceeding the end.
@@ -12,9 +13,12 @@ export function RangeBoundInput({
   decimals,
   min,
   max,
+  onBelowMin,
+  flashOnCommit = false,
 }) {
   const displayValue = formatBound(value, divisor, sigDigits, decimals)
   const [draft, setDraft] = useState(displayValue)
+  const [justCommitted, setJustCommitted] = useState(false)
 
   useEffect(() => {
     setDraft(displayValue)
@@ -32,13 +36,25 @@ export function RangeBoundInput({
     }
 
     let next = parsed * divisor
-    if (Number.isFinite(min)) next = Math.max(min, next)
+    if (Number.isFinite(min) && next < min) {
+      if (onBelowMin) {
+        onBelowMin(next, min)
+        setDraft(displayValue)
+        return
+      }
+      next = min
+    }
     if (Number.isFinite(max)) next = Math.min(max, next)
 
     // Re-sync the draft after clamping: state may already contain the clamped value, so the
     // unchanged value prop won't trigger the effect to replace the out-of-range input.
     setDraft(formatBound(next, divisor, sigDigits, decimals))
     onCommit(next)
+
+    if (flashOnCommit) {
+      setJustCommitted(true)
+      setTimeout(() => setJustCommitted(false), 600)
+    }
   }
 
   return (
@@ -51,7 +67,11 @@ export function RangeBoundInput({
       onKeyDown={(e) => {
         if (e.key === 'Enter') commit()
       }}
-      className={className}
+      className={cn(
+        className,
+        'transition-colors duration-300',
+        justCommitted && 'border-action bg-assist-secondary'
+      )}
     />
   )
 }

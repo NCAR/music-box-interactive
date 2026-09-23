@@ -649,7 +649,7 @@ export function SpeciesEditor() {
               value={speciesSearch}
               onChange={(e) => setSpeciesSearch(e.target.value)}
               placeholder="Search species by name"
-              className={`w-[90%] mb-5 ${TEXT_INPUT_SM.replace('text-center', 'text-left')}`}
+              className={`w-[95%] mb-5 ${TEXT_INPUT_SM.replace('text-center', 'text-left')}`}
             />
 
             {species.length === 0 ? (

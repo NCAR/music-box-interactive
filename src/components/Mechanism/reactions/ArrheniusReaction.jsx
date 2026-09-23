@@ -92,8 +92,8 @@ export function ArrheniusReactionForm({ onAddReaction }) {
           type="text"
           value={reactants}
           onChange={(e) => setReactants(e.target.value)}
-          placeholder="e.g., O1D + N2"
-          className={TEXT_INPUT}
+          placeholder="O1D + N2"
+          className={TEXT_INPUT.replace('text-center', 'text-left')}
         />
       </div>
 
@@ -105,12 +105,12 @@ export function ArrheniusReactionForm({ onAddReaction }) {
           type="text"
           value={products}
           onChange={(e) => setProducts(e.target.value)}
-          placeholder="e.g., O + N2"
-          className={TEXT_INPUT}
+          placeholder="O + N2"
+          className={TEXT_INPUT.replace('text-center', 'text-left')}
         />
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 gap-3">
         <div>
           <label className={FIELD_LABEL}>
             A (pre-exponential factor)
@@ -120,7 +120,7 @@ export function ArrheniusReactionForm({ onAddReaction }) {
             value={rateA}
             onChange={(e) => setRateA(e.target.value)}
             placeholder="1.0"
-            className={TEXT_INPUT}
+            className={TEXT_INPUT.replace('text-center', 'text-left')}
           />
         </div>
         <div>
@@ -130,7 +130,7 @@ export function ArrheniusReactionForm({ onAddReaction }) {
             value={rateB}
             onChange={(e) => setRateB(e.target.value)}
             placeholder="0.0"
-            className={TEXT_INPUT}
+            className={TEXT_INPUT.replace('text-center', 'text-left')}
           />
         </div>
         <div>
@@ -140,7 +140,7 @@ export function ArrheniusReactionForm({ onAddReaction }) {
             value={rateC}
             onChange={(e) => setRateC(e.target.value)}
             placeholder="0.0"
-            className={TEXT_INPUT}
+            className={TEXT_INPUT.replace('text-center', 'text-left')}
           />
         </div>
         <div>
@@ -150,7 +150,7 @@ export function ArrheniusReactionForm({ onAddReaction }) {
             value={rateD}
             onChange={(e) => setRateD(e.target.value)}
             placeholder="300.0"
-            className={TEXT_INPUT}
+            className={TEXT_INPUT.replace('text-center', 'text-left')}
           />
         </div>
         <div>
@@ -160,7 +160,7 @@ export function ArrheniusReactionForm({ onAddReaction }) {
             value={rateE}
             onChange={(e) => setRateE(e.target.value)}
             placeholder="0.0"
-            className={TEXT_INPUT}
+            className={TEXT_INPUT.replace('text-center', 'text-left')}
           />
         </div>
       </div>

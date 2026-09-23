@@ -55,8 +55,8 @@ export function FirstOrderLossReactionForm({ onAddReaction }) {
           type="text"
           value={reactants}
           onChange={(e) => setReactants(e.target.value)}
-          placeholder="e.g., C"
-          className={TEXT_INPUT}
+          placeholder="C"
+          className={TEXT_INPUT.replace('text-center', 'text-left')}
         />
       </div>
 
@@ -69,7 +69,7 @@ export function FirstOrderLossReactionForm({ onAddReaction }) {
           value={scalingFactor}
           onChange={(e) => setScalingFactor(e.target.value)}
           placeholder="1.0"
-          className={TEXT_INPUT}
+          className={TEXT_INPUT.replace('text-center', 'text-left')}
         />
       </div>
 

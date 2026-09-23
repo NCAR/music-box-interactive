@@ -63,8 +63,8 @@ export function ScaledReactionForm({ onAddReaction, reactionType, allowEmptyProd
           type="text"
           value={reactants}
           onChange={(e) => setReactants(e.target.value)}
-          placeholder="e.g., O3"
-          className={TEXT_INPUT}
+          placeholder="O3"
+          className={TEXT_INPUT.replace('text-center', 'text-left')}
         />
       </div>
 
@@ -76,8 +76,8 @@ export function ScaledReactionForm({ onAddReaction, reactionType, allowEmptyProd
           type="text"
           value={products}
           onChange={(e) => setProducts(e.target.value)}
-          placeholder="e.g., O + O2"
-          className={TEXT_INPUT}
+          placeholder="O + O2"
+          className={TEXT_INPUT.replace('text-center', 'text-left')}
         />
       </div>
 
@@ -90,7 +90,7 @@ export function ScaledReactionForm({ onAddReaction, reactionType, allowEmptyProd
           value={scalingFactor}
           onChange={(e) => setScalingFactor(e.target.value)}
           placeholder="1.0"
-          className={TEXT_INPUT}
+          className={TEXT_INPUT.replace('text-center', 'text-left')}
         />
       </div>
 

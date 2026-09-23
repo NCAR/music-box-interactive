@@ -179,7 +179,7 @@ export function FlowPanel({
             <button
               type="button"
               onClick={() => setValueDisplayMenuOpen((open) => !open)}
-              className="flex items-center justify-between gap-1 w-fit h-8 bg-[#E6F0FA] text-ink border border-border rounded-lg text-sm font-bold px-2.5 whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-action transition-colors duration-200"
+              className="flex items-center justify-between gap-1 w-fit h-8 bg-blue-100/50 text-ink border border-border rounded-lg text-sm font-bold px-2.5 whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-action transition-colors duration-200"
             >
               <span className="pr-2">{valueDisplayOption.label}</span>
               <ChevronDown className="w-3.5 h-3.5 flex-shrink-0" />
@@ -213,7 +213,7 @@ export function FlowPanel({
             <button
               type="button"
               onClick={() => setArrowScalingMenuOpen((open) => !open)}
-              className="flex items-center justify-between gap-1 w-32 h-8 bg-[#E6F0FA] text-ink border border-border rounded-lg text-sm font-bold px-2.5 focus:outline-none focus:ring-2 focus:ring-action transition-colors duration-200"
+              className="flex items-center justify-between gap-1 w-32 h-8 bg-blue-100/50 text-ink border border-border rounded-lg text-sm font-bold px-2.5 focus:outline-none focus:ring-2 focus:ring-action transition-colors duration-200"
             >
               <span className="pr-2">{arrowScalingOption.label}</span>
               <ChevronDown className="w-3.5 h-3.5 flex-shrink-0" />
@@ -250,7 +250,7 @@ export function FlowPanel({
               <button
                 type="button"
                 onClick={() => setTimeRangeUnitMenuOpen((open) => !open)}
-                className="flex items-center justify-between gap-1 w-24 h-8 bg-[#E6F0FA] text-ink rounded-l-lg text-sm font-bold px-2.5 focus:outline-none focus:ring-2 focus:ring-action transition-colors duration-200"
+                className="flex items-center justify-between gap-1 w-24 h-8 bg-blue-100/50 text-ink rounded-l-lg text-sm font-bold px-2.5 focus:outline-none focus:ring-2 focus:ring-action transition-colors duration-200"
               >
                 {timeRangeUnit.label}
                 <ChevronDown className="w-3.5 h-3.5 flex-shrink-0" />
@@ -339,7 +339,7 @@ export function FlowPanel({
         value={activeReactionType}
         onChange={setReactionType}
         options={reactionTypeOptions}
-        className="h-8 w-44 flex-shrink-0 border border-border bg-[#E6F0FA] px-2.5 text-sm font-bold text-ink"
+        className="h-8 w-44 flex-shrink-0 border border-border bg-blue-100/50 px-2.5 text-sm font-bold text-ink"
       />
 
       <div className="flex items-center border border-border rounded-lg divide-x divide-gray-300 bg-white">
@@ -347,7 +347,7 @@ export function FlowPanel({
           <button
             type="button"
             onClick={() => setSelectAllMenuOpen((open) => !open)}
-            className="flex items-center justify-between gap-1 w-32 h-8 bg-[#E6F0FA] text-ink rounded-l-lg text-sm font-bold px-2.5 focus:outline-none focus:ring-2 focus:ring-action transition-colors duration-200"
+            className="flex items-center justify-between gap-1 w-32 h-8 bg-blue-100/50 text-ink rounded-l-lg text-sm font-bold px-2.5 focus:outline-none focus:ring-2 focus:ring-action transition-colors duration-200"
           >
             {selectAllStatusLabel}
             <ChevronDown className="w-3.5 h-3.5 flex-shrink-0" />
@@ -413,7 +413,7 @@ export function FlowPanel({
             onClick={() => toggleSpecies(name)}
             className={`px-2 xs:px-3 py-1 rounded-full text-sm font-medium transition-all ${
               displaySpecies.includes(name)
-                ? 'bg-[#007483] text-white shadow-md'
+                ? 'bg-[#E6807A] text-white shadow-md'
                 : 'bg-surface-alt text-muted hover:bg-surface-hover'
             }`}
           >
@@ -441,7 +441,7 @@ export function FlowPanel({
                   >
                     <span
                       className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${
-                        displaySpecies.includes(name) ? 'bg-[#007483]' : 'bg-border'
+                        displaySpecies.includes(name) ? 'bg-[#E6807A]' : 'bg-border'
                       }`}
                     />
                     <span className="flex-1 truncate">{name}</span>
