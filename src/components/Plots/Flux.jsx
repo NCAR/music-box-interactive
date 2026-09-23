@@ -136,7 +136,7 @@ function FluxReactionRow({ reaction, flux, checked, onToggleCheck }) {
           <button
             type="button"
             onClick={() => setExpanded((current) => !current)}
-            className="flex items-center gap-1.5 font-mono text-sm font-semibold text-ink text-left break-words hover:text-heading focus:outline-none focus-visible:ring-2 focus-visible:ring-assist-secondary-ring"
+            className="flex items-center gap-1.5 font-mono text-sm text-ink text-left break-words hover:text-heading focus:outline-none focus-visible:ring-2 focus-visible:ring-assist-secondary-ring"
           >
             {expanded ? (
               <ChevronUp className="w-3.5 h-3.5 flex-shrink-0 text-muted" />
@@ -155,7 +155,10 @@ function FluxReactionRow({ reaction, flux, checked, onToggleCheck }) {
         <tr className="border-b border-gray-200 bg-assist-secondary">
           <td />
           <td colSpan={3} className="px-4 py-3">
-            <div className="flex flex-col gap-2 max-w-md">
+            <div className="flex flex-col gap-2 max-w-[35%] pl-5">
+              <span className="text-xs  text-muted uppercase tracking-wide">
+                Parameters
+              </span>
               {parameters.map((field) => (
                 <div key={field.key} className="flex items-center justify-between gap-3 text-sm">
                   <span className="text-muted flex-shrink-0">{field.key}</span>
@@ -436,7 +439,7 @@ export function Flux() {
               </button>
 
               {sortMenuOpen && (
-                <div className="absolute right-0 z-10 mt-1 w-44 bg-white border border-border rounded-lg shadow-lg py-1">
+                <div className="absolute right-0 z-20 mt-1 w-44 bg-white border border-border rounded-lg shadow-lg py-1">
                   {SORT_OPTIONS.map((option) => (
                     <button
                       key={option.id}
@@ -634,7 +637,7 @@ export function Flux() {
                 <p className="text-sm text-muted p-4">No reactions match the current filters.</p>
               ) : (
                 <table className="w-full text-sm">
-                  <thead className="bg-assist-secondary text-assist-secondary-foreground">
+                  <thead className="sticky top-0 z-10 bg-assist-secondary text-assist-secondary-foreground">
                     <tr>
                       <th className="w-10 px-4 py-2" />
                       <th className="text-left px-4 py-2 font-semibold">Reaction</th>
