@@ -3,37 +3,22 @@ import { buildSolverConditions } from './conditions'
 import {
   buildPhases,
   getMechanismLabel,
-  reconcileReactionNamesWithSource,
-  reconcileSpeciesWithSource,
   serializeReaction,
   serializeSpecies,
-  validateMechanismPayload,
 } from './mechanism'
 
 export const buildLocalSimulationPayload = ({ mechanismData, conditions }) => {
-  const sourceMechanism = mechanismData.mechanism?.mechanism || {}
+  const sourceMechanism = mechanismData.config?.mechanism || {}
   const mechanismLabel = getMechanismLabel(mechanismData)
   const sourceSpecies = Array.isArray(sourceMechanism.species) ? sourceMechanism.species : []
 
   // serializeSpecies strips PhaseSpecies properties, so buildPhases uses the pre-serialization
   // species to re-attach them to the phase entries.
-  const reconciledSpecies = reconcileSpeciesWithSource(
-    mechanismData.species.length > 0 ? mechanismData.species : sourceSpecies,
-    sourceSpecies
-  )
-  const species = reconciledSpecies.map(serializeSpecies)
+  const species = sourceSpecies.map(serializeSpecies)
 
-  const reactions =
-    mechanismData.reactions.length > 0
-      ? mechanismData.reactions.map(serializeReaction)
-      : (sourceMechanism.reactions || []).map(serializeReaction)
+  const reactions = (sourceMechanism.reactions || []).map(serializeReaction)
 
-  const reconciledReactions = reconcileReactionNamesWithSource(
-    reactions,
-    sourceMechanism.reactions || []
-  )
-
-  const phases = buildPhases(sourceMechanism, reconciledSpecies)
+  const phases = buildPhases(sourceMechanism, sourceSpecies)
 
   const mechanismInstance = new mechanismConfiguration.Mechanism({
     name:
@@ -44,12 +29,12 @@ export const buildLocalSimulationPayload = ({ mechanismData, conditions }) => {
     version: sourceMechanism.version || '1.0.0',
     species,
     phases,
-    reactions: reconciledReactions,
+    reactions,
   })
 
-  // Mechanism's constructor only recognizes name/version/species/phases/reactions -- any other
-  // top-level mechanism property from an uploaded config (there is no other_properties support
-  // here, unlike every other builder class) is merged in directly instead of being dropped.
+  // Mechanism's constructor keeps only name/version/species/phases/reactions and drops every
+  // other param (the other builder classes collect them into other_properties). So any other
+  // top-level mechanism property from an uploaded config is merged in directly.
   const {
     name: _name,
     version: _version,
@@ -84,8 +69,6 @@ export const buildLocalSimulationPayload = ({ mechanismData, conditions }) => {
       'Invalid conditions payload: expected conditions.data[] with at least one block'
     )
   }
-
-  validateMechanismPayload(payload.mechanism)
 
   return {
     payload,

@@ -54,7 +54,7 @@ export function FlowPanel({
   setValueDisplay,
 }) {
   const results = useSelector((state) => state.simulation.results)
-  const reactions = useSelector((state) => state.mechanism.reactions)
+  const reactions = useSelector((state) => state.mechanism.config.mechanism?.reactions || [])
 
   const reactionTypeOptions = useMemo(() => {
     const counts = new Map()

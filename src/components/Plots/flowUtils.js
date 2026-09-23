@@ -28,7 +28,7 @@ export const getThirdBodyNames = (species) =>
 const componentList = (components) =>
   (Array.isArray(components) ? components : [components])
     .filter(Boolean)
-    .map((entry) => (typeof entry === 'string' ? { 'species name': entry } : entry))
+    .map((entry) => (typeof entry === 'string' ? { name: entry } : entry))
 
 export const reactionReactants = (reaction) =>
   componentList(reaction?.reactants ?? reaction?.['gas-phase species'] ?? [])
@@ -47,7 +47,7 @@ export const matchesReactionType = (reaction, reactionType) =>
 export const isReactionVisible = (reaction, selectedSpecies, thirdBodyNames) => {
   const named = (components) =>
     components
-      .map((entry) => entry['species name'])
+      .map((entry) => entry.name)
       .filter((name) => isRealSpecies(name) && !thirdBodyNames.has(name))
 
   const involved = [
@@ -86,11 +86,11 @@ export const getReactionEdges = (reaction, rate, thirdBodyNames, nodeId = reacti
   const add = (map, name, coeff) => map.set(name, (map.get(name) ?? 0) + coeff)
 
   for (const entry of reactionReactants(reaction)) {
-    const name = entry['species name']
+    const name = entry.name
     if (keep(name)) add(consumed, name, Math.abs(entry.coefficient ?? 1))
   }
   for (const entry of reactionProducts(reaction)) {
-    const name = entry['species name']
+    const name = entry.name
     if (!keep(name)) continue
     const coeff = entry.coefficient ?? 1
     if (coeff < 0) add(consumed, name, -coeff)

@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest'
+import { toReduxConfig } from '../src/services/config/loadMusicBoxConfig'
 import { MusicBox } from '@ncar/music-box'
 
 import { buildDownloadableConfig } from '../src/services/config/downloadConfig'
@@ -25,9 +26,7 @@ const buildInputs = (config) => {
   const options = config['box model options'] || {}
   return {
     mechanism: {
-      mechanism: { mechanism: config.mechanism },
-      species: [],
-      reactions: [],
+      config: { mechanism: toReduxConfig(config).mechanism },
       currentExample: { name: config.mechanism?.name || 'example' },
     },
     conditions: {
@@ -46,10 +45,7 @@ describe('downloadConfig', () => {
     const blankMechanism = {
       selectedMechanism: null,
       currentExample: null,
-      species: [],
-      reactions: [],
-      phases: [],
-      mechanism: {},
+      config: {},
     }
     const blankConditions = {
       basic: { duration: 250000, timeStep: 200, outputFrequency: 10 },
@@ -92,52 +88,38 @@ describe('downloadConfig', () => {
     30000
   )
 
-  // The tests above always pass species/reactions as [], which takes the "no user edits" branch
-  // (buildLocalSimulationPayload falls back to the raw uploaded mechanism). Once a user edits a
-  // species or reaction in the UI, mechanismData.species/reactions is populated and
-  // reconcileSpeciesWithSource/reconcileReactionNamesWithSource kick in instead -- this covers
-  // that path.
-  it('reflects species and reaction edits made in the UI, not just the uploaded mechanism', () => {
-    const { mechanism: baseMechanism, conditions } = buildInputs(chapmanConfig)
-    const sourceSpecies = chapmanConfig.mechanism.species
-    const sourceReactions = chapmanConfig.mechanism.reactions
+  // Species/reactions are edited in place on mechanism.config.mechanism -- there's no separate
+  // copy to reconcile, so an edit just needs to show up untouched in the downloaded config.
+  it('reflects species and reaction edits made in the UI', () => {
+    const { mechanism, conditions } = buildInputs(chapmanConfig)
+    const sourceReactions = mechanism.config.mechanism.reactions
 
-    // Mirrors what loadMusicBoxConfig + the species editor put into mechanismData.species: name,
-    // phase, and only explicitly declared property keys.
-    const editedSpecies = sourceSpecies.map((species) => ({
-      name: species.name,
-      phase: 'Gas',
-      ...(species.name === 'O3' ? { 'absolute tolerance': 1e-15 } : {}),
-      ...(species.name === 'M' ? { 'molecular weight [kg mol-1]': 0.048 } : {}),
-    }))
+    const o3 = mechanism.config.mechanism.species.find((s) => s.name === 'O3')
+    o3['absolute tolerance'] = 1e-15
+    const m = mechanism.config.mechanism.species.find((s) => s.name === 'M')
+    m['molecular weight [kg mol-1]'] = 0.048
+    sourceReactions[0] = { ...sourceReactions[0], A: sourceReactions[0].A * 2 }
 
-    const editedReactions = sourceReactions.map((reaction, index) =>
-      index === 0 ? { ...reaction, A: reaction.A * 2 } : reaction
-    )
-
-    const mechanism = { ...baseMechanism, species: editedSpecies, reactions: editedReactions }
     const configuration = buildDownloadableConfig({ mechanism, conditions })
 
-    const o3 = configuration.mechanism.species.find((s) => s.name === 'O3')
-    const m = configuration.mechanism.species.find((s) => s.name === 'M')
-    expect(o3['absolute tolerance']).toBe(1e-15)
-    expect(m['molecular weight [kg mol-1]']).toBe(0.048)
+    expect(configuration.mechanism.species.find((s) => s.name === 'O3')['absolute tolerance']).toBe(
+      1e-15
+    )
+    expect(
+      configuration.mechanism.species.find((s) => s.name === 'M')['molecular weight [kg mol-1]']
+    ).toBe(0.048)
     // An untouched species keeps only what the source mechanism declared.
     expect(
       configuration.mechanism.species.find((s) => s.name === 'O1D')['absolute tolerance']
     ).toBeUndefined()
 
-    expect(configuration.mechanism.reactions[0].A).toBe(sourceReactions[0].A * 2)
+    expect(configuration.mechanism.reactions[0].A).toBe(sourceReactions[0].A)
   })
 
-  it('a config with edited species and reactions still solves', async () => {
-    const { mechanism: baseMechanism, conditions } = buildInputs(chapmanConfig)
-    const editedSpecies = chapmanConfig.mechanism.species.map((species) => ({
-      name: species.name,
-      phase: 'Gas',
-      ...(species.name === 'O3' ? { 'absolute tolerance': 1e-15 } : {}),
-    }))
-    const mechanism = { ...baseMechanism, species: editedSpecies, reactions: [] }
+  it('a config with edited species still solves', async () => {
+    const { mechanism, conditions } = buildInputs(chapmanConfig)
+    const o3 = mechanism.config.mechanism.species.find((s) => s.name === 'O3')
+    o3['absolute tolerance'] = 1e-15
 
     const configuration = buildDownloadableConfig({ mechanism, conditions })
     const result = await MusicBox.fromJson(configuration).solve()

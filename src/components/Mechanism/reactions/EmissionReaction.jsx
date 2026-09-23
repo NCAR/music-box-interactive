@@ -28,7 +28,7 @@ export function EmissionReactionForm({ onAddReaction }) {
       type: 'EMISSION',
       products: [
         {
-          'species name': products.toUpperCase(),
+          name: products.trim(),
           coefficient: 1.0,
         },
       ],

@@ -56,8 +56,8 @@ describe('reaction names are not unique', () => {
 describe('getReactionEdges node identity', () => {
   const reaction = {
     name: 'HNO3 + OH -> NO3 + H2O',
-    reactants: [{ 'species name': 'HNO3', coefficient: 1 }],
-    products: [{ 'species name': 'NO3', coefficient: 1 }],
+    reactants: [{ name: 'HNO3', coefficient: 1 }],
+    products: [{ name: 'NO3', coefficient: 1 }],
   }
 
   it('attaches edges to the id it is given, not the reaction name', () => {

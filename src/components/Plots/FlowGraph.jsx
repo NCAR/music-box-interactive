@@ -88,11 +88,11 @@ const EMPTY_SIDE = '\u2205'
 function reactionLabel(reaction) {
   const fmt = (entries) => {
     const text = entries
-      .filter((entry) => isRealSpecies(entry['species name']))
+      .filter((entry) => isRealSpecies(entry.name))
       .map((entry) =>
         entry.coefficient === undefined || entry.coefficient === 1
-          ? entry['species name']
-          : `${entry.coefficient}${entry['species name']}`
+          ? entry.name
+          : `${entry.coefficient}${entry.name}`
       )
       .join(' + ')
 
@@ -133,8 +133,8 @@ export function FlowGraph({
   const tooltipRef = useRef()
   const [selectedNode, setSelectedNode] = useState(null)
 
-  const reactions = useSelector((state) => state.mechanism.reactions)
-  const species = useSelector((state) => state.mechanism.species)
+  const reactions = useSelector((state) => state.mechanism.config.mechanism?.reactions || [])
+  const species = useSelector((state) => state.mechanism.config.mechanism?.species || [])
   const results = useSelector((state) => state.simulation.excludedResults)
 
   useEffect(() => {
@@ -205,10 +205,10 @@ export function FlowGraph({
     const speciesSet = new Set()
     for (const rxn of visibleReactions) {
       reactionReactants(rxn).forEach((r) => {
-        if (isGraphSpecies(r['species name'])) speciesSet.add(r['species name'])
+        if (isGraphSpecies(r.name)) speciesSet.add(r.name)
       })
       reactionProducts(rxn).forEach((p) => {
-        if (isGraphSpecies(p['species name'])) speciesSet.add(p['species name'])
+        if (isGraphSpecies(p.name)) speciesSet.add(p.name)
       })
     }
 

@@ -38,7 +38,7 @@ export function SurfaceReactionForm({ onAddReaction }) {
       id: uuidv4(),
       type: 'SURFACE_REACTION',
       'gas phase': 'gas',
-      'gas-phase species': gasPhaseSpecies.trim().toUpperCase(),
+      'gas-phase species': gasPhaseSpecies.trim(),
       'gas-phase products': parseReactionString(gasPhaseProducts),
       ...(hasReactionProbability ? { 'reaction probability': reactionProbabilityValue } : {}),
     }

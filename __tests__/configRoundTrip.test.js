@@ -8,7 +8,7 @@ import conditionsReducer from '../src/redux/slices/conditionsSlice'
 import simulationReducer from '../src/redux/slices/simulationSlice'
 import { buildDownloadableConfig } from '../src/services/config/downloadConfig'
 import { parseUploadedMusicBoxConfig } from '../src/services/config/parseUploadedMusicBoxConfig'
-import { loadMusicBoxConfig } from '../src/services/config/loadMusicBoxConfig'
+import { loadMusicBoxConfig, toReduxConfig } from '../src/services/config/loadMusicBoxConfig'
 import { durationSeconds, stepSeconds } from './helpers/boxModelOptions'
 
 import analyticalConfig from '@ncar/music-box/examples/analytical/my_config.json' with { type: 'json' }
@@ -34,9 +34,7 @@ const buildInputs = (config) => {
   const options = config['box model options'] || {}
   return {
     mechanism: {
-      mechanism: { mechanism: config.mechanism },
-      species: [],
-      reactions: [],
+      config: { mechanism: toReduxConfig(config).mechanism },
       currentExample: { name: config.mechanism?.name || 'example' },
     },
     conditions: {
@@ -105,7 +103,7 @@ describe('download -> upload round trip', () => {
     const downloaded = buildDownloadableConfig({ mechanism, conditions })
 
     const store = await uploadAndLoad(downloaded)
-    const reloadedSpecies = store.getState().mechanism.species
+    const reloadedSpecies = store.getState().mechanism.config.mechanism.species
 
     const m = reloadedSpecies.find((s) => s.name === 'M')
     expect(m['is third body']).toBe(true)
@@ -125,18 +123,16 @@ describe('download -> upload round trip', () => {
   })
 
   it('round trips a config downloaded with edited species/reactions', async () => {
-    const { mechanism: baseMechanism, conditions } = buildInputs(chapmanConfig)
-    const editedSpecies = chapmanConfig.mechanism.species.map((species) => ({
-      name: species.name,
-      phase: 'Gas',
-      ...(species.name === 'O3' ? { 'absolute tolerance': 1e-15 } : {}),
-    }))
-    const mechanism = { ...baseMechanism, species: editedSpecies, reactions: [] }
+    const { mechanism, conditions } = buildInputs(chapmanConfig)
+    const o3 = mechanism.config.mechanism.species.find((s) => s.name === 'O3')
+    o3['absolute tolerance'] = 1e-15
     const downloaded = buildDownloadableConfig({ mechanism, conditions })
 
     const store = await uploadAndLoad(downloaded)
-    const o3 = store.getState().mechanism.species.find((s) => s.name === 'O3')
+    const reloadedO3 = store.getState().mechanism.config.mechanism.species.find(
+      (s) => s.name === 'O3'
+    )
 
-    expect(o3['absolute tolerance']).toBe(1e-15)
+    expect(reloadedO3['absolute tolerance']).toBe(1e-15)
   })
 })

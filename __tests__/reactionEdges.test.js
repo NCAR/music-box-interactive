@@ -1,11 +1,14 @@
+import { toReduxConfig } from '../src/services/config/loadMusicBoxConfig';
 import {
   getReactionEdges,
   getThirdBodyNames,
   isReactionVisible,
 } from '../src/components/Plots/flowUtils';
 
-import chapmanConfig from '@ncar/music-box/examples/chapman/my_config.json' with { type: 'json' };
-import carbonBond5Config from '@ncar/music-box/examples/carbon_bond_5/my_config.json' with { type: 'json' };
+import chapmanConfigRaw from '@ncar/music-box/examples/chapman/my_config.json' with { type: 'json' };
+const chapmanConfig = toReduxConfig(chapmanConfigRaw);
+import carbonBond5ConfigRaw from '@ncar/music-box/examples/carbon_bond_5/my_config.json' with { type: 'json' };
+const carbonBond5Config = toReduxConfig(carbonBond5ConfigRaw);
 
 const NO_THIRD_BODIES = new Set();
 const RATE = 10;
@@ -17,8 +20,8 @@ describe('getReactionEdges — stoichiometric coefficients', () => {
     // O + O3 -> 2 O2 : each event yields two O2, so that edge is 2x the reaction rate.
     const reaction = {
       name: 'R',
-      reactants: [{ 'species name': 'O', coefficient: 1 }, { 'species name': 'O3', coefficient: 1 }],
-      products: [{ 'species name': 'O2', coefficient: 2 }],
+      reactants: [{ name: 'O', coefficient: 1 }, { name: 'O3', coefficient: 1 }],
+      products: [{ name: 'O2', coefficient: 2 }],
     };
     expect(edgeMap(getReactionEdges(reaction, RATE, NO_THIRD_BODIES))).toEqual({
       'O->R': 10,
@@ -30,8 +33,8 @@ describe('getReactionEdges — stoichiometric coefficients', () => {
   it('scales a reactant edge by its coefficient', () => {
     const reaction = {
       name: 'R',
-      reactants: [{ 'species name': 'A', coefficient: 3 }],
-      products: [{ 'species name': 'B', coefficient: 1 }],
+      reactants: [{ name: 'A', coefficient: 3 }],
+      products: [{ name: 'B', coefficient: 1 }],
     };
     expect(edgeMap(getReactionEdges(reaction, RATE, NO_THIRD_BODIES))).toEqual({
       'A->R': 30,
@@ -42,8 +45,8 @@ describe('getReactionEdges — stoichiometric coefficients', () => {
   it('defaults a missing coefficient to 1', () => {
     const reaction = {
       name: 'R',
-      reactants: [{ 'species name': 'A' }],
-      products: [{ 'species name': 'B' }],
+      reactants: [{ name: 'A' }],
+      products: [{ name: 'B' }],
     };
     expect(edgeMap(getReactionEdges(reaction, RATE, NO_THIRD_BODIES))).toEqual({
       'A->R': 10,
@@ -54,8 +57,8 @@ describe('getReactionEdges — stoichiometric coefficients', () => {
   it('handles fractional coefficients', () => {
     const reaction = {
       name: 'R',
-      reactants: [{ 'species name': 'A', coefficient: 1 }],
-      products: [{ 'species name': 'B', coefficient: 0.5 }],
+      reactants: [{ name: 'A', coefficient: 1 }],
+      products: [{ name: 'B', coefficient: 0.5 }],
     };
     expect(edgeMap(getReactionEdges(reaction, RATE, NO_THIRD_BODIES))['R->B']).toBeCloseTo(5, 10);
   });
@@ -63,10 +66,10 @@ describe('getReactionEdges — stoichiometric coefficients', () => {
   it('aggregates a species listed twice on the same side', () => {
     const reaction = {
       name: 'R',
-      reactants: [{ 'species name': 'A', coefficient: 1 }],
+      reactants: [{ name: 'A', coefficient: 1 }],
       products: [
-        { 'species name': 'B', coefficient: 1 },
-        { 'species name': 'B', coefficient: 2 },
+        { name: 'B', coefficient: 1 },
+        { name: 'B', coefficient: 2 },
       ],
     };
     expect(edgeMap(getReactionEdges(reaction, RATE, NO_THIRD_BODIES))['R->B']).toBe(30);
@@ -79,10 +82,10 @@ describe('getReactionEdges — negative coefficients', () => {
   // those sort below any range minimum and yield NaN widths under log scaling.
   const reaction = {
     name: 'R',
-    reactants: [{ 'species name': 'OH', coefficient: 1 }],
+    reactants: [{ name: 'OH', coefficient: 1 }],
     products: [
-      { 'species name': 'ALD2', coefficient: 1 },
-      { 'species name': 'PAR', coefficient: -2.1 },
+      { name: 'ALD2', coefficient: 1 },
+      { name: 'PAR', coefficient: -2.1 },
     ],
   };
 
@@ -109,8 +112,8 @@ describe('getReactionEdges — negative coefficients', () => {
   it('drops a zero coefficient rather than drawing a zero-width edge', () => {
     const zeroYield = {
       name: 'R',
-      reactants: [{ 'species name': 'A', coefficient: 1 }],
-      products: [{ 'species name': 'B', coefficient: 0 }],
+      reactants: [{ name: 'A', coefficient: 1 }],
+      products: [{ name: 'B', coefficient: 0 }],
     };
     expect(edgeMap(getReactionEdges(zeroYield, RATE, NO_THIRD_BODIES))).toEqual({ 'A->R': 10 });
   });
@@ -133,10 +136,10 @@ describe('getReactionEdges — exclusions', () => {
   it('omits injected tracers', () => {
     const reaction = {
       name: 'R',
-      reactants: [{ 'species name': 'A', coefficient: 1 }],
+      reactants: [{ name: 'A', coefficient: 1 }],
       products: [
-        { 'species name': 'B', coefficient: 1 },
-        { 'species name': '__PROD__RXN_0_R', coefficient: 1 },
+        { name: 'B', coefficient: 1 },
+        { name: '__PROD__RXN_0_R', coefficient: 1 },
       ],
     };
     expect(edgeMap(getReactionEdges(reaction, RATE, NO_THIRD_BODIES))).toEqual({
@@ -153,8 +156,8 @@ describe('getReactionEdges — exclusions', () => {
   it('scales linearly with rate', () => {
     const reaction = {
       name: 'R',
-      reactants: [{ 'species name': 'A', coefficient: 1 }],
-      products: [{ 'species name': 'B', coefficient: 2 }],
+      reactants: [{ name: 'A', coefficient: 1 }],
+      products: [{ name: 'B', coefficient: 2 }],
     };
     expect(edgeMap(getReactionEdges(reaction, 0, NO_THIRD_BODIES))['R->B']).toBe(0);
     expect(edgeMap(getReactionEdges(reaction, 7, NO_THIRD_BODIES))['R->B']).toBe(14);
@@ -169,8 +172,8 @@ describe('getReactionEdges — reaction shapes', () => {
       name: 'usr_NO2_aer',
       'gas-phase species': 'NO2',
       'gas-phase products': [
-        { 'species name': 'OH', coefficient: 0.5 },
-        { 'species name': 'HNO3', coefficient: 0.5 },
+        { name: 'OH', coefficient: 0.5 },
+        { name: 'HNO3', coefficient: 0.5 },
       ],
     };
 
@@ -184,9 +187,9 @@ describe('getReactionEdges — reaction shapes', () => {
   it('produces both branches of a branched reaction', () => {
     const reaction = {
       name: 'branched',
-      reactants: [{ 'species name': 'C4H9O2', coefficient: 1 }],
-      'alkoxy products': [{ 'species name': 'C4H9O', coefficient: 0.8 }],
-      'nitrate products': [{ 'species name': 'C4H9ONO2', coefficient: 0.2 }],
+      reactants: [{ name: 'C4H9O2', coefficient: 1 }],
+      'alkoxy products': [{ name: 'C4H9O', coefficient: 0.8 }],
+      'nitrate products': [{ name: 'C4H9ONO2', coefficient: 0.2 }],
     };
 
     expect(edgeMap(getReactionEdges(reaction, RATE, NO_THIRD_BODIES, 'R'))).toEqual({
@@ -201,7 +204,7 @@ describe('isReactionVisible — reaction shapes', () => {
   it('counts a surface reaction gas-phase reactant', () => {
     const reaction = {
       'gas-phase species': 'NO2',
-      'gas-phase products': [{ 'species name': 'HNO3', coefficient: 1 }],
+      'gas-phase products': [{ name: 'HNO3', coefficient: 1 }],
     };
 
     expect(isReactionVisible(reaction, ['NO2'], NO_THIRD_BODIES)).toBe(true);
@@ -216,12 +219,12 @@ describe('isReactionVisible — sources and sinks', () => {
   const emission = {
     type: 'EMISSION',
     name: 'NO',
-    products: [{ 'species name': 'NO', coefficient: 1 }],
+    products: [{ name: 'NO', coefficient: 1 }],
   };
   const firstOrderLoss = {
     type: 'FIRST_ORDER_LOSS',
     name: 'loss',
-    reactants: [{ 'species name': 'C', coefficient: 1 }],
+    reactants: [{ name: 'C', coefficient: 1 }],
   };
 
   it('shows an emission when the species it emits is selected', () => {
@@ -249,10 +252,10 @@ describe('isReactionVisible — sources and sinks', () => {
   it('shows an ordinary reaction when any single reactant or product is selected', () => {
     const reaction = {
       reactants: [
-        { 'species name': 'O', coefficient: 1 },
-        { 'species name': 'O3', coefficient: 1 },
+        { name: 'O', coefficient: 1 },
+        { name: 'O3', coefficient: 1 },
       ],
-      products: [{ 'species name': 'O2', coefficient: 2 }],
+      products: [{ name: 'O2', coefficient: 2 }],
     };
     expect(isReactionVisible(reaction, ['O', 'O3'], NO_THIRD_BODIES)).toBe(true);
     expect(isReactionVisible(reaction, ['O'], NO_THIRD_BODIES)).toBe(true);

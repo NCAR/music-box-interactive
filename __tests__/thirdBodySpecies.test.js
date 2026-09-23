@@ -1,6 +1,8 @@
+import { toReduxConfig } from '../src/services/config/loadMusicBoxConfig';
 import { getThirdBodyNames, isReactionVisible, isRealSpecies } from '../src/components/Plots/flowUtils';
 
-import chapmanConfig from '@ncar/music-box/examples/chapman/my_config.json' with { type: 'json' };
+import chapmanConfigRaw from '@ncar/music-box/examples/chapman/my_config.json' with { type: 'json' };
+const chapmanConfig = toReduxConfig(chapmanConfigRaw);
 
 // A third body ("M" = any molecule present in the system) catalyses a reaction without being
 // consumed, so the solver reports no concentration for it. The species list in the panel is
@@ -34,7 +36,7 @@ describe('isReactionVisible — third bodies do not gate visibility', () => {
   const ozoneFormation = reactions[3];
 
   it('is the reaction under test', () => {
-    const names = ozoneFormation.reactants.map((r) => r['species name']);
+    const names = ozoneFormation.reactants.map((r) => r.name);
     expect(names).toEqual(expect.arrayContaining(['O', 'O2', 'M']));
   });
 
@@ -45,7 +47,7 @@ describe('isReactionVisible — third bodies do not gate visibility', () => {
   it('never uses a third body itself to satisfy visibility', () => {
     // M can never appear in selectedSpecies (the solver reports no concentration for it), so a
     // reaction whose only real species is a third body must never be drawn.
-    const thirdBodyOnly = { reactants: [{ 'species name': 'M' }], products: [{ 'species name': 'M' }] };
+    const thirdBodyOnly = { reactants: [{ name: 'M' }], products: [{ name: 'M' }] };
     expect(isReactionVisible(thirdBodyOnly, ['M'], thirdBodyNames)).toBe(false);
   });
 
@@ -77,7 +79,7 @@ describe('isReactionVisible — third bodies do not gate visibility', () => {
 
   it('does not count tracers as required reactants', () => {
     const reaction = {
-      reactants: [{ 'species name': 'O' }, { 'species name': '__PROD__RXN_1_FOO' }],
+      reactants: [{ name: 'O' }, { name: '__PROD__RXN_1_FOO' }],
     };
     expect(isRealSpecies('__PROD__RXN_1_FOO')).toBe(false);
     expect(isReactionVisible(reaction, ['O'], thirdBodyNames)).toBe(true);

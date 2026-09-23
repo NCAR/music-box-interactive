@@ -26,15 +26,15 @@ const REACTIONS = [
     id: 'p0',
     name: 'dark',
     type: 'PHOTOLYSIS',
-    reactants: [{ 'species name': 'NO2', coefficient: 1 }],
-    products: [{ 'species name': 'NO', coefficient: 1 }],
+    reactants: [{ name: 'NO2', coefficient: 1 }],
+    products: [{ name: 'NO', coefficient: 1 }],
   },
   {
     id: 'p1',
     name: 'lit',
     type: 'PHOTOLYSIS',
-    reactants: [{ 'species name': 'NO2', coefficient: 1 }],
-    products: [{ 'species name': 'O3', coefficient: 1 }],
+    reactants: [{ name: 'NO2', coefficient: 1 }],
+    products: [{ name: 'O3', coefficient: 1 }],
   },
 ]
 

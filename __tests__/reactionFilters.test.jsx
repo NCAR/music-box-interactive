@@ -26,8 +26,8 @@ const reaction = (id, type, reactant, product) => ({
   id,
   type,
   'gas phase': 'gas',
-  reactants: [{ 'species name': reactant }],
-  products: [{ 'species name': product }],
+  reactants: [{ name: reactant }],
+  products: [{ name: product }],
 })
 
 const REACTIONS = [

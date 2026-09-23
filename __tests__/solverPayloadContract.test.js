@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest'
+import { toReduxConfig } from '../src/services/config/loadMusicBoxConfig'
 import { MusicBox } from '@ncar/music-box'
 
 import { buildLocalSimulationPayload } from '../src/services/simulation/local/payload'
@@ -32,11 +33,7 @@ const buildInputs = (config) => {
   const options = config['box model options'] || {}
   return {
     mechanismData: {
-      // Empty species/reactions makes the builder fall back to the authored mechanism, which is
-      // the path an untouched example takes.
-      mechanism: { mechanism: config.mechanism },
-      species: [],
-      reactions: [],
+      config: { mechanism: toReduxConfig(config).mechanism },
       currentExample: { name: config.mechanism?.name || 'example' },
     },
     conditions: {
@@ -126,9 +123,7 @@ describe('solver payload contract', () => {
     const { conditions } = buildInputs(analyticalConfig)
     const { payload } = buildLocalSimulationPayload({
       mechanismData: {
-        mechanism: { mechanism: analyticalConfig.mechanism },
-        species: uiSpecies,
-        reactions: [],
+        config: { mechanism: { ...analyticalConfig.mechanism, species: uiSpecies, reactions: [] } },
         currentExample: { name: 'analytical' },
       },
       conditions,

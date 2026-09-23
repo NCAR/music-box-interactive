@@ -1,18 +1,18 @@
 import React from 'react';
 import { Provider } from 'react-redux';
 import { configureStore } from '@reduxjs/toolkit';
-import mechanismReducer, { setMechanism, setCurrentExample, addSpecies, addReaction } from '../src/redux/slices/mechanismSlice';
-import conditionsReducer, { setConditions, setDuration, setTimeStep, setOutputFrequency, setExampleLoaded, setSourceFile } from '../src/redux/slices/conditionsSlice';
+import mechanismReducer from '../src/redux/slices/mechanismSlice';
+import conditionsReducer from '../src/redux/slices/conditionsSlice';
 import simulationReducer from '../src/redux/slices/simulationSlice';
 import { render, fireEvent, waitFor, screen } from '@testing-library/react';
 
 import { RunSimulationButton } from '../src/components/RunSimulationButton';
+import { loadMusicBoxConfig } from '../src/services/config/loadMusicBoxConfig';
 
 // TS1 Example Imports
 import ts1Config from '@ncar/music-box/examples/ts1/my_config.json' with { type: 'json' };
 import ts1InitialConditionsCsv from '@ncar/music-box/examples/ts1/initial_conditions.csv?raw';
 import { parseCsvToBlock } from '@ncar/music-box';
-import { durationSeconds, stepSeconds } from './helpers/boxModelOptions';
 import { expectedInitialConcentrations } from './helpers/initialConcentrations';
 
 function withInlineConditionData(config, csvContents = []) {
@@ -61,31 +61,16 @@ describe('RunSimulationButton (TS1 example)', () => {
       csv: { initial_conditions: ts1InitialConditionsCsv },
       mechanism: withInlineConditionData(ts1Config, [ts1InitialConditionsCsv]),
     };
-    store.dispatch(setMechanism(ts1Example.mechanism));
-    store.dispatch(setCurrentExample({
-      id: ts1Example.id,
-      name: ts1Example.name,
-      description: ts1Example.description,
-      mechanism_name: ts1Example.mechanism_name,
-      csv: ts1Example.csv,
-    }));
-    (ts1Example.mechanism.mechanism.species || []).forEach((species) => {
-      store.dispatch(addSpecies({
-        name: species.name,
-        molecular_weight_kg_mol: species['molecular weight [kg mol-1]'],
-        properties: {},
-      }));
+    loadMusicBoxConfig(ts1Example.mechanism, {
+      dispatch: store.dispatch,
+      navigate: vi.fn(),
+      meta: {
+        id: ts1Example.id,
+        name: ts1Example.name,
+        description: ts1Example.description,
+        mechanism_name: ts1Example.mechanism_name,
+      },
     });
-    (ts1Example.mechanism.mechanism.reactions || []).forEach((reaction) => {
-      store.dispatch(addReaction({ ...reaction, id: reaction.id || 'test' }));
-    });
-    const options = ts1Example.mechanism["box model options"] || {};
-    store.dispatch(setDuration(durationSeconds(options)));
-    store.dispatch(setTimeStep(stepSeconds(options, "chemistry time step")));
-    store.dispatch(setOutputFrequency(stepSeconds(options, "output time step")));
-    store.dispatch(setConditions(ts1Example.mechanism.conditions));
-    store.dispatch(setExampleLoaded(false));
-    store.dispatch(setSourceFile(ts1Example.mechanism["__source file"] || null));
 
     render(
       <Provider store={store}>
