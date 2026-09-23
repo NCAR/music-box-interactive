@@ -38,8 +38,8 @@ describe('unset rate parameters', () => {
     // leave scaling factor blank
     fireEvent.click(screen.getByRole('button', { name: /add reaction/i }))
   
-    await waitFor(() => expect(store.getState().mechanism.reactions).toHaveLength(1))
-    expect(store.getState().mechanism.reactions[0]).not.toHaveProperty('scaling factor')
+    await waitFor(() => expect(store.getState().mechanism.config.mechanism.reactions).toHaveLength(1))
+    expect(store.getState().mechanism.config.mechanism.reactions[0]).not.toHaveProperty('scaling factor')
   
     // expand the chip: the field is offered, blank
     fireEvent.click(screen.getAllByRole('button').find((b) => /→/.test(b.textContent)))
@@ -54,7 +54,7 @@ describe('unset rate parameters', () => {
     // and filling it in saves
     fireEvent.change(field, { target: { value: '0.5' } })
     fireEvent.blur(field)
-    expect(store.getState().mechanism.reactions[0]['scaling factor']).toBe(0.5)
+    expect(store.getState().mechanism.config.mechanism.reactions[0]['scaling factor']).toBe(0.5)
   })
 
   it('an unset parameter shows the solver default as its placeholder', () => {
@@ -69,8 +69,8 @@ describe('unset rate parameters', () => {
       id: 'r1',
       type: 'ARRHENIUS',
       'gas phase': 'gas',
-      reactants: [{ 'species name': 'A' }],
-      products: [{ 'species name': 'B' }],
+      reactants: [{ name: 'A' }],
+      products: [{ name: 'B' }],
       A: 1.2e-11,
     }))
 

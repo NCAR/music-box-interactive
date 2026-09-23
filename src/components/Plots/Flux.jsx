@@ -47,7 +47,7 @@ const formatComponents = (entries) => {
   if (!entries.length) return '∅'
   return entries
     .map((entry) => {
-      const name = entry['species name'] || ''
+      const name = entry.name || ''
       const coefficient = Number(entry.coefficient)
       const prefix = Number.isFinite(coefficient) && coefficient > 1 ? coefficient : ''
       return `${prefix}${name}`
@@ -63,7 +63,7 @@ const formatReactionFormula = (reaction) =>
 const reactionInvolvesSpecies = (reaction, selectedSpeciesNames) => {
   if (selectedSpeciesNames.length === 0) return true
   const names = [...reactionReactants(reaction), ...reactionProducts(reaction)].map(
-    (entry) => entry['species name']
+    (entry) => entry.name
   )
   return names.some((name) => selectedSpeciesNames.includes(name))
 }
@@ -216,7 +216,7 @@ function FluxReactionChip({ reaction, flux, checked, onToggleCheck }) {
  */
 export function Flux() {
   const simulation = useSelector((state) => state.simulation)
-  const reactions = useSelector((state) => state.mechanism.reactions)
+  const reactions = useSelector((state) => state.mechanism.config.mechanism?.reactions || [])
   const duration = useSelector((state) => state.conditions.basic.duration)
 
   const [reactionsOpen, setReactionsOpen] = useState(true)

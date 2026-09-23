@@ -5,7 +5,6 @@
 // - 'phase': PhaseSpecies members → phases[].species[]
 //
 // Notes:
-// - Absolute tolerance requires the `__` prefix; "absolute tolerance" is rejected.
 // - mechanism.species[] rejects unknown keys, while phases[].species[] silently ignores them.
 export const SPECIES_PROPERTIES = [
   {
@@ -17,7 +16,7 @@ export const SPECIES_PROPERTIES = [
   },
   {
     pill: 'Absolute tolerance',
-    key: '__absolute tolerance',
+    key: 'absolute tolerance',
     target: 'species',
     label: 'Absolute tolerance (mol/m3)',
     placeholder: '1e-12',

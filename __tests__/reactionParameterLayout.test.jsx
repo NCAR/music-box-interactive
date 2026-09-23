@@ -27,7 +27,7 @@ const expand = (reaction) => {
   render(<MemoryRouter><Provider store={store}><ReactionEditor /></Provider></MemoryRouter>)
   fireEvent.click(screen.getAllByRole('button').find((b) => /→/.test(b.textContent)))
 }
-const base = { reactants: [{ 'species name': 'A' }], products: [{ 'species name': 'B' }] }
+const base = { reactants: [{ name: 'A' }], products: [{ name: 'B' }] }
 const nameSpans = () => {
   const panel = screen.getByRole('button', { name: 'Remove' }).parentElement.parentElement
   return [...panel.querySelectorAll('div')]
@@ -49,7 +49,7 @@ describe('parameter name column', () => {
 
   it('a long name widens the column for the whole reaction', () => {
   expand({ id: 'r2', type: 'SURFACE', 'gas-phase species': 'NO2',
-    'gas-phase products': [{ 'species name': 'OH' }], 'reaction probability': 8e-6 })
+    'gas-phase products': [{ name: 'OH' }], 'reaction probability': 8e-6 })
   const spans = nameSpans()
   expect(spans.map((s) => s.textContent)).toEqual(['reaction probability'])
   expect(spans[0].style.width).toBe('20ch')   // "reaction probability".length

@@ -1,19 +1,19 @@
 import React from 'react';
 import { Provider } from 'react-redux';
 import { configureStore } from '@reduxjs/toolkit';
-import mechanismReducer, { setMechanism, setCurrentExample, addSpecies, addReaction } from '../src/redux/slices/mechanismSlice';
-import conditionsReducer, { setConditions, setDuration, setTimeStep, setOutputFrequency, setExampleLoaded, setSourceFile } from '../src/redux/slices/conditionsSlice';
+import mechanismReducer from '../src/redux/slices/mechanismSlice';
+import conditionsReducer from '../src/redux/slices/conditionsSlice';
 import simulationReducer from '../src/redux/slices/simulationSlice';
 import { render, fireEvent, waitFor, screen } from '@testing-library/react';
 
 import { RunSimulationButton } from '../src/components/RunSimulationButton';
+import { loadMusicBoxConfig } from '../src/services/config/loadMusicBoxConfig';
 
 // Flow-Tube Example Imports
 import flowTubeConfig from '@ncar/music-box/examples/flow_tube/my_config.json' with { type: 'json' };
 import flowTubeInitialConcentrationsCsv from '@ncar/music-box/examples/flow_tube/initial_concentrations.csv?raw';
 import flowTubeInitialReactionRatesCsv from '@ncar/music-box/examples/flow_tube/initial_reaction_rates.csv?raw';
 import { parseCsvToBlock } from '@ncar/music-box';
-import { durationSeconds, stepSeconds } from './helpers/boxModelOptions';
 import { expectedInitialConcentrations } from './helpers/initialConcentrations';
 
 function withInlineConditionData(config, csvContents = []) {
@@ -58,31 +58,16 @@ describe('RunSimulationButton (Flow-Tube example)', () => {
       csv: { initial_concentrations: flowTubeInitialConcentrationsCsv, initial_reaction_rates: flowTubeInitialReactionRatesCsv },
       mechanism: withInlineConditionData(flowTubeConfig, [flowTubeInitialConcentrationsCsv, flowTubeInitialReactionRatesCsv]),
     };
-    store.dispatch(setMechanism(flowTubeExample.mechanism));
-    store.dispatch(setCurrentExample({
-      id: flowTubeExample.id,
-      name: flowTubeExample.name,
-      description: flowTubeExample.description,
-      mechanism_name: flowTubeExample.mechanism_name,
-      csv: flowTubeExample.csv,
-    }));
-    (flowTubeExample.mechanism.mechanism.species || []).forEach((species) => {
-      store.dispatch(addSpecies({
-        name: species.name,
-        molecular_weight_kg_mol: species['molecular weight [kg mol-1]'],
-        properties: {},
-      }));
+    loadMusicBoxConfig(flowTubeExample.mechanism, {
+      dispatch: store.dispatch,
+      navigate: vi.fn(),
+      meta: {
+        id: flowTubeExample.id,
+        name: flowTubeExample.name,
+        description: flowTubeExample.description,
+        mechanism_name: flowTubeExample.mechanism_name,
+      },
     });
-    (flowTubeExample.mechanism.mechanism.reactions || []).forEach((reaction) => {
-      store.dispatch(addReaction({ ...reaction, id: reaction.id || 'test' }));
-    });
-    const options = flowTubeExample.mechanism["box model options"] || {};
-    store.dispatch(setDuration(durationSeconds(options)));
-    store.dispatch(setTimeStep(stepSeconds(options, "chemistry time step")));
-    store.dispatch(setOutputFrequency(stepSeconds(options, "output time step")));
-    store.dispatch(setConditions(flowTubeExample.mechanism.conditions));
-    store.dispatch(setExampleLoaded(false));
-    store.dispatch(setSourceFile(flowTubeExample.mechanism["__source file"] || null));
 
     render(
       <Provider store={store}>

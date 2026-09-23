@@ -199,9 +199,9 @@ describe('computeIntegratedReactionRate — index-keyed lookup', () => {
 describe('computeIntegratedReactionRate — branched reactions', () => {
   const branched = {
     name: 'BR',
-    reactants: [{ 'species name': 'A', coefficient: 1 }],
-    'alkoxy products': [{ 'species name': 'B', coefficient: 1 }],
-    'nitrate products': [{ 'species name': 'C', coefficient: 1 }],
+    reactants: [{ name: 'A', coefficient: 1 }],
+    'alkoxy products': [{ name: 'B', coefficient: 1 }],
+    'nitrate products': [{ name: 'C', coefficient: 1 }],
   };
 
   const results = (concentrations) => [
@@ -226,8 +226,8 @@ describe('computeIntegratedReactionRate — branched reactions', () => {
   it('still reads a single-tracer reaction from its unsuffixed key', () => {
     const plain = {
       name: 'BR',
-      reactants: [{ 'species name': 'A', coefficient: 1 }],
-      products: [{ 'species name': 'B', coefficient: 1 }],
+      reactants: [{ name: 'A', coefficient: 1 }],
+      products: [{ name: 'B', coefficient: 1 }],
     };
     const rate = computeIntegratedReactionRate(
       plain,

@@ -28,8 +28,8 @@ const reaction = (id, type, name = GENERATED_NAME) => ({
   id,
   name,
   type,
-  reactants: [{ 'species name': 'HNO3', coefficient: 1 }],
-  products: [{ 'species name': 'NO3', coefficient: 1 }],
+  reactants: [{ name: 'HNO3', coefficient: 1 }],
+  products: [{ name: 'NO3', coefficient: 1 }],
 })
 
 const REACTIONS = [reaction('a', 'ARRHENIUS'), reaction('b', 'TROE')]
@@ -136,15 +136,15 @@ describe('flow diagram node identity', () => {
       type: 'SURFACE',
       name: 'usr_NO2_aer',
       'gas-phase species': 'HNO3',
-      'gas-phase products': [{ 'species name': 'NO3', coefficient: 1 }],
+      'gas-phase products': [{ name: 'NO3', coefficient: 1 }],
     }
     const branched = {
       id: 'b1',
       type: 'BRANCHED_NO_RO2',
       name: 'branched',
-      reactants: [{ 'species name': 'HNO3', coefficient: 1 }],
-      'alkoxy products': [{ 'species name': 'NO3', coefficient: 1 }],
-      'nitrate products': [{ 'species name': 'NO3', coefficient: 1 }],
+      reactants: [{ name: 'HNO3', coefficient: 1 }],
+      'alkoxy products': [{ name: 'NO3', coefficient: 1 }],
+      'nitrate products': [{ name: 'NO3', coefficient: 1 }],
     }
 
     const { container } = renderGraph([reaction('a', 'ARRHENIUS'), surface, branched])
@@ -157,15 +157,15 @@ describe('flow diagram node identity', () => {
         id: 's1',
         type: 'SURFACE',
         name: 'usr',
-        reactants: [{ 'species name': 'HNO3', coefficient: 1 }],
-        products: [{ 'species name': 'NO3', coefficient: 1 }],
+        reactants: [{ name: 'HNO3', coefficient: 1 }],
+        products: [{ name: 'NO3', coefficient: 1 }],
       },
       {
         id: 's2',
         type: 'SURFACE',
         name: 'usr2',
         'gas-phase species': 'HNO3',
-        'gas-phase products': [{ 'species name': 'NO3', coefficient: 1 }],
+        'gas-phase products': [{ name: 'NO3', coefficient: 1 }],
       },
     ])
 
@@ -184,13 +184,13 @@ describe('flow diagram node identity', () => {
         id: 'e1',
         type: 'EMISSION',
         name: 'emit',
-        products: [{ 'species name': 'HNO3', coefficient: 1 }],
+        products: [{ name: 'HNO3', coefficient: 1 }],
       },
       {
         id: 'l1',
         type: 'FIRST_ORDER_LOSS',
         name: 'loss',
-        reactants: [{ 'species name': 'NO3', coefficient: 1 }],
+        reactants: [{ name: 'NO3', coefficient: 1 }],
       },
     ])
 

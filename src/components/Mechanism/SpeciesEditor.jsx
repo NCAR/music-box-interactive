@@ -427,7 +427,7 @@ function SpeciesChip({ species, onPhaseChange, onFieldSave, onRemove, airDensity
 
 export function SpeciesEditor() {
   const dispatch = useDispatch()
-  const species = useSelector((state) => state.mechanism.species)
+  const species = useSelector((state) => state.mechanism.config.mechanism?.species || [])
   const initialConditions = useSelector((state) => state.conditions.initial)
   const { toast } = useToast()
   const airDensity = airDensityMolM3(initialConditions.pressure, initialConditions.temperature)

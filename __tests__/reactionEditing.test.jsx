@@ -23,8 +23,8 @@ const REACTION = {
   id: 'r1',
   type: 'ARRHENIUS',
   'gas phase': 'gas',
-  reactants: [{ 'species name': 'O1D', coefficient: 1 }],
-  products: [{ 'species name': 'O3', coefficient: 1 }],
+  reactants: [{ name: 'O1D', coefficient: 1 }],
+  products: [{ name: 'O3', coefficient: 1 }],
   A: 1.2e-11,
   B: 7,
 }
@@ -74,7 +74,7 @@ const parameterField = (name) => {
   return row.querySelector('input')
 }
 
-const reactionFrom = (store) => store.getState().mechanism.reactions[0]
+const reactionFrom = (store) => store.getState().mechanism.config.mechanism.reactions[0]
 
 // SURFACE names its reactant in `gas-phase species` as a bare string rather than a component
 // array, so it needs its own handling; without it the reactant has no field at all.
@@ -85,7 +85,7 @@ const SURFACE_REACTION = {
   'gas phase': 'gas',
   'reaction probability': 8e-6,
   'gas-phase species': 'NO2',
-  'gas-phase products': [{ 'species name': 'OH', coefficient: 0.5 }],
+  'gas-phase products': [{ name: 'OH', coefficient: 0.5 }],
 }
 
 describe('editing a surface reaction', () => {
@@ -127,7 +127,7 @@ describe('editing a surface reaction', () => {
     fireEvent.change(field, { target: { value: 'N2O5' } })
     fireEvent.blur(field)
 
-    const saved = store.getState().mechanism.reactions[0]
+    const saved = store.getState().mechanism.config.mechanism.reactions[0]
     expect(saved['gas-phase species']).toBe('N2O5')
   })
 
@@ -139,7 +139,7 @@ describe('editing a surface reaction', () => {
     fireEvent.blur(field)
 
     await waitFor(() => expect(screen.getByText(/must be a single species/i)).toBeInTheDocument())
-    expect(store.getState().mechanism.reactions[0]['gas-phase species']).toBe('NO2')
+    expect(store.getState().mechanism.config.mechanism.reactions[0]['gas-phase species']).toBe('NO2')
   })
 
   it('validates the reactant against the defined species', async () => {
@@ -152,7 +152,7 @@ describe('editing a surface reaction', () => {
     await waitFor(() =>
       expect(screen.getByText(/not defined in this mechanism/i)).toBeInTheDocument()
     )
-    expect(store.getState().mechanism.reactions[0]['gas-phase species']).toBe('NO2')
+    expect(store.getState().mechanism.config.mechanism.reactions[0]['gas-phase species']).toBe('NO2')
   })
 })
 
@@ -165,7 +165,7 @@ describe('editing a reaction from its chip', () => {
     fireEvent.change(field, { target: { value: '2NO2' } })
     fireEvent.blur(field)
 
-    expect(reactionFrom(store).reactants).toEqual([{ 'species name': 'NO2', coefficient: 2 }])
+    expect(reactionFrom(store).reactants).toEqual([{ name: 'NO2', coefficient: 2 }])
   })
 
   it('edits a rate parameter', () => {
@@ -210,7 +210,7 @@ describe('editing a reaction from its chip', () => {
     await waitFor(() =>
       expect(screen.getByText(/not defined in this mechanism/i)).toBeInTheDocument()
     )
-    expect(reactionFrom(store).products).toEqual([{ 'species name': 'O3', coefficient: 1 }])
+    expect(reactionFrom(store).products).toEqual([{ name: 'O3', coefficient: 1 }])
   })
 
   it('rejects emptying a component list', async () => {
@@ -232,6 +232,6 @@ describe('editing a reaction from its chip', () => {
     fireEvent.change(field, { target: { value: '5e-11' } })
     fireEvent.blur(field)
 
-    expect(store.getState().mechanism.reactions.map((r) => r.id)).toEqual(['r1', 'r2'])
+    expect(store.getState().mechanism.config.mechanism.reactions.map((r) => r.id)).toEqual(['r1', 'r2'])
   })
 })

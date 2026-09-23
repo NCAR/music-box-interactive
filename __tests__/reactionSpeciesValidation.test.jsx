@@ -10,10 +10,9 @@ import conditionsReducer from '../src/redux/slices/conditionsSlice'
 import simulationReducer from '../src/redux/slices/simulationSlice'
 import { ReactionEditor } from '../src/components/Mechanism/ReactionEditor'
 import { Toaster } from '../src/components/ui/toaster'
-import { resolveReactionSpeciesNames } from '../src/services/simulation/local/mechanism'
 
 // Rejects reactions that reference undefined species, preventing solver build failures at runtime.
-// Uses the same name comparison as validateMechanismPayload for consistent validation.
+// Species names are compared exactly, the same way MechanismConfiguration compares them.
 
 vi.mock('react-router-dom', async () => {
   const actual = await vi.importActual('react-router-dom')
@@ -65,7 +64,7 @@ describe('reaction species validation', () => {
       expect(screen.getByText(/not defined in this mechanism/i)).toBeInTheDocument()
     )
     expect(screen.getByText(/XYZ/)).toBeInTheDocument()
-    expect(store.getState().mechanism.reactions).toHaveLength(0)
+    expect((store.getState().mechanism.config.mechanism.reactions || [])).toHaveLength(0)
   })
 
   it('reports every unknown species at once rather than one at a time', async () => {
@@ -73,60 +72,39 @@ describe('reaction species validation', () => {
     submitReaction('FOO + BAR', 'O3')
 
     await waitFor(() => expect(screen.getByText(/FOO, BAR/)).toBeInTheDocument())
-    expect(store.getState().mechanism.reactions).toHaveLength(0)
+    expect((store.getState().mechanism.config.mechanism.reactions || [])).toHaveLength(0)
   })
 
   it('accepts a reaction whose species are all defined', async () => {
     const store = renderEditor(['O3', 'NO2'])
     submitReaction('O3', 'NO2')
 
-    await waitFor(() => expect(store.getState().mechanism.reactions).toHaveLength(1))
+    await waitFor(() => expect((store.getState().mechanism.config.mechanism.reactions || [])).toHaveLength(1))
   })
 })
 
-describe('species name resolution', () => {
-  // Reaction input is upper-cased as typed, but mechanisms may define lower-case species. Resolve
-  // names back to the mechanism's spelling so species like a-pinene, soa1_a1, and sink remain reachable.
-  it('matches a lower-case species and stores the mechanism spelling', async () => {
+describe('species name capitalization', () => {
+  // Species names are case-sensitive. The editor stores them exactly as typed and matches them
+  // exactly against the mechanism, so lower-case species like a-pinene stay reachable.
+  it('stores a lower-case species exactly as typed', async () => {
     const store = renderEditor(['a-pinene', 'O3'])
     submitReaction('a-pinene + O3', 'O3')
 
-    await waitFor(() => expect(store.getState().mechanism.reactions).toHaveLength(1))
+    await waitFor(() => expect((store.getState().mechanism.config.mechanism.reactions || [])).toHaveLength(1))
 
     const stored = store
       .getState()
-      .mechanism.reactions[0].reactants.map((component) => component['species name'])
-    expect(stored).toContain('a-pinene')
-    expect(stored).not.toContain('A-PINENE')
+      .mechanism.config.mechanism.reactions[0].reactants.map((component) => component.name)
+    expect(stored).toEqual(['a-pinene', 'O3'])
   })
 
-  it('resolves every component shape a reaction type can use', () => {
-    const resolved = resolveReactionSpeciesNames(
-      {
-        reactants: [{ 'species name': 'A-PINENE' }],
-        products: ['SINK'],
-        'alkoxy products': [{ name: 'SOA1_A1' }],
-        'gas-phase species': 'A-PINENE',
-      },
-      ['a-pinene', 'sink', 'soa1_a1']
+  it('rejects a species whose capitalization does not match the mechanism', async () => {
+    const store = renderEditor(['a-pinene', 'O3'])
+    submitReaction('A-PINENE + O3', 'O3')
+
+    await waitFor(() =>
+      expect(screen.getByText(/not defined in this mechanism/i)).toBeInTheDocument()
     )
-
-    expect(resolved.reactants[0]['species name']).toBe('a-pinene')
-    expect(resolved.products[0]).toBe('sink')
-    expect(resolved['alkoxy products'][0].name).toBe('soa1_a1')
-    expect(resolved['gas-phase species']).toBe('a-pinene')
-  })
-
-  it('leaves an unmatched name untouched so validation can report it as typed', () => {
-    const resolved = resolveReactionSpeciesNames({ reactants: [{ 'species name': 'XYZ' }] }, ['O3'])
-    expect(resolved.reactants[0]['species name']).toBe('XYZ')
-  })
-
-  it('preserves coefficients while rewriting names', () => {
-    const resolved = resolveReactionSpeciesNames(
-      { products: [{ 'species name': 'SINK', coefficient: 2 }] },
-      ['sink']
-    )
-    expect(resolved.products[0]).toEqual({ 'species name': 'sink', coefficient: 2 })
+    expect((store.getState().mechanism.config.mechanism.reactions || [])).toHaveLength(0)
   })
 })

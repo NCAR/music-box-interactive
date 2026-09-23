@@ -6,7 +6,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui
 import { Button } from '../ui/button'
 import { Dropdown } from '../ui/dropdown'
 import { addReaction, removeReaction, updateReaction } from '../../redux/slices/mechanismSlice'
-import { hasDeclaredName, parseReactionString } from './reactions/reactionUtils'
+import {
+  buildGeneratedReactionName,
+  hasDeclaredName,
+  parseReactionString,
+} from './reactions/reactionUtils'
 import {
   canonicalReactionType,
   getReactionDefinition,
@@ -17,7 +21,6 @@ import {
 import {
   REACTION_COMPONENT_KEYS,
   getReactionSpeciesNames,
-  resolveReactionSpeciesNames,
 } from '../../services/simulation/local/mechanism'
 import {
   EDITOR_GRID,
@@ -40,7 +43,7 @@ const formatReactionComponents = (components) => {
         return component
       }
 
-      const name = component['species name'] || component.name || ''
+      const name = component.name || ''
       const coefficient = Number(component.coefficient)
       const coeffPrefix = Number.isFinite(coefficient) && coefficient > 1 ? coefficient : ''
 
@@ -198,9 +201,7 @@ function ReactionChip({ reaction, onRemove, onComponentsSave, onParameterSave })
 
         {componentFields(reaction).map((field) => (
           <div key={field.key} className="flex flex-col gap-1">
-            <label className="text-[11px] uppercase tracking-wide text-muted">
-              {field.label}
-            </label>
+            <label className="text-[11px] uppercase tracking-wide text-muted">{field.label}</label>
             <input
               type="text"
               // Uncontrolled: the value is re-derived from the store on save, while a controlled input would
@@ -263,8 +264,8 @@ function ReactionChip({ reaction, onRemove, onComponentsSave, onParameterSave })
 export function ReactionEditor() {
   const dispatch = useDispatch()
   const { toast } = useToast()
-  const reactions = useSelector((state) => state.mechanism.reactions)
-  const species = useSelector((state) => state.mechanism.species)
+  const reactions = useSelector((state) => state.mechanism.config.mechanism?.reactions || [])
+  const species = useSelector((state) => state.mechanism.config.mechanism?.species || [])
 
   const [reactionType, setReactionType] = useState(reactionRegistry[0].type)
   const [reactionSearch, setReactionSearch] = useState('')
@@ -301,14 +302,10 @@ export function ReactionEditor() {
   })
 
   const handleAddReaction = (newReaction) => {
-    // Predicts solver build failures when reactions reference undefined species by validating exact
-    // mechanism names, matching validateMechanismPayload. Since reaction input is upper-cased, first
-    // map names back to the mechanism's spelling so lower-case species can be referenced.
-    const definedNames = species.map((sp) => sp.name).filter(Boolean)
-    const resolved = resolveReactionSpeciesNames(newReaction, definedNames)
-
-    const defined = new Set(definedNames)
-    const unknown = [...new Set(getReactionSpeciesNames(resolved))].filter(
+    // Rejects a reaction that references an undefined species, which would fail the solver build.
+    // Species names are case-sensitive.
+    const defined = new Set(species.map((sp) => sp.name).filter(Boolean))
+    const unknown = [...new Set(getReactionSpeciesNames(newReaction))].filter(
       (name) => !defined.has(name)
     )
 
@@ -325,7 +322,7 @@ export function ReactionEditor() {
       return
     }
 
-    dispatch(addReaction(resolved))
+    dispatch(addReaction(newReaction))
     toast({
       title: 'Reaction Added',
       description: `Successfully added reaction: ${newReaction.name || formatReactionDisplay(newReaction)}`,
@@ -333,14 +330,11 @@ export function ReactionEditor() {
     })
   }
 
-  // Edits go through the same resolution and validation as adding, so an edit cannot introduce a
-  // species reference that a newly added reaction would have been rejected for.
+  // Edits go through the same validation as adding, so an edit cannot introduce a species
+  // reference that a newly added reaction would have been rejected for.
   const saveReaction = (candidate) => {
-    const definedNames = species.map((sp) => sp.name).filter(Boolean)
-    const resolved = resolveReactionSpeciesNames(candidate, definedNames)
-
-    const defined = new Set(definedNames)
-    const unknown = [...new Set(getReactionSpeciesNames(resolved))].filter(
+    const defined = new Set(species.map((sp) => sp.name).filter(Boolean))
+    const unknown = [...new Set(getReactionSpeciesNames(candidate))].filter(
       (name) => !defined.has(name)
     )
 
@@ -355,7 +349,7 @@ export function ReactionEditor() {
       return false
     }
 
-    dispatch(updateReaction(resolved))
+    dispatch(updateReaction(candidate))
     return true
   }
 
@@ -381,7 +375,7 @@ export function ReactionEditor() {
         })
         return
       }
-      saveReaction({ ...reaction, [field.key]: parsed[0]['species name'] })
+      saveReaction({ ...reaction, [field.key]: parsed[0].name })
       return
     }
 
@@ -419,7 +413,7 @@ export function ReactionEditor() {
     dispatch(removeReaction(reactionId))
     toast({
       title: 'Reaction Removed',
-      description: `Removed reaction: ${reaction?.name || 'Unknown'}`,
+      description: `Removed reaction: ${reaction?.name || (reaction && buildGeneratedReactionName(reaction)) || 'Unknown'}`,
       variant: 'delete',
     })
   }
@@ -465,10 +459,7 @@ export function ReactionEditor() {
                     value: type.type,
                     label: type.label,
                     disabled: type.type === 'LAMBDA_RATE',
-                    title:
-                      type.type === 'LAMBDA_RATE'
-                        ? 'Lambda rate is unavailable'
-                        : undefined,
+                    title: type.type === 'LAMBDA_RATE' ? 'Lambda rate is unavailable' : undefined,
                   }))}
                 />
               </div>

@@ -11,7 +11,7 @@ function formatComponents(components) {
   return components
     .map((component) => {
       if (typeof component === 'string') return component
-      const name = component?.['species name'] || component?.name || ''
+      const name = component?.name || ''
       const coefficient = Number(component?.coefficient)
       const prefix = Number.isFinite(coefficient) && coefficient !== 1 ? `${coefficient} ` : ''
       return `${prefix}${name}`
@@ -33,9 +33,14 @@ function formatReactionFormula(reaction) {
 //   starting at that row (last row is blank -- no interval after it).
 // - music_box_config.json: same as Download Config.
 // - mapping.json: RXN_<index> -> reaction, since names aren't unique.
-// `reactions` must be the same array run.js injected tracers into, so indices match here.
+// `reactions` here is mechanism.config.mechanism.reactions -- the single source list
+// buildLocalSimulationPayload also serializes from, in the same order, so RXN_<index> lines up
+// with the reaction run.js solved (run.js's tracer injection only appends to product arrays,
+// it never changes reaction order or count).
 export function buildResultsExport({ mechanism, conditions, results, excludedResults, metadata }) {
-  const reactions = Array.isArray(mechanism?.reactions) ? mechanism.reactions : []
+  const reactions = Array.isArray(mechanism?.config?.mechanism?.reactions)
+    ? mechanism.config.mechanism.reactions
+    : []
   const points = Array.isArray(results) ? results : []
   const tracerPoints = Array.isArray(excludedResults) ? excludedResults : []
 

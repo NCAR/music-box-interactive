@@ -1,17 +1,15 @@
 // Mechanism Redux Slice
-// Manages chemical mechanism state (species, reactions, phases)
+// Manages chemical mechanism state (the uploaded/example config, edited in place)
 import { createSlice } from '@reduxjs/toolkit'
 
 const initialState = {
   selectedMechanism: null,
   currentExample: null, // Track loaded example {id, name, description}
-  species: [],
-  reactions: [],
-  phases: [],
-  loading: false,
-  error: null,
 
-  mechanism: {},
+  // The full config: {'box model options', mechanism: {name, version, species, phases,
+  // reactions}, conditions, ...}. Species/reactions are edited directly on config.mechanism --
+  // there is no separate UI-only copy to keep in sync with this one.
+  config: {},
 }
 
 export const mechanismSlice = createSlice({
@@ -24,44 +22,46 @@ export const mechanismSlice = createSlice({
     setCurrentExample: (state, action) => {
       state.currentExample = action.payload
     },
-    setSpecies: (state, action) => {
-      state.species = action.payload
+    setConfig: (state, action) => {
+      state.config = action.payload
     },
     addSpecies: (state, action) => {
-      state.species.push(action.payload)
+      state.config.mechanism ??= {}
+      state.config.mechanism.species ??= []
+      state.config.mechanism.species.push(action.payload)
     },
     updateSpecies: (state, action) => {
-      const index = state.species.findIndex((s) => s.name === action.payload.name)
+      const list = state.config.mechanism?.species || []
+      const index = list.findIndex((s) => s.name === action.payload.name)
       if (index !== -1) {
-        state.species[index] = action.payload
+        list[index] = action.payload
       }
     },
     removeSpecies: (state, action) => {
-      state.species = state.species.filter((s) => s.name !== action.payload)
-    },
-    setReactions: (state, action) => {
-      state.reactions = action.payload
+      if (state.config.mechanism?.species) {
+        state.config.mechanism.species = state.config.mechanism.species.filter(
+          (s) => s.name !== action.payload
+        )
+      }
     },
     addReaction: (state, action) => {
-      state.reactions.push(action.payload)
+      state.config.mechanism ??= {}
+      state.config.mechanism.reactions ??= []
+      state.config.mechanism.reactions.push(action.payload)
     },
     updateReaction: (state, action) => {
-      const index = state.reactions.findIndex((r) => r.id === action.payload.id)
+      const list = state.config.mechanism?.reactions || []
+      const index = list.findIndex((r) => r.id === action.payload.id)
       if (index !== -1) {
-        state.reactions[index] = action.payload
+        list[index] = action.payload
       }
     },
     removeReaction: (state, action) => {
-      state.reactions = state.reactions.filter((r) => r.id !== action.payload)
-    },
-    setLoading: (state, action) => {
-      state.loading = action.payload
-    },
-    setError: (state, action) => {
-      state.error = action.payload
-    },
-    setMechanism: (state, action) => {
-      state.mechanism = action.payload
+      if (state.config.mechanism?.reactions) {
+        state.config.mechanism.reactions = state.config.mechanism.reactions.filter(
+          (r) => r.id !== action.payload
+        )
+      }
     },
 
     resetMechanism: () => initialState,
@@ -71,17 +71,13 @@ export const mechanismSlice = createSlice({
 export const {
   setSelectedMechanism,
   setCurrentExample,
-  setSpecies,
+  setConfig,
   addSpecies,
   updateSpecies,
   removeSpecies,
-  setReactions,
   addReaction,
   updateReaction,
   removeReaction,
-  setLoading,
-  setError,
-  setMechanism,
   resetMechanism,
 } = mechanismSlice.actions
 
