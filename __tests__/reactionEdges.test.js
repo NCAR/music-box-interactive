@@ -246,7 +246,7 @@ describe('isReactionVisible — sources and sinks', () => {
     });
   });
 
-  it('still requires every reactant of an ordinary reaction to be selected', () => {
+  it('shows an ordinary reaction when any single reactant or product is selected', () => {
     const reaction = {
       reactants: [
         { 'species name': 'O', coefficient: 1 },
@@ -255,6 +255,8 @@ describe('isReactionVisible — sources and sinks', () => {
       products: [{ 'species name': 'O2', coefficient: 2 }],
     };
     expect(isReactionVisible(reaction, ['O', 'O3'], NO_THIRD_BODIES)).toBe(true);
-    expect(isReactionVisible(reaction, ['O'], NO_THIRD_BODIES)).toBe(false);
+    expect(isReactionVisible(reaction, ['O'], NO_THIRD_BODIES)).toBe(true);
+    expect(isReactionVisible(reaction, ['O2'], NO_THIRD_BODIES)).toBe(true);
+    expect(isReactionVisible(reaction, ['N2'], NO_THIRD_BODIES)).toBe(false);
   });
 });

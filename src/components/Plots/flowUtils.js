@@ -18,8 +18,8 @@ export const getThirdBodyNames = (species) =>
   new Set((species ?? []).filter((s) => s?.['is third body']).map((s) => s?.name))
 
 /**
- * A reaction is drawn when every reactant the user *could* have selected is selected.
- * Third bodies are excluded from that requirement: they are ambient, not chosen.
+ * A reaction is drawn when a selected species appears among its reactants or products.
+ * Third bodies never count toward this.
  */
 // Reaction types store species differently: SURFACE uses `gas-phase species` and
 // `gas-phase products`, while BRANCHED splits products into `alkoxy products` and
@@ -50,13 +50,12 @@ export const isReactionVisible = (reaction, selectedSpecies, thirdBodyNames) => 
       .map((entry) => entry['species name'])
       .filter((name) => isRealSpecies(name) && !thirdBodyNames.has(name))
 
-  const reactants = named(reactionReactants(reaction))
+  const involved = [
+    ...named(reactionReactants(reaction)),
+    ...named(reactionProducts(reaction)),
+  ]
 
-  // Emissions have no reactants. They inject species from outside the mechanism. Anchor them on
-  // their products so they appear on the diagram.
-  const anchors = reactants.length > 0 ? reactants : named(reactionProducts(reaction))
-
-  return anchors.length > 0 && anchors.every((name) => selectedSpecies.includes(name))
+  return involved.some((name) => selectedSpecies.includes(name))
 }
 
 
