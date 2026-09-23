@@ -93,7 +93,7 @@ export function ExampleLoader() {
     await writeConfigFiles(dir, csvFilesForExample(example.dir))
     const config = await resolveConditionsFilepathsFromFile(example.config, dir)
 
-    loadMusicBoxConfig(config, {
+    await loadMusicBoxConfig(config, {
       dispatch,
       navigate,
       meta: {

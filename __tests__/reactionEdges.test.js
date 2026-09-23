@@ -6,9 +6,9 @@ import {
 } from '../src/components/Plots/flowUtils';
 
 import chapmanConfigRaw from '@ncar/music-box/examples/chapman/my_config.json' with { type: 'json' };
-const chapmanConfig = toReduxConfig(chapmanConfigRaw);
+const chapmanConfig = await toReduxConfig(chapmanConfigRaw);
 import carbonBond5ConfigRaw from '@ncar/music-box/examples/carbon_bond_5/my_config.json' with { type: 'json' };
-const carbonBond5Config = toReduxConfig(carbonBond5ConfigRaw);
+const carbonBond5Config = await toReduxConfig(carbonBond5ConfigRaw);
 
 const NO_THIRD_BODIES = new Set();
 const RATE = 10;
@@ -16,7 +16,7 @@ const RATE = 10;
 const edgeMap = (edges) => Object.fromEntries(edges.map((e) => [`${e.source}->${e.target}`, e.value]));
 
 describe('getReactionEdges — stoichiometric coefficients', () => {
-  it('scales a product edge by its coefficient', () => {
+  it('scales a product edge by its coefficient', async () => {
     // O + O3 -> 2 O2 : each event yields two O2, so that edge is 2x the reaction rate.
     const reaction = {
       name: 'R',
@@ -30,7 +30,7 @@ describe('getReactionEdges — stoichiometric coefficients', () => {
     });
   });
 
-  it('scales a reactant edge by its coefficient', () => {
+  it('scales a reactant edge by its coefficient', async () => {
     const reaction = {
       name: 'R',
       reactants: [{ name: 'A', coefficient: 3 }],
@@ -42,7 +42,7 @@ describe('getReactionEdges — stoichiometric coefficients', () => {
     });
   });
 
-  it('defaults a missing coefficient to 1', () => {
+  it('defaults a missing coefficient to 1', async () => {
     const reaction = {
       name: 'R',
       reactants: [{ name: 'A' }],
@@ -54,7 +54,7 @@ describe('getReactionEdges — stoichiometric coefficients', () => {
     });
   });
 
-  it('handles fractional coefficients', () => {
+  it('handles fractional coefficients', async () => {
     const reaction = {
       name: 'R',
       reactants: [{ name: 'A', coefficient: 1 }],
@@ -63,7 +63,7 @@ describe('getReactionEdges — stoichiometric coefficients', () => {
     expect(edgeMap(getReactionEdges(reaction, RATE, NO_THIRD_BODIES))['R->B']).toBeCloseTo(5, 10);
   });
 
-  it('aggregates a species listed twice on the same side', () => {
+  it('aggregates a species listed twice on the same side', async () => {
     const reaction = {
       name: 'R',
       reactants: [{ name: 'A', coefficient: 1 }],
@@ -89,19 +89,19 @@ describe('getReactionEdges — negative coefficients', () => {
     ],
   };
 
-  it('turns a negative yield into a consumption edge with positive magnitude', () => {
+  it('turns a negative yield into a consumption edge with positive magnitude', async () => {
     const edges = edgeMap(getReactionEdges(reaction, RATE, NO_THIRD_BODIES));
     expect(edges['PAR->R']).toBeCloseTo(21, 10);
     expect(edges['R->PAR']).toBeUndefined();
   });
 
-  it('never emits a negative edge value', () => {
+  it('never emits a negative edge value', async () => {
     for (const edge of getReactionEdges(reaction, RATE, NO_THIRD_BODIES)) {
       expect(edge.value).toBeGreaterThan(0);
     }
   });
 
-  it('produces no negative edge anywhere in carbon_bond_5', () => {
+  it('produces no negative edge anywhere in carbon_bond_5', async () => {
     const thirdBodies = getThirdBodyNames(carbonBond5Config.mechanism.species);
     const negatives = carbonBond5Config.mechanism.reactions.flatMap((r) =>
       getReactionEdges(r, RATE, thirdBodies).filter((e) => e.value < 0)
@@ -109,7 +109,7 @@ describe('getReactionEdges — negative coefficients', () => {
     expect(negatives).toEqual([]);
   });
 
-  it('drops a zero coefficient rather than drawing a zero-width edge', () => {
+  it('drops a zero coefficient rather than drawing a zero-width edge', async () => {
     const zeroYield = {
       name: 'R',
       reactants: [{ name: 'A', coefficient: 1 }],
@@ -123,7 +123,7 @@ describe('getReactionEdges — exclusions', () => {
   const { reactions, species } = chapmanConfig.mechanism;
   const thirdBodies = getThirdBodyNames(species);
 
-  it('omits third bodies from both sides', () => {
+  it('omits third bodies from both sides', async () => {
     // Chapman reaction 3: O + O2 + M -> O3 + M. Unnamed in the config -- ExampleLoader
     // synthesizes a name before it reaches Redux, so mirror that here.
     const reaction = { ...reactions[3], name: 'RXN3' };
@@ -133,7 +133,7 @@ describe('getReactionEdges — exclusions', () => {
     expect(Object.keys(edges).some((k) => k.split('->').includes('M'))).toBe(false);
   });
 
-  it('omits injected tracers', () => {
+  it('omits injected tracers', async () => {
     const reaction = {
       name: 'R',
       reactants: [{ name: 'A', coefficient: 1 }],
@@ -148,12 +148,12 @@ describe('getReactionEdges — exclusions', () => {
     });
   });
 
-  it('is defensive about malformed reactions', () => {
+  it('is defensive about malformed reactions', async () => {
     expect(getReactionEdges(undefined, RATE, NO_THIRD_BODIES)).toEqual([]);
     expect(getReactionEdges({ name: 'R' }, RATE, NO_THIRD_BODIES)).toEqual([]);
   });
 
-  it('scales linearly with rate', () => {
+  it('scales linearly with rate', async () => {
     const reaction = {
       name: 'R',
       reactants: [{ name: 'A', coefficient: 1 }],
@@ -167,7 +167,7 @@ describe('getReactionEdges — exclusions', () => {
 // Reaction types name their species differently. Reading only `reactants`/`products` left a
 // surface reaction invisible and a branched reaction a dead end -- consuming without producing.
 describe('getReactionEdges — reaction shapes', () => {
-  it('reads a surface reaction from its gas-phase fields', () => {
+  it('reads a surface reaction from its gas-phase fields', async () => {
     const reaction = {
       name: 'usr_NO2_aer',
       'gas-phase species': 'NO2',
@@ -184,7 +184,7 @@ describe('getReactionEdges — reaction shapes', () => {
     });
   });
 
-  it('produces both branches of a branched reaction', () => {
+  it('produces both branches of a branched reaction', async () => {
     const reaction = {
       name: 'branched',
       reactants: [{ name: 'C4H9O2', coefficient: 1 }],
@@ -201,7 +201,7 @@ describe('getReactionEdges — reaction shapes', () => {
 });
 
 describe('isReactionVisible — reaction shapes', () => {
-  it('counts a surface reaction gas-phase reactant', () => {
+  it('counts a surface reaction gas-phase reactant', async () => {
     const reaction = {
       'gas-phase species': 'NO2',
       'gas-phase products': [{ name: 'HNO3', coefficient: 1 }],
@@ -227,29 +227,29 @@ describe('isReactionVisible — sources and sinks', () => {
     reactants: [{ name: 'C', coefficient: 1 }],
   };
 
-  it('shows an emission when the species it emits is selected', () => {
+  it('shows an emission when the species it emits is selected', async () => {
     expect(isReactionVisible(emission, ['NO'], NO_THIRD_BODIES)).toBe(true);
     expect(isReactionVisible(emission, ['O3'], NO_THIRD_BODIES)).toBe(false);
   });
 
-  it('gives an emission an outgoing edge only', () => {
+  it('gives an emission an outgoing edge only', async () => {
     expect(edgeMap(getReactionEdges(emission, RATE, NO_THIRD_BODIES, 'R'))).toEqual({
       'R->NO': 10,
     });
   });
 
-  it('keeps a first-order loss anchored on its reactant', () => {
+  it('keeps a first-order loss anchored on its reactant', async () => {
     expect(isReactionVisible(firstOrderLoss, ['C'], NO_THIRD_BODIES)).toBe(true);
     expect(isReactionVisible(firstOrderLoss, ['O3'], NO_THIRD_BODIES)).toBe(false);
   });
 
-  it('gives a first-order loss an incoming edge only', () => {
+  it('gives a first-order loss an incoming edge only', async () => {
     expect(edgeMap(getReactionEdges(firstOrderLoss, RATE, NO_THIRD_BODIES, 'R'))).toEqual({
       'C->R': 10,
     });
   });
 
-  it('shows an ordinary reaction when any single reactant or product is selected', () => {
+  it('shows an ordinary reaction when any single reactant or product is selected', async () => {
     const reaction = {
       reactants: [
         { name: 'O', coefficient: 1 },

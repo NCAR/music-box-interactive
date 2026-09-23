@@ -36,7 +36,7 @@ export function SurfaceReactionForm({ onAddReaction }) {
 
     const newReaction = {
       id: uuidv4(),
-      type: 'SURFACE_REACTION',
+      type: 'SURFACE',
       'gas phase': 'gas',
       'gas-phase species': gasPhaseSpecies.trim(),
       'gas-phase products': parseReactionString(gasPhaseProducts),

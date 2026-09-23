@@ -1,11 +1,6 @@
-import { MusicBox, mechanismConfiguration } from '@ncar/music-box'
+import { MusicBox } from '@ncar/music-box'
 import { buildSolverConditions } from './conditions'
-import {
-  buildPhases,
-  getMechanismLabel,
-  serializeReaction,
-  serializeSpecies,
-} from './mechanism'
+import { buildPhases, getMechanismLabel, serializeReaction, serializeSpecies } from './mechanism'
 
 export const buildLocalSimulationPayload = ({ mechanismData, conditions }) => {
   const sourceMechanism = mechanismData.config?.mechanism || {}
@@ -20,7 +15,7 @@ export const buildLocalSimulationPayload = ({ mechanismData, conditions }) => {
 
   const phases = buildPhases(sourceMechanism, sourceSpecies)
 
-  const mechanismInstance = new mechanismConfiguration.Mechanism({
+  const mechanism = {
     name:
       sourceMechanism.name ||
       mechanismData.currentExample?.name ||
@@ -30,26 +25,13 @@ export const buildLocalSimulationPayload = ({ mechanismData, conditions }) => {
     species,
     phases,
     reactions,
-  })
+  }
 
-  // Mechanism's constructor keeps only name/version/species/phases/reactions and drops every
-  // other param (the other builder classes collect them into other_properties). So any other
-  // top-level mechanism property from an uploaded config is merged in directly.
-  const {
-    name: _name,
-    version: _version,
-    species: _species,
-    phases: _phases,
-    reactions: _reactions,
-    ...otherMechanismProperties
-  } = sourceMechanism
   const box = new MusicBox()
   box.chemTimeStep = conditions.basic.timeStep
   box.outputTimeStep = conditions.basic.outputFrequency
   box.simulationLength = conditions.basic.duration
-  box.loadMechanism({
-    getJSON: () => ({ ...otherMechanismProperties, ...mechanismInstance.getJSON() }),
-  })
+  box.loadMechanism(mechanism)
   box.loadConditions(buildSolverConditions(conditions))
 
   const payload = box.toJson()

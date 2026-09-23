@@ -1,5 +1,6 @@
 import { zipSync, strToU8 } from 'fflate'
 import { computeIntegratedReactionRate } from '../../components/Plots/flowUtils'
+import { getReactionReactants } from '../simulation/local/mechanism'
 import { buildDownloadableConfig } from '../config/downloadConfig'
 import { toCsv } from '../../utils/csv'
 import { downloadBlob } from '../../utils/downloadJson'
@@ -10,7 +11,6 @@ function formatComponents(components) {
   }
   return components
     .map((component) => {
-      if (typeof component === 'string') return component
       const name = component?.name || ''
       const coefficient = Number(component?.coefficient)
       const prefix = Number.isFinite(coefficient) && coefficient !== 1 ? `${coefficient} ` : ''
@@ -20,7 +20,7 @@ function formatComponents(components) {
 }
 
 function formatReactionFormula(reaction) {
-  const reactants = reaction?.reactants || reaction?.['gas-phase species'] || []
+  const reactants = getReactionReactants(reaction)
   const products =
     reaction?.products || reaction?.['gas-phase products'] || reaction?.['alkoxy products'] || []
   const reactantList = Array.isArray(reactants) ? reactants : [reactants]
@@ -62,7 +62,9 @@ export function buildResultsExport({ mechanism, conditions, results, excludedRes
     if (index < points.length - 1) {
       const timeEnd = points[index + 1].time
       reactions.forEach((reaction, rxnIndex) => {
-        row.push(computeIntegratedReactionRate(reaction, rxnIndex, tracerPoints, point.time, timeEnd))
+        row.push(
+          computeIntegratedReactionRate(reaction, rxnIndex, tracerPoints, point.time, timeEnd)
+        )
       })
     } else {
       rateKeys.forEach(() => row.push(''))

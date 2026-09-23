@@ -54,7 +54,7 @@ export function LambdaRateReactionForm({ onAddReaction }) {
 
     const newReaction = {
       id: uuidv4(),
-      type: 'LAMBDA_RATE',
+      type: 'LAMBDA_RATE_CONSTANT',
       'gas phase': 'gas',
       reactants: parseReactionString(reactants),
       products: parseReactionString(products),

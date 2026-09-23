@@ -84,10 +84,9 @@ describe('matchesReactionType', () => {
     expect(matchesReactionType({ type: 'ARRHENIUS' }, '')).toBe(true)
   })
 
-  it('canonicalises, so both spellings of a type match', () => {
-    expect(matchesReactionType({ type: 'SURFACE' }, 'SURFACE_REACTION')).toBe(true)
-    expect(matchesReactionType({ type: 'SURFACE_REACTION' }, 'SURFACE_REACTION')).toBe(true)
-    expect(matchesReactionType({ type: 'ARRHENIUS' }, 'SURFACE_REACTION')).toBe(false)
+  it('matches only the chosen type', () => {
+    expect(matchesReactionType({ type: 'SURFACE' }, 'SURFACE')).toBe(true)
+    expect(matchesReactionType({ type: 'ARRHENIUS' }, 'SURFACE')).toBe(false)
   })
 })
 

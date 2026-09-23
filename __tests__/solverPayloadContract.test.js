@@ -29,11 +29,11 @@ const EXAMPLES = [
   ['ts1', ts1Config],
 ]
 
-const buildInputs = (config) => {
+const buildInputs = async (config) => {
   const options = config['box model options'] || {}
   return {
     mechanismData: {
-      config: { mechanism: toReduxConfig(config).mechanism },
+      config: { mechanism: (await toReduxConfig(config)).mechanism },
       currentExample: { name: config.mechanism?.name || 'example' },
     },
     conditions: {
@@ -49,15 +49,15 @@ const buildInputs = (config) => {
 
 describe('solver payload contract', () => {
   it.each(EXAMPLES)('%s builds a payload the solver accepts', async (_name, config) => {
-    const { mechanismData, conditions } = buildInputs(config)
+    const { mechanismData, conditions } = await buildInputs(config)
     const { payload } = buildLocalSimulationPayload({ mechanismData, conditions })
 
     await expect(MusicBox.fromJson(payload).solve()).resolves.toBeDefined()
   }, 30000)
 
   // MICM requires 'molecular weight [kg mol-1]' for the gas-phase species of a SURFACE reaction.
-  it('keeps molecular weight on species used by SURFACE reactions', () => {
-    const { mechanismData, conditions } = buildInputs(ts1Config)
+  it('keeps molecular weight on species used by SURFACE reactions', async () => {
+    const { mechanismData, conditions } = await buildInputs(ts1Config)
     const { payload } = buildLocalSimulationPayload({ mechanismData, conditions })
 
     const surfaceSpecies = payload.mechanism.reactions
@@ -85,7 +85,7 @@ describe('solver payload contract', () => {
     )
     expect(surfaceOnly.mechanism.reactions.length).toBeGreaterThan(0)
 
-    const { mechanismData, conditions } = buildInputs(surfaceOnly)
+    const { mechanismData, conditions } = await buildInputs(surfaceOnly)
     const { results, excludedResults } = await runLocalSimulation({ mechanismData, conditions })
 
     expect(results.length).toBeGreaterThan(0)
@@ -95,7 +95,7 @@ describe('solver payload contract', () => {
   }, 30000)
 
   it('solves with tracer instrumentation and keeps tracers out of the results', async () => {
-    const { mechanismData, conditions } = buildInputs(carbonBond5Config)
+    const { mechanismData, conditions } = await buildInputs(carbonBond5Config)
     const { results, excludedResults } = await runLocalSimulation({ mechanismData, conditions })
 
     expect(results.length).toBeGreaterThan(0)
@@ -120,7 +120,7 @@ describe('solver payload contract', () => {
       [field.key]: field.type === 'boolean' ? true : 1e-6,
     }))
 
-    const { conditions } = buildInputs(analyticalConfig)
+    const { conditions } = await buildInputs(analyticalConfig)
     const { payload } = buildLocalSimulationPayload({
       mechanismData: {
         config: { mechanism: { ...analyticalConfig.mechanism, species: uiSpecies, reactions: [] } },

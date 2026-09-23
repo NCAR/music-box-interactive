@@ -79,7 +79,7 @@ describe('RunSimulationButton (Chapman example)', () => {
     });
 
     // Simulate ExampleLoader's Redux setup
-    loadMusicBoxConfig(chapmanExample.mechanism, {
+    await loadMusicBoxConfig(chapmanExample.mechanism, {
       dispatch: store.dispatch,
       navigate: vi.fn(),
       meta: {

@@ -61,7 +61,7 @@ describe('RunSimulationButton (TS1 example)', () => {
       csv: { initial_conditions: ts1InitialConditionsCsv },
       mechanism: withInlineConditionData(ts1Config, [ts1InitialConditionsCsv]),
     };
-    loadMusicBoxConfig(ts1Example.mechanism, {
+    await loadMusicBoxConfig(ts1Example.mechanism, {
       dispatch: store.dispatch,
       navigate: vi.fn(),
       meta: {

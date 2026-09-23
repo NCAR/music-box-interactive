@@ -1,3 +1,5 @@
+import { getReactionReactants } from '../../../services/simulation/local/mechanism'
+
 export const parseReactionString = (str) => {
   return str
     .split('+')
@@ -27,9 +29,6 @@ export const parseReactionString = (str) => {
 const componentsToString = (components = []) =>
   components
     .map((component) => {
-      if (typeof component === 'string') {
-        return component.trim()
-      }
       if (!component || typeof component !== 'object') {
         return ''
       }
@@ -41,7 +40,7 @@ const componentsToString = (components = []) =>
     .join(' + ')
 
 export const buildGeneratedReactionName = (reaction) => {
-  const reactants = reaction.reactants || reaction['gas-phase species'] || []
+  const reactants = getReactionReactants(reaction)
   const products =
     reaction.products || reaction['gas-phase products'] || reaction['alkoxy products'] || []
 

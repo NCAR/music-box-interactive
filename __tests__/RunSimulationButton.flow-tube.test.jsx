@@ -58,7 +58,7 @@ describe('RunSimulationButton (Flow-Tube example)', () => {
       csv: { initial_concentrations: flowTubeInitialConcentrationsCsv, initial_reaction_rates: flowTubeInitialReactionRatesCsv },
       mechanism: withInlineConditionData(flowTubeConfig, [flowTubeInitialConcentrationsCsv, flowTubeInitialReactionRatesCsv]),
     };
-    loadMusicBoxConfig(flowTubeExample.mechanism, {
+    await loadMusicBoxConfig(flowTubeExample.mechanism, {
       dispatch: store.dispatch,
       navigate: vi.fn(),
       meta: {
