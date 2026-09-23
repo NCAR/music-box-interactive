@@ -42,22 +42,24 @@ describe('isReactionVisible — third bodies do not gate visibility', () => {
     expect(isReactionVisible(ozoneFormation, ['O', 'O2'], thirdBodyNames)).toBe(true);
   });
 
-  it('was hidden before the fix, when M was required', () => {
-    // Reproduces the old behaviour: no third-body exemption, so M had to be selected.
-    const withoutExemption = isReactionVisible(ozoneFormation, ['O', 'O2'], new Set());
-    expect(withoutExemption).toBe(false);
+  it('never uses a third body itself to satisfy visibility', () => {
+    // M can never appear in selectedSpecies (the solver reports no concentration for it), so a
+    // reaction whose only real species is a third body must never be drawn.
+    const thirdBodyOnly = { reactants: [{ 'species name': 'M' }], products: [{ 'species name': 'M' }] };
+    expect(isReactionVisible(thirdBodyOnly, ['M'], thirdBodyNames)).toBe(false);
   });
 
-  it('still hides the reaction when a genuine reactant is deselected', () => {
-    expect(isReactionVisible(ozoneFormation, ['O'], thirdBodyNames)).toBe(false);
-    expect(isReactionVisible(ozoneFormation, ['O2'], thirdBodyNames)).toBe(false);
+  it('shows the reaction when just one genuine reactant is selected', () => {
+    expect(isReactionVisible(ozoneFormation, ['O'], thirdBodyNames)).toBe(true);
+    expect(isReactionVisible(ozoneFormation, ['O2'], thirdBodyNames)).toBe(true);
     expect(isReactionVisible(ozoneFormation, [], thirdBodyNames)).toBe(false);
   });
 
   it('leaves reactions without a third body unaffected', () => {
     const oPlusO3 = reactions[2]; // O + O3 -> 2 O2
     expect(isReactionVisible(oPlusO3, ['O', 'O3'], thirdBodyNames)).toBe(true);
-    expect(isReactionVisible(oPlusO3, ['O'], thirdBodyNames)).toBe(false);
+    expect(isReactionVisible(oPlusO3, ['O'], thirdBodyNames)).toBe(true);
+    expect(isReactionVisible(oPlusO3, ['N2'], thirdBodyNames)).toBe(false);
   });
 
   it('every Chapman reaction is visible when all selectable species are selected', () => {
