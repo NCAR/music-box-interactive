@@ -7,8 +7,6 @@ import { useToast } from '@/hooks/use-toast'
 import { LIST_CARD, LIST_CARD_CONTENT, FIELD_LABEL, TEXT_INPUT_SM } from '../Mechanism/fieldStyles'
 import { canonicalReactionType } from '../Mechanism/reactions/reactionRegistry'
 
-const EDITOR_GRID = 'grid grid-cols-1 gap-4 lg:grid-cols-[auto_1fr] lg:items-start'
-
 const filterButtonClass = (selected) =>
   `w-full text-left text-sm px-1.5 py-1 rounded ${
     selected
@@ -204,164 +202,165 @@ export function ReactionTab() {
   }
 
   return (
-    <div className={EDITOR_GRID}>
-      <Card className="w-[26rem]">
-        <CardHeader>
-          <CardTitle>Rate constant parameter</CardTitle>
-          <CardDescription className="whitespace-nowrap">
-            Set time-varying rate constant parameters
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="w-full">
-            <label className={FIELD_LABEL}>Reaction type</label>
-            <div className="flex flex-col gap-0.5">
-              {reactionTypeCounts.map((type) => (
-                <button
-                  key={type.id}
-                  type="button"
-                  onClick={() => setReactionTypeId(type.id)}
-                  className={filterButtonClass(reactionTypeId === type.id)}
-                >
-                  {type.label} ({type.count})
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="w-full">
-            <label className={FIELD_LABEL}>Rate constant paramaters</label>
-            <input
-              type="text"
-              value={reactionSearch}
-              onChange={(e) => setReactionSearch(e.target.value)}
-              placeholder="Search by name"
-              className={`w-full mb-2 ${TEXT_INPUT_SM}`}
-            />
-            <div className="flex flex-col gap-0.5 max-h-40 overflow-y-auto">
-              {visibleReactionsOfType.map((reaction) => (
-                <button
-                  key={reaction.id ?? reaction.name}
-                  type="button"
-                  onClick={() => setReactionName(reaction.name)}
-                  className={filterButtonClass(reactionName === reaction.name)}
-                >
-                  {reaction.name}
-                </button>
-              ))}
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card className={LIST_CARD}>
-        <CardHeader>
-          <div className="flex items-center justify-between gap-3">
+    <Card className={LIST_CARD}>
+      <CardHeader>
+        <div className="flex items-center justify-between gap-3">
+          <div>
             <CardTitle>
-              {reactionName
-                ? `${reactionName}`
-                : 'Rate constant parameter over time'}
+              {reactionName ? reactionName : 'Rate constant parameter over time'}
             </CardTitle>
-            {/* Always mounted (just hidden) so the header's height never shifts when the
-                first checkbox is checked. */}
-            <Button
-              variant="glass"
-              size="sm"
-              onClick={handleClearSelected}
-              className={`rounded-lg bg-white text-red-600 hover:bg-red-50 flex-shrink-0 ${
-                selectedIndices.size === 0 ? 'invisible' : ''
-              }`}
-            >
-              Clear selected ({selectedIndices.size})
-            </Button>
+            <CardDescription className="whitespace-nowrap">
+              Set time-varying rate constant parameters
+            </CardDescription>
           </div>
-        </CardHeader>
-        <CardContent className={LIST_CARD_CONTENT}>
-          {evolvingTimes.length === 0 ? (
-            <p className="text-center text-gray-500 py-8">
-              No time points configured. Add time points in the Environment tab first.
-            </p>
-          ) : columns.length === 0 ? (
-            <p className="text-center text-gray-500 py-8">
-              {isSurface && reactionName
-                ? 'No properties loaded yet for this reaction.'
-                : 'Choose a reaction on the left to see its time-varying rate constant parameter.'}
-            </p>
-          ) : (
-            <div className="border border-gray-200 rounded-lg overflow-auto">
-              <table className="w-full table-fixed text-sm">
-                <thead className="bg-assist-secondary text-assist-secondary-foreground">
-                  <tr>
-                    <th className="w-10 px-4 py-2">
-                      <input
-                        type="checkbox"
-                        checked={allSelected}
-                        onChange={toggleSelectAll}
-                        aria-label="Select all time points"
-                        className="accent-action"
-                      />
-                    </th>
-                    <th className="text-left px-4 py-2 font-semibold">Time (s)</th>
-                    {columns.map((column) => (
-                      <th key={column.key} className="text-left px-4 py-2 font-semibold">
-                        {column.label}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {evolvingTimes.map((time, index) => (
-                    <tr key={index} className="border-b border-gray-200 hover:bg-gray-50">
-                      <td className="px-4 py-2">
+          {/* Always mounted (just hidden) so the header's height never shifts when the
+              first checkbox is checked. */}
+          <Button
+            variant="glass"
+            size="sm"
+            onClick={handleClearSelected}
+            className={`rounded-lg bg-white text-red-600 hover:bg-red-50 flex-shrink-0 ${
+              selectedIndices.size === 0 ? 'invisible' : ''
+            }`}
+          >
+            Clear selected ({selectedIndices.size})
+          </Button>
+        </div>
+      </CardHeader>
+      <CardContent className={LIST_CARD_CONTENT}>
+        <div className="flex flex-col lg:flex-row gap-4 flex-1 min-h-0">
+          {/* Sidebar filters */}
+          <div className="w-full lg:w-64 flex-shrink-0 space-y-5 lg:overflow-y-auto">
+            <div>
+              <label className={FIELD_LABEL}>Reaction</label>
+              <div className="flex flex-col gap-0.5">
+                {reactionTypeCounts.map((type) => (
+                  <button
+                    key={type.id}
+                    type="button"
+                    onClick={() => setReactionTypeId(type.id)}
+                    className={filterButtonClass(reactionTypeId === type.id)}
+                  >
+                    {type.label} ({type.count})
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <label className={FIELD_LABEL}>Rate constant paramaters</label>
+              <input
+                type="text"
+                value={reactionSearch}
+                onChange={(e) => setReactionSearch(e.target.value)}
+                placeholder="Search by name"
+                className={`w-full mb-2 ${TEXT_INPUT_SM}`}
+              />
+              <div className="flex flex-col gap-0.5 max-h-40 overflow-y-auto">
+                {visibleReactionsOfType.map((reaction) => (
+                  <button
+                    key={reaction.id ?? reaction.name}
+                    type="button"
+                    onClick={() => setReactionName(reaction.name)}
+                    className={filterButtonClass(reactionName === reaction.name)}
+                  >
+                    {reaction.name}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Main content: time table */}
+          <div className="flex-1 min-h-0 lg:relative">
+            <div className="border border-gray-200 rounded-lg overflow-auto lg:absolute lg:inset-0">
+              {evolvingTimes.length === 0 ? (
+                <p className="text-center text-gray-500 py-8">
+                  No time points configured. Add time points in the Environment tab first.
+                </p>
+              ) : columns.length === 0 ? (
+                <p className="text-center text-gray-500 py-8">
+                  {isSurface && reactionName
+                    ? 'No properties loaded yet for this reaction.'
+                    : 'Choose a reaction on the left to see its time-varying rate constant parameter.'}
+                </p>
+              ) : (
+                <table className="w-full table-fixed text-sm">
+                  <thead className="bg-assist-secondary text-assist-secondary-foreground">
+                    <tr>
+                      <th className="w-10 px-4 py-2">
                         <input
                           type="checkbox"
-                          checked={selectedIndices.has(index)}
-                          onChange={() => toggleSelected(index)}
-                          aria-label={`Select time point at t=${time}s`}
+                          checked={allSelected}
+                          onChange={toggleSelectAll}
+                          aria-label="Select all time points"
                           className="accent-action"
                         />
-                      </td>
-                      <td className="px-4 py-2 font-mono font-semibold">{time}</td>
-                      {columns.map((column) => {
-                        const stored = additionalSeries?.[column.key]?.[index]
-                        const draftKey = cellDraftKey(column.key, index)
-                        const displayValue =
-                          rowDrafts[draftKey] ??
-                          (stored === null || stored === undefined ? '' : formatValue(stored))
-                        return (
-                          <td key={column.key} className="px-4 py-2 font-mono">
-                            <input
-                              type="text"
-                              inputMode="decimal"
-                              value={displayValue}
-                              onChange={(e) => handleValueChange(column.key, index, e.target.value)}
-                              onKeyDown={(e) => {
-                                if (e.key === 'Enter') {
-                                  e.preventDefault()
-                                  commitValue(column.key, index, e.target.value)
-                                  e.target.blur()
-                                }
-                              }}
-                              onBlur={(e) => commitValue(column.key, index, e.target.value)}
-                              placeholder="not set"
-                              className={`${NUMBER_INPUT} ${
-                                justUpdatedCell === draftKey
-                                  ? 'border-action bg-assist-secondary'
-                                  : 'border-gray-300 bg-white'
-                              }`}
-                            />
-                          </td>
-                        )
-                      })}
+                      </th>
+                      <th className="text-left px-4 py-2 font-semibold">Time (s)</th>
+                      {columns.map((column) => (
+                        <th key={column.key} className="text-left px-4 py-2 font-semibold">
+                          {column.label}
+                        </th>
+                      ))}
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {evolvingTimes.map((time, index) => (
+                      <tr key={index} className="border-b border-gray-200 hover:bg-gray-50">
+                        <td className="px-4 py-2">
+                          <input
+                            type="checkbox"
+                            checked={selectedIndices.has(index)}
+                            onChange={() => toggleSelected(index)}
+                            aria-label={`Select time point at t=${time}s`}
+                            className="accent-action"
+                          />
+                        </td>
+                        <td className="px-4 py-2 font-mono font-semibold">{time}</td>
+                        {columns.map((column) => {
+                          const stored = additionalSeries?.[column.key]?.[index]
+                          const draftKey = cellDraftKey(column.key, index)
+                          const displayValue =
+                            rowDrafts[draftKey] ??
+                            (stored === null || stored === undefined ? '' : formatValue(stored))
+                          return (
+                            <td key={column.key} className="px-4 py-2 font-mono">
+                              <input
+                                type="text"
+                                inputMode="decimal"
+                                value={displayValue}
+                                onChange={(e) =>
+                                  handleValueChange(column.key, index, e.target.value)
+                                }
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter') {
+                                    e.preventDefault()
+                                    commitValue(column.key, index, e.target.value)
+                                    e.target.blur()
+                                  }
+                                }}
+                                onBlur={(e) => commitValue(column.key, index, e.target.value)}
+                                placeholder="not set"
+                                className={`${NUMBER_INPUT} ${
+                                  justUpdatedCell === draftKey
+                                    ? 'border-action bg-assist-secondary'
+                                    : 'border-gray-300 bg-white'
+                                }`}
+                              />
+                            </td>
+                          )
+                        })}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
             </div>
-          )}
-        </CardContent>
-      </Card>
-    </div>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
   )
 }
 
