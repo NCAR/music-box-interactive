@@ -120,7 +120,7 @@ function FluxReactionRow({ reaction, flux, checked, onToggleCheck }) {
   return (
     <>
       <tr className="border-b border-gray-200 hover:bg-gray-50">
-        <td className="px-4 py-2">
+        <td className="pl-6 pr-4 py-2">
           <input
             type="checkbox"
             checked={checked}
@@ -616,10 +616,12 @@ export function Flux() {
               {visibleReactions.length === 0 ? (
                 <p className="text-sm text-muted p-4">No reactions match the current filters.</p>
               ) : (
-                <table className="w-full text-sm">
+                <table className="w-full table-fixed text-sm">
                   <thead className="sticky top-0 z-10 bg-assist-secondary text-assist-secondary-foreground">
                     <tr>
-                      <th className="text-left px-4 py-2 font-semibold whitespace-nowrap">Plot</th>
+                      <th className="w-16 text-left px-4 py-2 font-semibold whitespace-nowrap">
+                        Plot
+                      </th>
                       <th className="text-left pl-9 pr-4 py-2 font-semibold">Reaction</th>
                       <th className="w-40 text-left px-4 py-2 font-semibold">Type</th>
                       <th className="w-40 text-left px-4 py-2 font-semibold">Flux (mol m⁻³)</th>
