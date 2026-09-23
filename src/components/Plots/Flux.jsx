@@ -151,7 +151,7 @@ function FluxReactionRow({ reaction, flux, checked, onToggleCheck }) {
         <td className="px-4 py-2 font-mono text-sm">{formatValue(flux)}</td>
       </tr>
       {expanded && (
-        <tr className="border-b border-gray-200 bg-assist-secondary">
+        <tr className="border-b border-gray-200">
           <td />
           <td colSpan={3} className="px-4 py-3">
             <div className="flex flex-col gap-2 max-w-[35%] pl-5">
@@ -620,7 +620,7 @@ export function Flux() {
                   <thead className="sticky top-0 z-10 bg-assist-secondary text-assist-secondary-foreground">
                     <tr>
                       <th className="text-left px-4 py-2 font-semibold whitespace-nowrap">Plot</th>
-                      <th className="text-left px-4 py-2 font-semibold">Reaction</th>
+                      <th className="text-left pl-9 pr-4 py-2 font-semibold">Reaction</th>
                       <th className="w-40 text-left px-4 py-2 font-semibold">Type</th>
                       <th className="w-40 text-left px-4 py-2 font-semibold">Flux (mol m⁻³)</th>
                     </tr>
