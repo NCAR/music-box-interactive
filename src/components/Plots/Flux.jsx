@@ -502,7 +502,7 @@ export function Flux() {
               <button
                 type="button"
                 onClick={() => setReactionsOpen((open) => !open)}
-                className="w-full flex items-center justify-between text-sm font-bold text-ink mb-2"
+                className="w-full flex items-center justify-between text-sm font-semibold text-ink mb-2"
               >
                 Reactions
                 {reactionsOpen ? (
@@ -539,7 +539,7 @@ export function Flux() {
               <button
                 type="button"
                 onClick={() => setSpeciesOpen((open) => !open)}
-                className="w-full flex items-center justify-between text-sm font-bold text-ink mb-2"
+                className="w-full flex items-center justify-between text-sm font-semibold text-ink mb-2"
               >
                 Species
                 {speciesOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
@@ -620,7 +620,7 @@ export function Flux() {
               <button
                 type="button"
                 onClick={() => setTimeRangeOpen((open) => !open)}
-                className="w-full flex items-center justify-between text-sm font-bold text-ink mb-2"
+                className="w-full flex items-center justify-between text-sm font-semibold text-ink mb-2"
               >
                 Time Range
                 {timeRangeOpen ? (
