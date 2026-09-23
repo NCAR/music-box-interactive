@@ -30,7 +30,6 @@ import { RangeBoundInput } from './RangeBoundInput'
 import { TIME_RANGE_UNITS } from './timeRangeUnits'
 import { UnitDropdown } from './UnitDropdown'
 import { Card, CardContent } from '../ui/card'
-import { Button } from '../ui/button'
 import { CHART_COLORS } from '../chartColors'
 import { ChartLegendContent, ChartTooltipContent } from '../SimulationChart'
 
@@ -129,7 +128,7 @@ function FluxReactionRow({ reaction, flux, checked, onToggleCheck }) {
             aria-label={
               checked ? `Deselect ${formula} for plotting` : `Select ${formula} for plotting`
             }
-            className="accent-action"
+            className="accent-assist-secondary-ring"
           />
         </td>
         <td className="px-4 py-2">
@@ -201,7 +200,6 @@ export function Flux() {
   const [sortOrder, setSortOrder] = useState('desc')
   const [sortMenuOpen, setSortMenuOpen] = useState(false)
   const [selectedReactionKeys, setSelectedReactionKeys] = useState([])
-  const [plotted, setPlotted] = useState(false)
   // key -> index into CHART_COLORS. Assigned once per reaction while it's selected and freed on
   // deselect, so a reaction keeps its color for as long as it's plotted -- position in
   // selectedReactionKeys shifts on every deselect, so deriving color from array index would
@@ -274,10 +272,6 @@ export function Flux() {
     })
   }
 
-  const handlePlotSelected = () => {
-    setPlotted(true)
-  }
-
   const resetFilters = () => {
     setSelectedReactionTypes([])
     setSelectedSpeciesNames([])
@@ -285,7 +279,6 @@ export function Flux() {
     setTimeRange({ start: 0, end: duration })
     setSelectedReactionKeys([])
     setColorAssignments(new Map())
-    setPlotted(false)
   }
 
   const reactionTypeCounts = useMemo(() => {
@@ -376,11 +369,11 @@ export function Flux() {
   const hiddenSeriesCount = plottedReactionEntries.length - chartSeries.length
 
   const chartData = useMemo(() => {
-    if (!plotted || chartSeries.length === 0) return []
+    if (chartSeries.length === 0) return []
     const timeStart = timeRange.start ?? 0
     const timeEnd = timeRange.end ?? duration ?? Infinity
     return computeReactionSeries(chartSeries, simulation.excludedResults, timeStart, timeEnd)
-  }, [plotted, chartSeries, simulation.excludedResults, timeRange.start, timeRange.end, duration])
+  }, [chartSeries, simulation.excludedResults, timeRange.start, timeRange.end, duration])
 
   if (!simulation.results || simulation.status !== 'succeeded') {
     return (
@@ -414,20 +407,7 @@ export function Flux() {
             </button>
           </div>
 
-          <div className="flex flex-1 items-center justify-between">
-            <Button
-              variant="primary"
-              size="sm"
-              onClick={handlePlotSelected}
-              className={`gap-1.5 font-normal border-assist-secondary-ring ${
-                plotted
-                  ? 'bg-assist-secondary-ring text-white hover:bg-assist-secondary-ring hover:text-white'
-                  : 'text-assist-secondary-ring hover:bg-white hover:text-assist-secondary-ring'
-              } ${selectedReactionKeys.length === 0 ? 'invisible' : ''}`}
-            >
-              Plot ({selectedReactionKeys.length})
-            </Button>
-
+          <div className="flex flex-1 items-center justify-end">
             <div className="relative" ref={sortMenuRef}>
               <button
                 type="button"
@@ -639,7 +619,7 @@ export function Flux() {
                 <table className="w-full text-sm">
                   <thead className="sticky top-0 z-10 bg-assist-secondary text-assist-secondary-foreground">
                     <tr>
-                      <th className="w-10 px-4 py-2" />
+                      <th className="text-left px-4 py-2 font-semibold whitespace-nowrap">Plot</th>
                       <th className="text-left px-4 py-2 font-semibold">Reaction</th>
                       <th className="w-40 text-left px-4 py-2 font-semibold">Type</th>
                       <th className="w-40 text-left px-4 py-2 font-semibold">Flux (mol m⁻³)</th>
@@ -664,7 +644,7 @@ export function Flux() {
         </CardContent>
       </Card>
 
-      {plotted && chartSeries.length > 0 && (
+      {chartSeries.length > 0 && (
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center justify-between gap-3 mb-3">
