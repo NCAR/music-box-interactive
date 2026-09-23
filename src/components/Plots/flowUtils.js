@@ -158,3 +158,44 @@ export function computeIntegratedReactionRate(
   return matched ? total : 0
 }
 
+/**
+ * Computes a time series of cumulative reaction amounts over a specified time window:
+ * - One row per results sample and one column per tracked reaction.
+ * - Each reaction starts at 0 at timeStart.
+ * - Values at any time are directly comparable to computeIntegratedReactionRate for that same window.
+ */
+export function computeReactionSeries(trackedReactions, results, timeStart, timeEnd) {
+  if (!Array.isArray(results)) return []
+
+  const tracked = trackedReactions.map(({ key, reaction, index }) => ({
+    key,
+    concKeys: buildTracerConcentrationKeys(index, reaction?.name),
+  }))
+
+  const baselines = new Map()
+  const points = []
+
+  for (const timeEntry of results) {
+    const t = timeEntry.time
+    if (t < timeStart || t > timeEnd) continue
+
+    const point = { time: t }
+    for (const { key, concKeys } of tracked) {
+      let total = 0
+      let matched = false
+      for (const concKey of concKeys) {
+        const value = timeEntry.concentrations?.[concKey]
+        if (typeof value !== 'number') continue
+        matched = true
+        total += value
+      }
+      if (!matched) continue
+      if (!baselines.has(key)) baselines.set(key, total)
+      point[key] = total - baselines.get(key)
+    }
+    points.push(point)
+  }
+
+  return points
+}
+

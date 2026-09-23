@@ -1,9 +1,25 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useSelector } from 'react-redux'
 import { ChevronDown, ChevronUp, Check, Waypoints } from 'lucide-react'
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+  Label,
+} from 'recharts'
 import { useClickOutside } from '../../hooks/useClickOutside'
 import { getResultSpeciesNames } from './speciesFormat'
-import { computeIntegratedReactionRate, reactionReactants, reactionProducts } from './flowUtils'
+import {
+  computeIntegratedReactionRate,
+  computeReactionSeries,
+  reactionReactants,
+  reactionProducts,
+} from './flowUtils'
 import {
   canonicalReactionType,
   getReactionParameters,
@@ -15,6 +31,9 @@ import { RangeBoundInput } from './RangeBoundInput'
 import { TIME_RANGE_UNITS } from './timeRangeUnits'
 import { UnitDropdown } from './UnitDropdown'
 import { Card, CardContent } from '../ui/card'
+import { Button } from '../ui/button'
+import { CHART_COLORS } from '../chartColors'
+import { ChartLegendContent, ChartTooltipContent } from '../SimulationChart'
 
 // Species rows shown before the list collapses into a "+N others" popover.
 const SPECIES_VISIBLE = 10
@@ -93,9 +112,39 @@ const reactionParameters = (reaction) => {
   ]
 }
 
+function ChipCheckCircle({ checked, onToggle, as: Component = 'span' }) {
+  return (
+    <Component
+      type={Component === 'button' ? 'button' : undefined}
+      role="checkbox"
+      aria-checked={checked}
+      aria-label={checked ? 'Deselect reaction for plotting' : 'Select reaction for plotting'}
+      tabIndex={0}
+      onClick={(e) => {
+        e.stopPropagation()
+        onToggle()
+      }}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault()
+          e.stopPropagation()
+          onToggle()
+        }
+      }}
+      className={`flex items-center justify-center w-5 h-5 rounded-full border-2 flex-shrink-0 cursor-pointer transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-assist-secondary-ring ${
+        checked
+          ? 'bg-assist-secondary-ring border-assist-secondary-ring'
+          : 'bg-white border-border hover:border-assist-secondary-ring'
+      }`}
+    >
+      {checked && <Check className="w-3 h-3 text-white" strokeWidth={3} />}
+    </Component>
+  )
+}
+
 // Collapsed: shows the formula and flux in a compact chip.
 // Click to expand and view the reaction type and rate parameters.
-function FluxReactionChip({ reaction, flux }) {
+function FluxReactionChip({ reaction, flux, checked, onToggleCheck }) {
   const [expanded, setExpanded] = useState(false)
   const formula = formatReactionFormula(reaction)
   const parameters = reactionParameters(reaction)
@@ -111,7 +160,10 @@ function FluxReactionChip({ reaction, flux }) {
           <span className="font-mono text-sm font-semibold text-ink break-words">
             {formula}
           </span>
-          <ChevronDown className="w-3.5 h-3.5 flex-shrink-0 text-muted" />
+          <div className="flex items-center gap-1.5 flex-shrink-0">
+            <ChevronDown className="w-3.5 h-3.5 text-muted" />
+            <ChipCheckCircle checked={checked} onToggle={onToggleCheck} />
+          </div>
         </div>
         <span className="text-sm text-muted">Flux: {formatValue(flux)} mol m⁻³</span>
       </button>
@@ -120,14 +172,17 @@ function FluxReactionChip({ reaction, flux }) {
 
   return (
     <div className="w-full rounded-2xl border border-assist-secondary-border bg-assist-secondary p-4 ring-1 ring-assist-secondary-ring">
-      <button
-        type="button"
-        onClick={() => setExpanded(false)}
-        className="w-full flex items-center justify-center gap-1.5 rounded text-sm font-semibold font-mono text-assist-secondary-foreground break-words text-center focus:outline-none focus-visible:ring-2 focus-visible:ring-assist-secondary-ring"
-      >
-        <span className="break-words">{formula}</span>
-        <ChevronUp className="w-4 h-4 flex-shrink-0" />
-      </button>
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          onClick={() => setExpanded(false)}
+          className="flex-1 min-w-0 flex items-center justify-center gap-1.5 rounded text-sm font-semibold font-mono text-assist-secondary-foreground break-words text-center focus:outline-none focus-visible:ring-2 focus-visible:ring-assist-secondary-ring"
+        >
+          <span className="break-words">{formula}</span>
+          <ChevronUp className="w-4 h-4 flex-shrink-0" />
+        </button>
+        <ChipCheckCircle checked={checked} onToggle={onToggleCheck} as="button" />
+      </div>
 
       <p className="mt-1 text-sm text-muted">Flux: {formatValue(flux)} mol m⁻³</p>
 
@@ -176,6 +231,13 @@ export function Flux() {
   const [timeRangeUnitId, setTimeRangeUnitId] = useState('seconds')
   const [sortOrder, setSortOrder] = useState('desc')
   const [sortMenuOpen, setSortMenuOpen] = useState(false)
+  const [selectedReactionKeys, setSelectedReactionKeys] = useState([])
+  const [plotted, setPlotted] = useState(false)
+  // key -> index into CHART_COLORS. Assigned once per reaction while it's selected and freed on
+  // deselect, so a reaction keeps its color for as long as it's plotted -- position in
+  // selectedReactionKeys shifts on every deselect, so deriving color from array index would
+  // repaint every reaction after the removed one.
+  const [colorAssignments, setColorAssignments] = useState(new Map())
 
   // The initial state captures duration only on mount; resync if a rerun changes the duration
   // while the tab remains mounted.
@@ -225,11 +287,36 @@ export function Flux() {
     )
   }
 
+  const toggleReactionSelection = (key) => {
+    setSelectedReactionKeys((current) =>
+      current.includes(key) ? current.filter((x) => x !== key) : [...current, key]
+    )
+    setColorAssignments((current) => {
+      const next = new Map(current)
+      if (next.has(key)) {
+        next.delete(key)
+        return next
+      }
+      const used = new Set(next.values())
+      let colorIndex = 0
+      while (used.has(colorIndex) && colorIndex < CHART_COLORS.length) colorIndex++
+      if (colorIndex < CHART_COLORS.length) next.set(key, colorIndex)
+      return next
+    })
+  }
+
+  const handlePlotSelected = () => {
+    setPlotted(true)
+  }
+
   const resetFilters = () => {
     setSelectedReactionTypes([])
     setSelectedSpeciesNames([])
     setSpeciesSearch('')
     setTimeRange({ start: 0, end: duration })
+    setSelectedReactionKeys([])
+    setColorAssignments(new Map())
+    setPlotted(false)
   }
 
   const reactionTypeCounts = useMemo(() => {
@@ -282,6 +369,50 @@ export function Flux() {
     sortOrder,
   ])
 
+  const reactionEntriesByKey = useMemo(() => {
+    const map = new Map()
+    ;(reactions ?? []).forEach((reaction, index) => {
+      map.set(reaction.id ?? index, { reaction, index })
+    })
+    return map
+  }, [reactions])
+
+  const plottedReactionEntries = useMemo(
+    () =>
+      selectedReactionKeys
+        .map((key) => {
+          const entry = reactionEntriesByKey.get(key)
+          return entry ? { key, ...entry } : null
+        })
+        .filter(Boolean),
+    [selectedReactionKeys, reactionEntriesByKey]
+  )
+
+  const chartSeries = useMemo(
+    () =>
+      plottedReactionEntries
+        .map((entry) => {
+          const colorIndex = colorAssignments.get(entry.key)
+          if (colorIndex === undefined) return null
+          return {
+            ...entry,
+            color: CHART_COLORS[colorIndex],
+            label: formatReactionFormula(entry.reaction),
+          }
+        })
+        .filter(Boolean),
+    [plottedReactionEntries, colorAssignments]
+  )
+
+  const hiddenSeriesCount = plottedReactionEntries.length - chartSeries.length
+
+  const chartData = useMemo(() => {
+    if (!plotted || chartSeries.length === 0) return []
+    const timeStart = timeRange.start ?? 0
+    const timeEnd = timeRange.end ?? duration ?? Infinity
+    return computeReactionSeries(chartSeries, simulation.excludedResults, timeStart, timeEnd)
+  }, [plotted, chartSeries, simulation.excludedResults, timeRange.start, timeRange.end, duration])
+
   if (!simulation.results || simulation.status !== 'succeeded') {
     return (
       <Card>
@@ -300,47 +431,67 @@ export function Flux() {
   const sortOption = SORT_OPTIONS.find((option) => option.id === sortOrder) ?? SORT_OPTIONS[0]
 
   return (
-    <Card>
-      <CardContent className="space-y-4">
-        <div className="flex items-center justify-between pt-3">
-          <div className="flex items-center gap-2 text-sm text-ink">
-            <button type="button" onClick={resetFilters} className="text-action hover:underline">
+    <div className="space-y-4">
+      <Card>
+        <CardContent className="space-y-4">
+        <div className="flex flex-col lg:flex-row lg:items-center gap-2 lg:gap-4 pt-3">
+          <div className="w-full lg:w-64 lg:flex-shrink-0">
+            <button
+              type="button"
+              onClick={resetFilters}
+              className="text-sm text-action hover:underline"
+            >
               Reset
             </button>
           </div>
 
-          <div className="relative" ref={sortMenuRef}>
-            <button
-              type="button"
-              onClick={() => setSortMenuOpen((open) => !open)}
-              className="flex items-center gap-1 text-sm text-ink hover:text-heading"
+          <div className="flex flex-1 items-center justify-between">
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={handlePlotSelected}
+              className={`gap-1.5 font-normal border-assist-secondary-ring ${
+                plotted
+                  ? 'bg-assist-secondary-ring text-white hover:bg-assist-secondary-ring hover:text-white'
+                  : 'text-assist-secondary-ring hover:bg-white hover:text-assist-secondary-ring'
+              } ${selectedReactionKeys.length === 0 ? 'invisible' : ''}`}
             >
-              {sortOption.label}
-              <ChevronDown className="w-3.5 h-3.5" />
-            </button>
+              Plot ({selectedReactionKeys.length})
+            </Button>
 
-            {sortMenuOpen && (
-              <div className="absolute right-0 z-10 mt-1 w-44 bg-white border border-border rounded-lg shadow-lg py-1">
-                {SORT_OPTIONS.map((option) => (
-                  <button
-                    key={option.id}
-                    type="button"
-                    onClick={() => {
-                      setSortOrder(option.id)
-                      setSortMenuOpen(false)
-                    }}
-                    className="w-full flex items-center gap-2 text-left text-sm px-3 py-1.5 text-ink hover:bg-surface-hover"
-                  >
-                    <Check
-                      className={`w-3.5 h-3.5 flex-shrink-0 ${
-                        sortOrder === option.id ? 'opacity-100' : 'opacity-0'
-                      }`}
-                    />
-                    {option.label}
-                  </button>
-                ))}
-              </div>
-            )}
+            <div className="relative" ref={sortMenuRef}>
+              <button
+                type="button"
+                onClick={() => setSortMenuOpen((open) => !open)}
+                className="flex items-center gap-1 text-sm text-ink hover:text-heading"
+              >
+                {sortOption.label}
+                <ChevronDown className="w-3.5 h-3.5" />
+              </button>
+
+              {sortMenuOpen && (
+                <div className="absolute right-0 z-10 mt-1 w-44 bg-white border border-border rounded-lg shadow-lg py-1">
+                  {SORT_OPTIONS.map((option) => (
+                    <button
+                      key={option.id}
+                      type="button"
+                      onClick={() => {
+                        setSortOrder(option.id)
+                        setSortMenuOpen(false)
+                      }}
+                      className="w-full flex items-center gap-2 text-left text-sm px-3 py-1.5 text-ink hover:bg-surface-hover"
+                    >
+                      <Check
+                        className={`w-3.5 h-3.5 flex-shrink-0 ${
+                          sortOrder === option.id ? 'opacity-100' : 'opacity-0'
+                        }`}
+                      />
+                      {option.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
@@ -511,20 +662,121 @@ export function Flux() {
             </div>
           </div>
 
-          {/* Reaction chips */}
-          <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 content-start items-start">
-            {visibleReactions.length === 0 ? (
-              <p className="text-sm text-muted col-span-full">
-                No reactions match the current filters.
-              </p>
-            ) : (
-              visibleReactions.map(({ reaction, key, flux }) => (
-                <FluxReactionChip key={key} reaction={reaction} flux={flux} />
-              ))
-            )}
+          <div className="flex-1 lg:relative">
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 content-start items-start lg:absolute lg:inset-0 lg:overflow-y-auto lg:p-1">
+              {visibleReactions.length === 0 ? (
+                <p className="text-sm text-muted col-span-full">
+                  No reactions match the current filters.
+                </p>
+              ) : (
+                visibleReactions.map(({ reaction, key, flux }) => (
+                  <FluxReactionChip
+                    key={key}
+                    reaction={reaction}
+                    flux={flux}
+                    checked={selectedReactionKeys.includes(key)}
+                    onToggleCheck={() => toggleReactionSelection(key)}
+                  />
+                ))
+              )}
+            </div>
           </div>
         </div>
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
+
+      {plotted && chartSeries.length > 0 && (
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between gap-3 mb-3">
+              {hiddenSeriesCount > 0 && (
+                <p className="text-xs text-muted">
+                  Showing the first {chartSeries.length} of {plottedReactionEntries.length}{' '}
+                  selected reactions -- more than that isn't distinguishable by color.
+                </p>
+              )}
+            </div>
+
+            <div className="max-w-[80%] mx-auto">
+              <ResponsiveContainer width="100%" height={512}>
+                <LineChart data={chartData} margin={{ top: 5, right: 30, left: 30, bottom: 5 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#D8D6D2" />
+
+                  <XAxis
+                    dataKey="time"
+                    type="number"
+                    domain={['dataMin', 'dataMax']}
+                    stroke="#5f6368"
+                    tick={{ fontSize: 12, fill: '#5f6368' }}
+                    tickFormatter={(t) => formatValue(t / timeRangeUnit.divisor)}
+                  >
+                    <Label
+                      value={`Time (${timeRangeUnit.label.toLowerCase()})`}
+                      position="insideBottom"
+                      offset={-5}
+                      style={{ fill: '#1f2937', fontWeight: 600, fontSize: 14 }}
+                    />
+                  </XAxis>
+
+                  <YAxis
+                    stroke="#5f6368"
+                    tick={{ fontSize: 11, fill: '#5f6368' }}
+                    tickFormatter={(v) => {
+                      if (v === 0 || !isFinite(v)) return '0'
+                      return v.toExponential(0)
+                    }}
+                    allowDataOverflow={false}
+                    width={70}
+                  >
+                    <Label
+                      value="Flux (mol m⁻³)"
+                      angle={-90}
+                      position="insideLeft"
+                      offset={10}
+                      style={{ fill: '#1f2937', fontWeight: 600, fontSize: 13, textAnchor: 'middle' }}
+                    />
+                  </YAxis>
+
+                  <Tooltip
+                    wrapperStyle={{ zIndex: 10 }}
+                    content={({ active, payload, label }) => (
+                      <ChartTooltipContent
+                        active={active}
+                        payload={payload}
+                        timeLabel={`${
+                          timeRangeUnit.divisor === 1
+                            ? label?.toLocaleString()
+                            : (label / timeRangeUnit.divisor)?.toFixed(2)
+                        } ${timeRangeUnit.label.toLowerCase()}`}
+                        maxVisible={chartSeries.length}
+                      />
+                    )}
+                  />
+
+                  <Legend
+                    wrapperStyle={{ paddingTop: '20px' }}
+                    content={<ChartLegendContent maxVisible={chartSeries.length} />}
+                  />
+
+                  {chartSeries.map((series) => (
+                    <Line
+                      key={series.key}
+                      type="monotone"
+                      dataKey={series.key}
+                      name={series.label}
+                      stroke={series.color}
+                      strokeWidth={3}
+                      dot={chartData.length <= 10 ? { r: 4 } : false}
+                      connectNulls
+                      isAnimationActive={false}
+                    />
+                  ))}
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+    </div>
   )
 }
