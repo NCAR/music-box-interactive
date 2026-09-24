@@ -5,7 +5,6 @@ import { Button } from '../ui/button'
 import { setEvolvingAdditionalSeries } from '../../redux/slices/conditionsSlice'
 import { useToast } from '@/hooks/use-toast'
 import { LIST_CARD, LIST_CARD_CONTENT, FIELD_LABEL, TEXT_INPUT_SM } from '../Mechanism/fieldStyles'
-import { canonicalReactionType } from '../Mechanism/reactions/reactionRegistry'
 
 const filterButtonClass = (selected) =>
   `w-full text-left text-sm px-1.5 py-1 rounded ${
@@ -34,7 +33,7 @@ const hasName = (reaction) => typeof reaction.name === 'string' && reaction.name
 
 const REACTION_TYPES = [
   { id: 'PHOTOLYSIS', label: 'Photolysis', prefix: 'PHOTO' },
-  { id: 'SURFACE_REACTION', label: 'Surface', prefix: 'SURF' },
+  { id: 'SURFACE', label: 'Surface', prefix: 'SURF' },
   { id: 'EMISSION', label: 'Emissions', prefix: 'EMIS' },
   { id: 'FIRST_ORDER_LOSS', label: 'Loss', prefix: 'LOSS' },
 ]
@@ -58,17 +57,17 @@ export function ReactionTab() {
   const [selectedIndices, setSelectedIndices] = useState(new Set())
 
   const reactionType = REACTION_TYPES.find((t) => t.id === reactionTypeId)
-  const isSurface = reactionTypeId === 'SURFACE_REACTION'
+  const isSurface = reactionTypeId === 'SURFACE'
 
   const reactionTypeCounts = REACTION_TYPES.map((type) => ({
     ...type,
     count: mechanismReactions.filter(
-      (reaction) => canonicalReactionType(reaction.type) === type.id && hasName(reaction)
+      (reaction) => reaction.type === type.id && hasName(reaction)
     ).length,
   }))
 
   const reactionsOfType = mechanismReactions.filter(
-    (reaction) => canonicalReactionType(reaction.type) === reactionTypeId && hasName(reaction)
+    (reaction) => reaction.type === reactionTypeId && hasName(reaction)
   )
 
   const reactionQuery = reactionSearch.trim().toLowerCase()
@@ -80,7 +79,7 @@ export function ReactionTab() {
   // depending on the derived reactionsOfType array
   useEffect(() => {
     const currentReactionsOfType = mechanismReactions.filter(
-      (reaction) => canonicalReactionType(reaction.type) === reactionTypeId && hasName(reaction)
+      (reaction) => reaction.type === reactionTypeId && hasName(reaction)
     )
     setReactionName((prev) =>
       currentReactionsOfType.some((reaction) => reaction.name === prev)
