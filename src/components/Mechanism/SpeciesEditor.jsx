@@ -27,9 +27,10 @@ import { CONCENTRATION_UNITS, airDensityMolM3, toMolM3, fromMolM3 } from '../../
 const CONCENTRATION_PILL = 'Constant concentration'
 import { SPECIES_PROPERTIES } from '../../services/simulation/local/speciesProperties'
 
-// Fixed phase segments; anything else is entered as a custom "Others" phase
-const FIXED_PHASE_OPTIONS = ['Gas', 'Aqueous']
-const DISABLED_PHASE_OPTIONS = ['Aqueous']
+// Fixed phase segments; anything else is entered as a custom "Others" phase. Phase names are
+// shown and stored exactly as the mechanism configuration spells them.
+const FIXED_PHASE_OPTIONS = ['gas', 'aqueous']
+const DISABLED_PHASE_OPTIONS = ['aqueous']
 
 const CUSTOM_PILL_MAX_LENGTH = 512
 
@@ -540,7 +541,7 @@ export function SpeciesEditor() {
     }
 
     updatedSpecies[field.key] = parsedValue
-    updatedSpecies.phase = updatedSpecies.phase || 'Gas'
+    updatedSpecies.phase = updatedSpecies.phase || 'gas'
     dispatch(updateSpecies(updatedSpecies))
   }
 
@@ -554,7 +555,7 @@ export function SpeciesEditor() {
     dispatch(
       updateSpecies({
         ...existingSpecies,
-        phase: phaseValue || 'Gas',
+        phase: phaseValue || 'gas',
       })
     )
   }

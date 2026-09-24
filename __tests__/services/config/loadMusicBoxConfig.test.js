@@ -197,7 +197,7 @@ describe('loadMusicBoxConfig', () => {
 
   it('replaces stale state instead of appending to it', async () => {
     const store = makeStore()
-    store.dispatch(addSpecies({ name: 'Stale', phase: 'Gas' }))
+    store.dispatch(addSpecies({ name: 'Stale', phase: 'gas' }))
     store.dispatch(addReaction({ type: 'ARRHENIUS', name: 'stale-reaction', id: 'stale-id' }))
     store.dispatch(setStatus('succeeded'))
 

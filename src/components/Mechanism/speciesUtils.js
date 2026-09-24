@@ -64,7 +64,7 @@ export function addSpeciesIfValid({
   dispatch(
     addSpecies({
       name: normalizedName,
-      phase: newSpeciesPhase || 'Gas',
+      phase: newSpeciesPhase || 'gas',
       ...stored,
     })
   )
