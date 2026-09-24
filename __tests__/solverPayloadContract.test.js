@@ -116,7 +116,7 @@ describe('solver payload contract', () => {
     const names = analyticalConfig.mechanism.species.map((sp) => sp.name)
     const uiSpecies = SPECIES_PROPERTIES.map((field, index) => ({
       name: names[index] ?? `SP${index}`,
-      phase: 'Gas',
+      phase: 'gas',
       [field.key]: field.type === 'boolean' ? true : 1e-6,
     }))
 

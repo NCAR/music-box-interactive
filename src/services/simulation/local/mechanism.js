@@ -26,24 +26,41 @@ const toPhaseSpecies = (name, sourceSpeciesList, sourcePhaseSpecies = {}) => {
   })
 }
 
+// The editor stores one phase on each species, but a config can list a species in more than one
+// phase. A species keeps all the phases that list it when its editor phase is one of them. Otherwise
+// (a new species, or one the user moved) it goes only into its editor phase.
+const phasesOfSpecies = (sp, sourcePhases) => {
+  const listedIn = sourcePhases
+    .filter((phase) => phase.species.some((entry) => entry.name === sp.name))
+    .map((phase) => phase.name)
+  const editorPhase = sp.phase ?? 'gas'
+  return listedIn.includes(editorPhase) ? listedIn : [editorPhase]
+}
+
 export const buildPhases = (sourceMechanism, species) => {
-  if (Array.isArray(sourceMechanism.phases) && sourceMechanism.phases.length > 0) {
-    return sourceMechanism.phases.map((phase) => {
-      const phaseSpeciesList = Array.isArray(phase.species) ? phase.species : []
-      const declaredNames = new Set(phaseSpeciesList.map((sp) => sp.name))
+  const sourcePhases = Array.isArray(sourceMechanism.phases) ? sourceMechanism.phases : []
+  const membership = new Map(species.map((sp) => [sp.name, phasesOfSpecies(sp, sourcePhases)]))
 
-      const declared = phaseSpeciesList
-        .filter((sp) => species.some((s) => s.name === sp.name))
-        .map((sp) => toPhaseSpecies(sp.name, species, sp))
-      const undeclared = species
-        .filter((sp) => !declaredNames.has(sp.name))
-        .map((sp) => toPhaseSpecies(sp.name, species))
+  // Keep the declared phases in their order, then add each new phase that a species names.
+  const phaseNames = [
+    ...new Set([...sourcePhases.map((phase) => phase.name), ...[...membership.values()].flat()]),
+  ]
 
-      return { ...phase, species: [...declared, ...undeclared] }
-    })
-  }
-
-  return [{ name: 'gas', species: species.map((sp) => toPhaseSpecies(sp.name, species)) }]
+  return phaseNames.map((name) => {
+    const source = sourcePhases.find((phase) => phase.name === name) ?? { name, species: [] }
+    return {
+      ...source,
+      species: species
+        .filter((sp) => membership.get(sp.name).includes(name))
+        .map((sp) =>
+          toPhaseSpecies(
+            sp.name,
+            species,
+            source.species.find((entry) => entry.name === sp.name)
+          )
+        ),
+    }
+  })
 }
 
 export const getMechanismLabel = (mechanismData) => {
