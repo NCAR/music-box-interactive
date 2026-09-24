@@ -26,12 +26,10 @@ import {
   getReactionTypeLabel,
 } from '../Mechanism/reactions/reactionRegistry'
 import { REACTION_COMPONENT_KEYS } from '../../services/simulation/local/mechanism'
-import { ITEM_PANEL } from '../Mechanism/fieldStyles'
 import { RangeBoundInput } from './RangeBoundInput'
 import { TIME_RANGE_UNITS } from './timeRangeUnits'
 import { UnitDropdown } from './UnitDropdown'
 import { Card, CardContent } from '../ui/card'
-import { Button } from '../ui/button'
 import { CHART_COLORS } from '../chartColors'
 import { ChartLegendContent, ChartTooltipContent } from '../SimulationChart'
 
@@ -112,107 +110,77 @@ const reactionParameters = (reaction) => {
   ]
 }
 
-function ChipCheckCircle({ checked, onToggle, as: Component = 'span' }) {
-  return (
-    <Component
-      type={Component === 'button' ? 'button' : undefined}
-      role="checkbox"
-      aria-checked={checked}
-      aria-label={checked ? 'Deselect reaction for plotting' : 'Select reaction for plotting'}
-      tabIndex={0}
-      onClick={(e) => {
-        e.stopPropagation()
-        onToggle()
-      }}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault()
-          e.stopPropagation()
-          onToggle()
-        }
-      }}
-      className={`flex items-center justify-center w-5 h-5 rounded-full border-2 flex-shrink-0 cursor-pointer transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-assist-secondary-ring ${
-        checked
-          ? 'bg-assist-secondary-ring border-assist-secondary-ring'
-          : 'bg-white border-border hover:border-assist-secondary-ring'
-      }`}
-    >
-      {checked && <Check className="w-3 h-3 text-white" strokeWidth={3} />}
-    </Component>
-  )
-}
-
-// Collapsed: shows the formula and flux in a compact chip.
-// Click to expand and view the reaction type and rate parameters.
-function FluxReactionChip({ reaction, flux, checked, onToggleCheck }) {
+// Collapsed: one row per reaction showing formula, type, and flux.
+// Click the formula to expand a details row with rate parameters.
+function FluxReactionRow({ reaction, flux, checked, onToggleCheck }) {
   const [expanded, setExpanded] = useState(false)
   const formula = formatReactionFormula(reaction)
   const parameters = reactionParameters(reaction)
 
-  if (!expanded) {
-    return (
-      <button
-        type="button"
-        onClick={() => setExpanded(true)}
-        className={`${ITEM_PANEL} text-left flex flex-col gap-1.5 hover:bg-surface-hover focus:outline-none focus-visible:ring-2 focus-visible:ring-assist-secondary-ring`}
-      >
-        <div className="flex items-center justify-between gap-2">
-          <span className="font-mono text-sm font-semibold text-ink break-words">
-            {formula}
-          </span>
-          <div className="flex items-center gap-1.5 flex-shrink-0">
-            <ChevronDown className="w-3.5 h-3.5 text-muted" />
-            <ChipCheckCircle checked={checked} onToggle={onToggleCheck} />
-          </div>
-        </div>
-        <span className="text-sm text-muted">Flux: {formatValue(flux)} mol m⁻³</span>
-      </button>
-    )
-  }
-
   return (
-    <div className="w-full rounded-2xl border border-assist-secondary-border bg-assist-secondary p-4 ring-1 ring-assist-secondary-ring">
-      <div className="flex items-center gap-2">
-        <button
-          type="button"
-          onClick={() => setExpanded(false)}
-          className="flex-1 min-w-0 flex items-center justify-center gap-1.5 rounded text-sm font-semibold font-mono text-assist-secondary-foreground break-words text-center focus:outline-none focus-visible:ring-2 focus-visible:ring-assist-secondary-ring"
-        >
-          <span className="break-words">{formula}</span>
-          <ChevronUp className="w-4 h-4 flex-shrink-0" />
-        </button>
-        <ChipCheckCircle checked={checked} onToggle={onToggleCheck} as="button" />
-      </div>
-
-      <p className="mt-1 text-sm text-muted">Flux: {formatValue(flux)} mol m⁻³</p>
-
-      <div className="mt-3 flex flex-col gap-2">
-        <div className="flex items-center justify-between gap-3 text-sm">
-          <span className="text-muted flex-shrink-0">Type</span>
-          <span className="font-mono text-ink truncate" title={reaction.type}>
-            {reaction.type}
-          </span>
-        </div>
-        {parameters.map((field) => (
-          <div key={field.key} className="flex items-center justify-between gap-3 text-sm">
-            <span className="text-muted flex-shrink-0">{field.key}</span>
-            <span
-              className="font-mono text-ink truncate"
-              title={String(formatValue(field.value))}
-            >
-              {formatValue(field.value)}
-            </span>
-          </div>
-        ))}
-      </div>
-    </div>
+    <>
+      <tr className="border-b border-gray-200 hover:bg-gray-50">
+        <td className="pl-6 pr-4 py-2">
+          <input
+            type="checkbox"
+            checked={checked}
+            onChange={onToggleCheck}
+            aria-label={
+              checked ? `Deselect ${formula} for plotting` : `Select ${formula} for plotting`
+            }
+            className="accent-assist-secondary-ring"
+          />
+        </td>
+        <td className="px-4 py-2">
+          <button
+            type="button"
+            onClick={() => setExpanded((current) => !current)}
+            className="flex items-center gap-1.5 font-mono text-sm text-ink text-left break-words hover:text-heading focus:outline-none focus-visible:ring-2 focus-visible:ring-assist-secondary-ring"
+          >
+            {expanded ? (
+              <ChevronUp className="w-3.5 h-3.5 flex-shrink-0 text-muted" />
+            ) : (
+              <ChevronDown className="w-3.5 h-3.5 flex-shrink-0 text-muted" />
+            )}
+            <span className="break-words">{formula}</span>
+          </button>
+        </td>
+        <td className="px-4 py-2 text-sm text-muted font-mono" title={reaction.type}>
+          {reaction.type}
+        </td>
+        <td className="px-4 py-2 font-mono text-sm">{formatValue(flux)}</td>
+      </tr>
+      {expanded && (
+        <tr className="border-b border-gray-200">
+          <td />
+          <td colSpan={3} className="px-4 py-3">
+            <div className="flex flex-col gap-2 max-w-[35%] pl-5">
+              <span className="text-xs  text-muted uppercase tracking-wide">
+                Parameters
+              </span>
+              {parameters.map((field) => (
+                <div key={field.key} className="flex items-center justify-between gap-3 text-sm">
+                  <span className="text-muted flex-shrink-0">{field.key}</span>
+                  <span
+                    className="font-mono text-ink truncate"
+                    title={String(formatValue(field.value))}
+                  >
+                    {formatValue(field.value)}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </td>
+        </tr>
+      )}
+    </>
   )
 }
 
 /*
  * Flux Component
  * Filterable reaction-flux view with a sidebar for reaction/species filters and a sortable
- * grid of cards showing each reaction's formula and integrated flux.
+ * table listing each reaction's formula, type, and integrated flux.
  */
 export function Flux() {
   const simulation = useSelector((state) => state.simulation)
@@ -232,7 +200,6 @@ export function Flux() {
   const [sortOrder, setSortOrder] = useState('desc')
   const [sortMenuOpen, setSortMenuOpen] = useState(false)
   const [selectedReactionKeys, setSelectedReactionKeys] = useState([])
-  const [plotted, setPlotted] = useState(false)
   // key -> index into CHART_COLORS. Assigned once per reaction while it's selected and freed on
   // deselect, so a reaction keeps its color for as long as it's plotted -- position in
   // selectedReactionKeys shifts on every deselect, so deriving color from array index would
@@ -305,10 +272,6 @@ export function Flux() {
     })
   }
 
-  const handlePlotSelected = () => {
-    setPlotted(true)
-  }
-
   const resetFilters = () => {
     setSelectedReactionTypes([])
     setSelectedSpeciesNames([])
@@ -316,7 +279,6 @@ export function Flux() {
     setTimeRange({ start: 0, end: duration })
     setSelectedReactionKeys([])
     setColorAssignments(new Map())
-    setPlotted(false)
   }
 
   const reactionTypeCounts = useMemo(() => {
@@ -407,11 +369,11 @@ export function Flux() {
   const hiddenSeriesCount = plottedReactionEntries.length - chartSeries.length
 
   const chartData = useMemo(() => {
-    if (!plotted || chartSeries.length === 0) return []
+    if (chartSeries.length === 0) return []
     const timeStart = timeRange.start ?? 0
     const timeEnd = timeRange.end ?? duration ?? Infinity
     return computeReactionSeries(chartSeries, simulation.excludedResults, timeStart, timeEnd)
-  }, [plotted, chartSeries, simulation.excludedResults, timeRange.start, timeRange.end, duration])
+  }, [chartSeries, simulation.excludedResults, timeRange.start, timeRange.end, duration])
 
   if (!simulation.results || simulation.status !== 'succeeded') {
     return (
@@ -445,20 +407,7 @@ export function Flux() {
             </button>
           </div>
 
-          <div className="flex flex-1 items-center justify-between">
-            <Button
-              variant="primary"
-              size="sm"
-              onClick={handlePlotSelected}
-              className={`gap-1.5 font-normal border-assist-secondary-ring ${
-                plotted
-                  ? 'bg-assist-secondary-ring text-white hover:bg-assist-secondary-ring hover:text-white'
-                  : 'text-assist-secondary-ring hover:bg-white hover:text-assist-secondary-ring'
-              } ${selectedReactionKeys.length === 0 ? 'invisible' : ''}`}
-            >
-              Plot ({selectedReactionKeys.length})
-            </Button>
-
+          <div className="flex flex-1 items-center justify-end">
             <div className="relative" ref={sortMenuRef}>
               <button
                 type="button"
@@ -470,7 +419,7 @@ export function Flux() {
               </button>
 
               {sortMenuOpen && (
-                <div className="absolute right-0 z-10 mt-1 w-44 bg-white border border-border rounded-lg shadow-lg py-1">
+                <div className="absolute right-0 z-20 mt-1 w-44 bg-white border border-border rounded-lg shadow-lg py-1">
                   {SORT_OPTIONS.map((option) => (
                     <button
                       key={option.id}
@@ -502,7 +451,7 @@ export function Flux() {
               <button
                 type="button"
                 onClick={() => setReactionsOpen((open) => !open)}
-                className="w-full flex items-center justify-between text-sm font-bold text-ink mb-2"
+                className="w-full flex items-center justify-between text-sm font-semibold text-ink mb-2"
               >
                 Reactions
                 {reactionsOpen ? (
@@ -539,7 +488,7 @@ export function Flux() {
               <button
                 type="button"
                 onClick={() => setSpeciesOpen((open) => !open)}
-                className="w-full flex items-center justify-between text-sm font-bold text-ink mb-2"
+                className="w-full flex items-center justify-between text-sm font-semibold text-ink mb-2"
               >
                 Species
                 {speciesOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
@@ -620,9 +569,9 @@ export function Flux() {
               <button
                 type="button"
                 onClick={() => setTimeRangeOpen((open) => !open)}
-                className="w-full flex items-center justify-between text-sm font-bold text-ink mb-2"
+                className="w-full flex items-center justify-between text-sm font-semibold text-ink mb-2"
               >
-                Time Range
+                Time range
                 {timeRangeOpen ? (
                   <ChevronUp className="w-4 h-4" />
                 ) : (
@@ -663,21 +612,33 @@ export function Flux() {
           </div>
 
           <div className="flex-1 lg:relative">
-            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 content-start items-start lg:absolute lg:inset-0 lg:overflow-y-auto lg:p-1">
+            <div className="border border-gray-200 rounded-lg overflow-auto lg:absolute lg:inset-0">
               {visibleReactions.length === 0 ? (
-                <p className="text-sm text-muted col-span-full">
-                  No reactions match the current filters.
-                </p>
+                <p className="text-sm text-muted p-4">No reactions match the current filters.</p>
               ) : (
-                visibleReactions.map(({ reaction, key, flux }) => (
-                  <FluxReactionChip
-                    key={key}
-                    reaction={reaction}
-                    flux={flux}
-                    checked={selectedReactionKeys.includes(key)}
-                    onToggleCheck={() => toggleReactionSelection(key)}
-                  />
-                ))
+                <table className="w-full table-fixed text-sm">
+                  <thead className="sticky top-0 z-10 bg-assist-secondary text-assist-secondary-foreground">
+                    <tr>
+                      <th className="w-16 text-left px-4 py-2 font-semibold whitespace-nowrap">
+                        Plot
+                      </th>
+                      <th className="text-left pl-9 pr-4 py-2 font-semibold">Reaction</th>
+                      <th className="w-40 text-left px-4 py-2 font-semibold">Type</th>
+                      <th className="w-40 text-left px-4 py-2 font-semibold">Flux (mol m⁻³)</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {visibleReactions.map(({ reaction, key, flux }) => (
+                      <FluxReactionRow
+                        key={key}
+                        reaction={reaction}
+                        flux={flux}
+                        checked={selectedReactionKeys.includes(key)}
+                        onToggleCheck={() => toggleReactionSelection(key)}
+                      />
+                    ))}
+                  </tbody>
+                </table>
               )}
             </div>
           </div>
@@ -685,7 +646,7 @@ export function Flux() {
         </CardContent>
       </Card>
 
-      {plotted && chartSeries.length > 0 && (
+      {chartSeries.length > 0 && (
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center justify-between gap-3 mb-3">
