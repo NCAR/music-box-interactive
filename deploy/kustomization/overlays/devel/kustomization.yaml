@@ -4,7 +4,7 @@ kind: Kustomization
 images:
 - name: hub.k8s.ucar.edu/musicbox/frontend
   newName: hub.k8s.ucar.edu/musicbox/frontend
-  newTag: 6c80d19
+  newTag: 9154b9a
 
 namePrefix: devel-
 
