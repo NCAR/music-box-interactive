@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback, useEffect, useMemo } from 'react'
 import { createPortal } from 'react-dom'
 import { useSelector, useDispatch } from 'react-redux'
 import { ChevronDown, ChevronUp } from 'lucide-react'
@@ -26,11 +26,8 @@ import { CONCENTRATION_UNITS, airDensityMolM3, toMolM3, fromMolM3 } from '../../
 // A unit choice
 const CONCENTRATION_PILL = 'Constant concentration'
 import { SPECIES_PROPERTIES } from '../../services/simulation/local/speciesProperties'
+import { withPhaseInfo } from '../../services/simulation/local/mechanism'
 
-// Fixed phase segments; anything else is entered as a custom "Others" phase. Phase names are
-// shown and stored exactly as the mechanism configuration spells them.
-const FIXED_PHASE_OPTIONS = ['gas', 'aqueous']
-const DISABLED_PHASE_OPTIONS = ['aqueous']
 
 const CUSTOM_PILL_MAX_LENGTH = 512
 
@@ -42,16 +39,13 @@ const SPECIES_EDITOR_GRID =
 const PROPERTY_PILL_GRID = 'grid grid-cols-1 sm:grid-cols-2 justify-items-start gap-2'
 
 // Shared pill styling for the phase and property selectors.
-function pillClassName(active, compact, disabled = false) {
+function pillClassName(active, compact) {
   const base = `${
     compact ? 'px-2.5 py-1 text-[11px]' : 'h-9 px-4 py-2 text-[15px]'
   } rounded-full border whitespace-nowrap transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-assist-secondary-ring flex items-center gap-1.5`
 
   if (active) {
     return `${base} bg-assist-secondary border-assist-secondary-border text-assist-secondary-foreground`
-  }
-  if (disabled) {
-    return `${base} bg-surface-alt border-border text-muted cursor-not-allowed`
   }
   return `${base} bg-white border-border text-ink hover:bg-surface-hover`
 }
@@ -124,18 +118,12 @@ function AddPillDialog({ label, onCancel, onAdd }) {
   )
 }
 
-function PhaseSelector({ value, onChange, size = 'default', allowCustom = true }) {
+// Offers the mechanism's own phases, spelled exactly as the mechanism configuration spells them.
+// A new phase is entered through the "Others" pill.
+function PhaseSelector({ value, onChange, phaseNames, size = 'default', allowCustom = true }) {
   const [dialogOpen, setDialogOpen] = useState(false)
-  // Keeps custom phase pills visible when switching between phases.
-  const [savedCustoms, setSavedCustoms] = useState(() =>
-    value && !FIXED_PHASE_OPTIONS.includes(value) ? [value] : []
-  )
-
-  useEffect(() => {
-    if (value && !FIXED_PHASE_OPTIONS.includes(value)) {
-      setSavedCustoms((prev) => (prev.includes(value) ? prev : [...prev, value]))
-    }
-  }, [value])
+  // A phase typed in the Add form is not in the mechanism until the species is added.
+  const options = value && !phaseNames.includes(value) ? [...phaseNames, value] : phaseNames
 
   const handleAddCustom = (phase) => {
     onChange(phase)
@@ -146,31 +134,14 @@ function PhaseSelector({ value, onChange, size = 'default', allowCustom = true }
 
   return (
     <div className="flex flex-wrap items-center gap-2">
-      {FIXED_PHASE_OPTIONS.map((phase) => {
-        const selected = value === phase
-        const disabled = DISABLED_PHASE_OPTIONS.includes(phase)
-        return (
-          <button
-            key={phase}
-            type="button"
-            disabled={disabled}
-            title={disabled && !selected ? `${phase} phase is not available yet` : undefined}
-            onClick={() => onChange(phase)}
-            className={pillClassName(selected, compact, disabled)}
-          >
-            {phase}
-          </button>
-        )
-      })}
-
-      {savedCustoms.map((custom) => (
+      {options.map((phase) => (
         <button
-          key={custom}
+          key={phase}
           type="button"
-          onClick={() => onChange(custom)}
-          className={pillClassName(value === custom, compact)}
+          onClick={() => onChange(phase)}
+          className={pillClassName(value === phase, compact)}
         >
-          {custom}
+          {phase}
         </button>
       ))}
 
@@ -289,7 +260,7 @@ function getSpeciesFields(species) {
 // A species renders as a collapsed chip showing only its name. Clicking it unfolds the phase
 // and property values in place; an expanded chip claims a full row of the wrapping list so its
 // controls have room. Expansion is local state -- opening one leaves the others alone.
-function SpeciesChip({ species, onPhaseChange, onFieldSave, onRemove, airDensity }) {
+function SpeciesChip({ species, phaseNames, onPhaseChange, onFieldSave, onRemove, airDensity }) {
   const [expanded, setExpanded] = useState(false)
   // Its own unit choice: display only, converted back to the stored mol m-3 value on save.
   const [concentrationUnitId, setConcentrationUnitId] = useState('mol_m3')
@@ -340,6 +311,7 @@ function SpeciesChip({ species, onPhaseChange, onFieldSave, onRemove, airDensity
           <PhaseSelector
             value={species.phase}
             onChange={(phase) => onPhaseChange(species.name, phase)}
+            phaseNames={phaseNames}
             size="compact"
             allowCustom={false}
           />
@@ -428,7 +400,11 @@ function SpeciesChip({ species, onPhaseChange, onFieldSave, onRemove, airDensity
 
 export function SpeciesEditor() {
   const dispatch = useDispatch()
-  const species = useSelector((state) => state.mechanism.config.mechanism?.species || [])
+  const storedSpecies = useSelector((state) => state.mechanism.config.mechanism?.species)
+  const phases = useSelector((state) => state.mechanism.config.mechanism?.phases)
+  const species = useMemo(() => withPhaseInfo(storedSpecies ?? [], phases), [storedSpecies, phases])
+  // A mechanism with no phase yet gets "gas" when its first species is added.
+  const phaseNames = useMemo(() => (phases?.length ? phases.map((p) => p.name) : ['gas']), [phases])
   const initialConditions = useSelector((state) => state.conditions.initial)
   const { toast } = useToast()
   const airDensity = airDensityMolM3(initialConditions.pressure, initialConditions.temperature)
@@ -541,7 +517,6 @@ export function SpeciesEditor() {
     }
 
     updatedSpecies[field.key] = parsedValue
-    updatedSpecies.phase = updatedSpecies.phase || 'gas'
     dispatch(updateSpecies(updatedSpecies))
   }
 
@@ -569,6 +544,7 @@ export function SpeciesEditor() {
           <SpeciesChip
             key={sp.name}
             species={sp}
+            phaseNames={phaseNames}
             onPhaseChange={handlePhaseSave}
             onFieldSave={handleFieldSave}
             onRemove={handleRemoveSpecies}
@@ -596,7 +572,11 @@ export function SpeciesEditor() {
                 <label className="block text-base font-semibold text-ink mb-2">
                   Choose a phase
                 </label>
-                <PhaseSelector value={newSpeciesPhase} onChange={setNewSpeciesPhase} />
+                <PhaseSelector
+                  value={newSpeciesPhase}
+                  onChange={setNewSpeciesPhase}
+                  phaseNames={phaseNames}
+                />
               </div>
 
               <div>

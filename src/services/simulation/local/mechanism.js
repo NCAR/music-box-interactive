@@ -1,67 +1,17 @@
-import { PHASE_PROPERTY_KEYS } from './speciesProperties'
+import { PHASE_PROPERTY_KEYS, pickDeclared } from './speciesProperties'
 
-const omitUndefined = (obj) =>
-  Object.fromEntries(Object.entries(obj).filter(([, value]) => value !== undefined))
+// The first phase that lists a species. The editor shows and edits this phase.
+export const findSpeciesPhase = (phases, name) =>
+  (phases ?? []).find((phase) => phase.species.some((entry) => entry.name === name))
 
-// Phase-only properties (diffusion coefficient, density) belong on phases[].species[].
-export const serializeSpecies = ({ id: _id, phase: _phase, ...species }) => {
-  for (const key of PHASE_PROPERTY_KEYS) {
-    delete species[key]
-  }
-  return species
-}
-
-// Diffusion coefficient/density can come from either the species editor's state (which the
-// UI writes to) or the phase's own original species entry (where an uploaded config stores
-// them). The editor's value wins when both are set.
-const toPhaseSpecies = (name, sourceSpeciesList, sourcePhaseSpecies = {}) => {
-  const source = sourceSpeciesList.find((sp) => sp?.name === name)
-  return omitUndefined({
-    ...sourcePhaseSpecies,
-    name,
-    'diffusion coefficient [m2 s-1]':
-      source?.['diffusion coefficient [m2 s-1]'] ??
-      sourcePhaseSpecies['diffusion coefficient [m2 s-1]'],
-    'density [kg m-3]': source?.['density [kg m-3]'] ?? sourcePhaseSpecies['density [kg m-3]'],
+// The mechanism stores phase membership and the phase-only species properties on
+// phases[].species[]. The editor shows each species together with its phase and those properties.
+export const withPhaseInfo = (species, phases) =>
+  species.map((sp) => {
+    const phase = findSpeciesPhase(phases, sp.name)
+    const entry = phase?.species.find((e) => e.name === sp.name) ?? {}
+    return { ...sp, ...pickDeclared(entry, PHASE_PROPERTY_KEYS), phase: phase?.name }
   })
-}
-
-// The editor stores one phase on each species, but a config can list a species in more than one
-// phase. A species keeps all the phases that list it when its editor phase is one of them. Otherwise
-// (a new species, or one the user moved) it goes only into its editor phase.
-const phasesOfSpecies = (sp, sourcePhases) => {
-  const listedIn = sourcePhases
-    .filter((phase) => phase.species.some((entry) => entry.name === sp.name))
-    .map((phase) => phase.name)
-  const editorPhase = sp.phase ?? 'gas'
-  return listedIn.includes(editorPhase) ? listedIn : [editorPhase]
-}
-
-export const buildPhases = (sourceMechanism, species) => {
-  const sourcePhases = Array.isArray(sourceMechanism.phases) ? sourceMechanism.phases : []
-  const membership = new Map(species.map((sp) => [sp.name, phasesOfSpecies(sp, sourcePhases)]))
-
-  // Keep the declared phases in their order, then add each new phase that a species names.
-  const phaseNames = [
-    ...new Set([...sourcePhases.map((phase) => phase.name), ...[...membership.values()].flat()]),
-  ]
-
-  return phaseNames.map((name) => {
-    const source = sourcePhases.find((phase) => phase.name === name) ?? { name, species: [] }
-    return {
-      ...source,
-      species: species
-        .filter((sp) => membership.get(sp.name).includes(name))
-        .map((sp) =>
-          toPhaseSpecies(
-            sp.name,
-            species,
-            source.species.find((entry) => entry.name === sp.name)
-          )
-        ),
-    }
-  })
-}
 
 export const getMechanismLabel = (mechanismData) => {
   return (

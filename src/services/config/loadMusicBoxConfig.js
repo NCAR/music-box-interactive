@@ -16,7 +16,6 @@ import {
   setSourceFile,
 } from '../../redux/slices/conditionsSlice'
 import { resetSimulation } from '../../redux/slices/simulationSlice'
-import { PHASE_PROPERTY_KEYS, pickDeclared } from '../simulation/local/speciesProperties'
 
 // MUSICA's parser validates the mechanism, fills in default values, and gives back the canonical
 // v1 format. It throws an Error with the parser messages when the mechanism is not valid.
@@ -26,46 +25,9 @@ const parseMechanism = async (mechanism) => {
 }
 
 // Converts a music-box config into the shape Redux stores. MUSICA's parser validates the
-// mechanism and gives back the canonical v1 format. Species then carry their phase and
-// phase-only properties.
+// mechanism and gives back the canonical v1 format, which Redux stores as it is.
 export async function toReduxConfig(config) {
   const mechanismConfig = config?.mechanism ? await parseMechanism(config.mechanism) : {}
-
-  // Diffusion coefficient and density belong to PhaseSpecies, so collect them by name and merge
-  // them onto the matching species entry -- the editor shows them on the species editor, different from the configuration format
-  // these are mapped to the proper location when we serialize the config
-  //
-  // in music box interactive's data format, the phase is stored on the species
-  // whereas in the configuraiton, phase membership is a list of species on the phase
-  const phases = Array.isArray(mechanismConfig.phases) ? mechanismConfig.phases : []
-  const phaseProperties = new Map()
-  const phaseNameBySpecies = new Map()
-  for (const phase of phases) {
-    for (const entry of Array.isArray(phase.species) ? phase.species : []) {
-      const entryName = typeof entry === 'string' ? entry : entry?.name
-      if (!entryName) {
-        continue
-      }
-      if (!phaseNameBySpecies.has(entryName)) {
-        phaseNameBySpecies.set(entryName, phase.name)
-      }
-      if (typeof entry !== 'object') {
-        continue
-      }
-      const carried = pickDeclared(entry, PHASE_PROPERTY_KEYS)
-      if (Object.keys(carried).length > 0) {
-        phaseProperties.set(entryName, { ...phaseProperties.get(entryName), ...carried })
-      }
-    }
-  }
-
-  const species = (Array.isArray(mechanismConfig.species) ? mechanismConfig.species : []).map(
-    (sp) => ({
-      phase: phaseNameBySpecies.get(sp.name) ?? 'gas',
-      ...sp,
-      ...(phaseProperties.get(sp.name) ?? {}),
-    })
-  )
 
   // Reactions get a UI-only id for React list keys and updateReaction/removeReaction targeting.
   // No name is generated here for an undeclared reaction -- FlowGraph/ReactionEditor compute a
@@ -75,7 +37,7 @@ export async function toReduxConfig(config) {
     (reaction) => ({ ...reaction, id: uuidv4() })
   )
 
-  return { ...config, mechanism: { ...mechanismConfig, species, reactions } }
+  return { ...config, mechanism: { ...mechanismConfig, reactions } }
 }
 
 // Loads a music-box config into Redux. conditions.data must already hold every

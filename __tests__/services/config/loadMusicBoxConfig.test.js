@@ -76,24 +76,24 @@ describe('loadMusicBoxConfig', () => {
     expect(species).toHaveLength(2)
     const a = species.find((s) => s.name === 'A')
     const b = species.find((s) => s.name === 'B')
-    expect(a.phase).toBe('gas') // the fixture's declared phase name, not an assumed default
+    expect(a.phase).toBeUndefined() // phase membership stays on phases[]
     expect(b['absolute tolerance']).toBe(1e-12)
     expect(b['is third body']).toBe(true)
   })
 
-  it('merges phase-only properties (diffusion coefficient, density) onto the matching species', async () => {
+  it('keeps phase-only properties (diffusion coefficient, density) on the phase entries', async () => {
     const { store } = await load(baseConfig())
-    const species = store.getState().mechanism.config.mechanism.species
+    const { species, phases } = store.getState().mechanism.config.mechanism
     const b = species.find((s) => s.name === 'B')
+    const bEntry = phases[0].species.find((e) => e.name === 'B')
 
-    expect(b['diffusion coefficient [m2 s-1]']).toBe(1e-5)
-    expect(b['density [kg m-3]']).toBe(1000)
-    // A has no phase-carried properties in the fixture, so none should appear.
-    const a = species.find((s) => s.name === 'A')
-    expect(a['diffusion coefficient [m2 s-1]']).toBeUndefined()
+    expect(bEntry['diffusion coefficient [m2 s-1]']).toBe(1e-5)
+    expect(bEntry['density [kg m-3]']).toBe(1000)
+    expect(b['diffusion coefficient [m2 s-1]']).toBeUndefined()
+    expect(b['density [kg m-3]']).toBeUndefined()
   })
 
-  it('reads a species phase from the phase that actually declares it, not a hardcoded default', async () => {
+  it('stores the phases as the config declares them', async () => {
     const config = baseConfig({
       mechanism: {
         ...baseConfig().mechanism,
@@ -105,20 +105,12 @@ describe('loadMusicBoxConfig', () => {
       },
     })
     const { store } = await load(config)
-    const species = store.getState().mechanism.config.mechanism.species
+    const { phases } = store.getState().mechanism.config.mechanism
 
-    expect(species.find((s) => s.name === 'A').phase).toBe('aqueous')
-    expect(species.find((s) => s.name === 'B').phase).toBe('gas')
-  })
-
-  it('defaults an undeclared-phase species to "gas", matching buildPhases() synthesis', async () => {
-    const config = baseConfig({
-      mechanism: { ...baseConfig().mechanism, phases: [], reactions: [] },
-    })
-    const { store } = await load(config)
-    const species = store.getState().mechanism.config.mechanism.species
-
-    expect(species.every((s) => s.phase === 'gas')).toBe(true)
+    expect(phases.map((p) => [p.name, p.species.map((e) => e.name)])).toEqual([
+      ['aqueous', ['A']],
+      ['gas', ['B']],
+    ])
   })
 
   it('keeps a declared reaction name, and leaves an undeclared one empty', async () => {

@@ -1,19 +1,13 @@
 import { MusicBox } from '@ncar/music-box'
 import { buildSolverConditions } from './conditions'
-import { buildPhases, getMechanismLabel, serializeReaction, serializeSpecies } from './mechanism'
+import { getMechanismLabel, serializeReaction } from './mechanism'
 
 export const buildLocalSimulationPayload = ({ mechanismData, conditions }) => {
   const sourceMechanism = mechanismData.config?.mechanism || {}
   const mechanismLabel = getMechanismLabel(mechanismData)
-  const sourceSpecies = Array.isArray(sourceMechanism.species) ? sourceMechanism.species : []
-
-  // serializeSpecies strips PhaseSpecies properties, so buildPhases uses the pre-serialization
-  // species to re-attach them to the phase entries.
-  const species = sourceSpecies.map(serializeSpecies)
-
-  const reactions = (sourceMechanism.reactions || []).map(serializeReaction)
-
-  const phases = buildPhases(sourceMechanism, sourceSpecies)
+  const species = sourceMechanism.species ?? []
+  const phases = sourceMechanism.phases ?? []
+  const reactions = (sourceMechanism.reactions ?? []).map(serializeReaction)
 
   const mechanism = {
     name:
