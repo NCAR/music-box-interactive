@@ -45,7 +45,9 @@ const REACTION_TYPES = [
 export function ReactionTab() {
   const dispatch = useDispatch()
   const { toast } = useToast()
-  const mechanismReactions = useSelector((state) => state.mechanism.reactions)
+  const mechanismReactions = useSelector(
+    (state) => state.mechanism.config.mechanism?.reactions || []
+  )
   const evolvingTimes = useSelector((state) => state.conditions.evolving.times)
   const additionalSeries = useSelector((state) => state.conditions.evolving.additionalSeries)
 
