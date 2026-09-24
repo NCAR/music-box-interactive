@@ -22,11 +22,11 @@ const EXAMPLES = [
   ['ts1', ts1Config],
 ]
 
-const buildInputs = (config) => {
+const buildInputs = async (config) => {
   const options = config['box model options'] || {}
   return {
     mechanism: {
-      config: { mechanism: toReduxConfig(config).mechanism },
+      config: { mechanism: (await toReduxConfig(config)).mechanism },
       currentExample: { name: config.mechanism?.name || 'example' },
     },
     conditions: {
@@ -41,7 +41,7 @@ const buildInputs = (config) => {
 }
 
 describe('downloadConfig', () => {
-  it('builds a well-formed config from a blank (no mechanism loaded) state', () => {
+  it('builds a well-formed config from a blank (no mechanism loaded) state', async () => {
     const blankMechanism = {
       selectedMechanism: null,
       currentExample: null,
@@ -67,7 +67,7 @@ describe('downloadConfig', () => {
   it.each(EXAMPLES)(
     '%s: downloaded config solves to the same results as Run Simulation',
     async (_name, config) => {
-      const { mechanism, conditions } = buildInputs(config)
+      const { mechanism, conditions } = await buildInputs(config)
 
       const configuration = buildDownloadableConfig({ mechanism, conditions })
 
@@ -90,8 +90,8 @@ describe('downloadConfig', () => {
 
   // Species/reactions are edited in place on mechanism.config.mechanism -- there's no separate
   // copy to reconcile, so an edit just needs to show up untouched in the downloaded config.
-  it('reflects species and reaction edits made in the UI', () => {
-    const { mechanism, conditions } = buildInputs(chapmanConfig)
+  it('reflects species and reaction edits made in the UI', async () => {
+    const { mechanism, conditions } = await buildInputs(chapmanConfig)
     const sourceReactions = mechanism.config.mechanism.reactions
 
     const o3 = mechanism.config.mechanism.species.find((s) => s.name === 'O3')
@@ -117,7 +117,7 @@ describe('downloadConfig', () => {
   })
 
   it('a config with edited species still solves', async () => {
-    const { mechanism, conditions } = buildInputs(chapmanConfig)
+    const { mechanism, conditions } = await buildInputs(chapmanConfig)
     const o3 = mechanism.config.mechanism.species.find((s) => s.name === 'O3')
     o3['absolute tolerance'] = 1e-15
 

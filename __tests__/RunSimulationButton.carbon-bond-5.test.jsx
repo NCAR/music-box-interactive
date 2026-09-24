@@ -57,7 +57,7 @@ describe('RunSimulationButton (Carbon-Bond-5 example)', () => {
       csv: { initial_concentrations: carbonBond5InitialConcentrationsCsv, initial_reaction_rates: carbonBond5InitialReactionRatesCsv },
       mechanism: withInlineConditionData(carbonBond5Config, [carbonBond5InitialConcentrationsCsv, carbonBond5InitialReactionRatesCsv]),
     };
-    loadMusicBoxConfig(carbonBond5Example.mechanism, {
+    await loadMusicBoxConfig(carbonBond5Example.mechanism, {
       dispatch: store.dispatch,
       navigate: vi.fn(),
       meta: {

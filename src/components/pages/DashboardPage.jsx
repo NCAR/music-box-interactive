@@ -49,10 +49,8 @@ export function DashboardPage() {
     event.target.value = ''
 
     parseUploadedMusicBoxConfig(file)
-      .then((config) => {
-        setShowExamples(false)
-
-        loadMusicBoxConfig(config, {
+      .then(async (config) => {
+        await loadMusicBoxConfig(config, {
           dispatch,
           navigate,
           meta: {
@@ -61,6 +59,7 @@ export function DashboardPage() {
             description: 'Custom configuration uploaded from file',
           },
         })
+        setShowExamples(false)
 
         toast({
           variant: 'success',
@@ -125,9 +124,7 @@ export function DashboardPage() {
                   1
                 </div>
                 <h3 className="font-bold text-sm">Define Your Mechanism</h3>
-                <p className="text-xs text-muted">
-                  Choose one of the options below to begin.
-                </p>
+                <p className="text-xs text-muted">Choose one of the options below to begin.</p>
                 <svg viewBox="0 0 24 36" className="hidden md:block w-6 h-9" aria-hidden="true">
                   <defs>
                     <linearGradient id="step1ArrowGradient" x1="0" y1="0" x2="1" y2="1">
@@ -175,7 +172,9 @@ export function DashboardPage() {
                   4
                 </div>
                 <h3 className="font-bold text-sm">View Results</h3>
-                <p className="text-xs text-muted">Visualize concentraitoions, envrionmental profiles, and integrated reaction rates.</p>
+                <p className="text-xs text-muted">
+                  Visualize concentraitoions, envrionmental profiles, and integrated reaction rates.
+                </p>
               </div>
             </div>
           </div>
@@ -290,7 +289,6 @@ export function DashboardPage() {
           <ExampleLoader />
         </div>
       )}
-
     </div>
   )
 }

@@ -21,7 +21,6 @@ import {
   reactionProducts,
 } from './flowUtils'
 import {
-  canonicalReactionType,
   getReactionParameters,
   getReactionTypeLabel,
 } from '../Mechanism/reactions/reactionRegistry'
@@ -284,7 +283,7 @@ export function Flux() {
   const reactionTypeCounts = useMemo(() => {
     const counts = new Map()
     for (const reaction of reactions ?? []) {
-      const type = canonicalReactionType(reaction.type || 'UNKNOWN')
+      const type = reaction.type || 'UNKNOWN'
       counts.set(type, (counts.get(type) ?? 0) + 1)
     }
     return [...counts.entries()]
@@ -303,7 +302,7 @@ export function Flux() {
       .filter(
         ({ reaction }) =>
           (selectedReactionTypes.length === 0 ||
-            selectedReactionTypes.includes(canonicalReactionType(reaction.type))) &&
+            selectedReactionTypes.includes(reaction.type)) &&
           reactionInvolvesSpecies(reaction, selectedSpeciesNames)
       )
       .map(({ reaction, index }) => ({

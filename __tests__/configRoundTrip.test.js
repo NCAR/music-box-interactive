@@ -30,11 +30,11 @@ const EXAMPLES = [
   ['ts1', ts1Config],
 ]
 
-const buildInputs = (config) => {
+const buildInputs = async (config) => {
   const options = config['box model options'] || {}
   return {
     mechanism: {
-      config: { mechanism: toReduxConfig(config).mechanism },
+      config: { mechanism: (await toReduxConfig(config)).mechanism },
       currentExample: { name: config.mechanism?.name || 'example' },
     },
     conditions: {
@@ -61,7 +61,7 @@ const uploadAndLoad = async (downloadedConfig) => {
       simulation: simulationReducer,
     },
   })
-  loadMusicBoxConfig(parsed, {
+  await loadMusicBoxConfig(parsed, {
     dispatch: store.dispatch,
     navigate: vi.fn(),
     meta: { id: 'uploaded', name: 'Uploaded' },
@@ -73,7 +73,7 @@ describe('download -> upload round trip', () => {
   it.each(EXAMPLES)(
     '%s: re-uploading a downloaded config solves to the same results',
     async (_name, config) => {
-      const { mechanism, conditions } = buildInputs(config)
+      const { mechanism, conditions } = await buildInputs(config)
       const downloaded = buildDownloadableConfig({ mechanism, conditions })
 
       const store = await uploadAndLoad(downloaded)
@@ -99,7 +99,7 @@ describe('download -> upload round trip', () => {
   )
 
   it('preserves declared species properties through a full round trip', async () => {
-    const { mechanism, conditions } = buildInputs(chapmanConfig)
+    const { mechanism, conditions } = await buildInputs(chapmanConfig)
     const downloaded = buildDownloadableConfig({ mechanism, conditions })
 
     const store = await uploadAndLoad(downloaded)
@@ -110,7 +110,7 @@ describe('download -> upload round trip', () => {
   })
 
   it('preserves box model options and conditions through a full round trip', async () => {
-    const { mechanism, conditions } = buildInputs(chapmanConfig)
+    const { mechanism, conditions } = await buildInputs(chapmanConfig)
     const downloaded = buildDownloadableConfig({ mechanism, conditions })
 
     const store = await uploadAndLoad(downloaded)
@@ -123,7 +123,7 @@ describe('download -> upload round trip', () => {
   })
 
   it('round trips a config downloaded with edited species/reactions', async () => {
-    const { mechanism, conditions } = buildInputs(chapmanConfig)
+    const { mechanism, conditions } = await buildInputs(chapmanConfig)
     const o3 = mechanism.config.mechanism.species.find((s) => s.name === 'O3')
     o3['absolute tolerance'] = 1e-15
     const downloaded = buildDownloadableConfig({ mechanism, conditions })

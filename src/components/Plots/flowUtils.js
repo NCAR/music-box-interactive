@@ -1,8 +1,8 @@
-import { canonicalReactionType } from '../Mechanism/reactions/reactionRegistry'
 import {
   buildTracerConcentrationKeys,
   isRealSpeciesName,
 } from '../../services/simulation/local/tracer'
+import { getReactionReactants } from '../../services/simulation/local/mechanism'
 
 export const isRealSpecies = isRealSpeciesName
 
@@ -26,12 +26,9 @@ export const getThirdBodyNames = (species) =>
 // `nitrate products`. Reading only `reactants`/`products` makes SURFACE reactions
 // invisible and BRANCHED reactions appear to consume without producing.
 const componentList = (components) =>
-  (Array.isArray(components) ? components : [components])
-    .filter(Boolean)
-    .map((entry) => (typeof entry === 'string' ? { name: entry } : entry))
+  (Array.isArray(components) ? components : [components]).filter(Boolean)
 
-export const reactionReactants = (reaction) =>
-  componentList(reaction?.reactants ?? reaction?.['gas-phase species'] ?? [])
+export const reactionReactants = (reaction) => componentList(getReactionReactants(reaction))
 
 // Both branches of a branched reaction are produced so the diagram shows both.
 export const reactionProducts = (reaction) => [
@@ -42,7 +39,7 @@ export const reactionProducts = (reaction) => [
 
 // The type filter narrows what the species selection already allows. An empty type means all.
 export const matchesReactionType = (reaction, reactionType) =>
-  !reactionType || canonicalReactionType(reaction?.type) === reactionType
+  !reactionType || reaction?.type === reactionType
 
 export const isReactionVisible = (reaction, selectedSpecies, thirdBodyNames) => {
   const named = (components) =>
@@ -50,14 +47,10 @@ export const isReactionVisible = (reaction, selectedSpecies, thirdBodyNames) => 
       .map((entry) => entry.name)
       .filter((name) => isRealSpecies(name) && !thirdBodyNames.has(name))
 
-  const involved = [
-    ...named(reactionReactants(reaction)),
-    ...named(reactionProducts(reaction)),
-  ]
+  const involved = [...named(reactionReactants(reaction)), ...named(reactionProducts(reaction))]
 
   return involved.some((name) => selectedSpecies.includes(name))
 }
-
 
 /**
  * Edges one reaction contributes, with stoichiometric coefficients applied.
@@ -197,4 +190,3 @@ export function computeReactionSeries(trackedReactions, results, timeStart, time
 
   return points
 }
-

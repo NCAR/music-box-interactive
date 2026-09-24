@@ -6,10 +6,7 @@ import { getResultSpeciesNames } from './speciesFormat'
 import { Dropdown } from '../ui/dropdown'
 import { RangeBoundInput } from './RangeBoundInput'
 import { TIME_RANGE_UNITS } from './timeRangeUnits'
-import {
-  canonicalReactionType,
-  getReactionTypeLabel,
-} from '../Mechanism/reactions/reactionRegistry'
+import { getReactionTypeLabel } from '../Mechanism/reactions/reactionRegistry'
 
 // Show at most this many species as chips before collapsing the rest into a "+N others" menu
 const SPECIES_CHIP_VISIBLE = 25
@@ -59,7 +56,7 @@ export function FlowPanel({
   const reactionTypeOptions = useMemo(() => {
     const counts = new Map()
     for (const reaction of reactions ?? []) {
-      const type = canonicalReactionType(reaction.type || 'UNKNOWN')
+      const type = reaction.type || 'UNKNOWN'
       counts.set(type, (counts.get(type) ?? 0) + 1)
     }
 
@@ -67,7 +64,10 @@ export function FlowPanel({
       { value: '', label: `All reactions (${reactions?.length ?? 0})` },
       ...[...counts.keys()]
         .sort()
-        .map((type) => ({ value: type, label: `${getReactionTypeLabel(type)} (${counts.get(type)})` })),
+        .map((type) => ({
+          value: type,
+          label: `${getReactionTypeLabel(type)} (${counts.get(type)})`,
+        })),
     ]
   }, [reactions])
 
@@ -122,7 +122,8 @@ export function FlowPanel({
   useClickOutside(arrowScalingMenuRef, closeArrowScalingMenu, arrowScalingMenuOpen)
   useClickOutside(timeRangeUnitMenuRef, closeTimeRangeUnitMenu, timeRangeUnitMenuOpen)
 
-  const timeRangeUnit = TIME_RANGE_UNITS.find((u) => u.id === timeRangeUnitId) ?? TIME_RANGE_UNITS[0]
+  const timeRangeUnit =
+    TIME_RANGE_UNITS.find((u) => u.id === timeRangeUnitId) ?? TIME_RANGE_UNITS[0]
 
   const valueDisplayOption =
     VALUE_DISPLAY_OPTIONS.find((o) => o.id === valueDisplay) ?? VALUE_DISPLAY_OPTIONS[0]
@@ -176,72 +177,72 @@ export function FlowPanel({
       {/* Row 1: Value Display | Arrow Scaling | Time Range | Flux */}
       <div className="flex flex-wrap items-center justify-between gap-3 w-full text-sm font-semibold">
         <div className="relative" ref={valueDisplayMenuRef}>
-            <button
-              type="button"
-              onClick={() => setValueDisplayMenuOpen((open) => !open)}
-              className="flex items-center justify-between gap-1 w-fit h-8 bg-blue-100/50 text-ink border border-border rounded-lg text-sm font-bold px-2.5 whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-action transition-colors duration-200"
-            >
-              <span className="pr-2">{valueDisplayOption.label}</span>
-              <ChevronDown className="w-3.5 h-3.5 flex-shrink-0" />
-            </button>
+          <button
+            type="button"
+            onClick={() => setValueDisplayMenuOpen((open) => !open)}
+            className="flex items-center justify-between gap-1 w-fit h-8 bg-blue-100/50 text-ink border border-border rounded-lg text-sm font-bold px-2.5 whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-action transition-colors duration-200"
+          >
+            <span className="pr-2">{valueDisplayOption.label}</span>
+            <ChevronDown className="w-3.5 h-3.5 flex-shrink-0" />
+          </button>
 
-            {valueDisplayMenuOpen && (
-              <div className="absolute z-10 mt-1 min-w-[12rem] bg-white border border-border rounded-lg shadow-lg py-1">
-                {VALUE_DISPLAY_OPTIONS.map((option) => (
-                  <button
-                    key={option.id}
-                    type="button"
-                    onClick={() => {
-                      setValueDisplay(option.id)
-                      setValueDisplayMenuOpen(false)
-                    }}
-                    className="w-full flex items-center gap-2 text-left text-sm font-bold px-3 py-1.5 text-ink hover:bg-surface-hover whitespace-nowrap"
-                  >
-                    <Check
-                      className={`w-3.5 h-3.5 flex-shrink-0 ${
-                        valueDisplay === option.id ? 'opacity-100' : 'opacity-0'
-                      }`}
-                    />
-                    {option.label}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
+          {valueDisplayMenuOpen && (
+            <div className="absolute z-10 mt-1 min-w-[12rem] bg-white border border-border rounded-lg shadow-lg py-1">
+              {VALUE_DISPLAY_OPTIONS.map((option) => (
+                <button
+                  key={option.id}
+                  type="button"
+                  onClick={() => {
+                    setValueDisplay(option.id)
+                    setValueDisplayMenuOpen(false)
+                  }}
+                  className="w-full flex items-center gap-2 text-left text-sm font-bold px-3 py-1.5 text-ink hover:bg-surface-hover whitespace-nowrap"
+                >
+                  <Check
+                    className={`w-3.5 h-3.5 flex-shrink-0 ${
+                      valueDisplay === option.id ? 'opacity-100' : 'opacity-0'
+                    }`}
+                  />
+                  {option.label}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
 
-          <div className="relative" ref={arrowScalingMenuRef}>
-            <button
-              type="button"
-              onClick={() => setArrowScalingMenuOpen((open) => !open)}
-              className="flex items-center justify-between gap-1 w-32 h-8 bg-blue-100/50 text-ink border border-border rounded-lg text-sm font-bold px-2.5 focus:outline-none focus:ring-2 focus:ring-action transition-colors duration-200"
-            >
-              <span className="pr-2">{arrowScalingOption.label}</span>
-              <ChevronDown className="w-3.5 h-3.5 flex-shrink-0" />
-            </button>
+        <div className="relative" ref={arrowScalingMenuRef}>
+          <button
+            type="button"
+            onClick={() => setArrowScalingMenuOpen((open) => !open)}
+            className="flex items-center justify-between gap-1 w-32 h-8 bg-blue-100/50 text-ink border border-border rounded-lg text-sm font-bold px-2.5 focus:outline-none focus:ring-2 focus:ring-action transition-colors duration-200"
+          >
+            <span className="pr-2">{arrowScalingOption.label}</span>
+            <ChevronDown className="w-3.5 h-3.5 flex-shrink-0" />
+          </button>
 
-            {arrowScalingMenuOpen && (
-              <div className="absolute z-10 mt-1 min-w-[9rem] bg-white border border-border rounded-lg shadow-lg py-1">
-                {ARROW_SCALING_OPTIONS.map((option) => (
-                  <button
-                    key={option.id}
-                    type="button"
-                    onClick={() => {
-                      setArrowScaling(option.id)
-                      setArrowScalingMenuOpen(false)
-                    }}
-                    className="w-full flex items-center gap-2 text-left text-sm font-bold px-3 py-1.5 text-ink hover:bg-surface-hover"
-                  >
-                    <Check
-                      className={`w-3.5 h-3.5 flex-shrink-0 ${
-                        arrowScaling === option.id ? 'opacity-100' : 'opacity-0'
-                      }`}
-                    />
-                    {option.label}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
+          {arrowScalingMenuOpen && (
+            <div className="absolute z-10 mt-1 min-w-[9rem] bg-white border border-border rounded-lg shadow-lg py-1">
+              {ARROW_SCALING_OPTIONS.map((option) => (
+                <button
+                  key={option.id}
+                  type="button"
+                  onClick={() => {
+                    setArrowScaling(option.id)
+                    setArrowScalingMenuOpen(false)
+                  }}
+                  className="w-full flex items-center gap-2 text-left text-sm font-bold px-3 py-1.5 text-ink hover:bg-surface-hover"
+                >
+                  <Check
+                    className={`w-3.5 h-3.5 flex-shrink-0 ${
+                      arrowScaling === option.id ? 'opacity-100' : 'opacity-0'
+                    }`}
+                  />
+                  {option.label}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
 
         {/* Time Range */}
         <div className="flex items-center gap-2">
@@ -335,71 +336,71 @@ export function FlowPanel({
 
       {/* Row 2: Reaction type | Select All / Deselect All + Search */}
       <div className="w-full flex items-center gap-3">
-      <Dropdown
-        value={activeReactionType}
-        onChange={setReactionType}
-        options={reactionTypeOptions}
-        className="h-8 w-44 flex-shrink-0 border border-border bg-blue-100/50 px-2.5 text-sm font-bold text-ink"
-      />
-
-      <div className="flex items-center border border-border rounded-lg divide-x divide-gray-300 bg-white">
-        <div className="relative" ref={selectAllMenuRef}>
-          <button
-            type="button"
-            onClick={() => setSelectAllMenuOpen((open) => !open)}
-            className="flex items-center justify-between gap-1 w-32 h-8 bg-blue-100/50 text-ink rounded-l-lg text-sm font-bold px-2.5 focus:outline-none focus:ring-2 focus:ring-action transition-colors duration-200"
-          >
-            {selectAllStatusLabel}
-            <ChevronDown className="w-3.5 h-3.5 flex-shrink-0" />
-          </button>
-
-          {selectAllMenuOpen && (
-            <div className="absolute z-10 mt-1 min-w-[9rem] bg-white border border-border rounded-lg shadow-lg py-1">
-              <button
-                type="button"
-                onClick={() => {
-                  setSelectedSpecies(filteredSpecies)
-                  setSelectAllMenuOpen(false)
-                }}
-                className="w-full flex items-center gap-2 text-left text-sm font-bold px-3 py-1.5 text-ink hover:bg-surface-hover"
-              >
-                <Check
-                  className={`w-3.5 h-3.5 flex-shrink-0 ${
-                    allFilteredSelected ? 'opacity-100' : 'opacity-0'
-                  }`}
-                />
-                Select all
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setSelectedSpecies([])
-                  setSelectAllMenuOpen(false)
-                }}
-                className="w-full flex items-center gap-2 text-left text-sm font-bold px-3 py-1.5 text-ink hover:bg-surface-hover"
-              >
-                <Check
-                  className={`w-3.5 h-3.5 flex-shrink-0 ${
-                    noneSelected ? 'opacity-100' : 'opacity-0'
-                  }`}
-                />
-                Deselect all
-              </button>
-            </div>
-          )}
-        </div>
-
-        <input
-          type="text"
-          value={speciesSearch}
-          onChange={(e) => {
-            setSpeciesSearch(e.target.value)
-            setSpeciesOverflowOpen(false)
-          }}
-          placeholder="Search species"
-          className="w-[30rem] h-8 px-3 bg-white text-ink placeholder:text-muted rounded-r-lg text-base font-mono focus:outline-none focus:relative focus:z-10 focus:ring-2 focus:ring-action"
+        <Dropdown
+          value={activeReactionType}
+          onChange={setReactionType}
+          options={reactionTypeOptions}
+          className="h-8 w-44 flex-shrink-0 border border-border bg-blue-100/50 px-2.5 text-sm font-bold text-ink"
         />
-      </div>
+
+        <div className="flex items-center border border-border rounded-lg divide-x divide-gray-300 bg-white">
+          <div className="relative" ref={selectAllMenuRef}>
+            <button
+              type="button"
+              onClick={() => setSelectAllMenuOpen((open) => !open)}
+              className="flex items-center justify-between gap-1 w-32 h-8 bg-blue-100/50 text-ink rounded-l-lg text-sm font-bold px-2.5 focus:outline-none focus:ring-2 focus:ring-action transition-colors duration-200"
+            >
+              {selectAllStatusLabel}
+              <ChevronDown className="w-3.5 h-3.5 flex-shrink-0" />
+            </button>
+
+            {selectAllMenuOpen && (
+              <div className="absolute z-10 mt-1 min-w-[9rem] bg-white border border-border rounded-lg shadow-lg py-1">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedSpecies(filteredSpecies)
+                    setSelectAllMenuOpen(false)
+                  }}
+                  className="w-full flex items-center gap-2 text-left text-sm font-bold px-3 py-1.5 text-ink hover:bg-surface-hover"
+                >
+                  <Check
+                    className={`w-3.5 h-3.5 flex-shrink-0 ${
+                      allFilteredSelected ? 'opacity-100' : 'opacity-0'
+                    }`}
+                  />
+                  Select all
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedSpecies([])
+                    setSelectAllMenuOpen(false)
+                  }}
+                  className="w-full flex items-center gap-2 text-left text-sm font-bold px-3 py-1.5 text-ink hover:bg-surface-hover"
+                >
+                  <Check
+                    className={`w-3.5 h-3.5 flex-shrink-0 ${
+                      noneSelected ? 'opacity-100' : 'opacity-0'
+                    }`}
+                  />
+                  Deselect all
+                </button>
+              </div>
+            )}
+          </div>
+
+          <input
+            type="text"
+            value={speciesSearch}
+            onChange={(e) => {
+              setSpeciesSearch(e.target.value)
+              setSpeciesOverflowOpen(false)
+            }}
+            placeholder="Search species"
+            className="w-[30rem] h-8 px-3 bg-white text-ink placeholder:text-muted rounded-r-lg text-base font-mono focus:outline-none focus:relative focus:z-10 focus:ring-2 focus:ring-action"
+          />
+        </div>
       </div>
 
       {/* Row 3: Species chips */}

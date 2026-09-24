@@ -1,5 +1,5 @@
 import { v4 as uuidv4 } from 'uuid'
-import { parseBoxModelOptions } from '@ncar/music-box'
+import { initModule, mechanismConfiguration, parseBoxModelOptions } from '@ncar/music-box'
 import {
   resetMechanism,
   setConfig,
@@ -16,13 +16,20 @@ import {
   setSourceFile,
 } from '../../redux/slices/conditionsSlice'
 import { resetSimulation } from '../../redux/slices/simulationSlice'
-import { normalizeReactionComponents } from '../simulation/local/mechanism'
 import { PHASE_PROPERTY_KEYS, pickDeclared } from '../simulation/local/speciesProperties'
 
-// Converts a music-box config into the shape Redux stores: species carry their phase and
-// phase-only properties, and reaction components use the canonical `name` key.
-export function toReduxConfig(config) {
-  const mechanismConfig = config?.mechanism || {}
+// MUSICA's parser validates the mechanism, fills in default values, and gives back the canonical
+// v1 format. It throws an Error with the parser messages when the mechanism is not valid.
+const parseMechanism = async (mechanism) => {
+  await initModule()
+  return mechanismConfiguration.parseMechanismFromString(JSON.stringify(mechanism))
+}
+
+// Converts a music-box config into the shape Redux stores. MUSICA's parser validates the
+// mechanism and gives back the canonical v1 format. Species then carry their phase and
+// phase-only properties.
+export async function toReduxConfig(config) {
+  const mechanismConfig = config?.mechanism ? await parseMechanism(config.mechanism) : {}
 
   // Diffusion coefficient and density belong to PhaseSpecies, so collect them by name and merge
   // them onto the matching species entry -- the editor shows them on the species editor, different from the configuration format
@@ -60,26 +67,28 @@ export function toReduxConfig(config) {
     })
   )
 
-  // Reactions get their components normalized to the canonical `name` key, and a UI-only id
-  // for React list keys and updateReaction/removeReaction targeting.
+  // Reactions get a UI-only id for React list keys and updateReaction/removeReaction targeting.
   // No name is generated here for an undeclared reaction -- FlowGraph/ReactionEditor compute a
   // display label on demand (buildGeneratedReactionName) instead of one being persisted, so an
   // undeclared name never leaks into a downloaded config.
   const reactions = (Array.isArray(mechanismConfig.reactions) ? mechanismConfig.reactions : []).map(
-    (reaction) => ({ ...normalizeReactionComponents(reaction), id: uuidv4() })
+    (reaction) => ({ ...reaction, id: uuidv4() })
   )
 
   return { ...config, mechanism: { ...mechanismConfig, species, reactions } }
 }
 
 // Loads a music-box config into Redux. conditions.data must already hold every
-// CSV-derived block inline; callers resolve filepaths before calling this
-export function loadMusicBoxConfig(config, { dispatch, navigate, meta = {} } = {}) {
+// CSV-derived block inline; callers resolve filepaths before calling this. Rejects when the
+// mechanism is not valid, before any Redux state changes.
+export async function loadMusicBoxConfig(config, { dispatch, navigate, meta = {} } = {}) {
+  const reduxConfig = await toReduxConfig(config)
+
   dispatch(resetMechanism())
   dispatch(resetConditions())
   dispatch(resetSimulation())
 
-  dispatch(setConfig(toReduxConfig(config)))
+  dispatch(setConfig(reduxConfig))
 
   // parseBoxModelOptions handles every time unit the solver accepts.
   const { chemTimeStep, outputTimeStep, simulationLength } = parseBoxModelOptions(config)

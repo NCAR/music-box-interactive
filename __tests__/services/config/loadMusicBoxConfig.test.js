@@ -31,10 +31,9 @@ const baseConfig = (overrides = {}) => ({
     name: 'Test Mechanism',
     version: '1.0.0',
     species: [
-      { name: 'A', type: 'CHEM_SPEC' },
+      { name: 'A' },
       {
         name: 'B',
-        type: 'CHEM_SPEC',
         'absolute tolerance': 1e-12,
         'is third body': true,
       },
@@ -49,23 +48,29 @@ const baseConfig = (overrides = {}) => ({
       },
     ],
     reactions: [
-      { type: 'ARRHENIUS', name: 'r1', reactants: [{ name: 'A' }], products: [] },
-      { type: 'ARRHENIUS', reactants: [{ name: 'B' }], products: [] },
+      {
+        type: 'ARRHENIUS',
+        name: 'r1',
+        'gas phase': 'gas',
+        reactants: [{ name: 'A' }],
+        products: [],
+      },
+      { type: 'ARRHENIUS', 'gas phase': 'gas', reactants: [{ name: 'B' }], products: [] },
     ],
   },
   ...overrides,
 })
 
-const load = (config, meta = {}) => {
+const load = async (config, meta = {}) => {
   const store = makeStore()
   const navigate = vi.fn()
-  loadMusicBoxConfig(config, { dispatch: store.dispatch, navigate, meta })
+  await loadMusicBoxConfig(config, { dispatch: store.dispatch, navigate, meta })
   return { store, navigate }
 }
 
 describe('loadMusicBoxConfig', () => {
-  it('loads species with their declared properties', () => {
-    const { store } = load(baseConfig())
+  it('loads species with their declared properties', async () => {
+    const { store } = await load(baseConfig())
     const species = store.getState().mechanism.config.mechanism.species
 
     expect(species).toHaveLength(2)
@@ -76,8 +81,8 @@ describe('loadMusicBoxConfig', () => {
     expect(b['is third body']).toBe(true)
   })
 
-  it('merges phase-only properties (diffusion coefficient, density) onto the matching species', () => {
-    const { store } = load(baseConfig())
+  it('merges phase-only properties (diffusion coefficient, density) onto the matching species', async () => {
+    const { store } = await load(baseConfig())
     const species = store.getState().mechanism.config.mechanism.species
     const b = species.find((s) => s.name === 'B')
 
@@ -88,7 +93,7 @@ describe('loadMusicBoxConfig', () => {
     expect(a['diffusion coefficient [m2 s-1]']).toBeUndefined()
   })
 
-  it('reads a species phase from the phase that actually declares it, not a hardcoded default', () => {
+  it('reads a species phase from the phase that actually declares it, not a hardcoded default', async () => {
     const config = baseConfig({
       mechanism: {
         ...baseConfig().mechanism,
@@ -96,36 +101,38 @@ describe('loadMusicBoxConfig', () => {
           { name: 'aqueous', species: [{ name: 'A' }] },
           { name: 'gas', species: [{ name: 'B' }] },
         ],
+        reactions: [],
       },
     })
-    const { store } = load(config)
+    const { store } = await load(config)
     const species = store.getState().mechanism.config.mechanism.species
 
     expect(species.find((s) => s.name === 'A').phase).toBe('aqueous')
     expect(species.find((s) => s.name === 'B').phase).toBe('gas')
   })
 
-  it('defaults an undeclared-phase species to "gas", matching buildPhases() synthesis', () => {
+  it('defaults an undeclared-phase species to "gas", matching buildPhases() synthesis', async () => {
     const config = baseConfig({
-      mechanism: { ...baseConfig().mechanism, phases: [] },
+      mechanism: { ...baseConfig().mechanism, phases: [], reactions: [] },
     })
-    const { store } = load(config)
+    const { store } = await load(config)
     const species = store.getState().mechanism.config.mechanism.species
 
     expect(species.every((s) => s.phase === 'gas')).toBe(true)
   })
 
-  it('keeps a declared reaction name, and leaves an undeclared one absent', () => {
-    const { store } = load(baseConfig())
+  it('keeps a declared reaction name, and leaves an undeclared one empty', async () => {
+    const { store } = await load(baseConfig())
     const reactions = store.getState().mechanism.config.mechanism.reactions
 
     expect(reactions[0].name).toBe('r1')
-    expect(reactions[1].name).toBeUndefined()
+    // MUSICA's parser gives an undeclared reaction name as an empty string.
+    expect(reactions[1].name).toBe('')
     expect(reactions.every((r) => typeof r.id === 'string' && r.id.length > 0)).toBe(true)
   })
 
-  it('converts box model options into seconds in the conditions slice', () => {
-    const { store } = load(baseConfig())
+  it('converts box model options into seconds in the conditions slice', async () => {
+    const { store } = await load(baseConfig())
     const { basic } = store.getState().conditions
 
     expect(basic.timeStep).toBe(2)
@@ -133,9 +140,9 @@ describe('loadMusicBoxConfig', () => {
     expect(basic.duration).toBe(100)
   })
 
-  it('stores the raw conditions and the full uploaded config', () => {
+  it('stores the raw conditions and the full uploaded config', async () => {
     const config = baseConfig()
-    const { store } = load(config)
+    const { store } = await load(config)
     const storedConfig = store.getState().mechanism.config
 
     expect(store.getState().conditions.conditions).toEqual(config.conditions)
@@ -151,17 +158,22 @@ describe('loadMusicBoxConfig', () => {
     )
   })
 
-  it('sets the source file when the config declares one, and clears it when it does not', () => {
-    const withSource = load(baseConfig({ '__source file': 'my_config.json' }))
+  it('sets the source file when the config declares one, and clears it when it does not', async () => {
+    const withSource = await load(baseConfig({ '__source file': 'my_config.json' }))
     expect(withSource.store.getState().conditions.source_file).toBe('my_config.json')
 
-    const withoutSource = load(baseConfig())
+    const withoutSource = await load(baseConfig())
     expect(withoutSource.store.getState().conditions.source_file).toBeNull()
   })
 
-  it('records the passed-in example metadata and marks the example as not yet loaded', () => {
-    const meta = { id: 'chapman', name: 'Chapman', description: 'desc', mechanism_name: 'Chapman Mechanism' }
-    const { store } = load(baseConfig(), meta)
+  it('records the passed-in example metadata and marks the example as not yet loaded', async () => {
+    const meta = {
+      id: 'chapman',
+      name: 'Chapman',
+      description: 'desc',
+      mechanism_name: 'Chapman Mechanism',
+    }
+    const { store } = await load(baseConfig(), meta)
     const state = store.getState()
 
     expect(state.mechanism.currentExample).toEqual(meta)
@@ -169,25 +181,31 @@ describe('loadMusicBoxConfig', () => {
     expect(state.conditions.exampleLoaded).toBe(false)
   })
 
-  it('falls back to the example id, then "custom", when no mechanism_name is given', () => {
-    expect(load(baseConfig(), { id: 'uploaded' }).store.getState().mechanism.selectedMechanism).toBe(
-      'uploaded'
+  it('falls back to the example id, then "custom", when no mechanism_name is given', async () => {
+    expect(
+      (await load(baseConfig(), { id: 'uploaded' })).store.getState().mechanism.selectedMechanism
+    ).toBe('uploaded')
+    expect((await load(baseConfig(), {})).store.getState().mechanism.selectedMechanism).toBe(
+      'custom'
     )
-    expect(load(baseConfig(), {}).store.getState().mechanism.selectedMechanism).toBe('custom')
   })
 
-  it('navigates to /mechanism after loading', () => {
-    const { navigate } = load(baseConfig())
+  it('navigates to /mechanism after loading', async () => {
+    const { navigate } = await load(baseConfig())
     expect(navigate).toHaveBeenCalledWith('/mechanism')
   })
 
-  it('replaces stale state instead of appending to it', () => {
+  it('replaces stale state instead of appending to it', async () => {
     const store = makeStore()
     store.dispatch(addSpecies({ name: 'Stale', phase: 'Gas' }))
     store.dispatch(addReaction({ type: 'ARRHENIUS', name: 'stale-reaction', id: 'stale-id' }))
     store.dispatch(setStatus('succeeded'))
 
-    loadMusicBoxConfig(baseConfig(), { dispatch: store.dispatch, navigate: vi.fn(), meta: {} })
+    await loadMusicBoxConfig(baseConfig(), {
+      dispatch: store.dispatch,
+      navigate: vi.fn(),
+      meta: {},
+    })
     const state = store.getState()
 
     expect(state.mechanism.config.mechanism.species.map((s) => s.name)).toEqual(['A', 'B'])
@@ -198,24 +216,55 @@ describe('loadMusicBoxConfig', () => {
   })
 })
 
-describe('toReduxConfig', () => {
-  it('rewrites legacy "species name" and bare-string components to the canonical name key', () => {
-    const config = {
+describe('loadMusicBoxConfig with an invalid mechanism', () => {
+  it('rejects with the parser message and leaves the current state unchanged', async () => {
+    const store = makeStore()
+    store.dispatch(addSpecies({ name: 'Existing', phase: 'gas' }))
+    const invalid = baseConfig({
       mechanism: {
-        species: [{ name: 'A' }, { name: 'B' }, { name: 'C' }],
+        ...baseConfig().mechanism,
         reactions: [
           {
             type: 'ARRHENIUS',
+            'gas phase': 'gas',
+            reactants: [{ name: 'UNDECLARED' }],
+            products: [],
+          },
+        ],
+      },
+    })
+
+    await expect(
+      loadMusicBoxConfig(invalid, { dispatch: store.dispatch, navigate: vi.fn(), meta: {} })
+    ).rejects.toThrow(/UNDECLARED/)
+    expect(store.getState().mechanism.config.mechanism.species.map((s) => s.name)).toEqual([
+      'Existing',
+    ])
+  })
+})
+
+describe('toReduxConfig', () => {
+  it('parses the mechanism, so legacy "species name" components use the canonical name key', async () => {
+    const config = {
+      mechanism: {
+        name: 'Test Mechanism',
+        version: '1.0.0',
+        species: [{ name: 'A' }, { name: 'C' }],
+        phases: [{ name: 'gas', species: [{ name: 'A' }, { name: 'C' }] }],
+        reactions: [
+          {
+            type: 'ARRHENIUS',
+            'gas phase': 'gas',
             reactants: [{ 'species name': 'A', coefficient: 2, __note: 'kept' }],
-            products: ['B', { name: 'C' }],
+            products: [{ name: 'C' }],
           },
         ],
       },
     }
 
-    const [reaction] = toReduxConfig(config).mechanism.reactions
+    const [reaction] = (await toReduxConfig(config)).mechanism.reactions
 
     expect(reaction.reactants).toEqual([{ name: 'A', coefficient: 2, __note: 'kept' }])
-    expect(reaction.products).toEqual([{ name: 'B' }, { name: 'C' }])
+    expect(reaction.products).toEqual([{ name: 'C', coefficient: 1 }])
   })
 })

@@ -57,7 +57,7 @@ describe('RunSimulationButton (Analytical example)', () => {
       csv: { initial_conditions: analyticalInitialConditionsCsv },
       mechanism: withInlineConditionData(analyticalConfig, [analyticalInitialConditionsCsv]),
     };
-    loadMusicBoxConfig(analyticalExample.mechanism, {
+    await loadMusicBoxConfig(analyticalExample.mechanism, {
       dispatch: store.dispatch,
       navigate: vi.fn(),
       meta: {

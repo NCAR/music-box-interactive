@@ -12,7 +12,6 @@ import {
   parseReactionString,
 } from './reactions/reactionUtils'
 import {
-  canonicalReactionType,
   getReactionDefinition,
   getReactionParameters,
   getReactionTypeLabel,
@@ -20,6 +19,7 @@ import {
 } from './reactions/reactionRegistry'
 import {
   REACTION_COMPONENT_KEYS,
+  getReactionReactants,
   getReactionSpeciesNames,
 } from '../../services/simulation/local/mechanism'
 import {
@@ -39,10 +39,6 @@ const formatReactionComponents = (components) => {
 
   return components
     .map((component) => {
-      if (typeof component === 'string') {
-        return component
-      }
-
       const name = component.name || ''
       const coefficient = Number(component.coefficient)
       const coeffPrefix = Number.isFinite(coefficient) && coefficient > 1 ? coefficient : ''
@@ -53,7 +49,7 @@ const formatReactionComponents = (components) => {
 }
 
 const formatReactionDisplay = (reaction) => {
-  const reactants = reaction.reactants || reaction['gas-phase species'] || []
+  const reactants = getReactionReactants(reaction)
   const products =
     reaction.products || reaction['gas-phase products'] || reaction['alkoxy products'] || []
 
@@ -278,7 +274,7 @@ export function ReactionEditor() {
   // reaction they appear in. Preserve mechanism order, and group reactions by canonical type so
   // registry and solver spellings map to the same option.
   const typeCounts = reactions.reduce((counts, reaction) => {
-    const type = canonicalReactionType(reaction.type || 'UNKNOWN')
+    const type = reaction.type || 'UNKNOWN'
     counts[type] = (counts[type] || 0) + 1
     return counts
   }, {})
@@ -291,7 +287,7 @@ export function ReactionEditor() {
   // Filters combine: select a type to narrow the list, then search by species within it.
   const reactionQuery = reactionSearch.trim().toLowerCase()
   const filteredReactions = reactions.filter((reaction) => {
-    if (activeType && canonicalReactionType(reaction.type) !== activeType) {
+    if (activeType && reaction.type !== activeType) {
       return false
     }
     if (!reactionQuery) {
@@ -458,8 +454,11 @@ export function ReactionEditor() {
                   options={reactionRegistry.map((type) => ({
                     value: type.type,
                     label: type.label,
-                    disabled: type.type === 'LAMBDA_RATE',
-                    title: type.type === 'LAMBDA_RATE' ? 'Lambda rate is unavailable' : undefined,
+                    disabled: type.type === 'LAMBDA_RATE_CONSTANT',
+                    title:
+                      type.type === 'LAMBDA_RATE_CONSTANT'
+                        ? 'Lambda rate is unavailable'
+                        : undefined,
                   }))}
                 />
               </div>
