@@ -15,19 +15,13 @@ export function useRunSimulation() {
   const currentExample = useSelector((state) => state.mechanism.currentExample)
   const conditions = useSelector((state) => state.conditions)
 
-  const sourceMechanism = mechanismData.mechanism?.mechanism || {}
-  const payloadSpeciesCount =
-    mechanismData.species.length > 0
-      ? mechanismData.species.length
-      : Array.isArray(sourceMechanism.species)
-        ? sourceMechanism.species.length
-        : 0
-  const payloadReactionCount =
-    mechanismData.reactions.length > 0
-      ? mechanismData.reactions.length
-      : Array.isArray(sourceMechanism.reactions)
-        ? sourceMechanism.reactions.length
-        : 0
+  const sourceMechanism = mechanismData.config?.mechanism || {}
+  const payloadSpeciesCount = Array.isArray(sourceMechanism.species)
+    ? sourceMechanism.species.length
+    : 0
+  const payloadReactionCount = Array.isArray(sourceMechanism.reactions)
+    ? sourceMechanism.reactions.length
+    : 0
   const hasValidMechanism = payloadSpeciesCount > 0 && payloadReactionCount > 0
 
   const isPredefinedMechanism = mechanism && mechanism !== 'custom'

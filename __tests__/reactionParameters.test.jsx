@@ -64,14 +64,14 @@ const parameterList = () => {
 describe('reaction parameter display', () => {
   it('Arrhenius shows every parameter that was filled in', () => {
     expandReaction({ id: 'r1', type: 'ARRHENIUS', 'gas phase': 'gas',
-      reactants: [{ 'species name': 'O1D' }], products: [{ 'species name': 'O' }],
+      reactants: [{ name: 'O1D' }], products: [{ name: 'O' }],
       A: 1.2e-11, B: 7, C: 75, D: 300, E: 0.5 })
     expect(parameterList()).toEqual({ A: '1.20e-11', B: '7', C: '75', D: '300', E: '0.5' })
   })
   
   it('Troe shows its own parameter set', () => {
     expandReaction({ id: 'r2', type: 'TROE', 'gas phase': 'gas',
-      reactants: [{ 'species name': 'A' }], products: [{ 'species name': 'B' }],
+      reactants: [{ name: 'A' }], products: [{ name: 'B' }],
       k0_A: 1e-30, k0_B: 0, kinf_A: 2.5e-11, Fc: 0.6, N: 1 })
     // Troe declares eight parameters; the ones this reaction omits show blank, ready to fill in.
     expect(parameterList()).toEqual({
@@ -90,13 +90,13 @@ describe('reaction parameter display', () => {
   // filled in later -- otherwise an omitted parameter would be unreachable from the editor.
   it('lists the unset parameters of the type, blank', () => {
     expandReaction({ id: 'r3', type: 'ARRHENIUS', 'gas phase': 'gas',
-      reactants: [{ 'species name': 'A' }], products: [{ 'species name': 'B' }], A: 1.2 })
+      reactants: [{ name: 'A' }], products: [{ name: 'B' }], A: 1.2 })
     expect(parameterList()).toEqual({ A: '1.2', B: '', C: '', D: '', E: '' })
   })
   
   it('structural fields are not shown as parameters', () => {
     expandReaction({ id: 'r4', type: 'SURFACE', name: 'usr_NO2_aer', 'gas phase': 'gas',
-      'gas-phase species': 'NO2', 'gas-phase products': [{ 'species name': 'OH' }],
+      'gas-phase species': 'NO2', 'gas-phase products': [{ name: 'OH' }],
       'reaction probability': 8e-6, __description: 'x' })
     const p = parameterList()
     expect(p).toEqual({ 'reaction probability': '8.00e-6' })
@@ -106,7 +106,7 @@ describe('reaction parameter display', () => {
   
   it('non-numeric parameters render as-is', () => {
     expandReaction({ id: 'r5', type: 'LAMBDA_RATE_CONSTANT', 'gas phase': 'gas',
-      reactants: [{ 'species name': 'A' }], products: [{ 'species name': 'B' }],
+      reactants: [{ name: 'A' }], products: [{ name: 'B' }],
       'lambda function': '(T) => 1.2e-5 * T' })
     expect(parameterList()).toEqual({ 'lambda function': '(T) => 1.2e-5 * T' })
   })

@@ -1,75 +1,34 @@
+import { MusicBox } from '@ncar/music-box'
 import { buildSolverConditions } from './conditions'
-import {
-  buildPhases,
-  getMechanismLabel,
-  reconcileReactionNamesWithSource,
-  reconcileSpeciesWithSource,
-  serializeReaction,
-  serializeSpecies,
-  validateMechanismPayload,
-} from './mechanism'
-
-const toSolverSpecies = (species = []) => {
-  return species.map((sp) => {
-    if (!sp || typeof sp !== 'object') {
-      return sp
-    }
-
-    return {
-      ...sp,
-      'is third body': Object.prototype.hasOwnProperty.call(sp, 'is third body')
-        ? sp['is third body']
-        : false,
-    }
-  })
-}
+import { getMechanismLabel, serializeReaction } from './mechanism'
 
 export const buildLocalSimulationPayload = ({ mechanismData, conditions }) => {
-  const sourceMechanism = mechanismData.mechanism?.mechanism || {}
+  const sourceMechanism = mechanismData.config?.mechanism || {}
   const mechanismLabel = getMechanismLabel(mechanismData)
-  const sourceSpecies = Array.isArray(sourceMechanism.species) ? sourceMechanism.species : []
+  const species = sourceMechanism.species ?? []
+  const phases = sourceMechanism.phases ?? []
+  const reactions = (sourceMechanism.reactions ?? []).map(serializeReaction)
 
-  // serializeSpecies strips PhaseSpecies properties, so buildPhases uses the pre-serialization
-  // species to re-attach them to the phase entries.
-  const reconciledSpecies = reconcileSpeciesWithSource(
-    mechanismData.species.length > 0 ? mechanismData.species : sourceSpecies,
-    sourceSpecies
-  )
-  const species = reconciledSpecies.map(serializeSpecies)
-
-  const reactions =
-    mechanismData.reactions.length > 0
-      ? mechanismData.reactions.map(serializeReaction)
-      : (sourceMechanism.reactions || []).map(serializeReaction)
-
-  const reconciledReactions = reconcileReactionNamesWithSource(
+  const mechanism = {
+    name:
+      sourceMechanism.name ||
+      mechanismData.currentExample?.name ||
+      mechanismData.currentExample ||
+      'custom',
+    version: sourceMechanism.version || '1.0.0',
+    species,
+    phases,
     reactions,
-    sourceMechanism.reactions || []
-  )
-
-  const phases = buildPhases(sourceMechanism, reconciledSpecies)
-
-  const payload = {
-    'box model options': {
-      grid: 'box',
-      'chemistry time step [sec]': conditions.basic.timeStep,
-      'output time step [sec]': conditions.basic.outputFrequency,
-      'simulation length [sec]': conditions.basic.duration,
-    },
-    conditions: buildSolverConditions(conditions),
-    mechanism: {
-      ...sourceMechanism,
-      name:
-        sourceMechanism.name ||
-        mechanismData.currentExample?.name ||
-        mechanismData.currentExample ||
-        'custom',
-      reactions: reconciledReactions,
-      species: toSolverSpecies(species),
-      phases,
-      version: sourceMechanism.version || '1.0.0',
-    },
   }
+
+  const box = new MusicBox()
+  box.chemTimeStep = conditions.basic.timeStep
+  box.outputTimeStep = conditions.basic.outputFrequency
+  box.simulationLength = conditions.basic.duration
+  box.loadMechanism(mechanism)
+  box.loadConditions(buildSolverConditions(conditions))
+
+  const payload = box.toJson()
 
   if (
     !payload.mechanism ||
@@ -86,8 +45,6 @@ export const buildLocalSimulationPayload = ({ mechanismData, conditions }) => {
       'Invalid conditions payload: expected conditions.data[] with at least one block'
     )
   }
-
-  validateMechanismPayload(payload.mechanism)
 
   return {
     payload,

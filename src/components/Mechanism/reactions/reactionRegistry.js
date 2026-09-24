@@ -72,7 +72,7 @@ export const reactionRegistry = [
     component: TroeReactionForm,
   },
   {
-    type: 'BRANCHED',
+    type: 'BRANCHED_NO_RO2',
     parameters: [
       { key: 'X', placeholder: '1.0' },
       { key: 'Y', placeholder: '0.0' },
@@ -93,7 +93,7 @@ export const reactionRegistry = [
     component: TunnelingReactionForm,
   },
   {
-    type: 'SURFACE_REACTION',
+    type: 'SURFACE',
     parameters: [{ key: 'reaction probability', placeholder: '1.0' }],
     label: 'Surface',
     component: SurfaceReactionForm,
@@ -105,7 +105,7 @@ export const reactionRegistry = [
     component: UserDefinedReactionForm,
   },
   {
-    type: 'LAMBDA_RATE',
+    type: 'LAMBDA_RATE_CONSTANT',
     parameters: [{ key: 'lambda function' }],
     label: 'Lambda rate',
     component: LambdaRateReactionForm,
@@ -118,31 +118,17 @@ export const getReactionDefinition = (reactionType) => {
   )
 }
 
-// Mechanism files use solver type names for three registry types.
-// serializeReaction renames them on save; map them back on load to keep labels consistent.
-const SOLVER_TYPE_ALIASES = {
-  SURFACE: 'SURFACE_REACTION',
-  BRANCHED_NO_RO2: 'BRANCHED',
-  LAMBDA_RATE_CONSTANT: 'LAMBDA_RATE',
-}
-
 // Title-case unknown types for readability: USER_DEFINED → "User defined".
 const titleCase = (type) => {
   const words = String(type).replace(/_/g, ' ').toLowerCase().trim()
   return words.charAt(0).toUpperCase() + words.slice(1)
 }
 
-// Normalize registry and solver type names to one value so the same reaction type is grouped together.
 // Return the type's rate parameters with their solver defaults as placeholders when unset.
 export const getReactionParameters = (reactionType) =>
-  reactionRegistry.find((entry) => entry.type === canonicalReactionType(reactionType))
-    ?.parameters ?? []
-
-export const canonicalReactionType = (reactionType) =>
-  SOLVER_TYPE_ALIASES[reactionType] ?? reactionType
+  reactionRegistry.find((entry) => entry.type === reactionType)?.parameters ?? []
 
 export const getReactionTypeLabel = (reactionType) => {
-  const registryType = SOLVER_TYPE_ALIASES[reactionType] ?? reactionType
-  const definition = reactionRegistry.find((entry) => entry.type === registryType)
+  const definition = reactionRegistry.find((entry) => entry.type === reactionType)
   return definition?.label ?? titleCase(reactionType)
 }

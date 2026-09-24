@@ -1,12 +1,13 @@
 import React from 'react';
 import { Provider } from 'react-redux';
 import { configureStore } from '@reduxjs/toolkit';
-import mechanismReducer, { setMechanism, setCurrentExample, addSpecies, addReaction } from '../src/redux/slices/mechanismSlice';
-import conditionsReducer, { setConditions, setDuration, setTimeStep, setOutputFrequency, setExampleLoaded, setSourceFile } from '../src/redux/slices/conditionsSlice';
+import mechanismReducer from '../src/redux/slices/mechanismSlice';
+import conditionsReducer from '../src/redux/slices/conditionsSlice';
 import simulationReducer from '../src/redux/slices/simulationSlice';
 import { render, fireEvent, waitFor, screen } from '@testing-library/react';
 
 import { RunSimulationButton } from '../src/components/RunSimulationButton';
+import { loadMusicBoxConfig } from '../src/services/config/loadMusicBoxConfig';
 import { vi } from 'vitest';
 
 // Carbon-Bond-5 Example Imports
@@ -14,7 +15,6 @@ import carbonBond5Config from '@ncar/music-box/examples/carbon_bond_5/my_config.
 import carbonBond5InitialConcentrationsCsv from '@ncar/music-box/examples/carbon_bond_5/initial_concentrations.csv?raw';
 import carbonBond5InitialReactionRatesCsv from '@ncar/music-box/examples/carbon_bond_5/initial_reaction_rates.csv?raw';
 import { parseCsvToBlock } from '@ncar/music-box';
-import { durationSeconds, stepSeconds } from './helpers/boxModelOptions';
 import { expectedInitialConcentrations } from './helpers/initialConcentrations';
 
 function withInlineConditionData(config, csvContents = []) {
@@ -57,31 +57,16 @@ describe('RunSimulationButton (Carbon-Bond-5 example)', () => {
       csv: { initial_concentrations: carbonBond5InitialConcentrationsCsv, initial_reaction_rates: carbonBond5InitialReactionRatesCsv },
       mechanism: withInlineConditionData(carbonBond5Config, [carbonBond5InitialConcentrationsCsv, carbonBond5InitialReactionRatesCsv]),
     };
-    store.dispatch(setMechanism(carbonBond5Example.mechanism));
-    store.dispatch(setCurrentExample({
-      id: carbonBond5Example.id,
-      name: carbonBond5Example.name,
-      description: carbonBond5Example.description,
-      mechanism_name: carbonBond5Example.mechanism_name,
-      csv: carbonBond5Example.csv,
-    }));
-    (carbonBond5Example.mechanism.mechanism.species || []).forEach((species) => {
-      store.dispatch(addSpecies({
-        name: species.name,
-        molecular_weight_kg_mol: species['molecular weight [kg mol-1]'],
-        properties: {},
-      }));
+    await loadMusicBoxConfig(carbonBond5Example.mechanism, {
+      dispatch: store.dispatch,
+      navigate: vi.fn(),
+      meta: {
+        id: carbonBond5Example.id,
+        name: carbonBond5Example.name,
+        description: carbonBond5Example.description,
+        mechanism_name: carbonBond5Example.mechanism_name,
+      },
     });
-    (carbonBond5Example.mechanism.mechanism.reactions || []).forEach((reaction) => {
-      store.dispatch(addReaction({ ...reaction, id: reaction.id || 'test' }));
-    });
-    const options = carbonBond5Example.mechanism["box model options"] || {};
-    store.dispatch(setDuration(durationSeconds(options)));
-    store.dispatch(setTimeStep(stepSeconds(options, "chemistry time step")));
-    store.dispatch(setOutputFrequency(stepSeconds(options, "output time step")));
-    store.dispatch(setConditions(carbonBond5Example.mechanism.conditions));
-    store.dispatch(setExampleLoaded(false));
-    store.dispatch(setSourceFile(carbonBond5Example.mechanism["__source file"] || null));
 
     render(
       <Provider store={store}>

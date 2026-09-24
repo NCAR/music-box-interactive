@@ -1,10 +1,8 @@
 import { v4 as uuidv4 } from 'uuid'
-import { parseBoxModelOptions } from '@ncar/music-box'
+import { initModule, mechanismConfiguration, parseBoxModelOptions } from '@ncar/music-box'
 import {
   resetMechanism,
-  addSpecies,
-  addReaction,
-  setMechanism,
+  setConfig,
   setCurrentExample,
   setSelectedMechanism,
 } from '../../redux/slices/mechanismSlice'
@@ -18,69 +16,41 @@ import {
   setSourceFile,
 } from '../../redux/slices/conditionsSlice'
 import { resetSimulation } from '../../redux/slices/simulationSlice'
-import { buildGeneratedReactionName } from '../../components/Mechanism/reactions/reactionUtils'
-import {
-  PHASE_PROPERTY_KEYS,
-  SPECIES_PROPERTY_KEYS,
-  pickDeclared,
-} from '../simulation/local/speciesProperties'
 
-// Loads a resolved music-box v1 config into Redux. conditions.data must already hold every
-// CSV-derived block inline; callers resolve filepaths before calling this.
-export function loadMusicBoxConfig(config, { dispatch, navigate, meta = {} } = {}) {
+// MUSICA's parser validates the mechanism, fills in default values, and gives back the canonical
+// v1 format. It throws an Error with the parser messages when the mechanism is not valid.
+const parseMechanism = async (mechanism) => {
+  await initModule()
+  return mechanismConfiguration.parseMechanismFromString(JSON.stringify(mechanism))
+}
+
+// Converts a music-box config into the shape Redux stores. MUSICA's parser validates the
+// mechanism and gives back the canonical v1 format, which Redux stores as it is.
+export async function toReduxConfig(config) {
+  const mechanismConfig = config?.mechanism ? await parseMechanism(config.mechanism) : {}
+
+  // Reactions get a UI-only id for React list keys and updateReaction/removeReaction targeting.
+  // No name is generated here for an undeclared reaction -- FlowGraph/ReactionEditor compute a
+  // display label on demand (buildGeneratedReactionName) instead of one being persisted, so an
+  // undeclared name never leaks into a downloaded config.
+  const reactions = (Array.isArray(mechanismConfig.reactions) ? mechanismConfig.reactions : []).map(
+    (reaction) => ({ ...reaction, id: uuidv4() })
+  )
+
+  return { ...config, mechanism: { ...mechanismConfig, reactions } }
+}
+
+// Loads a music-box config into Redux. conditions.data must already hold every
+// CSV-derived block inline; callers resolve filepaths before calling this. Rejects when the
+// mechanism is not valid, before any Redux state changes.
+export async function loadMusicBoxConfig(config, { dispatch, navigate, meta = {} } = {}) {
+  const reduxConfig = await toReduxConfig(config)
+
   dispatch(resetMechanism())
   dispatch(resetConditions())
   dispatch(resetSimulation())
 
-  const mechanismConfig = config?.mechanism || {}
-
-  dispatch(setMechanism(config))
-
-  // Diffusion coefficient and density belong to PhaseSpecies, so collect them by name
-  // for placement under phases[].species[].
-  const phaseProperties = new Map()
-  for (const phase of Array.isArray(mechanismConfig.phases) ? mechanismConfig.phases : []) {
-    for (const entry of Array.isArray(phase.species) ? phase.species : []) {
-      if (!entry || typeof entry !== 'object' || !entry.name) {
-        continue
-      }
-      const carried = pickDeclared(entry, PHASE_PROPERTY_KEYS)
-      if (Object.keys(carried).length > 0) {
-        phaseProperties.set(entry.name, { ...phaseProperties.get(entry.name), ...carried })
-      }
-    }
-  }
-
-  const mechanismSpecies = Array.isArray(mechanismConfig.species) ? mechanismConfig.species : []
-  mechanismSpecies.forEach((species) => {
-    // Only include declared properties; defaults would make unspecified values look configured.
-    dispatch(
-      addSpecies({
-        name: species.name,
-        phase: species.phase || 'Gas',
-        ...pickDeclared(species, SPECIES_PROPERTY_KEYS),
-        ...(phaseProperties.get(species.name) ?? {}),
-      })
-    )
-  })
-
-  const mechanismReactions = Array.isArray(mechanismConfig.reactions)
-    ? mechanismConfig.reactions
-    : []
-  mechanismReactions.forEach((reaction) => {
-    // FlowGraph identifies reaction nodes by name, so one is filled in where the mechanism does
-    // not declare one. The editor uses buildGeneratedReactionName to tell the two apart.
-    const declaredName =
-      typeof reaction.name === 'string' && reaction.name.trim().length > 0 ? reaction.name : null
-
-    dispatch(
-      addReaction({
-        ...reaction,
-        id: uuidv4(),
-        name: declaredName ?? buildGeneratedReactionName(reaction),
-      })
-    )
-  })
+  dispatch(setConfig(reduxConfig))
 
   // parseBoxModelOptions handles every time unit the solver accepts.
   const { chemTimeStep, outputTimeStep, simulationLength } = parseBoxModelOptions(config)

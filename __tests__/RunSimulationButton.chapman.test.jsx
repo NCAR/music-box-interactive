@@ -1,19 +1,19 @@
 import React from 'react';
 import { Provider } from 'react-redux';
 import { configureStore } from '@reduxjs/toolkit';
-import mechanismReducer, { setMechanism, setCurrentExample, addSpecies, addReaction } from '../src/redux/slices/mechanismSlice';
-import conditionsReducer, { setConditions, setDuration, setTimeStep, setOutputFrequency, setExampleLoaded, setSourceFile } from '../src/redux/slices/conditionsSlice';
+import mechanismReducer from '../src/redux/slices/mechanismSlice';
+import conditionsReducer from '../src/redux/slices/conditionsSlice';
 import simulationReducer from '../src/redux/slices/simulationSlice';
 import { render, fireEvent, waitFor, screen } from '@testing-library/react';
 
 import { RunSimulationButton } from '../src/components/RunSimulationButton';
+import { loadMusicBoxConfig } from '../src/services/config/loadMusicBoxConfig';
 
 // Import the real Chapman example and CSVs as in ExampleLoader
 import chapmanConfig from '@ncar/music-box/examples/chapman/my_config.json' with { type: 'json' };
 import chapmanInitialConcentrationsCsv from '@ncar/music-box/examples/chapman/initial_concentrations.csv?raw';
 import chapmanConditionsBoulderCsv from '@ncar/music-box/examples/chapman/conditions_Boulder.csv?raw';
 import { parseCsvToBlock } from '@ncar/music-box';
-import { durationSeconds, stepSeconds } from './helpers/boxModelOptions';
 import { expectedInitialConcentrations } from './helpers/initialConcentrations';
 
 // Helper to build the same data structure as ExampleLoader
@@ -79,34 +79,16 @@ describe('RunSimulationButton (Chapman example)', () => {
     });
 
     // Simulate ExampleLoader's Redux setup
-    store.dispatch(setMechanism(chapmanExample.mechanism));
-    store.dispatch(setCurrentExample({
-      id: chapmanExample.id,
-      name: chapmanExample.name,
-      description: chapmanExample.description,
-      mechanism_name: chapmanExample.mechanism_name,
-      csv: chapmanExample.csv,
-    }));
-    // Add species
-    (chapmanExample.mechanism.mechanism.species || []).forEach((species) => {
-      store.dispatch(addSpecies({
-        name: species.name,
-        molecular_weight_kg_mol: species['molecular weight [kg mol-1]'],
-        properties: {},
-      }));
+    await loadMusicBoxConfig(chapmanExample.mechanism, {
+      dispatch: store.dispatch,
+      navigate: vi.fn(),
+      meta: {
+        id: chapmanExample.id,
+        name: chapmanExample.name,
+        description: chapmanExample.description,
+        mechanism_name: chapmanExample.mechanism_name,
+      },
     });
-    // Add reactions
-    (chapmanExample.mechanism.mechanism.reactions || []).forEach((reaction) => {
-      store.dispatch(addReaction({ ...reaction, id: reaction.id || 'test' }));
-    });
-    // Set box model options
-    const options = chapmanExample.mechanism["box model options"] || {};
-    store.dispatch(setDuration(durationSeconds(options)));
-    store.dispatch(setTimeStep(stepSeconds(options, "chemistry time step")));
-    store.dispatch(setOutputFrequency(stepSeconds(options, "output time step")));
-    store.dispatch(setConditions(chapmanExample.mechanism.conditions));
-    store.dispatch(setExampleLoaded(false));
-    store.dispatch(setSourceFile(chapmanExample.mechanism["__source file"] || null));
 
     render(
       <Provider store={store}>

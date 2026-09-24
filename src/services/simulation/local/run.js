@@ -20,14 +20,14 @@ const addProductsToReactions = (reactions) => {
 
     // Handle products
     if (Array.isArray(reaction.products)) {
-      reaction.products.push({ 'species name': prodName, coefficient: 1 })
+      reaction.products.push({ name: prodName, coefficient: 1 })
       productSpeciesToAdd.push(prodName)
       productConcentrationKeys.push(`CONC.${prodName}.mol m-3`)
     }
 
     // Handle gas-phase products
     if (Array.isArray(reaction['gas-phase products'])) {
-      reaction['gas-phase products'].push({ 'species name': prodName, coefficient: 1 })
+      reaction['gas-phase products'].push({ name: prodName, coefficient: 1 })
       productSpeciesToAdd.push(prodName)
       productConcentrationKeys.push(`CONC.${prodName}.mol m-3`)
     }
@@ -35,7 +35,7 @@ const addProductsToReactions = (reactions) => {
     // Handle alkoxy products
     if (Array.isArray(reaction['alkoxy products'])) {
       const alkoxyProdName = `${prodName}${BRANCH_TRACER_SUFFIXES[0]}`
-      reaction['alkoxy products'].push({ 'species name': alkoxyProdName, coefficient: 1 })
+      reaction['alkoxy products'].push({ name: alkoxyProdName, coefficient: 1 })
       productSpeciesToAdd.push(alkoxyProdName)
       productConcentrationKeys.push(`CONC.${alkoxyProdName}.mol m-3`)
     }
@@ -43,7 +43,7 @@ const addProductsToReactions = (reactions) => {
     // Handle nitrate products
     if (Array.isArray(reaction['nitrate products'])) {
       const nitrateProdName = `${prodName}${BRANCH_TRACER_SUFFIXES[1]}`
-      reaction['nitrate products'].push({ 'species name': nitrateProdName, coefficient: 1 })
+      reaction['nitrate products'].push({ name: nitrateProdName, coefficient: 1 })
       productSpeciesToAdd.push(nitrateProdName)
       productConcentrationKeys.push(`CONC.${nitrateProdName}.mol m-3`)
     }

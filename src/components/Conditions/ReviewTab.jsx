@@ -25,6 +25,10 @@ export function ReviewTab() {
   const { toast } = useToast()
 
   const configuration = buildDownloadableConfig({ mechanism, conditions })
+  const sourceMechanism = mechanism.config?.mechanism || {}
+  const speciesCount = sourceMechanism.species?.length || 0
+  const reactionsCount = sourceMechanism.reactions?.length || 0
+  const phasesCount = sourceMechanism.phases?.length || 0
 
   const handleCopyToClipboard = async () => {
     try {
@@ -69,13 +73,13 @@ export function ReviewTab() {
             <div className="bg-surface-alt border border-border rounded-lg p-2 xs:p-3">
               <div className="text-xs xs:text-sm text-muted font-semibold">Species</div>
               <div className="text-sm xs:text-base sm:text-lg font-bold text-ink">
-                {mechanism.species.length}
+                {speciesCount}
               </div>
             </div>
             <div className="bg-surface-alt border border-border rounded-lg p-2 xs:p-3">
               <div className="text-xs xs:text-sm text-muted font-semibold">Reactions</div>
               <div className="text-sm xs:text-base sm:text-lg font-bold text-ink">
-                {mechanism.reactions.length}
+                {reactionsCount}
               </div>
             </div>
             <div className="bg-surface-alt border border-border rounded-lg p-2 xs:p-3">
@@ -106,15 +110,15 @@ export function ReviewTab() {
                     </li>
                     <li>
                       <span className="font-semibold">Species Count:</span>{' '}
-                      <span className="font-medium">{mechanism.species.length}</span>
+                      <span className="font-medium">{speciesCount}</span>
                     </li>
                     <li>
                       <span className="font-semibold">Reactions Count:</span>{' '}
-                      <span className="font-medium">{mechanism.reactions.length}</span>
+                      <span className="font-medium">{reactionsCount}</span>
                     </li>
                     <li>
                       <span className="font-semibold">Phases:</span>{' '}
-                      <span className="font-medium">{mechanism.phases?.length || 0}</span>
+                      <span className="font-medium">{phasesCount}</span>
                     </li>
                   </ul>
                 </div>
@@ -250,24 +254,24 @@ export function ReviewTab() {
               <span>Mechanism selected: {mechanism.selectedMechanism || 'None'}</span>
             </div>
             <div
-              className={`flex items-center gap-2 ${mechanism.species.length > 0 ? 'text-green-700' : 'text-yellow-700'}`}
+              className={`flex items-center gap-2 ${speciesCount > 0 ? 'text-green-700' : 'text-yellow-700'}`}
             >
-              {mechanism.species.length > 0 ? (
+              {speciesCount > 0 ? (
                 <CheckCircle2 className="w-4 h-4" />
               ) : (
                 <AlertCircle className="w-4 h-4" />
               )}
-              <span>Species defined: {mechanism.species.length}</span>
+              <span>Species defined: {speciesCount}</span>
             </div>
             <div
-              className={`flex items-center gap-2 ${mechanism.reactions.length > 0 ? 'text-green-700' : 'text-red-700'}`}
+              className={`flex items-center gap-2 ${reactionsCount > 0 ? 'text-green-700' : 'text-red-700'}`}
             >
-              {mechanism.reactions.length > 0 ? (
+              {reactionsCount > 0 ? (
                 <CheckCircle2 className="w-4 h-4" />
               ) : (
                 <XCircle className="w-4 h-4" />
               )}
-              <span>Reactions defined: {mechanism.reactions.length}</span>
+              <span>Reactions defined: {reactionsCount}</span>
             </div>
             <div
               className={`flex items-center gap-2 ${conditions.basic.duration > 0 ? 'text-green-700' : 'text-red-700'}`}

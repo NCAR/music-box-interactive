@@ -1,8 +1,8 @@
-import { canonicalReactionType } from '../Mechanism/reactions/reactionRegistry'
 import {
   buildTracerConcentrationKeys,
   isRealSpeciesName,
 } from '../../services/simulation/local/tracer'
+import { getReactionReactants } from '../../services/simulation/local/mechanism'
 
 export const isRealSpecies = isRealSpeciesName
 
@@ -18,20 +18,17 @@ export const getThirdBodyNames = (species) =>
   new Set((species ?? []).filter((s) => s?.['is third body']).map((s) => s?.name))
 
 /**
- * A reaction is drawn when every reactant the user *could* have selected is selected.
- * Third bodies are excluded from that requirement: they are ambient, not chosen.
+ * A reaction is drawn when a selected species appears among its reactants or products.
+ * Third bodies never count toward this.
  */
 // Reaction types store species differently: SURFACE uses `gas-phase species` and
 // `gas-phase products`, while BRANCHED splits products into `alkoxy products` and
 // `nitrate products`. Reading only `reactants`/`products` makes SURFACE reactions
 // invisible and BRANCHED reactions appear to consume without producing.
 const componentList = (components) =>
-  (Array.isArray(components) ? components : [components])
-    .filter(Boolean)
-    .map((entry) => (typeof entry === 'string' ? { 'species name': entry } : entry))
+  (Array.isArray(components) ? components : [components]).filter(Boolean)
 
-export const reactionReactants = (reaction) =>
-  componentList(reaction?.reactants ?? reaction?.['gas-phase species'] ?? [])
+export const reactionReactants = (reaction) => componentList(getReactionReactants(reaction))
 
 // Both branches of a branched reaction are produced so the diagram shows both.
 export const reactionProducts = (reaction) => [
@@ -42,23 +39,18 @@ export const reactionProducts = (reaction) => [
 
 // The type filter narrows what the species selection already allows. An empty type means all.
 export const matchesReactionType = (reaction, reactionType) =>
-  !reactionType || canonicalReactionType(reaction?.type) === reactionType
+  !reactionType || reaction?.type === reactionType
 
 export const isReactionVisible = (reaction, selectedSpecies, thirdBodyNames) => {
   const named = (components) =>
     components
-      .map((entry) => entry['species name'])
+      .map((entry) => entry.name)
       .filter((name) => isRealSpecies(name) && !thirdBodyNames.has(name))
 
-  const reactants = named(reactionReactants(reaction))
+  const involved = [...named(reactionReactants(reaction)), ...named(reactionProducts(reaction))]
 
-  // Emissions have no reactants. They inject species from outside the mechanism. Anchor them on
-  // their products so they appear on the diagram.
-  const anchors = reactants.length > 0 ? reactants : named(reactionProducts(reaction))
-
-  return anchors.length > 0 && anchors.every((name) => selectedSpecies.includes(name))
+  return involved.some((name) => selectedSpecies.includes(name))
 }
-
 
 /**
  * Edges one reaction contributes, with stoichiometric coefficients applied.
@@ -87,11 +79,11 @@ export const getReactionEdges = (reaction, rate, thirdBodyNames, nodeId = reacti
   const add = (map, name, coeff) => map.set(name, (map.get(name) ?? 0) + coeff)
 
   for (const entry of reactionReactants(reaction)) {
-    const name = entry['species name']
+    const name = entry.name
     if (keep(name)) add(consumed, name, Math.abs(entry.coefficient ?? 1))
   }
   for (const entry of reactionProducts(reaction)) {
-    const name = entry['species name']
+    const name = entry.name
     if (!keep(name)) continue
     const coeff = entry.coefficient ?? 1
     if (coeff < 0) add(consumed, name, -coeff)
@@ -198,4 +190,3 @@ export function computeReactionSeries(trackedReactions, results, timeStart, time
 
   return points
 }
-

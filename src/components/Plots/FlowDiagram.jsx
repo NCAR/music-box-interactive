@@ -41,8 +41,8 @@ export function FlowDiagram() {
 
   // If no simulation results, show placeholder
   const simulation = useSelector((state) => state.simulation)
-  const reactions = useSelector((state) => state.mechanism.reactions)
-  const species = useSelector((state) => state.mechanism.species)
+  const reactions = useSelector((state) => state.mechanism.config.mechanism?.reactions || [])
+  const species = useSelector((state) => state.mechanism.config.mechanism?.species || [])
 
   // The integrated reaction rate depends on the selected time window, so its magnitude
   // changes with the time range and species selection. The range must therefore be

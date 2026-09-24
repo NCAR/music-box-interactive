@@ -1,3 +1,5 @@
+import { getReactionReactants } from '../../../services/simulation/local/mechanism'
+
 export const parseReactionString = (str) => {
   return str
     .split('+')
@@ -9,25 +11,16 @@ export const parseReactionString = (str) => {
       if (match) {
         const coeff = match[1] ? parseFloat(match[1]) : 1.0
         return {
-          'species name': match[2].trim().toUpperCase(),
+          name: match[2].trim(),
           coefficient: coeff,
         }
       }
 
       return {
-        'species name': value.toUpperCase(),
+        name: value,
         coefficient: 1.0,
       }
     })
-}
-
-export const buildReactionName = (reactantsInput, productsInput) => {
-  const normalizedReactants = reactantsInput.toUpperCase()
-  const normalizedProducts = productsInput ? productsInput.toUpperCase() : ''
-
-  return normalizedProducts
-    ? `${normalizedReactants} → ${normalizedProducts}`
-    : `${normalizedReactants} → (removed)`
 }
 
 // Generate a fallback label for unnamed reactions, e.g. "O1D + N2 -> O + N2".
@@ -36,21 +29,18 @@ export const buildReactionName = (reactantsInput, productsInput) => {
 const componentsToString = (components = []) =>
   components
     .map((component) => {
-      if (typeof component === 'string') {
-        return component.trim().toUpperCase()
-      }
       if (!component || typeof component !== 'object') {
         return ''
       }
 
-      const name = component['species name']?.trim()?.toUpperCase() ?? ''
+      const name = component.name?.trim() ?? ''
       const coefficient = parseFloat(component.coefficient)
       return coefficient === 1 || Number.isNaN(coefficient) ? name : `${coefficient}${name}`
     })
     .join(' + ')
 
 export const buildGeneratedReactionName = (reaction) => {
-  const reactants = reaction.reactants || reaction['gas-phase species'] || []
+  const reactants = getReactionReactants(reaction)
   const products =
     reaction.products || reaction['gas-phase products'] || reaction['alkoxy products'] || []
 

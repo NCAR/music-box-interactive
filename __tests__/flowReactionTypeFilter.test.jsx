@@ -26,15 +26,15 @@ const REACTIONS = [
     id: 'a',
     name: 'arr',
     type: 'ARRHENIUS',
-    reactants: [{ 'species name': 'NO2', coefficient: 1 }],
-    products: [{ 'species name': 'NO', coefficient: 1 }],
+    reactants: [{ name: 'NO2', coefficient: 1 }],
+    products: [{ name: 'NO', coefficient: 1 }],
   },
   {
     id: 'p',
     name: 'pho',
     type: 'PHOTOLYSIS',
-    reactants: [{ 'species name': 'NO2', coefficient: 1 }],
-    products: [{ 'species name': 'O3', coefficient: 1 }],
+    reactants: [{ name: 'NO2', coefficient: 1 }],
+    products: [{ name: 'O3', coefficient: 1 }],
   },
 ]
 
@@ -84,10 +84,9 @@ describe('matchesReactionType', () => {
     expect(matchesReactionType({ type: 'ARRHENIUS' }, '')).toBe(true)
   })
 
-  it('canonicalises, so both spellings of a type match', () => {
-    expect(matchesReactionType({ type: 'SURFACE' }, 'SURFACE_REACTION')).toBe(true)
-    expect(matchesReactionType({ type: 'SURFACE_REACTION' }, 'SURFACE_REACTION')).toBe(true)
-    expect(matchesReactionType({ type: 'ARRHENIUS' }, 'SURFACE_REACTION')).toBe(false)
+  it('matches only the chosen type', () => {
+    expect(matchesReactionType({ type: 'SURFACE' }, 'SURFACE')).toBe(true)
+    expect(matchesReactionType({ type: 'ARRHENIUS' }, 'SURFACE')).toBe(false)
   })
 })
 

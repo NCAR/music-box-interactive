@@ -17,7 +17,7 @@ export function addSpeciesIfValid({
     return false
   }
 
-  const normalizedName = newSpeciesName.trim().toUpperCase()
+  const normalizedName = newSpeciesName.trim()
 
   if (species.find((s) => s.name === normalizedName)) {
     toast({
@@ -64,7 +64,7 @@ export function addSpeciesIfValid({
   dispatch(
     addSpecies({
       name: normalizedName,
-      phase: newSpeciesPhase || 'Gas',
+      phase: newSpeciesPhase || 'gas',
       ...stored,
     })
   )

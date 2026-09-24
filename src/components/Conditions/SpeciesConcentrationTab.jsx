@@ -38,7 +38,7 @@ export function SpeciesConcentrationTab() {
   const conditions = useSelector((state) => state.conditions.conditions)
   const hydratedExampleId = useSelector((state) => state.conditions.hydration.initialExampleId)
   const currentExample = useSelector((state) => state.mechanism.currentExample)
-  const mechanismSpecies = useSelector((state) => state.mechanism.species)
+  const mechanismSpecies = useSelector((state) => state.mechanism.config.mechanism?.species || [])
 
   const [newSpecies, setNewSpecies] = useState('')
   const [newConcentration, setNewConcentration] = useState('')

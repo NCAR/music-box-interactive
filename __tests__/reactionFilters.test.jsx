@@ -10,7 +10,6 @@ import conditionsReducer from '../src/redux/slices/conditionsSlice'
 import simulationReducer from '../src/redux/slices/simulationSlice'
 import { ReactionEditor } from '../src/components/Mechanism/ReactionEditor'
 import {
-  canonicalReactionType,
   getReactionTypeLabel,
 } from '../src/components/Mechanism/reactions/reactionRegistry'
 
@@ -26,15 +25,14 @@ const reaction = (id, type, reactant, product) => ({
   id,
   type,
   'gas phase': 'gas',
-  reactants: [{ 'species name': reactant }],
-  products: [{ 'species name': product }],
+  reactants: [{ name: reactant }],
+  products: [{ name: product }],
 })
 
 const REACTIONS = [
   reaction('r1', 'ARRHENIUS', 'O1D', 'O3'),
   reaction('r2', 'ARRHENIUS', 'NO2', 'NO'),
   reaction('r3', 'PHOTOLYSIS', 'O3', 'O2'),
-  // The type name a mechanism file uses; the registry calls this SURFACE_REACTION.
   reaction('r4', 'SURFACE', 'NO2', 'HNO3'),
 ]
 
@@ -91,8 +89,7 @@ const listedFormulas = () =>
 describe('reaction list filters', () => {
   it('offers the types actually present, with counts, and an all-types option', () => {
     renderEditor()
-    // Labelled the same way the add form labels them, including for SURFACE, whose registry
-    // entry is spelled SURFACE_REACTION.
+    // Labelled the same way the add form labels them.
     expect(typeOptionLabels()).toEqual([
       'All reaction types (4)',
       `${getReactionTypeLabel('ARRHENIUS')} (2)`,
@@ -120,10 +117,8 @@ describe('reaction list filters', () => {
     expect(sizing(select)).toEqual(sizing(input))
   })
 
-  it('matches a config-spelled type behind its registry label', () => {
+  it('filters to the reactions of the chosen type', () => {
     renderEditor()
-    // r4's type is SURFACE, which the registry spells SURFACE_REACTION. Selecting the label must
-    // still match the reaction, which a registry-driven value would not.
     chooseType(`${getReactionTypeLabel('SURFACE')} (1)`)
     expect(listedFormulas()).toHaveLength(1)
     expect(listedFormulas()[0]).toMatch(/HNO3/)
@@ -167,37 +162,5 @@ describe('reaction list filters', () => {
 
     chooseType('All reaction types (4)')
     expect(listedFormulas()).toHaveLength(4)
-  })
-
-  // Reactions built in the form carry the registry's type name (SURFACE_REACTION) while ones
-  // loaded from a mechanism carry the solver's (SURFACE). They are the same kind of reaction and
-  // must not appear as two categories.
-  it('groups a form-built reaction with the config-spelled one', () => {
-    renderEditor([
-      reaction('c1', 'SURFACE', 'NO2', 'HNO3'),
-      reaction('f1', 'SURFACE_REACTION', 'N2O5', 'HNO3'),
-    ])
-
-    const labels = typeOptionLabels()
-    expect(labels).toHaveLength(2) // "all", plus one surface entry -- not two
-    expect(labels).toEqual(['All reaction types (2)', `${getReactionTypeLabel('SURFACE')} (2)`])
-  })
-
-  it('filtering that group returns both spellings', () => {
-    renderEditor([
-      reaction('c1', 'SURFACE', 'NO2', 'HNO3'),
-      reaction('f1', 'SURFACE_REACTION', 'N2O5', 'HNO3'),
-      reaction('a1', 'ARRHENIUS', 'O1D', 'O3'),
-    ])
-
-    chooseType(`${getReactionTypeLabel('SURFACE')} (2)`)
-    expect(listedFormulas()).toHaveLength(2)
-  })
-
-  it('canonicalReactionType folds the aliased spellings together', () => {
-    expect(canonicalReactionType('SURFACE')).toBe(canonicalReactionType('SURFACE_REACTION'))
-    expect(canonicalReactionType('BRANCHED_NO_RO2')).toBe(canonicalReactionType('BRANCHED'))
-    expect(canonicalReactionType('LAMBDA_RATE_CONSTANT')).toBe(canonicalReactionType('LAMBDA_RATE'))
-    expect(canonicalReactionType('ARRHENIUS')).toBe('ARRHENIUS')
   })
 })
