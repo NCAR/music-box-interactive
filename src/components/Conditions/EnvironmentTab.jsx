@@ -10,6 +10,7 @@ import {
   setEvolvingTemperature,
   setEvolvingPressure,
   setEvolvingAdditionalSeries,
+  untagEvolvingRows,
 } from '../../redux/slices/conditionsSlice'
 import { UnitDropdown } from '../Plots/UnitDropdown'
 import { TIME_RANGE_UNITS } from '../Plots/timeRangeUnits'
@@ -18,6 +19,12 @@ import { PRESSURE_UNITS } from '../Plots/pressureUnits'
 import { DENSITY_UNITS } from '../Plots/densityUnits'
 import { LIST_CARD, LIST_CARD_CONTENT, FIELD_LABEL } from '../Mechanism/fieldStyles'
 import { cn } from '../../lib/utils'
+import {
+  DEFAULT_TEMPERATURE,
+  DEFAULT_PRESSURE,
+  insertAdditionalSeriesValue,
+  removeAdditionalSeriesValues,
+} from './evolvingSeries'
 
 // Air number density is optional, so its values are stored in the evolving slice's generic
 // additionalSeries map, alongside hidden series like PHOTO.*, instead of
@@ -41,8 +48,6 @@ const CELL_INPUT =
 
 // Matches each field's placeholder when the field is left blank.
 const DEFAULT_TIME = 0
-const DEFAULT_TEMPERATURE = 298.15
-const DEFAULT_PRESSURE = 101325
 
 // GAS_CONSTANT (Avogadro x Boltzmann)
 const GAS_CONSTANT = 8.31446261815324
@@ -57,25 +62,6 @@ function idealGasDensity(pressure, temperature) {
 
 function formatConversion(value, decimals = 4) {
   return String(parseFloat(value.toFixed(decimals)))
-}
-
-function insertAdditionalSeriesValue(series, insertIndex, value = null) {
-  return Object.fromEntries(
-    Object.entries(series || {}).map(([name, values]) => {
-      const nextValues = Array.isArray(values) ? [...values] : []
-      nextValues.splice(insertIndex, 0, value)
-      return [name, nextValues]
-    })
-  )
-}
-
-function removeAdditionalSeriesValues(series, removeIndices) {
-  return Object.fromEntries(
-    Object.entries(series || {}).map(([name, values]) => [
-      name,
-      (Array.isArray(values) ? values : []).filter((_, index) => !removeIndices.has(index)),
-    ])
-  )
 }
 
 /**
@@ -213,6 +199,7 @@ export function EnvironmentTab() {
     if (selectedIndices.size === 0) return
 
     const removedCount = selectedIndices.size
+    const removedTimes = evolving.times.filter((_, i) => selectedIndices.has(i))
     const newTimes = evolving.times.filter((_, i) => !selectedIndices.has(i))
     const newTemps = evolving.temperature.filter((_, i) => !selectedIndices.has(i))
     const newPresses = evolving.pressure.filter((_, i) => !selectedIndices.has(i))
@@ -222,6 +209,7 @@ export function EnvironmentTab() {
     dispatch(setEvolvingTemperature(newTemps))
     dispatch(setEvolvingPressure(newPresses))
     dispatch(setEvolvingAdditionalSeries(newAdditionalSeries))
+    dispatch(untagEvolvingRows(removedTimes))
 
     toast({
       title: removedCount === 1 ? 'Condition Removed' : 'Conditions Removed',

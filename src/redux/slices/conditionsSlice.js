@@ -28,6 +28,12 @@ const initialState = {
     additionalSeries: {},
     // Rate constants can also evolve
     rateConstants: {},
+    // UI-only: maps each time value (stringified) to the reaction type id(s) it's relevant to
+    // from the Reactions tab -- starts with just the type it was created under, and gains more
+    // if that same time is later "added" again from a different type. A row with no entry here
+    // (added from the Environment tab, or predating this field) is universal -- visible from
+    // every reaction type. Never read by the solver payload.
+    rowReactionType: {},
   },
 
   hydration: {
@@ -104,6 +110,23 @@ export const conditionsSlice = createSlice({
     setEvolvingAdditionalSeries: (state, action) => {
       state.evolving.additionalSeries = action.payload || {}
     },
+    tagEvolvingRow: (state, action) => {
+      const { time, typeId } = action.payload
+      state.evolving.rowReactionType ??= {}
+      const key = String(time)
+      const existing = state.evolving.rowReactionType[key]
+      if (!Array.isArray(existing)) {
+        state.evolving.rowReactionType[key] = [typeId]
+      } else if (!existing.includes(typeId)) {
+        existing.push(typeId)
+      }
+    },
+    untagEvolvingRows: (state, action) => {
+      state.evolving.rowReactionType ??= {}
+      action.payload.forEach((time) => {
+        delete state.evolving.rowReactionType[String(time)]
+      })
+    },
 
     markInitialHydrated: (state, action) => {
       state.hydration.initialExampleId = action.payload || null
@@ -151,6 +174,8 @@ export const {
   setEvolvingPressure,
   setInterpolationMethod,
   setEvolvingAdditionalSeries,
+  tagEvolvingRow,
+  untagEvolvingRows,
   markInitialHydrated,
   markEvolvingHydrated,
   loadConditions,
