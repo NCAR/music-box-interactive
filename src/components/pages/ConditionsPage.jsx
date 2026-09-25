@@ -14,13 +14,13 @@ import {
  * Main page for configuring simulation conditions with 5 tabs
  */
 export function ConditionsPage() {
-  const [activeTab, setActiveTab] = useState('time') // 'time' | 'environment' | 'species' | 'reaction' | 'review'
+  const [activeTab, setActiveTab] = useState('time') // 'time' | 'environment' | 'species' | 'reactions' | 'review'
 
   const tabs = [
     { id: 'time', label: 'Time', component: TimeTab },
     { id: 'environment', label: 'Environment', component: EnvironmentTab },
     { id: 'species', label: 'Species', component: SpeciesConcentrationTab },
-    { id: 'reaction', label: 'Reaction', component: ReactionTab },
+    { id: 'reactions', label: 'Reactions', component: ReactionTab },
     { id: 'review', label: 'Review', component: ReviewTab },
   ]
 

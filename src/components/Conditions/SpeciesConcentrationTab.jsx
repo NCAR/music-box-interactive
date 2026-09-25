@@ -377,7 +377,7 @@ export function SpeciesConcentrationTab() {
                         checked={allVisibleSelected}
                         onChange={toggleSelectAll}
                         aria-label="Select all species"
-                        className="accent-action"
+                        className="accent-assist-secondary-ring"
                       />
                     </th>
                     <th className="w-1/2 text-left px-4 py-2 font-semibold">Species</th>
@@ -396,7 +396,7 @@ export function SpeciesConcentrationTab() {
                           checked={selectedSpecies.has(species)}
                           onChange={() => toggleSelected(species)}
                           aria-label={`Select ${species}`}
-                          className="accent-action"
+                          className="accent-assist-secondary-ring"
                         />
                       </td>
                       <td className="px-4 py-2 font-mono font-semibold">{species}</td>

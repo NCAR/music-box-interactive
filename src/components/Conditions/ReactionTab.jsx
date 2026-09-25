@@ -17,7 +17,7 @@ const filterButtonClass = (selected) =>
   }`
 
 const NUMBER_INPUT =
-  'w-2/3 h-9 px-2 border rounded text-sm text-center font-mono focus:outline-none focus:ring-2 focus:ring-action transition-colors duration-300'
+  'w-2/3 h-9 px-2 border rounded text-sm text-left font-mono focus:outline-none focus:ring-2 focus:ring-action transition-colors duration-300'
 
 const formatValue = (value) => {
   if (typeof value !== 'number') return String(value)
@@ -55,7 +55,8 @@ const REACTION_TYPES = [
 
 /**
  * ReactionTab Component
- * Time-varying rate parameters for Photolysis/Surface/Emissions/Loss reactions 
+ * Time-varying rate parameters for specific reactions: 
+ * - Photolysis, Surface, Emissions, Loss
  */
 export function ReactionTab() {
   const dispatch = useDispatch()
@@ -68,6 +69,7 @@ export function ReactionTab() {
 
   const [reactionTypeId, setReactionTypeId] = useState(REACTION_TYPES[0].id)
   const [selectedReactionNames, setSelectedReactionNames] = useState(new Set())
+  const [selectedSurfaceProperty, setSelectedSurfaceProperty] = useState(null)
   const [reactionSearch, setReactionSearch] = useState('')
   const [rowDrafts, setRowDrafts] = useState({})
   const [justUpdatedCell, setJustUpdatedCell] = useState(null)
@@ -99,6 +101,21 @@ export function ReactionTab() {
   const filteredReactionsOfType = reactionQuery
     ? reactionsOfType.filter((reaction) => reaction.name.toLowerCase().includes(reactionQuery))
     : reactionsOfType
+
+  // When a surface reaction is present, the nested surface dropdown lists its two available properties:
+  // effective radius and particle number concentration.
+  const surfacePropertyOptions = [
+    ...new Set(
+      mechanismReactions
+        .filter((reaction) => reaction.type === 'SURFACE' && hasName(reaction))
+        .flatMap((reaction) => {
+          const prefix = `SURF.${reaction.name}.`
+          return Object.keys(additionalSeries || {})
+            .filter((key) => key.startsWith(prefix))
+            .map((key) => stripPropertyUnit(key.slice(prefix.length)))
+        })
+    ),
+  ].sort()
 
   // Selected reactions beyond the visible cap stay visible until deselected.
   const baseVisibleReactions = filteredReactionsOfType.slice(0, REACTIONS_VISIBLE)
@@ -142,20 +159,42 @@ export function ReactionTab() {
     })
   }, [reactionTypeId, mechanismReactions])
 
+  // Keep the selected surface property pointed at one that's present, falling back to the
+  // first available option. Recomputes from mechanismReactions/additionalSeries -- both stable
+  // selector outputs -- rather than depending on surfacePropertyOptions, which is a fresh array
+  // every render.
+  useEffect(() => {
+    const options = [
+      ...new Set(
+        mechanismReactions
+          .filter((reaction) => reaction.type === 'SURFACE' && hasName(reaction))
+          .flatMap((reaction) => {
+            const prefix = `SURF.${reaction.name}.`
+            return Object.keys(additionalSeries || {})
+              .filter((key) => key.startsWith(prefix))
+              .map((key) => stripPropertyUnit(key.slice(prefix.length)))
+          })
+      ),
+    ]
+    setSelectedSurfaceProperty((prev) => (options.includes(prev) ? prev : (options[0] ?? null)))
+  }, [mechanismReactions, additionalSeries])
+
   const selectedReactions = reactionsOfType.filter((reaction) =>
     selectedReactionNames.has(reaction.name)
   )
 
-  // Each selected reaction contributes its own column.
+  // Each selected reaction contributes its own column. For surface reactions, only the one
+  // property picked in the nested "Surface" dropdown is shown, same as every other type.
   const columns = selectedReactions.flatMap((reaction) => {
     if (isSurface) {
+      if (!selectedSurfaceProperty) return []
       const surfacePrefix = `SURF.${reaction.name}.`
-      return Object.keys(additionalSeries || {})
-        .filter((key) => key.startsWith(surfacePrefix))
-        .map((key) => ({
-          key,
-          label: `${reaction.name}: ${stripPropertyUnit(key.slice(surfacePrefix.length))}`,
-        }))
+      const key = Object.keys(additionalSeries || {}).find(
+        (candidate) =>
+          candidate.startsWith(surfacePrefix) &&
+          stripPropertyUnit(candidate.slice(surfacePrefix.length)) === selectedSurfaceProperty
+      )
+      return key ? [{ key, label: reaction.name }] : []
     }
 
     const bareKey = `${reactionType.prefix}.${reaction.name}`
@@ -302,14 +341,42 @@ export function ReactionTab() {
               {reactionSectionOpen && (
                 <div className="flex flex-col gap-0.5">
                   {presentReactionTypes.map((type) => (
-                    <button
-                      key={type.id}
-                      type="button"
-                      onClick={() => setReactionTypeId(type.id)}
-                      className={filterButtonClass(reactionTypeId === type.id)}
-                    >
-                      {type.label} ({type.count})
-                    </button>
+                    <div key={type.id}>
+                      <button
+                        type="button"
+                        onClick={() => setReactionTypeId(type.id)}
+                        className={`w-full flex items-center justify-between ${filterButtonClass(
+                          reactionTypeId === type.id
+                        )}`}
+                      >
+                        <span>
+                          {type.label} ({type.count})
+                        </span>
+                        {type.id === 'SURFACE' && surfacePropertyOptions.length > 0 && (
+                          <ChevronDown className="w-3.5 h-3.5 flex-shrink-0" />
+                        )}
+                      </button>
+
+                      {/* Nested picker: a surface reaction can carry more than one property
+                          (e.g. effective radius, particle number concentration) -- this keeps
+                          only one shown in the table at a time, same as every other type. */}
+                      {type.id === 'SURFACE' &&
+                        reactionTypeId === 'SURFACE' &&
+                        surfacePropertyOptions.length > 0 && (
+                          <div className="flex flex-col gap-0.5 pl-4 mt-0.5">
+                            {surfacePropertyOptions.map((property) => (
+                              <button
+                                key={property}
+                                type="button"
+                                onClick={() => setSelectedSurfaceProperty(property)}
+                                className={filterButtonClass(selectedSurfaceProperty === property)}
+                              >
+                                {property}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                    </div>
                   ))}
                 </div>
               )}
@@ -399,7 +466,7 @@ export function ReactionTab() {
               ) : columns.length === 0 ? (
                 <p className="text-center text-gray-500 py-8">
                   {isSurface && selectedReactionNames.size > 0
-                    ? 'No properties loaded yet for the selected reaction(s).'
+                    ? `No data for "${selectedSurfaceProperty ?? 'this property'}" yet for the selected reaction(s).`
                     : 'Choose one or more reactions on the left to see their time-varying rate constant parameters.'}
                 </p>
               ) : (
@@ -444,7 +511,7 @@ export function ReactionTab() {
                             className="accent-assist-secondary-ring"
                           />
                         </td>
-                        <td className="px-4 py-2 font-mono font-semibold">{time}</td>
+                        <td className="px-4 py-2 font-mono">{time}</td>
                         {columns.map((column) => {
                           const stored = additionalSeries?.[column.key]?.[index]
                           const draftKey = cellDraftKey(column.key, index)
