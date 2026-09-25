@@ -3,11 +3,26 @@ import { useSelector, useDispatch } from 'react-redux'
 import { ChevronDown, ChevronUp, Check } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card'
 import { Button } from '../ui/button'
-import { setEvolvingAdditionalSeries } from '../../redux/slices/conditionsSlice'
+import {
+  setEvolvingEnabled,
+  setEvolvingTimes,
+  setEvolvingTemperature,
+  setEvolvingPressure,
+  setEvolvingAdditionalSeries,
+  tagEvolvingRow,
+  untagEvolvingRows,
+} from '../../redux/slices/conditionsSlice'
 import { useToast } from '@/hooks/use-toast'
 import { useClickOutside } from '../../hooks/useClickOutside'
 import { EMPTY_ARRAY } from '../../utils/emptyArray'
 import { LIST_CARD, LIST_CARD_CONTENT, TEXT_INPUT_SM } from '../Mechanism/fieldStyles'
+import {
+  DEFAULT_TEMPERATURE,
+  DEFAULT_PRESSURE,
+  insertAdditionalSeriesValue,
+  removeEvolvingTimeRows,
+  ensureZeroTimeRow,
+} from './evolvingSeries'
 
 const filterButtonClass = (selected) =>
   `w-full text-left text-sm px-1.5 py-1 rounded ${
@@ -17,7 +32,7 @@ const filterButtonClass = (selected) =>
   }`
 
 const NUMBER_INPUT =
-  'w-2/3 h-9 px-2 border rounded text-sm text-left font-mono focus:outline-none focus:ring-2 focus:ring-action transition-colors duration-300'
+  'w-2/3 px-2 py-1 border-1 rounded text-sm text-left font-mono focus:outline-none focus:ring-2 focus:ring-assist-secondary-ring transition-colors duration-300'
 
 const formatValue = (value) => {
   if (typeof value !== 'number') return String(value)
@@ -33,6 +48,10 @@ const stripPropertyUnit = (prop) => {
 }
 
 const hasName = (reaction) => typeof reaction.name === 'string' && reaction.name.trim() !== ''
+
+// A stable fallback for the rowReactionType selector, matching EMPTY_ARRAY's reasoning: a fresh
+// {} on every call would make useSyncExternalStore treat every render as a real change.
+const EMPTY_ROW_TAGS = {}
 
 const DEFAULT_SELECTED_REACTIONS = 3
 const REACTIONS_VISIBLE = 13
@@ -65,7 +84,12 @@ export function ReactionTab() {
     (state) => state.mechanism.config.mechanism?.reactions || EMPTY_ARRAY
   )
   const evolvingTimes = useSelector((state) => state.conditions.evolving.times)
+  const evolvingTemperature = useSelector((state) => state.conditions.evolving.temperature)
+  const evolvingPressure = useSelector((state) => state.conditions.evolving.pressure)
   const additionalSeries = useSelector((state) => state.conditions.evolving.additionalSeries)
+  const evolvingRowReactionType = useSelector(
+    (state) => state.conditions.evolving.rowReactionType || EMPTY_ROW_TAGS
+  )
 
   const [reactionTypeId, setReactionTypeId] = useState(REACTION_TYPES[0].id)
   const [selectedReactionNames, setSelectedReactionNames] = useState(new Set())
@@ -79,6 +103,10 @@ export function ReactionTab() {
   const [reactionOverflowOpen, setReactionOverflowOpen] = useState(false)
   const reactionOverflowRef = useRef(null)
   useClickOutside(reactionOverflowRef, () => setReactionOverflowOpen(false), reactionOverflowOpen)
+  const [addTimeOpen, setAddTimeOpen] = useState(false)
+  const [newTimeValue, setNewTimeValue] = useState('')
+  const addTimeRef = useRef(null)
+  useClickOutside(addTimeRef, () => setAddTimeOpen(false), addTimeOpen)
 
   const reactionType = REACTION_TYPES.find((t) => t.id === reactionTypeId)
   const isSurface = reactionTypeId === 'SURFACE'
@@ -204,6 +232,46 @@ export function ReactionTab() {
     return [{ key: existingKey ?? bareKey, label: reaction.name }]
   })
 
+  // Row indices where the active type already has a value, checked across every reaction of
+  // that type (not just the ones currently selected), so toggling a sidebar checkbox never
+  // makes a row flicker in/out.
+  const typeDataIndices = new Set(
+    reactionsOfType.flatMap((reaction) => {
+      const keys = isSurface
+        ? Object.keys(additionalSeries || {}).filter((key) =>
+            key.startsWith(`SURF.${reaction.name}.`)
+          )
+        : (() => {
+            const bareKey = `${reactionType.prefix}.${reaction.name}`
+            const existingKey = Object.keys(additionalSeries || {}).find(
+              (key) => key === bareKey || key.startsWith(`${bareKey}.`)
+            )
+            return existingKey ? [existingKey] : []
+          })()
+
+      return keys.flatMap((key) => {
+        const series = additionalSeries?.[key]
+        if (!Array.isArray(series)) return []
+        return series.flatMap((value, index) => (value != null ? [index] : []))
+      })
+    })
+  )
+
+  // A row shows under the active type if it has no type tags (added from Environment, or
+  // predates this feature -- universal), was added/re-added under this type, or already has
+  // data here.
+  const visibleTimeEntries = evolvingTimes
+    .map((time, index) => ({ time, index }))
+    .filter(({ time, index }) => {
+      const tags = evolvingRowReactionType[String(time)]
+      if (!Array.isArray(tags) || tags.length === 0 || tags.includes(reactionTypeId)) return true
+      return typeDataIndices.has(index)
+    })
+  // t=0 is the simulation's starting point, not an editable/removable evolving row.
+  const removableIndices = visibleTimeEntries
+    .filter((entry) => entry.time !== 0)
+    .map((entry) => entry.index)
+
   // Clear on evolvingTimes changing
   useEffect(() => {
     setRowDrafts({})
@@ -240,18 +308,24 @@ export function ReactionTab() {
       ? [...additionalSeries[key]]
       : new Array(evolvingTimes.length).fill(null)
     while (existing.length < evolvingTimes.length) existing.push(null)
-    existing[index] = parsed
 
-    dispatch(setEvolvingAdditionalSeries({ ...additionalSeries, [key]: existing }))
+    // Clicking into a cell and back out without typing anything shouldn't flash it or write to
+    // Redux -- only an actual change counts as an update.
+    const unchanged = existing[index] === parsed || (existing[index] == null && parsed == null)
     setRowDrafts((prev) => {
       const next = { ...prev }
       delete next[cellDraftKey(key, index)]
       return next
     })
+    if (unchanged) return
+
+    existing[index] = parsed
+    dispatch(setEvolvingAdditionalSeries({ ...additionalSeries, [key]: existing }))
     flashUpdated(cellDraftKey(key, index))
   }
 
   const toggleSelected = (index) => {
+    if (!removableIndices.includes(index)) return
     setSelectedIndices((prev) => {
       const next = new Set(prev)
       if (next.has(index)) {
@@ -263,36 +337,105 @@ export function ReactionTab() {
     })
   }
 
-  const allSelected = evolvingTimes.length > 0 && evolvingTimes.every((_, i) => selectedIndices.has(i))
+  // Scoped to the removable rows visible for the active type -- t=0 is never included.
+  const allSelected = removableIndices.length > 0 && removableIndices.every((i) => selectedIndices.has(i))
 
   const toggleSelectAll = () => {
-    setSelectedIndices((prev) =>
-      prev.size === evolvingTimes.length ? new Set() : new Set(evolvingTimes.map((_, i) => i))
-    )
+    setSelectedIndices((prev) => {
+      const allCurrentlySelected = removableIndices.length > 0 && removableIndices.every((i) => prev.has(i))
+      const next = new Set(prev)
+      removableIndices.forEach((i) => (allCurrentlySelected ? next.delete(i) : next.add(i)))
+      return next
+    })
   }
 
-  const handleClearSelected = () => {
-    if (selectedIndices.size === 0 || columns.length === 0) return
+  const handleRemoveSelected = () => {
+    const result = removeEvolvingTimeRows(
+      { times: evolvingTimes, temperature: evolvingTemperature, pressure: evolvingPressure, additionalSeries },
+      selectedIndices
+    )
+    if (!result) return
 
-    const nextSeries = { ...additionalSeries }
-    columns.forEach((column) => {
-      const existing = Array.isArray(additionalSeries[column.key])
-        ? [...additionalSeries[column.key]]
-        : new Array(evolvingTimes.length).fill(null)
-      while (existing.length < evolvingTimes.length) existing.push(null)
-      selectedIndices.forEach((index) => {
-        existing[index] = null
-      })
-      nextSeries[column.key] = existing
-    })
+    dispatch(setEvolvingTimes(result.times))
+    dispatch(setEvolvingTemperature(result.temperature))
+    dispatch(setEvolvingPressure(result.pressure))
+    dispatch(setEvolvingAdditionalSeries(result.additionalSeries))
+    dispatch(untagEvolvingRows(result.removedTimes))
 
-    dispatch(setEvolvingAdditionalSeries(nextSeries))
     toast({
-      title: 'Values Cleared',
-      description: `Cleared ${selectedIndices.size} time point${selectedIndices.size === 1 ? '' : 's'}`,
+      title: result.removedCount === 1 ? 'Time Point Removed' : 'Time Points Removed',
+      description: `Removed ${result.removedCount} time point${result.removedCount === 1 ? '' : 's'}`,
       variant: 'delete',
     })
     setSelectedIndices(new Set())
+  }
+
+  const handleAddTimePoint = () => {
+    const trimmed = newTimeValue.trim()
+    const time = parseFloat(trimmed)
+    if (trimmed === '' || isNaN(time) || time < 0) {
+      toast({
+        title: 'Invalid Input',
+        description: 'Time must be a valid number zero or greater',
+        variant: 'destructive',
+      })
+      return
+    }
+
+    if (evolvingTimes.includes(time)) {
+      const tags = evolvingRowReactionType[String(time)]
+      const alreadyVisibleHere = !Array.isArray(tags) || tags.length === 0 || tags.includes(reactionTypeId)
+      if (alreadyVisibleHere) {
+        toast({
+          title: 'Duplicate Time Point',
+          description: `A time point already exists at t=${time}s`,
+          variant: 'destructive',
+        })
+        return
+      }
+
+      // The row exists but was created under a different type and has no data of its own here
+      // yet -- silently reveal it under this type too instead of refusing the add outright.
+      dispatch(tagEvolvingRow({ time, typeId: reactionTypeId }))
+      setNewTimeValue('')
+      setAddTimeOpen(false)
+      return
+    }
+
+    // t=0 is always the default starting point
+    const withZero = ensureZeroTimeRow(
+      { times: evolvingTimes, temperature: evolvingTemperature, pressure: evolvingPressure, additionalSeries },
+      time
+    )
+
+    const newTimes = [...withZero.times, time].sort((a, b) => a - b)
+    const insertIndex = newTimes.indexOf(time)
+
+    const newTemperature = [...withZero.temperature]
+    newTemperature.splice(insertIndex, 0, DEFAULT_TEMPERATURE)
+
+    const newPressure = [...withZero.pressure]
+    newPressure.splice(insertIndex, 0, DEFAULT_PRESSURE)
+
+    const newAdditionalSeries = insertAdditionalSeriesValue(withZero.additionalSeries, insertIndex)
+
+    dispatch(setEvolvingEnabled(true))
+    dispatch(setEvolvingTimes(newTimes))
+    dispatch(setEvolvingTemperature(newTemperature))
+    dispatch(setEvolvingPressure(newPressure))
+    dispatch(setEvolvingAdditionalSeries(newAdditionalSeries))
+    // Scopes this row to the active type until it also has data under another one (see
+    // visibleTimeEntries above) -- so it's immediately visible here without leaking into
+    // every other reaction type's table.
+    dispatch(tagEvolvingRow({ time, typeId: reactionTypeId }))
+
+    toast({
+      title: 'Time Point Added',
+      description: `Added time point at t=${time}s`,
+      variant: 'success',
+    })
+    setNewTimeValue('')
+    setAddTimeOpen(false)
   }
 
   return (
@@ -307,17 +450,53 @@ export function ReactionTab() {
               Set time-varying rate constant parameters
             </CardDescription>
           </div>
-          {/* Always mounted (just hidden) so the header's height never shifts */}
-          <Button
-            variant="glass"
-            size="sm"
-            onClick={handleClearSelected}
-            className={`rounded-lg bg-white text-red-600 hover:bg-red-50 flex-shrink-0 ${
-              selectedIndices.size === 0 ? 'invisible' : ''
-            }`}
-          >
-            Clear selected ({selectedIndices.size})
-          </Button>
+          <div className="flex items-center gap-2 flex-shrink-0">
+            {/* Always mounted (just hidden) so the header's height never shifts */}
+            <Button
+              variant="glass"
+              size="sm"
+              onClick={handleRemoveSelected}
+              className={`rounded-lg border-2 border-red-600 bg-white text-red-600 hover:bg-red-50 flex-shrink-0 ${
+                selectedIndices.size === 0 ? 'invisible' : ''
+              }`}
+            >
+              Remove ({selectedIndices.size})
+            </Button>
+
+            <div className="relative" ref={addTimeRef}>
+              <Button
+                variant="glass"
+                size="sm"
+                onClick={() => setAddTimeOpen((open) => !open)}
+                className="rounded-lg border-2 border-assist-secondary-ring bg-white text-assist-secondary-ring hover:bg-assist-secondary"
+              >
+                Add
+              </Button>
+
+              {addTimeOpen && (
+                <div className="absolute right-0 z-20 mt-1 w-40 bg-white border border-border rounded-lg shadow-lg p-3">
+                  <label className="block px-1 text-xs font-semibold text-ink mb-1">
+                    New time point
+                  </label>
+                  <input
+                    type="text"
+                    inputMode="decimal"
+                    value={newTimeValue}
+                    onChange={(e) => setNewTimeValue(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault()
+                        handleAddTimePoint()
+                      }
+                    }}
+                    placeholder="seconds"
+                    autoFocus
+                    className={`w-full focus:!ring-assist-secondary-ring ${TEXT_INPUT_SM}`}
+                  />
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       </CardHeader>
       <CardContent className={LIST_CARD_CONTENT}>
@@ -403,7 +582,7 @@ export function ReactionTab() {
                     value={reactionSearch}
                     onChange={(e) => setReactionSearch(e.target.value)}
                     placeholder="Search by name"
-                    className={`w-full !h-8 mb-2 ${TEXT_INPUT_SM}`}
+                    className={`w-[98%] mx-auto block !h-8 mb-2 focus:!border-action ${TEXT_INPUT_SM}`}
                   />
                   <div className="flex flex-col gap-0.5">
                     {visibleReactionsOfType.map((reaction) => (
@@ -461,7 +640,11 @@ export function ReactionTab() {
             <div className="border border-gray-200 rounded-lg overflow-auto lg:absolute lg:inset-0">
               {evolvingTimes.length === 0 ? (
                 <p className="text-center text-gray-500 py-8">
-                  No time points configured. Add time points in the Environment tab first.
+                  No rate constant parameters configured
+                </p>
+              ) : visibleTimeEntries.length === 0 ? (
+                <p className="text-center text-gray-500 py-8">
+                  No time points for {reactionType.label} yet. Click "Add" above to create one.
                 </p>
               ) : columns.length === 0 ? (
                 <p className="text-center text-gray-500 py-8">
@@ -500,15 +683,21 @@ export function ReactionTab() {
                     </tr>
                   </thead>
                   <tbody>
-                    {evolvingTimes.map((time, index) => (
+                    {visibleTimeEntries.map(({ time, index }) => (
                       <tr key={index} className="border-b border-gray-200 hover:bg-gray-50">
                         <td className="px-4 py-2">
                           <input
                             type="checkbox"
                             checked={selectedIndices.has(index)}
                             onChange={() => toggleSelected(index)}
-                            aria-label={`Select time point at t=${time}s`}
-                            className="accent-assist-secondary-ring"
+                            disabled={time === 0}
+                            aria-label={
+                              time === 0
+                                ? 'Time point at t=0s cannot be removed'
+                                : `Select time point at t=${time}s`
+                            }
+                            title={time === 0 ? 'The starting time point cannot be removed' : undefined}
+                            className="accent-assist-secondary-ring disabled:opacity-30 disabled:cursor-not-allowed"
                           />
                         </td>
                         <td className="px-4 py-2 font-mono">{time}</td>
@@ -536,7 +725,7 @@ export function ReactionTab() {
                                 }}
                                 onBlur={(e) => commitValue(column.key, index, e.target.value)}
                                 placeholder="not set"
-                                className={`${NUMBER_INPUT} ${
+                                className={`${NUMBER_INPUT} focus:border-assist-secondary-ring ${
                                   justUpdatedCell === draftKey
                                     ? 'border-action bg-assist-secondary'
                                     : 'border-gray-300 bg-white'

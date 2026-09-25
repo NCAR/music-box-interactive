@@ -28,6 +28,9 @@ const initialState = {
     additionalSeries: {},
     // Rate constants can also evolve
     rateConstants: {},
+    // UI-only: maps each time value to its relevant reaction type(s); missing entries are universal.
+    // Not used in the solver payload.
+    rowReactionType: {},
   },
 
   hydration: {
@@ -104,6 +107,23 @@ export const conditionsSlice = createSlice({
     setEvolvingAdditionalSeries: (state, action) => {
       state.evolving.additionalSeries = action.payload || {}
     },
+    tagEvolvingRow: (state, action) => {
+      const { time, typeId } = action.payload
+      state.evolving.rowReactionType ??= {}
+      const key = String(time)
+      const existing = state.evolving.rowReactionType[key]
+      if (!Array.isArray(existing)) {
+        state.evolving.rowReactionType[key] = [typeId]
+      } else if (!existing.includes(typeId)) {
+        existing.push(typeId)
+      }
+    },
+    untagEvolvingRows: (state, action) => {
+      state.evolving.rowReactionType ??= {}
+      action.payload.forEach((time) => {
+        delete state.evolving.rowReactionType[String(time)]
+      })
+    },
 
     markInitialHydrated: (state, action) => {
       state.hydration.initialExampleId = action.payload || null
@@ -151,6 +171,8 @@ export const {
   setEvolvingPressure,
   setInterpolationMethod,
   setEvolvingAdditionalSeries,
+  tagEvolvingRow,
+  untagEvolvingRows,
   markInitialHydrated,
   markEvolvingHydrated,
   loadConditions,

@@ -10,6 +10,7 @@ import {
   setEvolvingTemperature,
   setEvolvingPressure,
   setEvolvingAdditionalSeries,
+  untagEvolvingRows,
 } from '../../redux/slices/conditionsSlice'
 import { UnitDropdown } from '../Plots/UnitDropdown'
 import { TIME_RANGE_UNITS } from '../Plots/timeRangeUnits'
@@ -18,6 +19,13 @@ import { PRESSURE_UNITS } from '../Plots/pressureUnits'
 import { DENSITY_UNITS } from '../Plots/densityUnits'
 import { LIST_CARD, LIST_CARD_CONTENT, FIELD_LABEL } from '../Mechanism/fieldStyles'
 import { cn } from '../../lib/utils'
+import {
+  DEFAULT_TEMPERATURE,
+  DEFAULT_PRESSURE,
+  insertAdditionalSeriesValue,
+  removeEvolvingTimeRows,
+  ensureZeroTimeRow,
+} from './evolvingSeries'
 
 // Air number density is optional, so its values are stored in the evolving slice's generic
 // additionalSeries map, alongside hidden series like PHOTO.*, instead of
@@ -41,8 +49,6 @@ const CELL_INPUT =
 
 // Matches each field's placeholder when the field is left blank.
 const DEFAULT_TIME = 0
-const DEFAULT_TEMPERATURE = 298.15
-const DEFAULT_PRESSURE = 101325
 
 // GAS_CONSTANT (Avogadro x Boltzmann)
 const GAS_CONSTANT = 8.31446261815324
@@ -57,25 +63,6 @@ function idealGasDensity(pressure, temperature) {
 
 function formatConversion(value, decimals = 4) {
   return String(parseFloat(value.toFixed(decimals)))
-}
-
-function insertAdditionalSeriesValue(series, insertIndex, value = null) {
-  return Object.fromEntries(
-    Object.entries(series || {}).map(([name, values]) => {
-      const nextValues = Array.isArray(values) ? [...values] : []
-      nextValues.splice(insertIndex, 0, value)
-      return [name, nextValues]
-    })
-  )
-}
-
-function removeAdditionalSeriesValues(series, removeIndices) {
-  return Object.fromEntries(
-    Object.entries(series || {}).map(([name, values]) => [
-      name,
-      (Array.isArray(values) ? values : []).filter((_, index) => !removeIndices.has(index)),
-    ])
-  )
 }
 
 /**
@@ -151,21 +138,32 @@ export function EnvironmentTab() {
       return
     }
 
-    const newTimes = [...evolving.times, time].sort((a, b) => a - b)
+    // t=0 is always the default starting point
+    const withZero = ensureZeroTimeRow(
+      {
+        times: evolving.times,
+        temperature: evolving.temperature,
+        pressure: evolving.pressure,
+        additionalSeries: evolving.additionalSeries,
+      },
+      time
+    )
+
+    const newTimes = [...withZero.times, time].sort((a, b) => a - b)
     const insertIndex = newTimes.indexOf(time)
 
-    const newTemps = [...evolving.temperature]
+    const newTemps = [...withZero.temperature]
     newTemps.splice(insertIndex, 0, temperature)
 
-    const newPresses = [...evolving.pressure]
+    const newPresses = [...withZero.pressure]
     newPresses.splice(insertIndex, 0, pressure)
 
-    let newAdditionalSeries = insertAdditionalSeriesValue(evolving.additionalSeries, insertIndex)
+    let newAdditionalSeries = insertAdditionalSeriesValue(withZero.additionalSeries, insertIndex)
 
     if (densityEnabled) {
-      const existingDensitySeries = Array.isArray(evolving.additionalSeries?.[DENSITY_SERIES_KEY])
-        ? evolving.additionalSeries[DENSITY_SERIES_KEY]
-        : new Array(evolving.times.length).fill(null)
+      const existingDensitySeries = Array.isArray(withZero.additionalSeries?.[DENSITY_SERIES_KEY])
+        ? withZero.additionalSeries[DENSITY_SERIES_KEY]
+        : new Array(withZero.times.length).fill(null)
       const nextDensitySeries = [...existingDensitySeries]
       nextDensitySeries.splice(insertIndex, 0, density)
       newAdditionalSeries = { ...newAdditionalSeries, [DENSITY_SERIES_KEY]: nextDensitySeries }
@@ -189,7 +187,14 @@ export function EnvironmentTab() {
     setNewDensity('')
   }
 
+  // t=0 is the simulation's starting point, not removable.
+  const removableIndices = evolving.times
+    .map((time, index) => ({ time, index }))
+    .filter((entry) => entry.time !== 0)
+    .map((entry) => entry.index)
+
   const toggleSelected = (index) => {
+    if (!removableIndices.includes(index)) return
     setSelectedIndices((prev) => {
       const next = new Set(prev)
       if (next.has(index)) {
@@ -202,30 +207,34 @@ export function EnvironmentTab() {
   }
 
   const toggleSelectAll = () => {
-    setSelectedIndices((prev) =>
-      prev.size === evolving.times.length
-        ? new Set()
-        : new Set(evolving.times.map((_, index) => index))
-    )
+    setSelectedIndices((prev) => {
+      const allCurrentlySelected =
+        removableIndices.length > 0 && removableIndices.every((i) => prev.has(i))
+      return allCurrentlySelected ? new Set() : new Set(removableIndices)
+    })
   }
 
   const handleRemoveSelected = () => {
-    if (selectedIndices.size === 0) return
+    const result = removeEvolvingTimeRows(
+      {
+        times: evolving.times,
+        temperature: evolving.temperature,
+        pressure: evolving.pressure,
+        additionalSeries: evolving.additionalSeries,
+      },
+      selectedIndices
+    )
+    if (!result) return
 
-    const removedCount = selectedIndices.size
-    const newTimes = evolving.times.filter((_, i) => !selectedIndices.has(i))
-    const newTemps = evolving.temperature.filter((_, i) => !selectedIndices.has(i))
-    const newPresses = evolving.pressure.filter((_, i) => !selectedIndices.has(i))
-    const newAdditionalSeries = removeAdditionalSeriesValues(evolving.additionalSeries, selectedIndices)
-
-    dispatch(setEvolvingTimes(newTimes))
-    dispatch(setEvolvingTemperature(newTemps))
-    dispatch(setEvolvingPressure(newPresses))
-    dispatch(setEvolvingAdditionalSeries(newAdditionalSeries))
+    dispatch(setEvolvingTimes(result.times))
+    dispatch(setEvolvingTemperature(result.temperature))
+    dispatch(setEvolvingPressure(result.pressure))
+    dispatch(setEvolvingAdditionalSeries(result.additionalSeries))
+    dispatch(untagEvolvingRows(result.removedTimes))
 
     toast({
-      title: removedCount === 1 ? 'Condition Removed' : 'Conditions Removed',
-      description: `Removed ${removedCount} condition${removedCount === 1 ? '' : 's'}`,
+      title: result.removedCount === 1 ? 'Condition Removed' : 'Conditions Removed',
+      description: `Removed ${result.removedCount} condition${result.removedCount === 1 ? '' : 's'}`,
       variant: 'delete',
     })
 
@@ -265,10 +274,11 @@ export function EnvironmentTab() {
       })
       return
     }
+    clearCellDraft('temperature', index)
+    if (evolving.temperature[index] === parsed) return
     const next = [...evolving.temperature]
     next[index] = parsed
     dispatch(setEvolvingTemperature(next))
-    clearCellDraft('temperature', index)
     flashCell('temperature', index)
   }
 
@@ -282,10 +292,11 @@ export function EnvironmentTab() {
       })
       return
     }
+    clearCellDraft('pressure', index)
+    if (evolving.pressure[index] === parsed) return
     const next = [...evolving.pressure]
     next[index] = parsed
     dispatch(setEvolvingPressure(next))
-    clearCellDraft('pressure', index)
     flashCell('pressure', index)
   }
 
@@ -302,15 +313,16 @@ export function EnvironmentTab() {
       })
       return
     }
+    clearCellDraft('density', index)
     const existing = Array.isArray(evolving.additionalSeries?.[DENSITY_SERIES_KEY])
       ? evolving.additionalSeries[DENSITY_SERIES_KEY]
       : new Array(evolving.times.length).fill(null)
+    if (existing[index] === parsed) return
     const next = [...existing]
     next[index] = parsed
     dispatch(
       setEvolvingAdditionalSeries({ ...evolving.additionalSeries, [DENSITY_SERIES_KEY]: next })
     )
-    clearCellDraft('density', index)
     flashCell('density', index)
   }
 
@@ -498,7 +510,8 @@ export function EnvironmentTab() {
             (() => {
               const densitySeries = evolving.additionalSeries?.[DENSITY_SERIES_KEY]
               const hasDensityColumn = Array.isArray(densitySeries) && densitySeries.some((v) => v != null)
-              const allSelected = selectedIndices.size === evolving.times.length
+              const allSelected =
+                removableIndices.length > 0 && removableIndices.every((i) => selectedIndices.has(i))
 
               return (
                 <div className="border border-gray-200 rounded-lg overflow-auto">
@@ -533,8 +546,16 @@ export function EnvironmentTab() {
                                 type="checkbox"
                                 checked={selectedIndices.has(index)}
                                 onChange={() => toggleSelected(index)}
-                                aria-label={`Select condition at t=${time}s`}
-                                className="accent-assist-secondary-ring"
+                                disabled={time === 0}
+                                aria-label={
+                                  time === 0
+                                    ? 'Condition at t=0s cannot be removed'
+                                    : `Select condition at t=${time}s`
+                                }
+                                title={
+                                  time === 0 ? 'The starting time point cannot be removed' : undefined
+                                }
+                                className="accent-assist-secondary-ring disabled:opacity-30 disabled:cursor-not-allowed"
                               />
                             </td>
                             <td className="px-4 py-2 font-mono">{formatConversion(time)}</td>
