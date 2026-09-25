@@ -502,23 +502,23 @@ export function EnvironmentTab() {
 
               return (
                 <div className="border border-gray-200 rounded-lg overflow-auto">
-                  <table className="w-full text-sm">
+                  <table className="w-full table-fixed text-sm">
                     <thead className="bg-assist-secondary text-assist-secondary-foreground">
                       <tr>
-                        <th className="w-10 px-4 py-2">
+                        <th className="w-10 text-left px-4 py-2">
                           <input
                             type="checkbox"
                             checked={allSelected}
                             onChange={toggleSelectAll}
                             aria-label="Select all conditions"
-                            className="accent-green-700"
+                            className="accent-assist-secondary-ring"
                           />
                         </th>
-                        <th className="text-left px-4 py-2 font-semibold">Time (s)</th>
-                        <th className="text-left px-4 py-2 font-semibold">Temperature (K)</th>
-                        <th className="text-left px-4 py-2 font-semibold">Pressure (Pa)</th>
+                        <th className="w-28 text-left px-4 py-2 font-semibold">Time (s)</th>
+                        <th className="w-36 text-left px-4 py-2 font-semibold">Temperature (K)</th>
+                        <th className="w-36 text-left px-4 py-2 font-semibold">Pressure (Pa)</th>
                         {hasDensityColumn && (
-                          <th className="text-left px-4 py-2 font-semibold">Air number density (mol m-3)</th>
+                          <th className="w-56 text-left px-4 py-2 font-semibold">Air number density (mol m-3)</th>
                         )}
                       </tr>
                     </thead>
@@ -534,7 +534,7 @@ export function EnvironmentTab() {
                                 checked={selectedIndices.has(index)}
                                 onChange={() => toggleSelected(index)}
                                 aria-label={`Select condition at t=${time}s`}
-                                className="accent-green-700"
+                                className="accent-assist-secondary-ring"
                               />
                             </td>
                             <td className="px-4 py-2 font-mono">{formatConversion(time)}</td>
@@ -544,7 +544,9 @@ export function EnvironmentTab() {
                                 inputMode="decimal"
                                 value={
                                   rowDrafts[cellKey('temperature', index)] ??
-                                  formatConversion(evolving.temperature[index])
+                                  (evolving.temperature[index] != null
+                                    ? formatConversion(evolving.temperature[index])
+                                    : '')
                                 }
                                 onChange={(e) =>
                                   handleCellDraftChange('temperature', index, e.target.value)
@@ -570,7 +572,9 @@ export function EnvironmentTab() {
                                 inputMode="decimal"
                                 value={
                                   rowDrafts[cellKey('pressure', index)] ??
-                                  formatConversion(evolving.pressure[index])
+                                  (evolving.pressure[index] != null
+                                    ? formatConversion(evolving.pressure[index])
+                                    : '')
                                 }
                                 onChange={(e) =>
                                   handleCellDraftChange('pressure', index, e.target.value)
@@ -602,9 +606,17 @@ export function EnvironmentTab() {
                                   onChange={(e) =>
                                     handleCellDraftChange('density', index, e.target.value)
                                   }
-                                  placeholder={formatConversion(
-                                    idealGasDensity(evolving.pressure[index], evolving.temperature[index])
-                                  )}
+                                  placeholder={
+                                    evolving.pressure[index] != null &&
+                                    evolving.temperature[index] != null
+                                      ? formatConversion(
+                                          idealGasDensity(
+                                            evolving.pressure[index],
+                                            evolving.temperature[index]
+                                          )
+                                        )
+                                      : ''
+                                  }
                                   onKeyDown={(e) => {
                                     if (e.key === 'Enter') {
                                       e.preventDefault()
