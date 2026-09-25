@@ -24,6 +24,7 @@ import {
   DEFAULT_PRESSURE,
   insertAdditionalSeriesValue,
   removeAdditionalSeriesValues,
+  ensureZeroTimeRow,
 } from './evolvingSeries'
 
 // Air number density is optional, so its values are stored in the evolving slice's generic
@@ -137,21 +138,33 @@ export function EnvironmentTab() {
       return
     }
 
-    const newTimes = [...evolving.times, time].sort((a, b) => a - b)
+    // t=0 is always the default starting point -- ensure it exists (with the same not-set
+    // defaults as any other added row) before adding the requested time.
+    const withZero = ensureZeroTimeRow(
+      {
+        times: evolving.times,
+        temperature: evolving.temperature,
+        pressure: evolving.pressure,
+        additionalSeries: evolving.additionalSeries,
+      },
+      time
+    )
+
+    const newTimes = [...withZero.times, time].sort((a, b) => a - b)
     const insertIndex = newTimes.indexOf(time)
 
-    const newTemps = [...evolving.temperature]
+    const newTemps = [...withZero.temperature]
     newTemps.splice(insertIndex, 0, temperature)
 
-    const newPresses = [...evolving.pressure]
+    const newPresses = [...withZero.pressure]
     newPresses.splice(insertIndex, 0, pressure)
 
-    let newAdditionalSeries = insertAdditionalSeriesValue(evolving.additionalSeries, insertIndex)
+    let newAdditionalSeries = insertAdditionalSeriesValue(withZero.additionalSeries, insertIndex)
 
     if (densityEnabled) {
-      const existingDensitySeries = Array.isArray(evolving.additionalSeries?.[DENSITY_SERIES_KEY])
-        ? evolving.additionalSeries[DENSITY_SERIES_KEY]
-        : new Array(evolving.times.length).fill(null)
+      const existingDensitySeries = Array.isArray(withZero.additionalSeries?.[DENSITY_SERIES_KEY])
+        ? withZero.additionalSeries[DENSITY_SERIES_KEY]
+        : new Array(withZero.times.length).fill(null)
       const nextDensitySeries = [...existingDensitySeries]
       nextDensitySeries.splice(insertIndex, 0, density)
       newAdditionalSeries = { ...newAdditionalSeries, [DENSITY_SERIES_KEY]: nextDensitySeries }
@@ -175,7 +188,14 @@ export function EnvironmentTab() {
     setNewDensity('')
   }
 
+  // t=0 is the simulation's starting point, not a removable evolving row.
+  const removableIndices = evolving.times
+    .map((time, index) => ({ time, index }))
+    .filter((entry) => entry.time !== 0)
+    .map((entry) => entry.index)
+
   const toggleSelected = (index) => {
+    if (!removableIndices.includes(index)) return
     setSelectedIndices((prev) => {
       const next = new Set(prev)
       if (next.has(index)) {
@@ -188,22 +208,26 @@ export function EnvironmentTab() {
   }
 
   const toggleSelectAll = () => {
-    setSelectedIndices((prev) =>
-      prev.size === evolving.times.length
-        ? new Set()
-        : new Set(evolving.times.map((_, index) => index))
-    )
+    setSelectedIndices((prev) => {
+      const allCurrentlySelected =
+        removableIndices.length > 0 && removableIndices.every((i) => prev.has(i))
+      return allCurrentlySelected ? new Set() : new Set(removableIndices)
+    })
   }
 
   const handleRemoveSelected = () => {
-    if (selectedIndices.size === 0) return
+    // t=0 is never selectable, but guard here too in case selectedIndices carries stale state.
+    const indicesToRemove = new Set(
+      [...selectedIndices].filter((i) => evolving.times[i] !== 0)
+    )
+    if (indicesToRemove.size === 0) return
 
-    const removedCount = selectedIndices.size
-    const removedTimes = evolving.times.filter((_, i) => selectedIndices.has(i))
-    const newTimes = evolving.times.filter((_, i) => !selectedIndices.has(i))
-    const newTemps = evolving.temperature.filter((_, i) => !selectedIndices.has(i))
-    const newPresses = evolving.pressure.filter((_, i) => !selectedIndices.has(i))
-    const newAdditionalSeries = removeAdditionalSeriesValues(evolving.additionalSeries, selectedIndices)
+    const removedCount = indicesToRemove.size
+    const removedTimes = evolving.times.filter((_, i) => indicesToRemove.has(i))
+    const newTimes = evolving.times.filter((_, i) => !indicesToRemove.has(i))
+    const newTemps = evolving.temperature.filter((_, i) => !indicesToRemove.has(i))
+    const newPresses = evolving.pressure.filter((_, i) => !indicesToRemove.has(i))
+    const newAdditionalSeries = removeAdditionalSeriesValues(evolving.additionalSeries, indicesToRemove)
 
     dispatch(setEvolvingTimes(newTimes))
     dispatch(setEvolvingTemperature(newTemps))
@@ -486,7 +510,8 @@ export function EnvironmentTab() {
             (() => {
               const densitySeries = evolving.additionalSeries?.[DENSITY_SERIES_KEY]
               const hasDensityColumn = Array.isArray(densitySeries) && densitySeries.some((v) => v != null)
-              const allSelected = selectedIndices.size === evolving.times.length
+              const allSelected =
+                removableIndices.length > 0 && removableIndices.every((i) => selectedIndices.has(i))
 
               return (
                 <div className="border border-gray-200 rounded-lg overflow-auto">
@@ -521,8 +546,16 @@ export function EnvironmentTab() {
                                 type="checkbox"
                                 checked={selectedIndices.has(index)}
                                 onChange={() => toggleSelected(index)}
-                                aria-label={`Select condition at t=${time}s`}
-                                className="accent-assist-secondary-ring"
+                                disabled={time === 0}
+                                aria-label={
+                                  time === 0
+                                    ? 'Condition at t=0s cannot be removed'
+                                    : `Select condition at t=${time}s`
+                                }
+                                title={
+                                  time === 0 ? 'The starting time point cannot be removed' : undefined
+                                }
+                                className="accent-assist-secondary-ring disabled:opacity-30 disabled:cursor-not-allowed"
                               />
                             </td>
                             <td className="px-4 py-2 font-mono">{formatConversion(time)}</td>

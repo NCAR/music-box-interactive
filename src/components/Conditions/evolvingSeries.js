@@ -25,3 +25,20 @@ export function removeAdditionalSeriesValues(series, removeIndices) {
     ])
   )
 }
+
+// Ensures a t=0 row exists, using the same defaults a manually-added row gets (temperature/
+// pressure defaulted, every additional-series column left not-set/null) -- callers use this
+// right before adding the mechanism's first evolving time point, so t=0 is always present as
+// the starting point. A no-op if t=0 already exists, or if the row being added already is t=0.
+export function ensureZeroTimeRow({ times, temperature, pressure, additionalSeries }, newTime) {
+  if (newTime === 0 || times.includes(0)) {
+    return { times, temperature, pressure, additionalSeries }
+  }
+
+  return {
+    times: [0, ...times],
+    temperature: [DEFAULT_TEMPERATURE, ...temperature],
+    pressure: [DEFAULT_PRESSURE, ...pressure],
+    additionalSeries: insertAdditionalSeriesValue(additionalSeries, 0),
+  }
+}

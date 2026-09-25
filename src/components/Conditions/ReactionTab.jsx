@@ -21,6 +21,7 @@ import {
   DEFAULT_PRESSURE,
   insertAdditionalSeriesValue,
   removeAdditionalSeriesValues,
+  ensureZeroTimeRow,
 } from './evolvingSeries'
 
 const filterButtonClass = (selected) =>
@@ -267,6 +268,10 @@ export function ReactionTab() {
       return typeDataIndices.has(index)
     })
   const visibleIndices = visibleTimeEntries.map((entry) => entry.index)
+  // t=0 is the simulation's starting point, not an editable/removable evolving row.
+  const removableIndices = visibleTimeEntries
+    .filter((entry) => entry.time !== 0)
+    .map((entry) => entry.index)
 
   // Clear on evolvingTimes changing
   useEffect(() => {
@@ -316,6 +321,7 @@ export function ReactionTab() {
   }
 
   const toggleSelected = (index) => {
+    if (!removableIndices.includes(index)) return
     setSelectedIndices((prev) => {
       const next = new Set(prev)
       if (next.has(index)) {
@@ -327,27 +333,31 @@ export function ReactionTab() {
     })
   }
 
-  // Scoped to the rows actually visible for the active type, not every row globally.
-  const allSelected = visibleIndices.length > 0 && visibleIndices.every((i) => selectedIndices.has(i))
+  // Scoped to the removable rows visible for the active type -- t=0 is never included.
+  const allSelected = removableIndices.length > 0 && removableIndices.every((i) => selectedIndices.has(i))
 
   const toggleSelectAll = () => {
     setSelectedIndices((prev) => {
-      const allCurrentlySelected = visibleIndices.length > 0 && visibleIndices.every((i) => prev.has(i))
+      const allCurrentlySelected = removableIndices.length > 0 && removableIndices.every((i) => prev.has(i))
       const next = new Set(prev)
-      visibleIndices.forEach((i) => (allCurrentlySelected ? next.delete(i) : next.add(i)))
+      removableIndices.forEach((i) => (allCurrentlySelected ? next.delete(i) : next.add(i)))
       return next
     })
   }
 
   const handleRemoveSelected = () => {
-    if (selectedIndices.size === 0) return
+    // t=0 is never selectable, but guard here too in case selectedIndices carries stale state.
+    const indicesToRemove = new Set(
+      [...selectedIndices].filter((i) => evolvingTimes[i] !== 0)
+    )
+    if (indicesToRemove.size === 0) return
 
-    const removedCount = selectedIndices.size
-    const removedTimes = evolvingTimes.filter((_, i) => selectedIndices.has(i))
-    const newTimes = evolvingTimes.filter((_, i) => !selectedIndices.has(i))
-    const newTemperature = evolvingTemperature.filter((_, i) => !selectedIndices.has(i))
-    const newPressure = evolvingPressure.filter((_, i) => !selectedIndices.has(i))
-    const newAdditionalSeries = removeAdditionalSeriesValues(additionalSeries, selectedIndices)
+    const removedCount = indicesToRemove.size
+    const removedTimes = evolvingTimes.filter((_, i) => indicesToRemove.has(i))
+    const newTimes = evolvingTimes.filter((_, i) => !indicesToRemove.has(i))
+    const newTemperature = evolvingTemperature.filter((_, i) => !indicesToRemove.has(i))
+    const newPressure = evolvingPressure.filter((_, i) => !indicesToRemove.has(i))
+    const newAdditionalSeries = removeAdditionalSeriesValues(additionalSeries, indicesToRemove)
 
     dispatch(setEvolvingTimes(newTimes))
     dispatch(setEvolvingTemperature(newTemperature))
@@ -395,16 +405,23 @@ export function ReactionTab() {
       return
     }
 
-    const newTimes = [...evolvingTimes, time].sort((a, b) => a - b)
+    // t=0 is always the default starting point -- ensure it exists (with the same not-set
+    // defaults as any other added row) before adding the requested time.
+    const withZero = ensureZeroTimeRow(
+      { times: evolvingTimes, temperature: evolvingTemperature, pressure: evolvingPressure, additionalSeries },
+      time
+    )
+
+    const newTimes = [...withZero.times, time].sort((a, b) => a - b)
     const insertIndex = newTimes.indexOf(time)
 
-    const newTemperature = [...evolvingTemperature]
+    const newTemperature = [...withZero.temperature]
     newTemperature.splice(insertIndex, 0, DEFAULT_TEMPERATURE)
 
-    const newPressure = [...evolvingPressure]
+    const newPressure = [...withZero.pressure]
     newPressure.splice(insertIndex, 0, DEFAULT_PRESSURE)
 
-    const newAdditionalSeries = insertAdditionalSeriesValue(additionalSeries, insertIndex)
+    const newAdditionalSeries = insertAdditionalSeriesValue(withZero.additionalSeries, insertIndex)
 
     dispatch(setEvolvingEnabled(true))
     dispatch(setEvolvingTimes(newTimes))
@@ -682,8 +699,14 @@ export function ReactionTab() {
                             type="checkbox"
                             checked={selectedIndices.has(index)}
                             onChange={() => toggleSelected(index)}
-                            aria-label={`Select time point at t=${time}s`}
-                            className="accent-assist-secondary-ring"
+                            disabled={time === 0}
+                            aria-label={
+                              time === 0
+                                ? 'Time point at t=0s cannot be removed'
+                                : `Select time point at t=${time}s`
+                            }
+                            title={time === 0 ? 'The starting time point cannot be removed' : undefined}
+                            className="accent-assist-secondary-ring disabled:opacity-30 disabled:cursor-not-allowed"
                           />
                         </td>
                         <td className="px-4 py-2 font-mono">{time}</td>
