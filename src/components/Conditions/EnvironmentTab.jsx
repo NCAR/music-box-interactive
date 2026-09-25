@@ -23,7 +23,7 @@ import {
   DEFAULT_TEMPERATURE,
   DEFAULT_PRESSURE,
   insertAdditionalSeriesValue,
-  removeAdditionalSeriesValues,
+  removeEvolvingTimeRows,
   ensureZeroTimeRow,
 } from './evolvingSeries'
 
@@ -138,8 +138,7 @@ export function EnvironmentTab() {
       return
     }
 
-    // t=0 is always the default starting point -- ensure it exists (with the same not-set
-    // defaults as any other added row) before adding the requested time.
+    // t=0 is always the default starting point
     const withZero = ensureZeroTimeRow(
       {
         times: evolving.times,
@@ -216,28 +215,26 @@ export function EnvironmentTab() {
   }
 
   const handleRemoveSelected = () => {
-    // t=0 is never selectable, but guard here too in case selectedIndices carries stale state.
-    const indicesToRemove = new Set(
-      [...selectedIndices].filter((i) => evolving.times[i] !== 0)
+    const result = removeEvolvingTimeRows(
+      {
+        times: evolving.times,
+        temperature: evolving.temperature,
+        pressure: evolving.pressure,
+        additionalSeries: evolving.additionalSeries,
+      },
+      selectedIndices
     )
-    if (indicesToRemove.size === 0) return
+    if (!result) return
 
-    const removedCount = indicesToRemove.size
-    const removedTimes = evolving.times.filter((_, i) => indicesToRemove.has(i))
-    const newTimes = evolving.times.filter((_, i) => !indicesToRemove.has(i))
-    const newTemps = evolving.temperature.filter((_, i) => !indicesToRemove.has(i))
-    const newPresses = evolving.pressure.filter((_, i) => !indicesToRemove.has(i))
-    const newAdditionalSeries = removeAdditionalSeriesValues(evolving.additionalSeries, indicesToRemove)
-
-    dispatch(setEvolvingTimes(newTimes))
-    dispatch(setEvolvingTemperature(newTemps))
-    dispatch(setEvolvingPressure(newPresses))
-    dispatch(setEvolvingAdditionalSeries(newAdditionalSeries))
-    dispatch(untagEvolvingRows(removedTimes))
+    dispatch(setEvolvingTimes(result.times))
+    dispatch(setEvolvingTemperature(result.temperature))
+    dispatch(setEvolvingPressure(result.pressure))
+    dispatch(setEvolvingAdditionalSeries(result.additionalSeries))
+    dispatch(untagEvolvingRows(result.removedTimes))
 
     toast({
-      title: removedCount === 1 ? 'Condition Removed' : 'Conditions Removed',
-      description: `Removed ${removedCount} condition${removedCount === 1 ? '' : 's'}`,
+      title: result.removedCount === 1 ? 'Condition Removed' : 'Conditions Removed',
+      description: `Removed ${result.removedCount} condition${result.removedCount === 1 ? '' : 's'}`,
       variant: 'delete',
     })
 

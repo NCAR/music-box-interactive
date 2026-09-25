@@ -20,7 +20,7 @@ import {
   DEFAULT_TEMPERATURE,
   DEFAULT_PRESSURE,
   insertAdditionalSeriesValue,
-  removeAdditionalSeriesValues,
+  removeEvolvingTimeRows,
   ensureZeroTimeRow,
 } from './evolvingSeries'
 
@@ -351,28 +351,21 @@ export function ReactionTab() {
   }
 
   const handleRemoveSelected = () => {
-    // t=0 is never selectable, but guard here too in case selectedIndices carries stale state.
-    const indicesToRemove = new Set(
-      [...selectedIndices].filter((i) => evolvingTimes[i] !== 0)
+    const result = removeEvolvingTimeRows(
+      { times: evolvingTimes, temperature: evolvingTemperature, pressure: evolvingPressure, additionalSeries },
+      selectedIndices
     )
-    if (indicesToRemove.size === 0) return
+    if (!result) return
 
-    const removedCount = indicesToRemove.size
-    const removedTimes = evolvingTimes.filter((_, i) => indicesToRemove.has(i))
-    const newTimes = evolvingTimes.filter((_, i) => !indicesToRemove.has(i))
-    const newTemperature = evolvingTemperature.filter((_, i) => !indicesToRemove.has(i))
-    const newPressure = evolvingPressure.filter((_, i) => !indicesToRemove.has(i))
-    const newAdditionalSeries = removeAdditionalSeriesValues(additionalSeries, indicesToRemove)
-
-    dispatch(setEvolvingTimes(newTimes))
-    dispatch(setEvolvingTemperature(newTemperature))
-    dispatch(setEvolvingPressure(newPressure))
-    dispatch(setEvolvingAdditionalSeries(newAdditionalSeries))
-    dispatch(untagEvolvingRows(removedTimes))
+    dispatch(setEvolvingTimes(result.times))
+    dispatch(setEvolvingTemperature(result.temperature))
+    dispatch(setEvolvingPressure(result.pressure))
+    dispatch(setEvolvingAdditionalSeries(result.additionalSeries))
+    dispatch(untagEvolvingRows(result.removedTimes))
 
     toast({
-      title: removedCount === 1 ? 'Time Point Removed' : 'Time Points Removed',
-      description: `Removed ${removedCount} time point${removedCount === 1 ? '' : 's'}`,
+      title: result.removedCount === 1 ? 'Time Point Removed' : 'Time Points Removed',
+      description: `Removed ${result.removedCount} time point${result.removedCount === 1 ? '' : 's'}`,
       variant: 'delete',
     })
     setSelectedIndices(new Set())
@@ -410,8 +403,7 @@ export function ReactionTab() {
       return
     }
 
-    // t=0 is always the default starting point -- ensure it exists (with the same not-set
-    // defaults as any other added row) before adding the requested time.
+    // t=0 is always the default starting point
     const withZero = ensureZeroTimeRow(
       { times: evolvingTimes, temperature: evolvingTemperature, pressure: evolvingPressure, additionalSeries },
       time

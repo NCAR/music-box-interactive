@@ -1,9 +1,5 @@
-// Shared by EnvironmentTab and ReactionTab: both insert/remove rows in the evolving conditions
-// slice (times/temperature/pressure/additionalSeries), which must all stay parallel arrays.
-
-// Matches each field's placeholder when left blank, and what a new time point added from
-// ReactionTab is given for temperature/pressure so those arrays stay parallel to evolving.times,
-// even though that tab doesn't show them.
+// Shared row operations for EnvironmentTab and ReactionTab; keeps all evolving condition arrays in sync.
+// Defines defaults for blank fields and new ReactionTab time points to keep arrays aligned.
 export const DEFAULT_TEMPERATURE = 298.15
 export const DEFAULT_PRESSURE = 101325
 
@@ -26,10 +22,23 @@ export function removeAdditionalSeriesValues(series, removeIndices) {
   )
 }
 
-// Ensures a t=0 row exists, using the same defaults a manually-added row gets (temperature/
-// pressure defaulted, every additional-series column left not-set/null) -- callers use this
-// right before adding the mechanism's first evolving time point, so t=0 is always present as
-// the starting point. A no-op if t=0 already exists, or if the row being added already is t=0.
+// Removes selected rows from all evolving series in sync, excluding t=0,
+// and returns the updated data and removed time values.
+export function removeEvolvingTimeRows({ times, temperature, pressure, additionalSeries }, selectedIndices) {
+  const indicesToRemove = new Set([...selectedIndices].filter((i) => times[i] !== 0))
+  if (indicesToRemove.size === 0) return null
+
+  return {
+    removedCount: indicesToRemove.size,
+    removedTimes: times.filter((_, i) => indicesToRemove.has(i)),
+    times: times.filter((_, i) => !indicesToRemove.has(i)),
+    temperature: temperature.filter((_, i) => !indicesToRemove.has(i)),
+    pressure: pressure.filter((_, i) => !indicesToRemove.has(i)),
+    additionalSeries: removeAdditionalSeriesValues(additionalSeries, indicesToRemove),
+  }
+}
+
+// Ensures a t=0 row exists with default values; no-op if it already exists.
 export function ensureZeroTimeRow({ times, temperature, pressure, additionalSeries }, newTime) {
   if (newTime === 0 || times.includes(0)) {
     return { times, temperature, pressure, additionalSeries }

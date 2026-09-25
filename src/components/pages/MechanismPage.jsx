@@ -45,8 +45,7 @@ export function MechanismPage() {
     }
     if (hydratedEvolvingId !== exampleId) {
       const hydrated = hydrateEvolvingConditions(conditions)
-      // t=0 is always the default starting point -- ensure it exists (with the same not-set
-      // defaults as any other added row) even when the example's own data starts later.
+      // t=0 is always the default starting point
       const withZero = hydrated.times.length > 0 ? ensureZeroTimeRow(hydrated) : hydrated
       dispatch(setEvolvingEnabled(hydrated.enabled))
       dispatch(setEvolvingTimes(withZero.times))
