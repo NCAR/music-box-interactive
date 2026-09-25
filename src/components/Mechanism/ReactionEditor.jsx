@@ -31,6 +31,7 @@ import {
   LIST_CARD_CONTENT,
   TEXT_INPUT_SM,
 } from './fieldStyles'
+import { EMPTY_ARRAY } from '../../utils/emptyArray'
 
 const formatReactionComponents = (components) => {
   if (!Array.isArray(components) || components.length === 0) {
@@ -260,8 +261,8 @@ function ReactionChip({ reaction, onRemove, onComponentsSave, onParameterSave })
 export function ReactionEditor() {
   const dispatch = useDispatch()
   const { toast } = useToast()
-  const reactions = useSelector((state) => state.mechanism.config.mechanism?.reactions || [])
-  const species = useSelector((state) => state.mechanism.config.mechanism?.species || [])
+  const reactions = useSelector((state) => state.mechanism.config.mechanism?.reactions || EMPTY_ARRAY)
+  const species = useSelector((state) => state.mechanism.config.mechanism?.species || EMPTY_ARRAY)
 
   const [reactionType, setReactionType] = useState(reactionRegistry[0].type)
   const [reactionSearch, setReactionSearch] = useState('')

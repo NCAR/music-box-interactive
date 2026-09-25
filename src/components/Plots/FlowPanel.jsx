@@ -7,6 +7,7 @@ import { Dropdown } from '../ui/dropdown'
 import { RangeBoundInput } from './RangeBoundInput'
 import { TIME_RANGE_UNITS } from './timeRangeUnits'
 import { getReactionTypeLabel } from '../Mechanism/reactions/reactionRegistry'
+import { EMPTY_ARRAY } from '../../utils/emptyArray'
 
 // Show at most this many species as chips before collapsing the rest into a "+N others" menu
 const SPECIES_CHIP_VISIBLE = 25
@@ -51,7 +52,7 @@ export function FlowPanel({
   setValueDisplay,
 }) {
   const results = useSelector((state) => state.simulation.results)
-  const reactions = useSelector((state) => state.mechanism.config.mechanism?.reactions || [])
+  const reactions = useSelector((state) => state.mechanism.config.mechanism?.reactions || EMPTY_ARRAY)
 
   const reactionTypeOptions = useMemo(() => {
     const counts = new Map()

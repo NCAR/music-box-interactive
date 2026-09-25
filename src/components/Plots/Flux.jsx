@@ -31,6 +31,7 @@ import { UnitDropdown } from './UnitDropdown'
 import { Card, CardContent } from '../ui/card'
 import { CHART_COLORS } from '../chartColors'
 import { ChartLegendContent, ChartTooltipContent } from '../SimulationChart'
+import { EMPTY_ARRAY } from '../../utils/emptyArray'
 
 // Species rows shown before the list collapses into a "+N others" popover.
 const SPECIES_VISIBLE = 10
@@ -183,7 +184,7 @@ function FluxReactionRow({ reaction, flux, checked, onToggleCheck }) {
  */
 export function Flux() {
   const simulation = useSelector((state) => state.simulation)
-  const reactions = useSelector((state) => state.mechanism.config.mechanism?.reactions || [])
+  const reactions = useSelector((state) => state.mechanism.config.mechanism?.reactions || EMPTY_ARRAY)
   const duration = useSelector((state) => state.conditions.basic.duration)
 
   const [reactionsOpen, setReactionsOpen] = useState(true)
