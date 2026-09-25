@@ -10,6 +10,7 @@ import {
   setEvolvingPressure,
   setEvolvingAdditionalSeries,
   tagEvolvingRow,
+  untagEvolvingRows,
 } from '../../redux/slices/conditionsSlice'
 import { useToast } from '@/hooks/use-toast'
 import { useClickOutside } from '../../hooks/useClickOutside'
@@ -19,6 +20,7 @@ import {
   DEFAULT_TEMPERATURE,
   DEFAULT_PRESSURE,
   insertAdditionalSeriesValue,
+  removeAdditionalSeriesValues,
 } from './evolvingSeries'
 
 const filterButtonClass = (selected) =>
@@ -337,25 +339,25 @@ export function ReactionTab() {
     })
   }
 
-  const handleClearSelected = () => {
-    if (selectedIndices.size === 0 || columns.length === 0) return
+  const handleRemoveSelected = () => {
+    if (selectedIndices.size === 0) return
 
-    const nextSeries = { ...additionalSeries }
-    columns.forEach((column) => {
-      const existing = Array.isArray(additionalSeries[column.key])
-        ? [...additionalSeries[column.key]]
-        : new Array(evolvingTimes.length).fill(null)
-      while (existing.length < evolvingTimes.length) existing.push(null)
-      selectedIndices.forEach((index) => {
-        existing[index] = null
-      })
-      nextSeries[column.key] = existing
-    })
+    const removedCount = selectedIndices.size
+    const removedTimes = evolvingTimes.filter((_, i) => selectedIndices.has(i))
+    const newTimes = evolvingTimes.filter((_, i) => !selectedIndices.has(i))
+    const newTemperature = evolvingTemperature.filter((_, i) => !selectedIndices.has(i))
+    const newPressure = evolvingPressure.filter((_, i) => !selectedIndices.has(i))
+    const newAdditionalSeries = removeAdditionalSeriesValues(additionalSeries, selectedIndices)
 
-    dispatch(setEvolvingAdditionalSeries(nextSeries))
+    dispatch(setEvolvingTimes(newTimes))
+    dispatch(setEvolvingTemperature(newTemperature))
+    dispatch(setEvolvingPressure(newPressure))
+    dispatch(setEvolvingAdditionalSeries(newAdditionalSeries))
+    dispatch(untagEvolvingRows(removedTimes))
+
     toast({
-      title: 'Values Cleared',
-      description: `Cleared ${selectedIndices.size} time point${selectedIndices.size === 1 ? '' : 's'}`,
+      title: removedCount === 1 ? 'Time Point Removed' : 'Time Points Removed',
+      description: `Removed ${removedCount} time point${removedCount === 1 ? '' : 's'}`,
       variant: 'delete',
     })
     setSelectedIndices(new Set())
@@ -440,12 +442,12 @@ export function ReactionTab() {
             <Button
               variant="glass"
               size="sm"
-              onClick={handleClearSelected}
+              onClick={handleRemoveSelected}
               className={`rounded-lg border border-red-600 bg-white text-red-600 hover:bg-red-50 flex-shrink-0 ${
                 selectedIndices.size === 0 ? 'invisible' : ''
               }`}
             >
-              Clear ({selectedIndices.size})
+              Remove ({selectedIndices.size})
             </Button>
 
             <div className="relative" ref={addTimeRef}>
