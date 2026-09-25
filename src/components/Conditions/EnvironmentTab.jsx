@@ -277,10 +277,11 @@ export function EnvironmentTab() {
       })
       return
     }
+    clearCellDraft('temperature', index)
+    if (evolving.temperature[index] === parsed) return
     const next = [...evolving.temperature]
     next[index] = parsed
     dispatch(setEvolvingTemperature(next))
-    clearCellDraft('temperature', index)
     flashCell('temperature', index)
   }
 
@@ -294,10 +295,11 @@ export function EnvironmentTab() {
       })
       return
     }
+    clearCellDraft('pressure', index)
+    if (evolving.pressure[index] === parsed) return
     const next = [...evolving.pressure]
     next[index] = parsed
     dispatch(setEvolvingPressure(next))
-    clearCellDraft('pressure', index)
     flashCell('pressure', index)
   }
 
@@ -314,15 +316,16 @@ export function EnvironmentTab() {
       })
       return
     }
+    clearCellDraft('density', index)
     const existing = Array.isArray(evolving.additionalSeries?.[DENSITY_SERIES_KEY])
       ? evolving.additionalSeries[DENSITY_SERIES_KEY]
       : new Array(evolving.times.length).fill(null)
+    if (existing[index] === parsed) return
     const next = [...existing]
     next[index] = parsed
     dispatch(
       setEvolvingAdditionalSeries({ ...evolving.additionalSeries, [DENSITY_SERIES_KEY]: next })
     )
-    clearCellDraft('density', index)
     flashCell('density', index)
   }
 

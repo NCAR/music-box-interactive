@@ -32,7 +32,7 @@ const filterButtonClass = (selected) =>
   }`
 
 const NUMBER_INPUT =
-  'w-2/3 h-9 px-2 border rounded text-sm text-left font-mono focus:outline-none focus:ring-2 focus:ring-action transition-colors duration-300'
+  'w-2/3 px-2 py-1 border-1 rounded text-sm text-left font-mono focus:outline-none focus:ring-2 focus:ring-assist-secondary-ring transition-colors duration-300'
 
 const formatValue = (value) => {
   if (typeof value !== 'number') return String(value)
@@ -309,14 +309,19 @@ export function ReactionTab() {
       ? [...additionalSeries[key]]
       : new Array(evolvingTimes.length).fill(null)
     while (existing.length < evolvingTimes.length) existing.push(null)
-    existing[index] = parsed
 
-    dispatch(setEvolvingAdditionalSeries({ ...additionalSeries, [key]: existing }))
+    // Clicking into a cell and back out without typing anything shouldn't flash it or write to
+    // Redux -- only an actual change counts as an update.
+    const unchanged = existing[index] === parsed || (existing[index] == null && parsed == null)
     setRowDrafts((prev) => {
       const next = { ...prev }
       delete next[cellDraftKey(key, index)]
       return next
     })
+    if (unchanged) return
+
+    existing[index] = parsed
+    dispatch(setEvolvingAdditionalSeries({ ...additionalSeries, [key]: existing }))
     flashUpdated(cellDraftKey(key, index))
   }
 
@@ -460,7 +465,7 @@ export function ReactionTab() {
               variant="glass"
               size="sm"
               onClick={handleRemoveSelected}
-              className={`rounded-lg border border-red-600 bg-white text-red-600 hover:bg-red-50 flex-shrink-0 ${
+              className={`rounded-lg border-2 border-red-600 bg-white text-red-600 hover:bg-red-50 flex-shrink-0 ${
                 selectedIndices.size === 0 ? 'invisible' : ''
               }`}
             >
@@ -472,36 +477,31 @@ export function ReactionTab() {
                 variant="glass"
                 size="sm"
                 onClick={() => setAddTimeOpen((open) => !open)}
-                className="rounded-lg border border-assist-secondary-ring bg-white text-assist-secondary-ring hover:bg-assist-secondary"
+                className="rounded-lg border-2 border-assist-secondary-ring bg-white text-assist-secondary-ring hover:bg-assist-secondary"
               >
                 Add
               </Button>
 
               {addTimeOpen && (
-                <div className="absolute right-0 z-20 mt-1 w-60 bg-white border border-border rounded-lg shadow-lg p-3">
-                  <label className="block text-xs font-semibold text-ink mb-1">
-                    New time point (s)
+                <div className="absolute right-0 z-20 mt-1 w-40 bg-white border border-border rounded-lg shadow-lg p-3">
+                  <label className="block px-1 text-xs font-semibold text-ink mb-1">
+                    New time point
                   </label>
-                  <div className="flex gap-2">
-                    <input
-                      type="text"
-                      inputMode="decimal"
-                      value={newTimeValue}
-                      onChange={(e) => setNewTimeValue(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          e.preventDefault()
-                          handleAddTimePoint()
-                        }
-                      }}
-                      placeholder="e.g. 1200"
-                      autoFocus
-                      className={`flex-1 ${TEXT_INPUT_SM}`}
-                    />
-                    <Button variant="secondary" size="sm" onClick={handleAddTimePoint}>
-                      Add
-                    </Button>
-                  </div>
+                  <input
+                    type="text"
+                    inputMode="decimal"
+                    value={newTimeValue}
+                    onChange={(e) => setNewTimeValue(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault()
+                        handleAddTimePoint()
+                      }
+                    }}
+                    placeholder="seconds"
+                    autoFocus
+                    className={`w-full focus:!ring-assist-secondary-ring ${TEXT_INPUT_SM}`}
+                  />
                 </div>
               )}
             </div>
@@ -591,7 +591,7 @@ export function ReactionTab() {
                     value={reactionSearch}
                     onChange={(e) => setReactionSearch(e.target.value)}
                     placeholder="Search by name"
-                    className={`w-full !h-8 mb-2 ${TEXT_INPUT_SM}`}
+                    className={`w-[98%] mx-auto block !h-8 mb-2 focus:!border-action ${TEXT_INPUT_SM}`}
                   />
                   <div className="flex flex-col gap-0.5">
                     {visibleReactionsOfType.map((reaction) => (
@@ -734,7 +734,7 @@ export function ReactionTab() {
                                 }}
                                 onBlur={(e) => commitValue(column.key, index, e.target.value)}
                                 placeholder="not set"
-                                className={`${NUMBER_INPUT} ${
+                                className={`${NUMBER_INPUT} focus:border-assist-secondary-ring ${
                                   justUpdatedCell === draftKey
                                     ? 'border-action bg-assist-secondary'
                                     : 'border-gray-300 bg-white'
