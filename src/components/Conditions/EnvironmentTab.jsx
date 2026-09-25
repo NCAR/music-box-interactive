@@ -187,7 +187,7 @@ export function EnvironmentTab() {
     setNewDensity('')
   }
 
-  // t=0 is the simulation's starting point, not a removable evolving row.
+  // t=0 is the simulation's starting point, not removable.
   const removableIndices = evolving.times
     .map((time, index) => ({ time, index }))
     .filter((entry) => entry.time !== 0)

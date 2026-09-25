@@ -28,11 +28,8 @@ const initialState = {
     additionalSeries: {},
     // Rate constants can also evolve
     rateConstants: {},
-    // UI-only: maps each time value (stringified) to the reaction type id(s) it's relevant to
-    // from the Reactions tab -- starts with just the type it was created under, and gains more
-    // if that same time is later "added" again from a different type. A row with no entry here
-    // (added from the Environment tab, or predating this field) is universal -- visible from
-    // every reaction type. Never read by the solver payload.
+    // UI-only: maps each time value to its relevant reaction type(s); missing entries are universal.
+    // Not used in the solver payload.
     rowReactionType: {},
   },
 
