@@ -1,4 +1,3 @@
-// A stable reference for selector fallbacks. `state.foo?.bar || []` creates a new array on every
-// call, which breaks useSyncExternalStore's snapshot-stability check and can trigger infinite
-// render loops in components that key an effect off the selected value.
+// Stable fallback for selectors. Avoids new array references that
+// can trigger useSyncExternalStore render loops.
 export const EMPTY_ARRAY = []
