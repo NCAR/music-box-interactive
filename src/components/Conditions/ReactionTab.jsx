@@ -267,7 +267,6 @@ export function ReactionTab() {
       if (!Array.isArray(tags) || tags.length === 0 || tags.includes(reactionTypeId)) return true
       return typeDataIndices.has(index)
     })
-  const visibleIndices = visibleTimeEntries.map((entry) => entry.index)
   // t=0 is the simulation's starting point, not an editable/removable evolving row.
   const removableIndices = visibleTimeEntries
     .filter((entry) => entry.time !== 0)
