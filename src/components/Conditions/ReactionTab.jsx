@@ -1,10 +1,13 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
+import { ChevronDown, ChevronUp, Check } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card'
 import { Button } from '../ui/button'
 import { setEvolvingAdditionalSeries } from '../../redux/slices/conditionsSlice'
 import { useToast } from '@/hooks/use-toast'
-import { LIST_CARD, LIST_CARD_CONTENT, FIELD_LABEL, TEXT_INPUT_SM } from '../Mechanism/fieldStyles'
+import { useClickOutside } from '../../hooks/useClickOutside'
+import { EMPTY_ARRAY } from '../../utils/emptyArray'
+import { LIST_CARD, LIST_CARD_CONTENT, TEXT_INPUT_SM } from '../Mechanism/fieldStyles'
 
 const filterButtonClass = (selected) =>
   `w-full text-left text-sm px-1.5 py-1 rounded ${
@@ -31,6 +34,9 @@ const stripPropertyUnit = (prop) => {
 
 const hasName = (reaction) => typeof reaction.name === 'string' && reaction.name.trim() !== ''
 
+// Reaction names shown before the list collapses into a "+N others" popover.
+const REACTIONS_VISIBLE = 13
+
 const REACTION_TYPES = [
   { id: 'PHOTOLYSIS', label: 'Photolysis', prefix: 'PHOTO' },
   { id: 'SURFACE', label: 'Surface', prefix: 'SURF' },
@@ -46,7 +52,7 @@ export function ReactionTab() {
   const dispatch = useDispatch()
   const { toast } = useToast()
   const mechanismReactions = useSelector(
-    (state) => state.mechanism.config.mechanism?.reactions || []
+    (state) => state.mechanism.config.mechanism?.reactions || EMPTY_ARRAY
   )
   const evolvingTimes = useSelector((state) => state.conditions.evolving.times)
   const additionalSeries = useSelector((state) => state.conditions.evolving.additionalSeries)
@@ -57,6 +63,11 @@ export function ReactionTab() {
   const [rowDrafts, setRowDrafts] = useState({})
   const [justUpdatedCell, setJustUpdatedCell] = useState(null)
   const [selectedIndices, setSelectedIndices] = useState(new Set())
+  const [reactionSectionOpen, setReactionSectionOpen] = useState(true)
+  const [rateConstantSectionOpen, setRateConstantSectionOpen] = useState(true)
+  const [reactionOverflowOpen, setReactionOverflowOpen] = useState(false)
+  const reactionOverflowRef = useRef(null)
+  useClickOutside(reactionOverflowRef, () => setReactionOverflowOpen(false), reactionOverflowOpen)
 
   const reactionType = REACTION_TYPES.find((t) => t.id === reactionTypeId)
   const isSurface = reactionTypeId === 'SURFACE'
@@ -68,14 +79,35 @@ export function ReactionTab() {
     ).length,
   }))
 
+  // Only offer reaction types that are actually present in the loaded mechanism.
+  const presentReactionTypes = reactionTypeCounts.filter((type) => type.count > 0)
+
   const reactionsOfType = mechanismReactions.filter(
     (reaction) => reaction.type === reactionTypeId && hasName(reaction)
   )
 
   const reactionQuery = reactionSearch.trim().toLowerCase()
-  const visibleReactionsOfType = reactionQuery
+  const filteredReactionsOfType = reactionQuery
     ? reactionsOfType.filter((reaction) => reaction.name.toLowerCase().includes(reactionQuery))
     : reactionsOfType
+
+  // A selected reaction beyond the visible cap stays visible until a different one is chosen.
+  const baseVisibleReactions = filteredReactionsOfType.slice(0, REACTIONS_VISIBLE)
+  const overflowCandidateReactions = filteredReactionsOfType.slice(REACTIONS_VISIBLE)
+  const pinnedOverflowReactions = overflowCandidateReactions.filter(
+    (reaction) => reaction.name === reactionName
+  )
+  const visibleReactionsOfType = [...baseVisibleReactions, ...pinnedOverflowReactions]
+  const overflowReactionsOfType = overflowCandidateReactions.filter(
+    (reaction) => reaction.name !== reactionName
+  )
+
+  // Keep the selected type pointed at one that's actually present, falling back to the first
+  // available type when the mechanism changes out from under the current selection.
+  useEffect(() => {
+    if (presentReactionTypes.some((type) => type.id === reactionTypeId)) return
+    if (presentReactionTypes.length > 0) setReactionTypeId(presentReactionTypes[0].id)
+  }, [presentReactionTypes, reactionTypeId])
 
   // Recomputes from its actual source deps (mechanismReactions/reactionTypeId) rather than
   // depending on the derived reactionsOfType array
@@ -204,11 +236,11 @@ export function ReactionTab() {
 
   return (
     <Card className={LIST_CARD}>
-      <CardHeader>
+      <CardHeader className="py-4">
         <div className="flex items-center justify-between gap-3">
           <div>
-            <CardTitle>
-              {reactionName ? reactionName : 'Rate constant parameter over time'}
+            <CardTitle className="text-lg">
+              {'Rate constant parameters'}
             </CardTitle>
             <CardDescription className="whitespace-nowrap">
               Set time-varying rate constant parameters
@@ -231,44 +263,109 @@ export function ReactionTab() {
       <CardContent className={LIST_CARD_CONTENT}>
         <div className="flex flex-col lg:flex-row gap-4 flex-1 min-h-0">
           {/* Sidebar filters */}
-          <div className="w-full lg:w-64 flex-shrink-0 space-y-5 lg:overflow-y-auto">
+          <div className="w-full lg:w-56 flex-shrink-0 space-y-5 lg:overflow-y-auto">
             <div>
-              <label className={FIELD_LABEL}>Reaction</label>
-              <div className="flex flex-col gap-0.5">
-                {reactionTypeCounts.map((type) => (
-                  <button
-                    key={type.id}
-                    type="button"
-                    onClick={() => setReactionTypeId(type.id)}
-                    className={filterButtonClass(reactionTypeId === type.id)}
-                  >
-                    {type.label} ({type.count})
-                  </button>
-                ))}
-              </div>
+              <button
+                type="button"
+                onClick={() => setReactionSectionOpen((open) => !open)}
+                className="w-full flex items-center justify-between whitespace-nowrap text-sm font-semibold text-ink mb-2"
+              >
+                Reactions
+                {reactionSectionOpen ? (
+                  <ChevronUp className="w-4 h-4" />
+                ) : (
+                  <ChevronDown className="w-4 h-4" />
+                )}
+              </button>
+
+              {reactionSectionOpen && (
+                <div className="flex flex-col gap-0.5">
+                  {presentReactionTypes.map((type) => (
+                    <button
+                      key={type.id}
+                      type="button"
+                      onClick={() => setReactionTypeId(type.id)}
+                      className={filterButtonClass(reactionTypeId === type.id)}
+                    >
+                      {type.label} ({type.count})
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
 
             <div>
-              <label className={FIELD_LABEL}>Rate constant paramaters</label>
-              <input
-                type="text"
-                value={reactionSearch}
-                onChange={(e) => setReactionSearch(e.target.value)}
-                placeholder="Search by name"
-                className={`w-full mb-2 ${TEXT_INPUT_SM}`}
-              />
-              <div className="flex flex-col gap-0.5 max-h-40 overflow-y-auto">
-                {visibleReactionsOfType.map((reaction) => (
-                  <button
-                    key={reaction.id ?? reaction.name}
-                    type="button"
-                    onClick={() => setReactionName(reaction.name)}
-                    className={filterButtonClass(reactionName === reaction.name)}
-                  >
-                    {reaction.name}
-                  </button>
-                ))}
-              </div>
+              <button
+                type="button"
+                onClick={() => setRateConstantSectionOpen((open) => !open)}
+                className="w-full flex items-center justify-between whitespace-nowrap text-sm font-semibold text-ink mb-2"
+              >
+                Rate constant paramaters
+                {rateConstantSectionOpen ? (
+                  <ChevronUp className="w-4 h-4" />
+                ) : (
+                  <ChevronDown className="w-4 h-4" />
+                )}
+              </button>
+
+              {rateConstantSectionOpen && (
+                <>
+                  <input
+                    type="text"
+                    value={reactionSearch}
+                    onChange={(e) => setReactionSearch(e.target.value)}
+                    placeholder="Search by name"
+                    className={`w-full !h-8 mb-2 ${TEXT_INPUT_SM}`}
+                  />
+                  <div className="flex flex-col gap-0.5">
+                    {visibleReactionsOfType.map((reaction) => (
+                      <button
+                        key={reaction.id ?? reaction.name}
+                        type="button"
+                        onClick={() => setReactionName(reaction.name)}
+                        className={filterButtonClass(reactionName === reaction.name)}
+                      >
+                        {reaction.name}
+                      </button>
+                    ))}
+
+                    {overflowReactionsOfType.length > 0 && (
+                      <div className="relative" ref={reactionOverflowRef}>
+                        <button
+                          type="button"
+                          onClick={() => setReactionOverflowOpen((open) => !open)}
+                          className="text-left text-sm px-1.5 py-1 rounded text-muted hover:bg-surface-hover"
+                        >
+                          +{overflowReactionsOfType.length} others
+                        </button>
+
+                        {reactionOverflowOpen && (
+                          <div className="absolute z-20 mt-1 w-48 max-h-56 overflow-y-auto bg-white border border-border rounded-lg shadow-lg py-1">
+                            {overflowReactionsOfType.map((reaction) => (
+                              <button
+                                key={reaction.id ?? reaction.name}
+                                type="button"
+                                onClick={() => {
+                                  setReactionName(reaction.name)
+                                  setReactionOverflowOpen(false)
+                                }}
+                                className="w-full flex items-center gap-2 text-left text-sm px-3 py-1.5 text-ink hover:bg-surface-hover"
+                              >
+                                <Check
+                                  className={`w-3.5 h-3.5 flex-shrink-0 ${
+                                    reactionName === reaction.name ? 'opacity-100' : 'opacity-0'
+                                  }`}
+                                />
+                                <span className="flex-1 truncate">{reaction.name}</span>
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </>
+              )}
             </div>
           </div>
 
@@ -298,9 +395,9 @@ export function ReactionTab() {
                           className="accent-action"
                         />
                       </th>
-                      <th className="text-left px-4 py-2 font-semibold">Time (s)</th>
+                      <th className="w-32 text-left px-4 py-2 font-semibold">Time (s)</th>
                       {columns.map((column) => (
-                        <th key={column.key} className="text-left px-4 py-2 font-semibold">
+                        <th key={column.key} className="w-40 text-left px-4 py-2 font-semibold">
                           {column.label}
                         </th>
                       ))}

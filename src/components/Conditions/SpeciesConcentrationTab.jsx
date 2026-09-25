@@ -23,6 +23,7 @@ import {
 } from '../Mechanism/fieldStyles'
 import { UnitDropdown } from '../Plots/UnitDropdown'
 import { CONCENTRATION_UNITS, airDensityMolM3, toMolM3, fromMolM3 } from '../../utils/concentrationUnits'
+import { EMPTY_ARRAY } from '../../utils/emptyArray'
 
 // Matches EnvironmentTab: the left column fits its content, the right column expands.
 const EDITOR_GRID = 'grid grid-cols-1 gap-4 lg:grid-cols-[auto_1fr] lg:items-start'
@@ -38,7 +39,9 @@ export function SpeciesConcentrationTab() {
   const conditions = useSelector((state) => state.conditions.conditions)
   const hydratedExampleId = useSelector((state) => state.conditions.hydration.initialExampleId)
   const currentExample = useSelector((state) => state.mechanism.currentExample)
-  const mechanismSpecies = useSelector((state) => state.mechanism.config.mechanism?.species || [])
+  const mechanismSpecies = useSelector(
+    (state) => state.mechanism.config.mechanism?.species || EMPTY_ARRAY
+  )
 
   const [newSpecies, setNewSpecies] = useState('')
   const [newConcentration, setNewConcentration] = useState('')

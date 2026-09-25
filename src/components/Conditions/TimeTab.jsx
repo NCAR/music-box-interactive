@@ -74,7 +74,7 @@ export function TimeTab() {
     <div className="w-fit mx-auto space-y-4">
       <Card>
         <CardHeader>
-          <CardTitle>Simulation Time</CardTitle>
+          <CardTitle>Simulation time</CardTitle>
           <CardDescription>Configure how long the simulation runs and its temporal resolution</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">

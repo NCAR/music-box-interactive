@@ -13,6 +13,7 @@ import {
 } from './flowUtils'
 import { getReactionTypeLabel } from '../Mechanism/reactions/reactionRegistry'
 import { hasDeclaredName } from '../Mechanism/reactions/reactionUtils'
+import { EMPTY_ARRAY } from '../../utils/emptyArray'
 
 // Edge/arrow color for in-range rate; out-of-range edges are muted to gray instead.
 const ARROW_COLOR = '#3D96C3'
@@ -133,8 +134,8 @@ export function FlowGraph({
   const tooltipRef = useRef()
   const [selectedNode, setSelectedNode] = useState(null)
 
-  const reactions = useSelector((state) => state.mechanism.config.mechanism?.reactions || [])
-  const species = useSelector((state) => state.mechanism.config.mechanism?.species || [])
+  const reactions = useSelector((state) => state.mechanism.config.mechanism?.reactions || EMPTY_ARRAY)
+  const species = useSelector((state) => state.mechanism.config.mechanism?.species || EMPTY_ARRAY)
   const results = useSelector((state) => state.simulation.excludedResults)
 
   useEffect(() => {

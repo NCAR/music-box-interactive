@@ -11,6 +11,7 @@ import { FlowPanel } from './FlowPanel'
 import { useSelector } from 'react-redux'
 import { Card, CardContent, CardDescription } from '../ui/card'
 import { Waypoints, StickyNote } from 'lucide-react'
+import { EMPTY_ARRAY } from '../../utils/emptyArray'
 
 /*
  * FlowDiagram Component
@@ -41,8 +42,8 @@ export function FlowDiagram() {
 
   // If no simulation results, show placeholder
   const simulation = useSelector((state) => state.simulation)
-  const reactions = useSelector((state) => state.mechanism.config.mechanism?.reactions || [])
-  const species = useSelector((state) => state.mechanism.config.mechanism?.species || [])
+  const reactions = useSelector((state) => state.mechanism.config.mechanism?.reactions || EMPTY_ARRAY)
+  const species = useSelector((state) => state.mechanism.config.mechanism?.species || EMPTY_ARRAY)
 
   // The integrated reaction rate depends on the selected time window, so its magnitude
   // changes with the time range and species selection. The range must therefore be
