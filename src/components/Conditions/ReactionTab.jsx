@@ -649,7 +649,7 @@ export function ReactionTab() {
             <div className="border border-gray-200 rounded-lg overflow-auto lg:absolute lg:inset-0">
               {evolvingTimes.length === 0 ? (
                 <p className="text-center text-gray-500 py-8">
-                  No time points configured. Add time points in the Environment tab first.
+                  No rate constant parameters configured
                 </p>
               ) : visibleTimeEntries.length === 0 ? (
                 <p className="text-center text-gray-500 py-8">
