@@ -1,6 +1,6 @@
 // Conditions Components
 export { TimeTab } from './TimeTab'
-export { EnvironmentTab } from './EnvironmentTab'
 export { SpeciesConcentrationTab } from './SpeciesConcentrationTab'
 export { ReactionTab } from './ReactionTab'
+export { EnvironmentTab } from './EnvironmentTab'
 export { ReviewTab } from './ReviewTab'

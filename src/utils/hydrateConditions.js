@@ -114,8 +114,7 @@ export function hydrateEvolvingConditions(conditions) {
     (header) =>
       header !== 'time.s' &&
       header !== 'ENV.temperature.K' &&
-      header !== 'ENV.pressure.Pa' &&
-      !header.startsWith('CONC.')
+      header !== 'ENV.pressure.Pa'
   )
   const additionalSeries = Object.fromEntries(
     additionalHeaders.map((header) => [
