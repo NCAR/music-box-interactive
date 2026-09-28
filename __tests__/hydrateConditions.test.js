@@ -94,8 +94,11 @@ describe('hydrateInitialConditions', () => {
     expect(result.pressure).toBe(1394.3)
   })
 
-  it('reads concentrations from a snapshot block whose own time.s is not 0 (TS1-shaped config)', () => {
+  it('does not read concentrations from a snapshot block whose own time.s is not 0 (TS1-shaped config)', () => {
     // TS1's real config: temperature/pressure at t=0, species concentrations at t=1000.
+    // Backdating a value declared at t=1000 into the t=0 snapshot would apply it before the
+    // user ever asked for it -- that value belongs to hydrateEvolvingConditions instead (see
+    // the matching test below).
     const conditions = {
       data: [
         { headers: ['time.s', 'ENV.temperature.K', 'ENV.pressure.Pa'], rows: [[0, 299.55, 99255.61]] },
@@ -105,7 +108,7 @@ describe('hydrateInitialConditions', () => {
     const result = hydrateInitialConditions(conditions)
     expect(result.temperature).toBe(299.55)
     expect(result.pressure).toBe(99255.61)
-    expect(result.concentrations).toEqual({ O3: 5.95e-6 })
+    expect(result.concentrations).toEqual({})
   })
 
   it('reads a snapshot regardless of which position it sits at in data', () => {
@@ -179,12 +182,28 @@ describe('hydrateEvolvingConditions', () => {
     expect(result.additionalSeries).toEqual({ 'PHOTO.O2_1.s-1': [1.47e-12] })
   })
 
-  it('excludes CONC.* columns -- those belong to the Species tab, not this series', () => {
+  it('excludes CONC.* columns from a genuine t=0 snapshot -- that value is owned by hydrateInitialConditions', () => {
     const conditions = {
       data: [{ headers: ['time.s', 'ENV.temperature.K', 'CONC.O3.mol m-3'], rows: [[0, 298.15, 5.95e-6]] }],
     }
     const result = hydrateEvolvingConditions(conditions)
     expect(result.additionalSeries).toEqual({})
+  })
+
+  it('captures a CONC-only snapshot block declared at a later time as its own evolving series (TS1-shaped config)', () => {
+    // Companion to the hydrateInitialConditions test of the same shape above: once
+    // hydrateInitialConditions stops claiming a non-zero-time snapshot, this is where that
+    // value has to surface instead -- at its real time, not lost.
+    const conditions = {
+      data: [
+        { headers: ['time.s', 'ENV.temperature.K', 'ENV.pressure.Pa'], rows: [[0, 299.55, 99255.61]] },
+        { headers: ['time.s', 'CONC.O3.mol m-3'], rows: [[1000, 5.95e-6]] },
+      ],
+    }
+    const result = hydrateEvolvingConditions(conditions)
+    expect(result.enabled).toBe(true)
+    expect(result.times).toEqual([1000])
+    expect(result.additionalSeries).toEqual({ 'CONC.O3.mol m-3': [5.95e-6] })
   })
 
   it('leaves temperature/pressure blank (null) when no block ever sets them, but keeps the point', () => {
