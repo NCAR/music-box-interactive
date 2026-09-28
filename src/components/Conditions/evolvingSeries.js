@@ -45,8 +45,18 @@ export function ensureZeroTimeRow(
   newTime,
   { temperature0 = DEFAULT_TEMPERATURE, pressure0 = DEFAULT_PRESSURE } = {}
 ) {
-  if (newTime === 0 || times.includes(0)) {
+  if (newTime === 0) {
     return { times, temperature, pressure, additionalSeries }
+  }
+
+  const zeroIndex = times.indexOf(0)
+  if (zeroIndex !== -1) {
+    // A t=0 row can already exist without temperature/pressure
+    const nextTemperature = [...temperature]
+    const nextPressure = [...pressure]
+    if (nextTemperature[zeroIndex] == null) nextTemperature[zeroIndex] = temperature0
+    if (nextPressure[zeroIndex] == null) nextPressure[zeroIndex] = pressure0
+    return { times, temperature: nextTemperature, pressure: nextPressure, additionalSeries }
   }
 
   return {
