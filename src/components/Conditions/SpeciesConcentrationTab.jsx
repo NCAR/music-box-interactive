@@ -60,7 +60,8 @@ const hasName = (species) => typeof species.name === 'string' && species.name.tr
 const CONC_PREFIX = 'CONC.'
 
 const DEFAULT_SELECTED_SPECIES = 3
-const SPECIES_VISIBLE = 13
+const SPECIES_VISIBLE = 20
+const MAX_SELECTED_SPECIES = 50
 
 // See ReactionTab for why table-layout: fixed needs an explicit min-width floor.
 const CHECKBOX_COLUMN_PX = 40 // w-10
@@ -154,6 +155,21 @@ export function SpeciesConcentrationTab() {
       else next.add(name)
       return next
     })
+  }
+
+  const handleSelectAllSpecies = () => {
+    const names = namedSpecies.map((species) => species.name)
+    setSelectedSpeciesNames(new Set(names.slice(0, MAX_SELECTED_SPECIES)))
+    if (names.length > MAX_SELECTED_SPECIES) {
+      toast({
+        title: 'Selection Limited',
+        description: `Selected the first ${MAX_SELECTED_SPECIES} of ${names.length} species. Use search to select others.`,
+      })
+    }
+  }
+
+  const handleDeselectAllSpecies = () => {
+    setSelectedSpeciesNames(new Set())
   }
 
   // A species' data lives under CONC.<name> (or CONC.<name>.<unit> once stored), same key
@@ -431,6 +447,25 @@ export function SpeciesConcentrationTab() {
                     placeholder="Search by name"
                     className={`w-[98%] mx-auto block !h-8 mb-2 focus:!border-action ${TEXT_INPUT_SM}`}
                   />
+
+                  <div className="flex items-center gap-2 mb-2">
+                    <button
+                      type="button"
+                      onClick={handleSelectAllSpecies}
+                      className="text-sm text-action hover:underline"
+                    >
+                      Select all
+                    </button>
+                    <span className="text-sm text-muted">|</span>
+                    <button
+                      type="button"
+                      onClick={handleDeselectAllSpecies}
+                      className="text-sm text-action hover:underline"
+                    >
+                      Deselect all
+                    </button>
+                  </div>
+
                   <div className="flex flex-col gap-0.5">
                     {visibleSpecies.map((species) => (
                       <button
