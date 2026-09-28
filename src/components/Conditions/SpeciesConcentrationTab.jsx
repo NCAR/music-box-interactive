@@ -448,7 +448,7 @@ export function SpeciesConcentrationTab() {
                     className={`w-[98%] mx-auto block !h-8 mb-2 focus:!border-action ${TEXT_INPUT_SM}`}
                   />
 
-                  <div className="flex items-center gap-2 mb-2">
+                  <div className="flex items-center gap-2 mb-2 pl-1">
                     <button
                       type="button"
                       onClick={handleSelectAllSpecies}

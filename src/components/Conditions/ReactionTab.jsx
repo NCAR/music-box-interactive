@@ -54,7 +54,8 @@ const hasName = (reaction) => typeof reaction.name === 'string' && reaction.name
 const EMPTY_ROW_TAGS = {}
 
 const DEFAULT_SELECTED_REACTIONS = 3
-const REACTIONS_VISIBLE = 13
+const REACTIONS_VISIBLE = 20
+const MAX_SELECTED_REACTION = 50
 
 // table-layout: fixed ignores a cell's own min-width when sizing columns -- it only divides the
 // table's own width among the unsized value columns, so it will squeeze them arbitrarily thin
@@ -163,6 +164,21 @@ export function ReactionTab() {
       else next.add(name)
       return next
     })
+  }
+
+  const handleSelectAllReactions = () => {
+    const names = reactionsOfType.map((reaction) => reaction.name)
+    setSelectedReactionNames(new Set(names.slice(0, REACTIONS_VISIBLE)))
+    if (names.length > MAX_SELECTED_REACTION) {
+      toast({
+        title: 'Selection Limited',
+        description: `Selected the first ${MAX_SELECTED_REACTION} of ${names.length} reactions. Use search to select others.`,
+      })
+    }
+  }
+
+  const handleDeselectAllReactions = () => {
+    setSelectedReactionNames(new Set())
   }
 
   // Keep the selected type pointed at one that's present, falling back to the first
@@ -584,6 +600,25 @@ export function ReactionTab() {
                     placeholder="Search by name"
                     className={`w-[98%] mx-auto block !h-8 mb-2 focus:!border-action ${TEXT_INPUT_SM}`}
                   />
+
+                  <div className="flex items-center gap-2 mb-2 pl-1">
+                    <button
+                      type="button"
+                      onClick={handleSelectAllReactions}
+                      className="text-sm text-action hover:underline"
+                    >
+                      Select all
+                    </button>
+                    <span className="text-sm text-muted">|</span>
+                    <button
+                      type="button"
+                      onClick={handleDeselectAllReactions}
+                      className="text-sm text-action hover:underline"
+                    >
+                      Deselect all
+                    </button>
+                  </div>
+
                   <div className="flex flex-col gap-0.5">
                     {visibleReactionsOfType.map((reaction) => (
                       <button
