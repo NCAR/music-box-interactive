@@ -10,6 +10,7 @@ import {
   ResponsiveContainer,
 } from 'recharts'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card'
+import { Toggle } from '../ui/toggle'
 import { Thermometer } from 'lucide-react'
 import { ChartTooltipContent } from '../SimulationChart'
 import { UnitDropdown } from './UnitDropdown'
@@ -17,14 +18,6 @@ import { TEMPERATURE_UNITS, fromKelvin } from './temperatureUnits'
 import { PRESSURE_UNITS } from './pressureUnits'
 import { TIME_RANGE_UNITS } from './timeRangeUnits'
 import { FIELD_LABEL, DROPDOWN_WRAPPER, DROPDOWN_BUTTON } from '../Mechanism/fieldStyles'
-
-// Same sidebar filter-pill style ReactionTab uses for its type/name selectors.
-const filterButtonClass = (selected) =>
-  `w-full text-left text-sm px-1.5 py-1 rounded ${
-    selected
-      ? 'text-assist-secondary-foreground font-semibold bg-assist-secondary'
-      : 'text-muted hover:bg-surface-hover'
-  }`
 
 /**
  * EnvironmentPlot Component
@@ -86,8 +79,11 @@ export function EnvironmentPlot() {
       if (hasEvolvingConditions) {
         for (const point of evolvingPoints) {
           if (point.time > result.time) break
-          if (point.temperature !== undefined) temperature = point.temperature
-          if (point.pressure !== undefined) pressure = point.pressure
+          // A null entry means "not set at this point" (e.g. a row that only carried rate
+          // parameters), not "set to nothing" -- it should leave the carried-forward value
+          // alone rather than blanking it out.
+          if (point.temperature != null) temperature = point.temperature
+          if (point.pressure != null) pressure = point.pressure
         }
       }
 
@@ -131,22 +127,19 @@ export function EnvironmentPlot() {
             {/* Sidebar */}
             <div className="w-full lg:w-[12rem] flex-shrink-0 space-y-5 pt-5">
               <div>
-                <span className="block text-sm font-semibold text-ink mb-2">View</span>
-                <div className="flex flex-col gap-0.5">
-                  <button
-                    type="button"
-                    onClick={() => toggleMetric('temperature')}
-                    className={filterButtonClass(showTemperature)}
-                  >
-                    Temperature
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => toggleMetric('pressure')}
-                    className={filterButtonClass(showPressure)}
-                  >
-                    Pressure
-                  </button>
+                <div className="flex flex-col gap-2">
+                  <Toggle
+                    checked={showTemperature}
+                    label={<span className="inline-block w-24 text-left">Temperature</span>}
+                    onChange={() => toggleMetric('temperature')}
+                    size="sm"
+                  />
+                  <Toggle
+                    checked={showPressure}
+                    label={<span className="inline-block w-24 text-left">Pressure</span>}
+                    onChange={() => toggleMetric('pressure')}
+                    size="sm"
+                  />
                 </div>
               </div>
 
@@ -200,7 +193,7 @@ export function EnvironmentPlot() {
                       value: `Time (${timeUnit.label})`,
                       position: 'insideBottom',
                       offset: -5,
-                      style: { fill: '#1f2937', fontWeight: 400 },
+                      style: { fill: '#1f2937', fontWeight: 600, fontSize: 14 },
                     }}
                     stroke="#5f6368"
                     tick={{ fontSize: 12, fill: '#5f6368' }}
@@ -213,10 +206,10 @@ export function EnvironmentPlot() {
                         value: `Temperature (${temperatureUnitLabel})`,
                         angle: -90,
                         position: 'insideLeft',
-                        style: { fill: '#FAA119', fontWeight: 400 },
+                        style: { fill: '#FAA119', fontWeight: 600, fontSize: 13 },
                       }}
                       stroke="#FAA119"
-                      tick={{ fontSize: 12, fill: '#FAA119' }}
+                      tick={{ fontSize: 11, fill: '#FAA119' }}
                       padding={{ top: 20, bottom: 20 }}
                     />
                   )}
@@ -228,10 +221,10 @@ export function EnvironmentPlot() {
                         value: `Pressure (${pressureUnit.label})`,
                         angle: showTemperature ? 90 : -90,
                         position: showTemperature ? 'insideRight' : 'insideLeft',
-                        style: { fill: '#0057C2', fontWeight: 400 },
+                        style: { fill: '#0057C2', fontWeight: 600, fontSize: 13 },
                       }}
                       stroke="#0057C2"
-                      tick={{ fontSize: 12, fill: '#0057C2' }}
+                      tick={{ fontSize: 11, fill: '#0057C2' }}
                       padding={{ top: 20, bottom: 20 }}
                     />
                   )}
