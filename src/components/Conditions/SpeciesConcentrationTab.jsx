@@ -41,7 +41,7 @@ const filterButtonClass = (selected) =>
 const NUMBER_INPUT =
   'w-2/3 px-2 py-1 border-1 rounded text-sm text-left font-mono focus:outline-none focus:ring-2 focus:ring-assist-secondary-ring transition-colors duration-300'
 
-const UNIT_DROPDOWN_WRAPPER = 'relative w-32 flex-shrink-0'
+const UNIT_DROPDOWN_WRAPPER = 'relative w-full flex-shrink-0'
 const UNIT_DROPDOWN_BUTTON =
   'flex items-center gap-1 w-full h-8 px-2 border border-gray-300 rounded-lg text-sm text-gray-800 hover:bg-gray-50 bg-white'
 
@@ -344,18 +344,6 @@ export function SpeciesConcentrationTab() {
             </CardDescription>
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
-            <UnitDropdown
-              unitId={concentrationUnitId}
-              onChange={(id) => {
-                setConcentrationUnitId(id)
-                setRowDrafts({})
-              }}
-              units={CONCENTRATION_UNITS}
-              wrapperClassName={UNIT_DROPDOWN_WRAPPER}
-              buttonClassName={UNIT_DROPDOWN_BUTTON}
-              centerLabel
-            />
-
             {/* Always mounted (just hidden) so the header's height never shifts */}
             <Button
               variant="glass"
@@ -424,6 +412,18 @@ export function SpeciesConcentrationTab() {
 
               {speciesSectionOpen && (
                 <>
+                  <UnitDropdown
+                    unitId={concentrationUnitId}
+                    onChange={(id) => {
+                      setConcentrationUnitId(id)
+                      setRowDrafts({})
+                    }}
+                    units={CONCENTRATION_UNITS}
+                    wrapperClassName={`${UNIT_DROPDOWN_WRAPPER} mb-2`}
+                    buttonClassName={UNIT_DROPDOWN_BUTTON}
+                    centerLabel
+                  />
+
                   <input
                     type="text"
                     value={speciesSearch}
