@@ -38,16 +38,21 @@ export function removeEvolvingTimeRows({ times, temperature, pressure, additiona
   }
 }
 
-// Ensures a t=0 row exists with default values; no-op if it already exists.
-export function ensureZeroTimeRow({ times, temperature, pressure, additionalSeries }, newTime) {
+// Ensures a t=0 row exists; no-op if it already exists. Defaults to DEFAULT_TEMPERATURE/
+// DEFAULT_PRESSURE unless the caller passes the real starting values.
+export function ensureZeroTimeRow(
+  { times, temperature, pressure, additionalSeries },
+  newTime,
+  { temperature0 = DEFAULT_TEMPERATURE, pressure0 = DEFAULT_PRESSURE } = {}
+) {
   if (newTime === 0 || times.includes(0)) {
     return { times, temperature, pressure, additionalSeries }
   }
 
   return {
     times: [0, ...times],
-    temperature: [DEFAULT_TEMPERATURE, ...temperature],
-    pressure: [DEFAULT_PRESSURE, ...pressure],
+    temperature: [temperature0, ...temperature],
+    pressure: [pressure0, ...pressure],
     additionalSeries: insertAdditionalSeriesValue(additionalSeries, 0),
   }
 }

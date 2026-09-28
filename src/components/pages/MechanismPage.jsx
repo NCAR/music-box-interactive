@@ -4,7 +4,7 @@ import { Button } from '../ui/button'
 import { SpeciesEditor, ReactionEditor } from '../Mechanism'
 import { useDispatch, useSelector } from 'react-redux'
 import { hydrateInitialConditions, hydrateEvolvingConditions } from '../../utils/hydrateConditions'
-import { ensureZeroTimeRow } from '../Conditions/evolvingSeries'
+import { ensureZeroTimeRow, DEFAULT_TEMPERATURE, DEFAULT_PRESSURE } from '../Conditions/evolvingSeries'
 import {
   setTemperature,
   setPressure,
@@ -45,8 +45,15 @@ export function MechanismPage() {
     }
     if (hydratedEvolvingId !== exampleId) {
       const hydrated = hydrateEvolvingConditions(conditions)
-      // t=0 is always the default starting point
-      const withZero = hydrated.times.length > 0 ? ensureZeroTimeRow(hydrated) : hydrated
+      const hydratedInitial = hydrateInitialConditions(conditions)
+      // t=0 is always the default starting point; when hydrating from a real config, seed it
+      // with that config's actual temperature/pressure instead of the generic defaults.
+      const withZero = hydrated.times.length > 0
+        ? ensureZeroTimeRow(hydrated, undefined, {
+            temperature0: hydratedInitial.temperature ?? DEFAULT_TEMPERATURE,
+            pressure0: hydratedInitial.pressure ?? DEFAULT_PRESSURE,
+          })
+        : hydrated
       dispatch(setEvolvingEnabled(hydrated.enabled))
       dispatch(setEvolvingTimes(withZero.times))
       dispatch(setEvolvingTemperature(withZero.temperature))
