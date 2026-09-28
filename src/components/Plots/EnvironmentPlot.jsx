@@ -11,7 +11,7 @@ import {
   ResponsiveContainer,
 } from 'recharts'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card'
-import { Thermometer, Info } from 'lucide-react'
+import { Thermometer } from 'lucide-react'
 
 /**
  * EnvironmentPlot Component
@@ -184,46 +184,6 @@ export function EnvironmentPlot() {
           </ResponsiveContainer>
         </CardContent>
       </Card>
-
-      <div
-        className={`border rounded-lg p-3 text-xs ${hasEvolvingConditions ? 'bg-[#00A2B4]/20 border-[#00A2B4]/50' : 'bg-[#00357A]/20 border-[#0057C2]/50'}`}
-      >
-        <p
-          className="font-semibold mb-1 flex items-center gap-2 text-heading"
-        >
-          <Info className="w-4 h-4" />
-          Environmental Conditions:
-        </p>
-        {hasEvolvingConditions ? (
-          <ul className="space-y-0.5 ml-4 text-ink">
-            <li>
-              • <strong>Evolving conditions enabled</strong> - Temperature and pressure vary over
-              time
-            </li>
-            <li>
-              • Temperature range: {Math.min(...envData.map((d) => d.temperature)).toFixed(2)} -{' '}
-              {Math.max(...envData.map((d) => d.temperature)).toFixed(2)} K
-            </li>
-            <li>
-              • Pressure range: {Math.min(...envData.map((d) => d.pressure)).toFixed(0)} -{' '}
-              {Math.max(...envData.map((d) => d.pressure)).toFixed(0)} Pa
-            </li>
-            <li>• Interpolation method: Step (most recent value at or before each time)</li>
-          </ul>
-        ) : (
-          <ul className="space-y-0.5 ml-4 text-ink">
-            <li>
-              • Temperature: {conditions.initial.temperature} K (
-              {(conditions.initial.temperature - 273.15).toFixed(2)}°C) - Constant
-            </li>
-            <li>
-              • Pressure: {conditions.initial.pressure} Pa (
-              {(conditions.initial.pressure / 101325).toFixed(4)} atm) - Constant
-            </li>
-            <li>• Environmental conditions remain constant throughout simulation</li>
-          </ul>
-        )}
-      </div>
     </div>
   )
 }
