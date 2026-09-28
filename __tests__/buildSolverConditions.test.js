@@ -131,10 +131,9 @@ describe('buildSolverConditions', () => {
   })
 
   it('leaves a null additionalSeries entry alone rather than forcing it to 0', () => {
-    // A blank cell in the table means "not set here", not "set to zero" -- otherwise
-    // touching one cell in a reaction's column would silently zero out every other
-    // "not set" row in that same column. With no override at t=30, ConditionsManager
-    // carries forward the last value it does have (t=0's 1.0e-4).
+    // A blank cell means "not set", not zero. This prevents changing one cell from
+    // implicitly zeroing other unset rows. Without an override at t=30, ConditionsManager
+    // carries forward the last set value (1.0e-4 from t=0).
     const result = buildSolverConditions({
       initial: { temperature: 298.15, pressure: 101325, concentrations: {} },
       rateConstants: {},
