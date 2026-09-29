@@ -134,12 +134,14 @@ export function EnvironmentPlot() {
                     label={<span className="inline-block w-24 text-left">Temperature</span>}
                     onChange={() => toggleMetric('temperature')}
                     size="sm"
+                    activeTrackClassName="bg-[#FAA119]"
                   />
                   <Toggle
                     checked={showPressure}
                     label={<span className="inline-block w-24 text-left">Pressure</span>}
                     onChange={() => toggleMetric('pressure')}
                     size="sm"
+                    activeTrackClassName="bg-[#0057C2]"
                   />
                 </div>
               </div>
