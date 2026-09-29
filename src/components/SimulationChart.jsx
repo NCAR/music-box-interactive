@@ -16,14 +16,14 @@ import { UnitDropdown } from './Plots/UnitDropdown'
 import { LIST_CARD, LIST_CARD_CONTENT, TEXT_INPUT_SM } from './Mechanism/fieldStyles'
 import { getSpeciesDisplayName } from './Plots/speciesFormat'
 import { useClickOutside } from '../hooks/useClickOutside'
+import { useConcentrationUnit, useEnvironmentSeries } from '../hooks/useConcentrationUnit'
+import { CONCENTRATION_UNITS, fromMolM3, isMixingRatioUnit } from '../utils/concentrationUnits'
+import { airDensitySeries } from '../utils/environmentSeries'
 import { CHART_COLORS } from './chartColors'
 import { TIME_RANGE_UNITS as TIME_UNITS } from './Plots/timeRangeUnits'
 
-// Y-axis concentration unit options
-const PLOT_UNITS = [
-  { id: 'mol_m3', label: 'mol m-3', axisLabel: 'Concentration (mol m-3)' },
-  { id: 'ppb', label: 'ppb', axisLabel: 'Concentration (ppb)', disabled: true },
-]
+// Concentrations at or below this (mol m-3) are plotted at the floor, since the y-axis is log.
+const MIN_VALUE = 1e-20
 
 const filterButtonClass = (selected) =>
   `w-full text-left text-sm px-1.5 py-1 rounded ${
@@ -108,7 +108,14 @@ export function ChartLegendContent({ payload, maxVisible, compact }) {
 
 // Tooltip entries sorted by value, with overflow shown as a "+N more" note.
 // No interaction since the tooltip disappears on mouse-out.
-export function ChartTooltipContent({ active, payload, timeLabel, maxVisible, compact }) {
+export function ChartTooltipContent({
+  active,
+  payload,
+  timeLabel,
+  maxVisible,
+  compact,
+  zeroBelow = 1e-19,
+}) {
   if (!active || !payload?.length) return null
 
   const sorted = [...payload].sort((a, b) => {
@@ -150,11 +157,9 @@ export function ChartTooltipContent({ active, payload, timeLabel, maxVisible, co
               </span>
               <span className="font-mono text-ink" style={{ color: '#1f2937' }}>
                 {isValidNumber
-                  ? numValue < 1e-19
-                    ? compact
-                      ? '0.00e+00'
-                      : '0.0000e+00'
-                    : numValue.toExponential(compact ? 2 : 4)
+                  ? numValue < zeroBelow
+                    ? '0.0000e+00'
+                    : numValue.toExponential(4)
                   : 'N/A'}
               </span>
             </div>
@@ -181,12 +186,14 @@ export function SimulationChart({ results, metadata }) {
   const [selectedSpecies, setSelectedSpecies] = useState([])
   const [initialized, setInitialized] = useState(false)
   const [timeUnitId, setTimeUnitId] = useState('seconds')
-  const [plotUnitId, setPlotUnitId] = useState('mol_m3')
+  const [plotUnitId, setPlotUnitId] = useConcentrationUnit()
+  const environmentSeries = useEnvironmentSeries(results)
   const [speciesOverflowOpen, setSpeciesOverflowOpen] = useState(false)
   const speciesOverflowRef = useRef(null)
 
   const timeUnit = TIME_UNITS.find((u) => u.id === timeUnitId) ?? TIME_UNITS[0]
-  const plotUnit = PLOT_UNITS.find((u) => u.id === plotUnitId) ?? PLOT_UNITS[0]
+  const plotUnit = CONCENTRATION_UNITS.find((u) => u.id === plotUnitId) ?? CONCENTRATION_UNITS[0]
+  const plotUnitAxisLabel = `Concentration (${plotUnit.label})`
 
   const closeSpeciesOverflow = useCallback(() => setSpeciesOverflowOpen(false), [])
   useClickOutside(speciesOverflowRef, closeSpeciesOverflow, speciesOverflowOpen)
@@ -224,9 +231,10 @@ export function SimulationChart({ results, metadata }) {
   const chartData = useMemo(() => {
     if (!Array.isArray(results) || results.length === 0) return []
 
-    const MIN_VALUE = 1e-20
+    // Mixing ratios scale with the air density at each point's time; mol m-3 needs none.
+    const densities = isMixingRatioUnit(plotUnitId) ? airDensitySeries(environmentSeries) : null
 
-    return results.map((result) => {
+    return results.map((result, index) => {
       const time = result.time ?? result.timestamp ?? result.date ?? 0
       const point = {
         timeSeconds: time / timeUnit.divisor,
@@ -250,12 +258,23 @@ export function SimulationChart({ results, metadata }) {
         }
 
         // For log scale, replace zeros with MIN_VALUE
-        point[species] = value < MIN_VALUE ? MIN_VALUE : value
+        // Floor in mol m-3 first so lines don't shift when the unit changes.
+        if (value < MIN_VALUE) value = MIN_VALUE
+        point[species] = densities ? fromMolM3(value, plotUnitId, densities[index]) : value
       })
 
       return point
     })
-  }, [results, allSpecies, timeUnit.divisor])
+  }, [results, allSpecies, timeUnit.divisor, plotUnitId, environmentSeries])
+
+  // Tooltip shows "0" for points sitting on the floor, whatever unit the floor converts to.
+  const zeroBelow = useMemo(() => {
+    if (!isMixingRatioUnit(plotUnitId)) return undefined
+    const floors = airDensitySeries(environmentSeries).map((d) =>
+      fromMolM3(MIN_VALUE, plotUnitId, d)
+    )
+    return floors.length > 0 ? Math.max(...floors) * 1.01 : undefined
+  }, [plotUnitId, environmentSeries])
 
   // Keep axis bounds visually consistent across time units.
   // Recharts' "auto" domain varies padding based on magnitude.
@@ -411,7 +430,7 @@ export function SimulationChart({ results, metadata }) {
               <UnitDropdown
                 unitId={plotUnitId}
                 onChange={setPlotUnitId}
-                units={PLOT_UNITS}
+                units={CONCENTRATION_UNITS}
                 wrapperClassName={`${UNIT_DROPDOWN_WRAPPER} mb-2`}
                 buttonClassName={UNIT_DROPDOWN_BUTTON}
                 centerLabel
@@ -557,6 +576,7 @@ export function SimulationChart({ results, metadata }) {
                       timeUnit.divisor === 1 ? label?.toLocaleString() : label?.toFixed(2)
                     } ${timeUnit.shortLabel}`}
                     maxVisible={TOOLTIP_VISIBLE_COMPACT}
+                    zeroBelow={zeroBelow}
                     compact
                   />
                 )}
@@ -620,7 +640,7 @@ export function SimulationChart({ results, metadata }) {
                 width={70}
               >
                 <Label
-                  value={plotUnit.axisLabel}
+                  value={plotUnitAxisLabel}
                   angle={-90}
                   position="insideLeft"
                   offset={10}
@@ -638,6 +658,7 @@ export function SimulationChart({ results, metadata }) {
                       timeUnit.divisor === 1 ? label?.toLocaleString() : label?.toFixed(2)
                     } ${timeUnit.shortLabel}`}
                     maxVisible={TOOLTIP_VISIBLE}
+                    zeroBelow={zeroBelow}
                   />
                 )}
               />

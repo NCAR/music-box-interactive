@@ -111,6 +111,10 @@ export const getReactionEdges = (reaction, rate, thirdBodyNames, nodeId = reacti
  * accumulated total at every step, producing a number that scales with output resolution
  * rather than with chemistry -- halving the output frequency would halve every value.
  *
+ * With `intervalDivisors` (one per `results` sample, see buildIntervalDivisors) the result is in
+ * a mixing-ratio unit instead: each interval's increase is divided by that interval's divisor
+ * and the pieces are summed, which stays exact when air density changes within the window.
+ *
  * `reactionIndex` must be the reaction's position in the UNFILTERED mechanism reactions array
  * -- the same array run.js walked when injecting tracers. Passing an index from a filtered
  * subset silently reads a different reaction's tracer.
@@ -120,7 +124,8 @@ export function computeIntegratedReactionRate(
   reactionIndex,
   results,
   timeStart,
-  timeEnd
+  timeEnd,
+  intervalDivisors = null
 ) {
   if (!Array.isArray(results)) return 0
 
@@ -132,19 +137,26 @@ export function computeIntegratedReactionRate(
   for (const concKey of buildTracerConcentrationKeys(reactionIndex, reaction?.name)) {
     let first = null
     let last = null
+    let converted = 0
+    let previous = null
 
-    for (const timeEntry of results) {
+    for (let i = 0; i < results.length; i++) {
+      const timeEntry = results[i]
       const t = timeEntry.time
       if (t < timeStart || t > timeEnd) continue
       const value = timeEntry.concentrations?.[concKey]
       if (typeof value !== 'number') continue
       if (first === null) first = value
       last = value
+      if (intervalDivisors && previous) {
+        converted += (value - previous.value) / intervalDivisors[previous.index]
+      }
+      previous = { value, index: i }
     }
 
     if (first !== null) {
       matched = true
-      total += last - first
+      total += intervalDivisors ? converted : last - first
     }
   }
 
@@ -157,7 +169,13 @@ export function computeIntegratedReactionRate(
  * - Each reaction starts at 0 at timeStart.
  * - Values at any time are directly comparable to computeIntegratedReactionRate for that same window.
  */
-export function computeReactionSeries(trackedReactions, results, timeStart, timeEnd) {
+export function computeReactionSeries(
+  trackedReactions,
+  results,
+  timeStart,
+  timeEnd,
+  intervalDivisors = null
+) {
   if (!Array.isArray(results)) return []
 
   const tracked = trackedReactions.map(({ key, reaction, index }) => ({
@@ -166,9 +184,12 @@ export function computeReactionSeries(trackedReactions, results, timeStart, time
   }))
 
   const baselines = new Map()
+  // Converted mode: running total of converted increases, plus the previous sample per reaction.
+  const running = new Map()
   const points = []
 
-  for (const timeEntry of results) {
+  for (let i = 0; i < results.length; i++) {
+    const timeEntry = results[i]
     const t = timeEntry.time
     if (t < timeStart || t > timeEnd) continue
 
@@ -183,6 +204,15 @@ export function computeReactionSeries(trackedReactions, results, timeStart, time
         total += value
       }
       if (!matched) continue
+      if (intervalDivisors) {
+        const state = running.get(key) ?? { total, index: i, converted: 0 }
+        state.converted += (total - state.total) / intervalDivisors[state.index]
+        state.total = total
+        state.index = i
+        running.set(key, state)
+        point[key] = state.converted
+        continue
+      }
       if (!baselines.has(key)) baselines.set(key, total)
       point[key] = total - baselines.get(key)
     }

@@ -32,6 +32,9 @@ import { Card, CardContent } from '../ui/card'
 import { CHART_COLORS } from '../chartColors'
 import { ChartLegendContent, ChartTooltipContent } from '../SimulationChart'
 import { EMPTY_ARRAY } from '../../utils/emptyArray'
+import { useConcentrationUnit, useEnvironmentSeries } from '../../hooks/useConcentrationUnit'
+import { CONCENTRATION_UNITS } from '../../utils/concentrationUnits'
+import { buildIntervalDivisors } from '../../utils/environmentSeries'
 
 // Species rows shown before the list collapses into a "+N others" popover.
 const SPECIES_VISIBLE = 10
@@ -77,6 +80,11 @@ const formatValue = (value) => {
   if (value === 0) return '0'
   const magnitude = Math.abs(value)
   return magnitude < 1e-3 || magnitude >= 1e6 ? value.toExponential(2) : String(value)
+}
+
+const formatFlux = (value) => {
+  if (typeof value !== 'number' || !Number.isFinite(value) || value === 0) return formatValue(value)
+  return value.toExponential(4)
 }
 
 // Structural fields aren't rate parameters. All other reaction fields are shown as rate parameters.
@@ -148,7 +156,7 @@ function FluxReactionRow({ reaction, flux, checked, onToggleCheck }) {
         <td className="px-4 py-2 text-sm text-muted font-mono" title={reaction.type}>
           {reaction.type}
         </td>
-        <td className="px-4 py-2 font-mono text-sm">{formatValue(flux)}</td>
+        <td className="px-4 py-2 font-mono text-sm">{formatFlux(flux)}</td>
       </tr>
       {expanded && (
         <tr className="border-b border-gray-200">
@@ -197,6 +205,8 @@ export function Flux() {
   const [speciesOverflowOpen, setSpeciesOverflowOpen] = useState(false)
   const [timeRange, setTimeRange] = useState({ start: 0, end: duration })
   const [timeRangeUnitId, setTimeRangeUnitId] = useState('seconds')
+  const [concentrationUnitId, setConcentrationUnitId] = useConcentrationUnit()
+  const environmentSeries = useEnvironmentSeries(simulation.excludedResults)
   const [sortOrder, setSortOrder] = useState('desc')
   const [sortMenuOpen, setSortMenuOpen] = useState(false)
   const [selectedReactionKeys, setSelectedReactionKeys] = useState([])
@@ -220,6 +230,15 @@ export function Flux() {
   const timeRangeUnit =
     TIME_RANGE_UNITS.find((unit) => unit.id === timeRangeUnitId) ?? TIME_RANGE_UNITS[0]
   const timeAxisUnitLabel = timeRangeUnit.shortLabel
+
+  // Mixing-ratio units convert each interval's increase with that interval's own air density,
+  // then sum, so the flux stays exact when conditions evolve within the window.
+  const concentrationUnit =
+    CONCENTRATION_UNITS.find((u) => u.id === concentrationUnitId) ?? CONCENTRATION_UNITS[0]
+  const intervalDivisors = useMemo(
+    () => buildIntervalDivisors(concentrationUnitId, environmentSeries),
+    [concentrationUnitId, environmentSeries]
+  )
 
   const speciesNames = useMemo(
     () => getResultSpeciesNames(simulation.results),
@@ -317,7 +336,8 @@ export function Flux() {
           index,
           simulation.excludedResults,
           timeStart,
-          timeEnd
+          timeEnd,
+          intervalDivisors
         ),
       }))
       .sort((a, b) => (sortOrder === 'asc' ? a.flux - b.flux : b.flux - a.flux))
@@ -330,6 +350,7 @@ export function Flux() {
     timeRange.start,
     timeRange.end,
     sortOrder,
+    intervalDivisors,
   ])
 
   const reactionEntriesByKey = useMemo(() => {
@@ -373,8 +394,21 @@ export function Flux() {
     if (chartSeries.length === 0) return []
     const timeStart = timeRange.start ?? 0
     const timeEnd = timeRange.end ?? duration ?? Infinity
-    return computeReactionSeries(chartSeries, simulation.excludedResults, timeStart, timeEnd)
-  }, [chartSeries, simulation.excludedResults, timeRange.start, timeRange.end, duration])
+    return computeReactionSeries(
+      chartSeries,
+      simulation.excludedResults,
+      timeStart,
+      timeEnd,
+      intervalDivisors
+    )
+  }, [
+    chartSeries,
+    simulation.excludedResults,
+    timeRange.start,
+    timeRange.end,
+    duration,
+    intervalDivisors,
+  ])
 
   if (!simulation.results || simulation.status !== 'succeeded') {
     return (
@@ -491,6 +525,15 @@ export function Flux() {
                   </div>
                 </div>
               )}
+            </div>
+
+            <div>
+              <p className="text-sm font-semibold text-ink mb-2">Flux unit</p>
+              <UnitDropdown
+                unitId={concentrationUnitId}
+                onChange={setConcentrationUnitId}
+                units={CONCENTRATION_UNITS}
+              />
             </div>
 
             <div>
@@ -625,7 +668,9 @@ export function Flux() {
                       </th>
                       <th className="text-left pl-9 pr-4 py-2 font-semibold">Reaction</th>
                       <th className="w-40 text-left px-4 py-2 font-semibold">Type</th>
-                      <th className="w-40 text-left px-4 py-2 font-semibold">Flux (mol m⁻³)</th>
+                      <th className="w-40 text-left px-4 py-2 font-semibold">
+                        Flux ({concentrationUnit.label})
+                      </th>
                     </tr>
                   </thead>
                   <tbody>
@@ -691,7 +736,7 @@ export function Flux() {
                     width={70}
                   >
                     <Label
-                      value="Flux (mol m⁻³)"
+                      value={`Flux (${concentrationUnit.label})`}
                       angle={-90}
                       position="insideLeft"
                       offset={10}

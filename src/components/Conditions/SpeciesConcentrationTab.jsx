@@ -22,7 +22,8 @@ import { useClickOutside } from '../../hooks/useClickOutside'
 import { EMPTY_ARRAY } from '../../utils/emptyArray'
 import { LIST_CARD, LIST_CARD_CONTENT, TEXT_INPUT_SM } from '../Mechanism/fieldStyles'
 import { UnitDropdown } from '../Plots/UnitDropdown'
-import { CONCENTRATION_UNITS, airDensityMolM3, toMolM3, fromMolM3 } from '../../utils/concentrationUnits'
+import { CONCENTRATION_UNITS, toMolM3, fromMolM3 } from '../../utils/concentrationUnits'
+import { DENSITY_SERIES_KEY, resolveAirDensity } from '../../utils/environmentSeries'
 import {
   DEFAULT_TEMPERATURE,
   DEFAULT_PRESSURE,
@@ -53,7 +54,7 @@ const UNIT_DROPDOWN_BUTTON =
 const formatValue = (value) => {
   if (typeof value !== 'number') return String(value)
   if (value === 0) return '0'
-  return value.toExponential(2)
+  return value.toExponential(4)
 }
 
 const hasName = (species) => typeof species.name === 'string' && species.name.trim() !== ''
@@ -226,7 +227,11 @@ export function SpeciesConcentrationTab() {
 
     const temperature = evolvingTemperature[index] ?? DEFAULT_TEMPERATURE
     const pressure = evolvingPressure[index] ?? DEFAULT_PRESSURE
-    const airDensity = airDensityMolM3(pressure, temperature)
+    const airDensity = resolveAirDensity({
+      density: additionalSeries[DENSITY_SERIES_KEY]?.[index],
+      pressure,
+      temperature,
+    })
     const parsed = displayed === null ? null : toMolM3(displayed, concentrationUnitId, airDensity)
 
     const existing = Array.isArray(additionalSeries[key])
@@ -605,7 +610,11 @@ export function SpeciesConcentrationTab() {
                     {timeEntries.map(({ time, index }) => {
                       const temperature = evolvingTemperature[index] ?? DEFAULT_TEMPERATURE
                       const pressure = evolvingPressure[index] ?? DEFAULT_PRESSURE
-                      const airDensity = airDensityMolM3(pressure, temperature)
+                      const airDensity = resolveAirDensity({
+                        density: additionalSeries[DENSITY_SERIES_KEY]?.[index],
+                        pressure,
+                        temperature,
+                      })
 
                       return (
                         <tr key={index} className="border-b border-gray-200 hover:bg-gray-50">

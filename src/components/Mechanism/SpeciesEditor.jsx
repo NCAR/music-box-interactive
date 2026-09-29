@@ -21,7 +21,20 @@ import {
   DROPDOWN_BUTTON,
 } from './fieldStyles'
 import { UnitDropdown } from '../Plots/UnitDropdown'
-import { CONCENTRATION_UNITS, airDensityMolM3, toMolM3, fromMolM3 } from '../../utils/concentrationUnits'
+import {
+  CONCENTRATION_UNITS,
+  airDensityMolM3,
+  isMixingRatioUnit,
+  toMolM3,
+  fromMolM3,
+} from '../../utils/concentrationUnits'
+
+// An unset concentration stays blank instead of converting to 0.
+const displayConcentration = (value, unitId, airDensity) => {
+  if (value === '' || value == null) return ''
+  const converted = Number(fromMolM3(value, unitId, airDensity))
+  return Number.isFinite(converted) ? converted.toExponential(4) : String(value)
+}
 
 // A unit choice
 const CONCENTRATION_PILL = 'Constant concentration'
@@ -347,9 +360,12 @@ function SpeciesChip({ species, phaseNames, onPhaseChange, onFieldSave, onRemove
                 <input
                   key={concentrationUnitId}
                   type="text"
-                  defaultValue={fromMolM3(field.value, concentrationUnitId, airDensity) ?? ''}
+                  defaultValue={displayConcentration(field.value, concentrationUnitId, airDensity)}
                   onBlur={(e) => {
                     const raw = e.target.value.trim()
+                    if (raw === String(displayConcentration(field.value, concentrationUnitId, airDensity))) {
+                      return
+                    }
                     if (!raw) {
                       onFieldSave(species.name, field, '')
                       return
@@ -436,7 +452,7 @@ export function SpeciesEditor() {
         })
         return
       }
-      if (addFormConcentrationUnitId === 'ppb') {
+      if (isMixingRatioUnit(addFormConcentrationUnitId)) {
         convertedProperties = {
           ...newSpeciesProperties,
           [CONCENTRATION_PILL]: String(

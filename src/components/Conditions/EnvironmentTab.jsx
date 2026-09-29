@@ -27,14 +27,8 @@ import {
   commitEvolvingTime,
   ensureZeroTimeRow,
 } from './evolvingSeries'
+import { DENSITY_SERIES_KEY } from '../../utils/environmentSeries'
 
-// Air number density is optional, so its values are stored in the evolving slice's generic
-// additionalSeries map, alongside hidden series like PHOTO.*, instead of
-// getting a dedicated array field.
-const DENSITY_SERIES_KEY = 'ENV.air number density.mol m-3'
-
-// Unlike the Species editor's equal-width columns, the left column fits its content (like TimeTab),
-// while the right column expands to fill the remaining space.
 const EDITOR_GRID = 'grid grid-cols-1 gap-4 lg:grid-cols-[auto_1fr] lg:items-start'
 
 const NUMBER_INPUT =
