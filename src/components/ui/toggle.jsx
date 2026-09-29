@@ -6,8 +6,7 @@ const SIZES = {
 
 // On/off switch (pill with a sliding thumb), shared by boolean species properties
 // and other simple enable/disable fields. activeTrackClassName lets a caller recolor the
-// "on" track to match something it represents (e.g. a chart series' own color) instead of
-// the default assist-secondary color.
+// "on" track to match something it represents.
 export function Toggle({
   checked,
   label,
