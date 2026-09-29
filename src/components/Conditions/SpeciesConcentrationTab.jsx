@@ -42,7 +42,7 @@ const filterButtonClass = (selected) =>
 const NUMBER_INPUT =
   'w-2/3 px-2 py-1 border-1 rounded text-sm text-left font-mono focus:outline-none focus:ring-2 focus:ring-assist-secondary-ring transition-colors duration-300'
 
-const UNIT_DROPDOWN_WRAPPER = 'relative w-full flex-shrink-0'
+const UNIT_DROPDOWN_WRAPPER = 'relative flex-shrink-0 mr-3'
 const UNIT_DROPDOWN_BUTTON =
   'flex items-center gap-1 w-full h-8 px-2 border border-gray-300 rounded-lg text-sm text-gray-800 hover:bg-gray-50 bg-white'
 
@@ -494,7 +494,7 @@ export function SpeciesConcentrationTab() {
                     value={speciesSearch}
                     onChange={(e) => setSpeciesSearch(e.target.value)}
                     placeholder="Search by name"
-                    className={`w-[98%] mx-auto block !h-8 mb-2 focus:!border-action ${TEXT_INPUT_SM}`}
+                    className={`w-[calc(100%-0.75rem)] block !h-8 mb-2 focus:!border-action ${TEXT_INPUT_SM}`}
                   />
 
                   <div className="flex items-center gap-2 mb-2 pl-1">

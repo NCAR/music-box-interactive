@@ -36,11 +36,15 @@ export function UnitDropdown({
             <button
               key={u.id}
               type="button"
+              disabled={u.disabled}
+              title={u.disabled ? 'Conversion not yet supported' : undefined}
               onClick={() => {
                 onChange(u.id)
                 setOpen(false)
               }}
-              className="w-full flex items-center gap-2 text-left text-sm px-3 py-1.5 text-ink hover:bg-surface-hover"
+              className={`w-full flex items-center gap-2 text-left text-sm px-3 py-1.5 ${
+                u.disabled ? 'text-muted cursor-not-allowed' : 'text-ink hover:bg-surface-hover'
+              }`}
             >
               <Check
                 className={`w-3.5 h-3.5 flex-shrink-0 ${
