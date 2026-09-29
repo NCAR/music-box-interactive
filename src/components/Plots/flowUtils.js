@@ -38,8 +38,9 @@ export const reactionProducts = (reaction) => [
 ]
 
 // The type filter narrows what the species selection already allows. An empty type means all.
-export const matchesReactionType = (reaction, reactionType) =>
-  !reactionType || reaction?.type === reactionType
+// An empty list means no type filter, so every reaction matches.
+export const matchesReactionType = (reaction, reactionTypes) =>
+  !reactionTypes?.length || reactionTypes.includes(reaction?.type)
 
 export const isReactionVisible = (reaction, selectedSpecies, thirdBodyNames) => {
   const named = (components) =>

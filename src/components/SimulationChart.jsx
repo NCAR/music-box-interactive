@@ -509,8 +509,8 @@ export function SimulationChart({ results, metadata }) {
               </div>
             )}
 
-            <div className="relative flex-1 min-h-[28rem] lg:min-h-0 border rounded-lg bg-white">
-              <div className="absolute inset-0 p-2 xs:p-3 sm:p-4">
+            <div className="relative flex-1 min-h-[28rem] lg:min-h-0 bg-white">
+              <div className="absolute inset-0 p-2 xs:p-3 sm:p-4 !pl-0">
           <ResponsiveContainer width="100%" height="100%" className="xs:hidden">
             <LineChart data={chartData} margin={{ top: 5, right: 5, left: 5, bottom: 5 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#D8D6D2" />
@@ -585,7 +585,7 @@ export function SimulationChart({ results, metadata }) {
 
           {/* Larger chart for bigger screens */}
           <ResponsiveContainer width="100%" height="100%" className="hidden xs:block">
-            <LineChart data={chartData} margin={{ top: 5, right: 30, left: 30, bottom: 5 }}>
+            <LineChart data={chartData} margin={{ top: 5, right: 20, left: 15, bottom: 3 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#D8D6D2" />
 
               <XAxis

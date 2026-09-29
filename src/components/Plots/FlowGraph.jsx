@@ -127,7 +127,7 @@ export function FlowGraph({
   selectedSpecies,
   rateRange,
   timeRange,
-  reactionType = '',
+  reactionTypes = EMPTY_ARRAY,
   valueDisplay = 'absolute',
 }) {
   const ref = useRef()
@@ -153,7 +153,7 @@ export function FlowGraph({
     const visibleReactions = reactions.filter(
       (rxn) =>
         isReactionVisible(rxn, selectedSpecies, thirdBodyNames) &&
-        matchesReactionType(rxn, reactionType)
+        matchesReactionType(rxn, reactionTypes)
     )
 
     if (visibleReactions.length === 0) return
@@ -551,7 +551,7 @@ export function FlowGraph({
 
     sim.alpha(0.4).restart()
     return () => sim.stop()
-  }, [selectedSpecies, reactionType, rateRange, timeRange, reactions, species, results, valueDisplay])
+  }, [selectedSpecies, reactionTypes, rateRange, timeRange, reactions, species, results, valueDisplay])
 
   // Sync selectedNode → D3 rate label visibility & rect highlight
   useEffect(() => {
