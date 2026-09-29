@@ -24,6 +24,7 @@ import {
   DEFAULT_PRESSURE,
   insertAdditionalSeriesValue,
   removeEvolvingTimeRows,
+  commitEvolvingTime,
   ensureZeroTimeRow,
 } from './evolvingSeries'
 
@@ -187,11 +188,7 @@ export function EnvironmentTab() {
     setNewDensity('')
   }
 
-  // t=0 is the simulation's starting point, not removable.
-  const removableIndices = evolving.times
-    .map((time, index) => ({ time, index }))
-    .filter((entry) => entry.time !== 0)
-    .map((entry) => entry.index)
+  const removableIndices = evolving.times.map((_, index) => index)
 
   const toggleSelected = (index) => {
     if (!removableIndices.includes(index)) return
@@ -324,6 +321,54 @@ export function EnvironmentTab() {
       setEvolvingAdditionalSeries({ ...evolving.additionalSeries, [DENSITY_SERIES_KEY]: next })
     )
     flashCell('density', index)
+  }
+
+  const commitTime = (index, rawValue) => {
+    const outcome = commitEvolvingTime(
+      {
+        times: evolving.times,
+        temperature: evolving.temperature,
+        pressure: evolving.pressure,
+        additionalSeries: evolving.additionalSeries,
+      },
+      index,
+      rawValue
+    )
+
+    if (outcome.kind === 'invalid') {
+      // Leave the draft in place so the invalid text stays visible to fix, instead of
+      // silently reverting to the last committed value.
+      toast({
+        title: 'Invalid Input',
+        description: 'Time must be a valid number zero or greater',
+        variant: 'destructive',
+      })
+      return
+    }
+
+    clearCellDraft('time', index)
+
+    if (outcome.kind === 'unchanged') return
+    if (outcome.kind === 'duplicate') {
+      toast({
+        title: 'Duplicate Time Point',
+        description: `A condition already exists at t=${outcome.newTime}s`,
+        variant: 'destructive',
+      })
+      return
+    }
+
+    const { result } = outcome
+    dispatch(setEvolvingTimes(result.times))
+    dispatch(setEvolvingTemperature(result.temperature))
+    dispatch(setEvolvingPressure(result.pressure))
+    dispatch(setEvolvingAdditionalSeries(result.additionalSeries))
+
+    toast({
+      title: 'Condition Updated',
+      description: `Moved condition to t=${result.newTime}s`,
+      variant: 'success',
+    })
   }
 
   // Live “stored as” hints, shown only for non-base units.
@@ -546,19 +591,31 @@ export function EnvironmentTab() {
                                 type="checkbox"
                                 checked={selectedIndices.has(index)}
                                 onChange={() => toggleSelected(index)}
-                                disabled={time === 0}
-                                aria-label={
-                                  time === 0
-                                    ? 'Condition at t=0s cannot be removed'
-                                    : `Select condition at t=${time}s`
-                                }
-                                title={
-                                  time === 0 ? 'The starting time point cannot be removed' : undefined
-                                }
-                                className="accent-assist-secondary-ring disabled:opacity-30 disabled:cursor-not-allowed"
+                                aria-label={`Select condition at t=${time}s`}
+                                className="accent-assist-secondary-ring"
                               />
                             </td>
-                            <td className="px-4 py-2 font-mono">{formatConversion(time)}</td>
+                            <td className="px-4 py-2 font-mono">
+                              <input
+                                type="text"
+                                inputMode="decimal"
+                                value={rowDrafts[cellKey('time', index)] ?? formatConversion(time)}
+                                onChange={(e) => handleCellDraftChange('time', index, e.target.value)}
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter') {
+                                    e.preventDefault()
+                                    commitTime(index, e.target.value)
+                                    e.target.blur()
+                                  }
+                                }}
+                                onBlur={(e) => commitTime(index, e.target.value)}
+                                className={cn(
+                                  CELL_INPUT,
+                                  justUpdatedCell === cellKey('time', index) &&
+                                    'border-action bg-assist-secondary'
+                                )}
+                              />
+                            </td>
                             <td className="px-4 py-2 font-mono">
                               <input
                                 type="text"

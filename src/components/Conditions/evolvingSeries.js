@@ -22,10 +22,12 @@ export function removeAdditionalSeriesValues(series, removeIndices) {
   )
 }
 
-// Removes selected rows from all evolving series in sync, excluding t=0,
-// and returns the updated data and removed time values.
+// Removes selected rows from all evolving series in sync and returns the updated data and
+// removed time values. buildSolverConditions falls back to initial.temperature/pressure/concentrations
+// for t=0 whenever the evolving series doesn't cover it, so removing that row just means
+// nothing overrides the default.
 export function removeEvolvingTimeRows({ times, temperature, pressure, additionalSeries }, selectedIndices) {
-  const indicesToRemove = new Set([...selectedIndices].filter((i) => times[i] !== 0))
+  const indicesToRemove = new Set(selectedIndices)
   if (indicesToRemove.size === 0) return null
 
   return {
@@ -36,6 +38,63 @@ export function removeEvolvingTimeRows({ times, temperature, pressure, additiona
     pressure: pressure.filter((_, i) => !indicesToRemove.has(i)),
     additionalSeries: removeAdditionalSeriesValues(additionalSeries, indicesToRemove),
   }
+}
+
+// Changes one row's time value and keeps every parallel array (temperature, pressure, each
+// additionalSeries key) aligned by re-sorting them all together, so a row's data travels with
+// it to its new position instead of getting scrambled relative to the other rows. Returns null
+// if newTime is a no-op (unchanged) or collides with another existing row.
+export function renameEvolvingTime({ times, temperature, pressure, additionalSeries }, index, newTime) {
+  if (times[index] === newTime) return null
+  if (times.some((t, i) => i !== index && t === newTime)) return null
+
+  const additionalKeys = Object.keys(additionalSeries || {})
+  const rows = times
+    .map((time, i) => ({
+      time: i === index ? newTime : time,
+      temperature: temperature[i],
+      pressure: pressure[i],
+      additional: Object.fromEntries(additionalKeys.map((key) => [key, additionalSeries[key]?.[i] ?? null])),
+    }))
+    .sort((a, b) => a.time - b.time)
+
+  return {
+    oldTime: times[index],
+    newTime,
+    times: rows.map((row) => row.time),
+    temperature: rows.map((row) => row.temperature),
+    pressure: rows.map((row) => row.pressure),
+    additionalSeries: Object.fromEntries(
+      additionalKeys.map((key) => [key, rows.map((row) => row.additional[key])])
+    ),
+  }
+}
+
+// Shared parse/validate/rename pipeline behind every time-cell edit in EnvironmentTab,
+// ReactionTab, and SpeciesConcentrationTab -- those three call sites were byte-for-byte the
+// same logic wrapped around their own draft-state and toast wording, so only that surrounding
+// part stays per-component. Returns a tagged result the caller switches on:
+//   { kind: 'invalid' }             -- not a valid non-negative number
+//   { kind: 'unchanged' }           -- same as the current value, nothing to do
+//   { kind: 'duplicate', newTime }  -- collides with another row's time
+//   { kind: 'ok', result }          -- result is renameEvolvingTime's return value
+export function commitEvolvingTime({ times, temperature, pressure, additionalSeries }, index, rawValue) {
+  const trimmed = rawValue.trim()
+  const newTime = parseFloat(trimmed)
+
+  if (trimmed === '' || isNaN(newTime) || newTime < 0) {
+    return { kind: 'invalid' }
+  }
+  if (newTime === times[index]) {
+    return { kind: 'unchanged' }
+  }
+  if (times.some((t, i) => i !== index && t === newTime)) {
+    return { kind: 'duplicate', newTime }
+  }
+
+  const result = renameEvolvingTime({ times, temperature, pressure, additionalSeries }, index, newTime)
+  if (!result) return { kind: 'unchanged' }
+  return { kind: 'ok', result }
 }
 
 // Ensures a t=0 row exists; no-op if it already exists. Defaults to DEFAULT_TEMPERATURE/

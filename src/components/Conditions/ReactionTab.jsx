@@ -11,6 +11,7 @@ import {
   setEvolvingAdditionalSeries,
   tagEvolvingRow,
   untagEvolvingRows,
+  renameEvolvingRowTag,
 } from '../../redux/slices/conditionsSlice'
 import { useToast } from '@/hooks/use-toast'
 import { useClickOutside } from '../../hooks/useClickOutside'
@@ -21,6 +22,7 @@ import {
   DEFAULT_PRESSURE,
   insertAdditionalSeriesValue,
   removeEvolvingTimeRows,
+  commitEvolvingTime,
   ensureZeroTimeRow,
 } from './evolvingSeries'
 
@@ -283,10 +285,7 @@ export function ReactionTab() {
       if (!Array.isArray(tags) || tags.length === 0 || tags.includes(reactionTypeId)) return true
       return typeDataIndices.has(index)
     })
-  // t=0 is the simulation's starting point, not an editable/removable evolving row.
-  const removableIndices = visibleTimeEntries
-    .filter((entry) => entry.time !== 0)
-    .map((entry) => entry.index)
+  const removableIndices = visibleTimeEntries.map((entry) => entry.index)
 
   // Clear on evolvingTimes changing
   useEffect(() => {
@@ -338,6 +337,56 @@ export function ReactionTab() {
     existing[index] = parsed
     dispatch(setEvolvingAdditionalSeries({ ...additionalSeries, [key]: existing }))
     flashUpdated(cellDraftKey(key, index))
+  }
+
+  const TIME_DRAFT_KEY = '__time__'
+
+  const commitTime = (index, rawValue) => {
+    const outcome = commitEvolvingTime(
+      { times: evolvingTimes, temperature: evolvingTemperature, pressure: evolvingPressure, additionalSeries },
+      index,
+      rawValue
+    )
+
+    if (outcome.kind === 'invalid') {
+      // Leave the draft in place so the invalid text stays visible to fix, instead of
+      // silently reverting to the last committed value.
+      toast({
+        title: 'Invalid Input',
+        description: 'Time must be a valid number zero or greater',
+        variant: 'destructive',
+      })
+      return
+    }
+
+    setRowDrafts((prev) => {
+      const next = { ...prev }
+      delete next[cellDraftKey(TIME_DRAFT_KEY, index)]
+      return next
+    })
+
+    if (outcome.kind === 'unchanged') return
+    if (outcome.kind === 'duplicate') {
+      toast({
+        title: 'Duplicate Time Point',
+        description: `A time point already exists at t=${outcome.newTime}s`,
+        variant: 'destructive',
+      })
+      return
+    }
+
+    const { result } = outcome
+    dispatch(setEvolvingTimes(result.times))
+    dispatch(setEvolvingTemperature(result.temperature))
+    dispatch(setEvolvingPressure(result.pressure))
+    dispatch(setEvolvingAdditionalSeries(result.additionalSeries))
+    dispatch(renameEvolvingRowTag({ oldTime: result.oldTime, newTime: result.newTime }))
+
+    toast({
+      title: 'Time Point Updated',
+      description: `Moved time point to t=${result.newTime}s`,
+      variant: 'success',
+    })
   }
 
   const toggleSelected = (index) => {
@@ -725,17 +774,27 @@ export function ReactionTab() {
                             type="checkbox"
                             checked={selectedIndices.has(index)}
                             onChange={() => toggleSelected(index)}
-                            disabled={time === 0}
-                            aria-label={
-                              time === 0
-                                ? 'Time point at t=0s cannot be removed'
-                                : `Select time point at t=${time}s`
-                            }
-                            title={time === 0 ? 'The starting time point cannot be removed' : undefined}
-                            className="accent-assist-secondary-ring disabled:opacity-30 disabled:cursor-not-allowed"
+                            aria-label={`Select time point at t=${time}s`}
+                            className="accent-assist-secondary-ring"
                           />
                         </td>
-                        <td className="px-4 py-2 font-mono">{time}</td>
+                        <td className="px-4 py-2 font-mono">
+                          <input
+                            type="text"
+                            inputMode="decimal"
+                            value={rowDrafts[cellDraftKey(TIME_DRAFT_KEY, index)] ?? time}
+                            onChange={(e) => handleValueChange(TIME_DRAFT_KEY, index, e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                e.preventDefault()
+                                commitTime(index, e.target.value)
+                                e.target.blur()
+                              }
+                            }}
+                            onBlur={(e) => commitTime(index, e.target.value)}
+                            className={`${NUMBER_INPUT} focus:border-assist-secondary-ring border-gray-300 bg-white`}
+                          />
+                        </td>
                         {columns.map((column) => {
                           const stored = additionalSeries?.[column.key]?.[index]
                           const draftKey = cellDraftKey(column.key, index)

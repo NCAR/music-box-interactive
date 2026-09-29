@@ -124,6 +124,18 @@ export const conditionsSlice = createSlice({
         delete state.evolving.rowReactionType[String(time)]
       })
     },
+    // Moves a row's type tag(s) when its time value itself is edited, so ReactionTab's
+    // per-type visibility scoping survives the row moving to a new time.
+    renameEvolvingRowTag: (state, action) => {
+      const { oldTime, newTime } = action.payload
+      state.evolving.rowReactionType ??= {}
+      const oldKey = String(oldTime)
+      const tags = state.evolving.rowReactionType[oldKey]
+      if (tags) {
+        delete state.evolving.rowReactionType[oldKey]
+        state.evolving.rowReactionType[String(newTime)] = tags
+      }
+    },
 
     markInitialHydrated: (state, action) => {
       state.hydration.initialExampleId = action.payload || null
@@ -173,6 +185,7 @@ export const {
   setEvolvingAdditionalSeries,
   tagEvolvingRow,
   untagEvolvingRows,
+  renameEvolvingRowTag,
   markInitialHydrated,
   markEvolvingHydrated,
   loadConditions,
