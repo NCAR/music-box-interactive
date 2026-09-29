@@ -48,6 +48,7 @@ export function EnvironmentPlot() {
   const temperatureUnitLabel =
     TEMPERATURE_UNITS.find((u) => u.id === temperatureUnitId)?.label ?? 'K'
   const timeUnit = TIME_RANGE_UNITS.find((u) => u.id === timeUnitId) ?? TIME_RANGE_UNITS[1]
+  const timeAxisUnitLabel = timeUnit.shortLabel
 
   // Evolving temperature and pressure points fed to the solver, sorted for step interpolation
   const evolvingPoints = useMemo(() => {
@@ -190,7 +191,7 @@ export function EnvironmentPlot() {
                   <XAxis
                     dataKey="time"
                     label={{
-                      value: `Time (${timeUnit.label})`,
+                      value: `Time (${timeAxisUnitLabel})`,
                       position: 'insideBottom',
                       offset: -5,
                       style: { fill: '#1f2937', fontWeight: 600, fontSize: 14 },
@@ -234,7 +235,7 @@ export function EnvironmentPlot() {
                       <ChartTooltipContent
                         active={active}
                         payload={payload}
-                        timeLabel={`${label?.toFixed(2)} ${timeUnit.label.toLowerCase()}`}
+                        timeLabel={`${label?.toFixed(2)} ${timeAxisUnitLabel}`}
                         maxVisible={2}
                       />
                     )}

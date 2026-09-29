@@ -15,12 +15,7 @@ import { Card, CardContent, CardDescription } from './ui/card'
 import { getSpeciesDisplayName } from './Plots/speciesFormat'
 import { useClickOutside } from '../hooks/useClickOutside'
 import { CHART_COLORS } from './chartColors'
-
-// X-axis time unit options
-const TIME_UNITS = [
-  { id: 'seconds', label: 'Seconds', axisLabel: 'Time (s)', suffix: 's', divisor: 1 },
-  { id: 'hours', label: 'Hours', axisLabel: 'Time (hr)', suffix: 'hr', divisor: 3600 },
-]
+import { TIME_RANGE_UNITS as TIME_UNITS } from './Plots/timeRangeUnits'
 
 // Y-axis concentration unit options
 const PLOT_UNITS = [
@@ -617,7 +612,7 @@ export function SimulationChart({ results, metadata }) {
                 type="number"
               >
                 <Label
-                  value={timeUnit.axisLabel}
+                  value={`Time (${timeUnit.shortLabel})`}
                   position="insideBottom"
                   offset={-5}
                   style={{ fill: '#1f2937', fontWeight: 600, fontSize: 11 }}
@@ -648,7 +643,7 @@ export function SimulationChart({ results, metadata }) {
                     payload={payload}
                     timeLabel={`${
                       timeUnit.divisor === 1 ? label?.toLocaleString() : label?.toFixed(2)
-                    } ${timeUnit.suffix}`}
+                    } ${timeUnit.shortLabel}`}
                     maxVisible={TOOLTIP_VISIBLE_COMPACT}
                     compact
                   />
@@ -690,7 +685,7 @@ export function SimulationChart({ results, metadata }) {
                 type="number"
               >
                 <Label
-                  value={timeUnit.axisLabel}
+                  value={`Time (${timeUnit.shortLabel})`}
                   position="insideBottom"
                   offset={-5}
                   style={{ fill: '#1f2937', fontWeight: 600, fontSize: 14 }}
@@ -729,7 +724,7 @@ export function SimulationChart({ results, metadata }) {
                     payload={payload}
                     timeLabel={`${
                       timeUnit.divisor === 1 ? label?.toLocaleString() : label?.toFixed(2)
-                    } ${timeUnit.label.toLowerCase()}`}
+                    } ${timeUnit.shortLabel}`}
                     maxVisible={TOOLTIP_VISIBLE}
                   />
                 )}
