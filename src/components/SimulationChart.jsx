@@ -10,8 +10,10 @@ import {
   ResponsiveContainer,
   Label,
 } from 'recharts'
-import { BarChart3, Atom, AlertCircle, ChevronDown, Check } from 'lucide-react'
-import { Card, CardContent, CardDescription } from './ui/card'
+import { BarChart3, Atom, AlertCircle, Check } from 'lucide-react'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card'
+import { UnitDropdown } from './Plots/UnitDropdown'
+import { LIST_CARD, LIST_CARD_CONTENT, TEXT_INPUT_SM } from './Mechanism/fieldStyles'
 import { getSpeciesDisplayName } from './Plots/speciesFormat'
 import { useClickOutside } from '../hooks/useClickOutside'
 import { CHART_COLORS } from './chartColors'
@@ -19,9 +21,20 @@ import { TIME_RANGE_UNITS as TIME_UNITS } from './Plots/timeRangeUnits'
 
 // Y-axis concentration unit options
 const PLOT_UNITS = [
-  { id: 'mol_m3', label: 'mol m-3', axisLabel: 'Concentration (mol m-3)', supported: true },
-  { id: 'ppb', label: 'ppb', axisLabel: 'Concentration (ppb)', supported: false },
+  { id: 'mol_m3', label: 'mol m-3', axisLabel: 'Concentration (mol m-3)' },
+  { id: 'ppb', label: 'ppb', axisLabel: 'Concentration (ppb)', disabled: true },
 ]
+
+const filterButtonClass = (selected) =>
+  `w-full text-left text-sm px-1.5 py-1 rounded ${
+    selected
+      ? 'text-assist-secondary-foreground font-semibold bg-assist-secondary'
+      : 'text-muted hover:bg-surface-hover'
+  }`
+
+const UNIT_DROPDOWN_WRAPPER = 'relative flex-shrink-0 mr-3'
+const UNIT_DROPDOWN_BUTTON =
+  'flex items-center gap-1 w-full h-8 px-2 border border-gray-300 rounded-lg text-sm text-gray-800 hover:bg-gray-50 bg-white'
 
 // Round a value up to a human-friendly scale (1, 2, 5, or 10 times a power of 10)
 function niceNumber(x) {
@@ -169,25 +182,13 @@ export function SimulationChart({ results, metadata }) {
   const [initialized, setInitialized] = useState(false)
   const [timeUnitId, setTimeUnitId] = useState('seconds')
   const [plotUnitId, setPlotUnitId] = useState('mol_m3')
-  const [plotUnitMenuOpen, setPlotUnitMenuOpen] = useState(false)
-  const [timeUnitMenuOpen, setTimeUnitMenuOpen] = useState(false)
-  const [selectAllMenuOpen, setSelectAllMenuOpen] = useState(false)
   const [speciesOverflowOpen, setSpeciesOverflowOpen] = useState(false)
-  const plotUnitMenuRef = useRef(null)
-  const timeUnitMenuRef = useRef(null)
-  const selectAllMenuRef = useRef(null)
   const speciesOverflowRef = useRef(null)
 
   const timeUnit = TIME_UNITS.find((u) => u.id === timeUnitId) ?? TIME_UNITS[0]
   const plotUnit = PLOT_UNITS.find((u) => u.id === plotUnitId) ?? PLOT_UNITS[0]
 
-  const closePlotUnitMenu = useCallback(() => setPlotUnitMenuOpen(false), [])
-  const closeTimeUnitMenu = useCallback(() => setTimeUnitMenuOpen(false), [])
-  const closeSelectAllMenu = useCallback(() => setSelectAllMenuOpen(false), [])
   const closeSpeciesOverflow = useCallback(() => setSpeciesOverflowOpen(false), [])
-  useClickOutside(plotUnitMenuRef, closePlotUnitMenu, plotUnitMenuOpen)
-  useClickOutside(timeUnitMenuRef, closeTimeUnitMenu, timeUnitMenuOpen)
-  useClickOutside(selectAllMenuRef, closeSelectAllMenu, selectAllMenuOpen)
   useClickOutside(speciesOverflowRef, closeSpeciesOverflow, speciesOverflowOpen)
 
   // Extract all species, do not filter by value (show even if all zero)
@@ -314,17 +315,14 @@ export function SimulationChart({ results, metadata }) {
       })
   }, [allSpecies, speciesSearch])
 
-  const visibleFilteredSpecies = filteredSpecies.slice(0, SPECIES_CHIP_VISIBLE)
-  const overflowFilteredSpecies = filteredSpecies.slice(SPECIES_CHIP_VISIBLE)
-
-  const allFilteredSelected =
-    filteredSpecies.length > 0 && filteredSpecies.every((sp) => displaySpecies.includes(sp))
-  const noneSelected = displaySpecies.length === 0
-  const selectAllStatusLabel = allFilteredSelected
-    ? 'Select all'
-    : noneSelected
-      ? 'Deselect all'
-      : 'Custom'
+  // Selected species beyond the visible cap stay listed until deselected.
+  const baseVisibleSpecies = filteredSpecies.slice(0, SPECIES_CHIP_VISIBLE)
+  const overflowCandidates = filteredSpecies.slice(SPECIES_CHIP_VISIBLE)
+  const visibleSpeciesList = [
+    ...baseVisibleSpecies,
+    ...overflowCandidates.filter((sp) => displaySpecies.includes(sp)),
+  ]
+  const overflowSpeciesList = overflowCandidates.filter((sp) => !displaySpecies.includes(sp))
 
   // Validation checks
   if (!results || results.length === 0) {
@@ -370,236 +368,150 @@ export function SimulationChart({ results, metadata }) {
     )
   }
 
+  const unitLabelSuffix = metadata?.mechanism
+    ? `${metadata.mechanism.toUpperCase()}${
+        metadata.mechanism.toLowerCase().includes('mechanism') ? '' : ' mechanism'
+      }`
+    : null
+
   return (
-    <Card>
-      <CardContent className="space-y-3 xs:space-y-4">
-        {/* Warning for insufficient data points */}
-        {results.length < 3 && (
-          <div className="bg-[#FFFBEB] border-2 border-location/60 rounded-lg p-3 text-sm">
-            <p className="font-semibold text-heading mb-1 flex items-center gap-2">
-              <AlertCircle className="w-4 h-4" />
-              Limited Data Points
-            </p>
-            <p className="text-ink text-xs">
-              This simulation produced only {results.length} data point
-              {results.length > 1 ? 's' : ''}. For better visualization, consider increasing the
-              simulation duration or decreasing the time step.
-            </p>
-          </div>
-        )}
+    <Card className={LIST_CARD}>
+      <CardHeader className="py-4">
+        <CardTitle className="text-lg">Species concentration</CardTitle>
+        <CardDescription>
+          {[
+            unitLabelSuffix,
+            metadata?.duration != null
+              ? `${metadata.duration.toLocaleString()} s | ${(metadata.duration / 3600).toFixed(1)} hr`
+              : null,
+            `${results.length} data points`,
+          ]
+            .filter(Boolean)
+            .join(' \u2022 ')}
+        </CardDescription>
+      </CardHeader>
+      <CardContent className={LIST_CARD_CONTENT}>
+        <div className="flex flex-col lg:flex-row gap-4 flex-1 min-h-0">
+          {/* Sidebar controls */}
+          <div className="w-full lg:w-56 flex-shrink-0 space-y-5 lg:overflow-y-auto">
+            <div>
+              <p className="text-sm font-semibold text-ink mb-2">Time unit</p>
+              <UnitDropdown
+                unitId={timeUnitId}
+                onChange={setTimeUnitId}
+                units={TIME_UNITS}
+                wrapperClassName={UNIT_DROPDOWN_WRAPPER}
+                buttonClassName={UNIT_DROPDOWN_BUTTON}
+                centerLabel
+              />
+            </div>
 
-        {/* Species Filter */}
-        <div className="rounded-lg p-2 xs:p-3 sm:p-4 bg-surface-alt mt-2 xs:mt-3 sm:mt-4">
-          <div className="flex flex-col xs:flex-row items-start xs:items-center justify-between gap-2 xs:gap-0 mb-3">
-            <div className="flex flex-wrap items-center justify-between gap-3 w-full">
-              <div className="flex items-center border border-border rounded-lg divide-x divide-border bg-white">
-                <div className="relative" ref={selectAllMenuRef}>
-                  <button
-                    type="button"
-                    onClick={() => setSelectAllMenuOpen((open) => !open)}
-                    className={`flex items-center justify-between gap-1 w-32 h-8 bg-[#E6F0FA] text-ink rounded-l-lg
-                      text-sm font-bold px-2.5 focus:outline-none focus:ring-2 focus:ring-action transition-colors duration-200`}
-                  >
-                    {selectAllStatusLabel}
-                    <ChevronDown className="w-3.5 h-3.5 flex-shrink-0" />
-                  </button>
+            <div>
+              <p className="text-sm font-semibold text-ink mb-2">Species</p>
+              <UnitDropdown
+                unitId={plotUnitId}
+                onChange={setPlotUnitId}
+                units={PLOT_UNITS}
+                wrapperClassName={`${UNIT_DROPDOWN_WRAPPER} mb-2`}
+                buttonClassName={UNIT_DROPDOWN_BUTTON}
+                centerLabel
+              />
 
-                  {selectAllMenuOpen && (
-                    <div className="absolute z-10 mt-1 min-w-[9rem] bg-white border border-border rounded-lg shadow-lg py-1">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setSelectedSpecies(filteredSpecies)
-                          setSelectAllMenuOpen(false)
-                        }}
-                        className="w-full flex items-center gap-2 text-left text-sm font-bold px-3 py-1.5 text-ink hover:bg-surface-hover"
-                      >
-                        <Check
-                          className={`w-3.5 h-3.5 flex-shrink-0 ${
-                            allFilteredSelected ? 'opacity-100' : 'opacity-0'
-                          }`}
-                        />
-                        Select all
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setSelectedSpecies([])
-                          setSelectAllMenuOpen(false)
-                        }}
-                        className="w-full flex items-center gap-2 text-left text-sm font-bold px-3 py-1.5 text-ink hover:bg-surface-hover"
-                      >
-                        <Check
-                          className={`w-3.5 h-3.5 flex-shrink-0 ${
-                            noneSelected ? 'opacity-100' : 'opacity-0'
-                          }`}
-                        />
-                        Deselect all
-                      </button>
-                    </div>
-                  )}
-                </div>
+              <input
+                type="text"
+                value={speciesSearch}
+                onChange={(e) => {
+                  setSpeciesSearch(e.target.value)
+                  setSpeciesOverflowOpen(false)
+                }}
+                placeholder="Search by name"
+                className={`w-[calc(100%-0.75rem)] block !h-8 mb-2 focus:!border-action ${TEXT_INPUT_SM}`}
+              />
 
-                {/* Search bar for species filter */}
-                <input
-                  type="text"
-                  value={speciesSearch}
-                  onChange={(e) => {
-                    setSpeciesSearch(e.target.value)
-                    setSpeciesOverflowOpen(false)
-                  }}
-                  placeholder="Search species"
-                  className="w-[30rem] h-8 px-3 text-ink placeholder:text-muted rounded-r-lg text-base font-mono focus:outline-none focus:relative focus:z-10 focus:ring-2 focus:ring-action"
-                />
+              <div className="flex items-center gap-2 mb-2 pl-1">
+                <button
+                  type="button"
+                  onClick={() => setSelectedSpecies(filteredSpecies)}
+                  className="text-sm text-action hover:underline"
+                >
+                  Select all
+                </button>
+                <span className="text-sm text-muted">|</span>
+                <button
+                  type="button"
+                  onClick={() => setSelectedSpecies([])}
+                  className="text-sm text-action hover:underline"
+                >
+                  Deselect all
+                </button>
               </div>
 
-              <div className="flex items-center border border-border rounded-lg divide-x divide-border bg-white">
-                <div className="relative" ref={plotUnitMenuRef}>
+              <div className="flex flex-col gap-0.5">
+                {visibleSpeciesList.map((species) => (
                   <button
+                    key={species}
                     type="button"
-                    onClick={() => setPlotUnitMenuOpen((open) => !open)}
-                    className={`flex items-center justify-between gap-1 w-24 h-8 bg-[#E6F0FA] text-ink rounded-l-lg text-sm
-                      font-bold px-2.5 focus:outline-none focus:ring-2 focus:ring-action transition-colors duration-200`}
+                    onClick={() => toggleSpecies(species)}
+                    className={filterButtonClass(displaySpecies.includes(species))}
                   >
-                    {plotUnit.label}
-                    <ChevronDown className="w-3.5 h-3.5 flex-shrink-0" />
+                    {getSpeciesDisplayName(species)}
                   </button>
+                ))}
 
-                  {plotUnitMenuOpen && (
-                    <div className="absolute z-10 mt-1 min-w-[9rem] bg-white border border-border rounded-lg shadow-lg py-1">
-                      {PLOT_UNITS.map((unit) => (
-                        <button
-                          key={unit.id}
-                          type="button"
-                          disabled={!unit.supported}
-                          title={!unit.supported ? 'Conversion not yet supported' : undefined}
-                          onClick={() => {
-                            setPlotUnitId(unit.id)
-                            setPlotUnitMenuOpen(false)
-                          }}
-                          className={`w-full flex items-center gap-2 text-left text-sm font-bold px-3 py-1.5 ${
-                            unit.supported
-                              ? 'text-ink hover:bg-surface-hover'
-                              : 'text-muted cursor-not-allowed'
-                          }`}
-                        >
-                          <Check
-                            className={`w-3.5 h-3.5 flex-shrink-0 ${
-                              plotUnitId === unit.id ? 'opacity-100' : 'opacity-0'
-                            }`}
-                          />
-                          {unit.label}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
+                {overflowSpeciesList.length > 0 && (
+                  <div className="relative" ref={speciesOverflowRef}>
+                    <button
+                      type="button"
+                      onClick={() => setSpeciesOverflowOpen((open) => !open)}
+                      className="text-left text-sm px-1.5 py-1 rounded text-muted hover:bg-surface-hover"
+                    >
+                      +{overflowSpeciesList.length} others
+                    </button>
 
-                <div className="relative" ref={timeUnitMenuRef}>
-                  <button
-                    type="button"
-                    onClick={() => setTimeUnitMenuOpen((open) => !open)}
-                    className={`flex items-center justify-between gap-1 w-24 h-8 bg-[#E6F0FA] text-ink rounded-r-lg
-                      text-sm font-bold px-2.5 focus:outline-none focus:ring-2 focus:ring-action transition-colors duration-200`}
-                  >
-                    {timeUnit.label}
-                    <ChevronDown className="w-3.5 h-3.5 flex-shrink-0" />
-                  </button>
-
-                  {timeUnitMenuOpen && (
-                    <div className="absolute z-10 mt-1 min-w-[9rem] bg-white border border-border rounded-lg shadow-lg py-1">
-                      {TIME_UNITS.map((unit) => (
-                        <button
-                          key={unit.id}
-                          type="button"
-                          onClick={() => {
-                            setTimeUnitId(unit.id)
-                            setTimeUnitMenuOpen(false)
-                          }}
-                          className="w-full flex items-center gap-2 text-left text-sm font-bold px-3 py-1.5 text-ink hover:bg-surface-hover"
-                        >
-                          <Check
-                            className={`w-3.5 h-3.5 flex-shrink-0 ${
-                              timeUnitId === unit.id ? 'opacity-100' : 'opacity-0'
-                            }`}
-                          />
-                          {unit.label}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
+                    {speciesOverflowOpen && (
+                      <div className="absolute z-20 mt-1 w-48 max-h-56 overflow-y-auto bg-white border border-border rounded-lg shadow-lg py-1">
+                        {overflowSpeciesList.map((species) => (
+                          <button
+                            key={species}
+                            type="button"
+                            onClick={() => toggleSpecies(species)}
+                            className="w-full flex items-center gap-2 text-left text-sm px-3 py-1.5 text-ink hover:bg-surface-hover"
+                          >
+                            <Check
+                              className={`w-3.5 h-3.5 flex-shrink-0 ${
+                                displaySpecies.includes(species) ? 'opacity-100' : 'opacity-0'
+                              }`}
+                            />
+                            <span className="flex-1 truncate">{getSpeciesDisplayName(species)}</span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-1.5 xs:gap-2 pl-2 lg:max-w-[calc(100%-13rem)]">
-            <h4 className="font-semibold text-sm xs:text-base text-muted mr-1">
-              {displaySpecies.length} selected
-            </h4>
-            {visibleFilteredSpecies.map((species) => (
-              <button
-                key={species}
-                onClick={() => toggleSpecies(species)}
-                className={`px-2 xs:px-3 py-1 rounded-full text-sm font-medium transition-all ${
-                  displaySpecies.includes(species)
-                    ? 'bg-blue-500 text-white shadow-md'
-                    : 'bg-surface-alt text-muted hover:bg-surface-hover'
-                }`}
-                style={
-                  displaySpecies.includes(species)
-                    ? { backgroundColor: CHART_COLORS[allSpecies.indexOf(species) % CHART_COLORS.length] }
-                    : {}
-                }
-              >
-                {getSpeciesDisplayName(species)}
-              </button>
-            ))}
-            {overflowFilteredSpecies.length > 0 && (
-              <div className="relative" ref={speciesOverflowRef}>
-                <button
-                  type="button"
-                  onClick={() => setSpeciesOverflowOpen((open) => !open)}
-                  className="px-2 xs:px-3 py-1 rounded-full text-sm font-medium bg-surface-alt text-muted border border-border hover:bg-surface-hover transition-all"
-                >
-                  +{overflowFilteredSpecies.length} others
-                </button>
-
-                {speciesOverflowOpen && (
-                  <div className="absolute z-20 mt-1 w-56 max-h-64 overflow-y-auto bg-white border border-border rounded-lg shadow-lg py-1">
-                    {overflowFilteredSpecies.map((species) => (
-                      <button
-                        key={species}
-                        type="button"
-                        onClick={() => toggleSpecies(species)}
-                        className="w-full flex items-center gap-2 text-left text-sm font-medium px-3 py-1.5 hover:bg-surface-hover text-ink"
-                      >
-                        <span
-                          className="w-2.5 h-2.5 rounded-full flex-shrink-0"
-                          style={{
-                            backgroundColor: displaySpecies.includes(species)
-                              ? CHART_COLORS[allSpecies.indexOf(species) % CHART_COLORS.length]
-                              : '#D8D6D2',
-                          }}
-                        />
-                        <span className="flex-1 truncate">{getSpeciesDisplayName(species)}</span>
-                        <Check
-                          className={`w-3.5 h-3.5 flex-shrink-0 ${
-                            displaySpecies.includes(species) ? 'opacity-100' : 'opacity-0'
-                          }`}
-                        />
-                      </button>
-                    ))}
-                  </div>
-                )}
+          {/* Main content: chart */}
+          <div className="flex-1 min-h-0 flex flex-col gap-3">
+            {results.length < 3 && (
+              <div className="bg-[#FFFBEB] border-2 border-location/60 rounded-lg p-3 text-sm">
+                <p className="font-semibold text-heading mb-1 flex items-center gap-2">
+                  <AlertCircle className="w-4 h-4" />
+                  Limited Data Points
+                </p>
+                <p className="text-ink text-xs">
+                  This simulation produced only {results.length} data point
+                  {results.length > 1 ? 's' : ''}. For better visualization, consider increasing
+                  the simulation duration or decreasing the time step.
+                </p>
               </div>
             )}
-          </div>
-        </div>
 
-        {/* Chart */}
-        <div className="border rounded-lg p-2 xs:p-3 sm:p-4 bg-white">
-          <ResponsiveContainer width="100%" height={450} className="xs:hidden">
+            <div className="relative flex-1 min-h-[28rem] lg:min-h-0 border rounded-lg bg-white">
+              <div className="absolute inset-0 p-2 xs:p-3 sm:p-4">
+          <ResponsiveContainer width="100%" height="100%" className="xs:hidden">
             <LineChart data={chartData} margin={{ top: 5, right: 5, left: 5, bottom: 5 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#D8D6D2" />
 
@@ -672,7 +584,7 @@ export function SimulationChart({ results, metadata }) {
           </ResponsiveContainer>
 
           {/* Larger chart for bigger screens */}
-          <ResponsiveContainer width="100%" height={680} className="hidden xs:block">
+          <ResponsiveContainer width="100%" height="100%" className="hidden xs:block">
             <LineChart data={chartData} margin={{ top: 5, right: 30, left: 30, bottom: 5 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#D8D6D2" />
 
@@ -750,31 +662,9 @@ export function SimulationChart({ results, metadata }) {
               ))}
             </LineChart>
           </ResponsiveContainer>
-        </div>
-
-        {/* Summary Box */}
-        <div className="text-sm text-muted bg-[#E6F0FA]/70 border border-[#B8D4EF] rounded-lg p-3">
-          <p className="font-semibold text-base mb-1 flex items-center gap-2">
-            <BarChart3 className="w-4 h-4" />
-            Summary:
-          </p>
-          <CardDescription className="text-base ml-4">
-            • {metadata?.mechanism?.toUpperCase()}
-            {metadata?.mechanism &&
-              !metadata.mechanism.toLowerCase().includes('mechanism') && (
-                <>{"\u00A0"}mechanism</>
-              )}
-            <br />
-            • {metadata?.duration?.toLocaleString()} {"\u00A0"}seconds
-            {metadata?.duration != null && (
-              <>
-                {"\u00A0"}{"\u00A0"}|{"\u00A0"}{"\u00A0"}
-                {(metadata.duration / 3600).toFixed(1)} {"\u00A0"}hours
-              </>
-            )}
-            <br />
-            • {results.length} {"\u00A0"}data points
-          </CardDescription>
+              </div>
+            </div>
+          </div>
         </div>
       </CardContent>
     </Card>
