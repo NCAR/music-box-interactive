@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Card, CardContent } from '../ui/card'
 import { Button } from '../ui/button'
 import { SpeciesPlot, EnvironmentPlot, FlowDiagram, Flux } from '../Plots'
-import { ConcentrationUnitProvider } from '../../hooks/useConcentrationUnit'
+import { ConcentrationUnitProvider } from '../../hooks/ConcentrationUnitProvider'
 import { Atom, FlaskConical, Thermometer, Waypoints } from 'lucide-react'
 
 /**
