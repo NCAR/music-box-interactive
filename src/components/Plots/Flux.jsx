@@ -219,6 +219,7 @@ export function Flux() {
 
   const timeRangeUnit =
     TIME_RANGE_UNITS.find((unit) => unit.id === timeRangeUnitId) ?? TIME_RANGE_UNITS[0]
+  const timeAxisUnitLabel = timeRangeUnit.shortLabel
 
   const speciesNames = useMemo(
     () => getResultSpeciesNames(simulation.results),
@@ -672,7 +673,7 @@ export function Flux() {
                     tickFormatter={(t) => formatValue(t / timeRangeUnit.divisor)}
                   >
                     <Label
-                      value={`Time (${timeRangeUnit.label.toLowerCase()})`}
+                      value={`Time (${timeAxisUnitLabel})`}
                       position="insideBottom"
                       offset={-5}
                       style={{ fill: '#1f2937', fontWeight: 600, fontSize: 14 }}
@@ -708,7 +709,7 @@ export function Flux() {
                           timeRangeUnit.divisor === 1
                             ? label?.toLocaleString()
                             : (label / timeRangeUnit.divisor)?.toFixed(2)
-                        } ${timeRangeUnit.label.toLowerCase()}`}
+                        } ${timeAxisUnitLabel}`}
                         maxVisible={chartSeries.length}
                       />
                     )}

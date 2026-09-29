@@ -5,8 +5,15 @@ const SIZES = {
 }
 
 // On/off switch (pill with a sliding thumb), shared by boolean species properties
-// and other simple enable/disable fields.
-export function Toggle({ checked, label, onChange, size = 'default' }) {
+// and other simple enable/disable fields. activeTrackClassName lets a caller recolor the
+// "on" track to match something it represents.
+export function Toggle({
+  checked,
+  label,
+  onChange,
+  size = 'default',
+  activeTrackClassName = 'bg-assist-secondary-hover',
+}) {
   const { track, thumb, on } = SIZES[size]
 
   return (
@@ -20,7 +27,7 @@ export function Toggle({ checked, label, onChange, size = 'default' }) {
       {label}
       <span
         className={`relative inline-flex ${track} flex-shrink-0 items-center rounded-full transition-colors ${
-          checked ? 'bg-assist-secondary-hover' : 'bg-border'
+          checked ? activeTrackClassName : 'bg-border'
         }`}
       >
         <span

@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { useSelector } from 'react-redux'
 import {
   LineChart,
@@ -7,11 +7,17 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
-  Legend,
   ResponsiveContainer,
 } from 'recharts'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card'
-import { Thermometer, Info } from 'lucide-react'
+import { Toggle } from '../ui/toggle'
+import { Thermometer } from 'lucide-react'
+import { ChartTooltipContent } from '../SimulationChart'
+import { UnitDropdown } from './UnitDropdown'
+import { TEMPERATURE_UNITS, fromKelvin } from './temperatureUnits'
+import { PRESSURE_UNITS } from './pressureUnits'
+import { TIME_RANGE_UNITS } from './timeRangeUnits'
+import { FIELD_LABEL, DROPDOWN_WRAPPER, DROPDOWN_BUTTON } from '../Mechanism/fieldStyles'
 
 /**
  * EnvironmentPlot Component
@@ -20,6 +26,29 @@ import { Thermometer, Info } from 'lucide-react'
 export function EnvironmentPlot() {
   const simulation = useSelector((state) => state.simulation)
   const conditions = useSelector((state) => state.conditions)
+
+  const [temperatureUnitId, setTemperatureUnitId] = useState('K')
+  const [pressureUnitId, setPressureUnitId] = useState('Pa')
+  const [timeUnitId, setTimeUnitId] = useState('hours')
+  const [visibleMetrics, setVisibleMetrics] = useState(() => new Set(['temperature', 'pressure']))
+  const showTemperature = visibleMetrics.has('temperature')
+  const showPressure = visibleMetrics.has('pressure')
+
+  const toggleMetric = (metric) => {
+    setVisibleMetrics((prev) => {
+      // Keep at least one metric visible -- an empty chart isn't a useful state.
+      if (prev.has(metric) && prev.size === 1) return prev
+      const next = new Set(prev)
+      if (next.has(metric)) next.delete(metric)
+      else next.add(metric)
+      return next
+    })
+  }
+  const pressureUnit = PRESSURE_UNITS.find((u) => u.id === pressureUnitId) ?? PRESSURE_UNITS[0]
+  const temperatureUnitLabel =
+    TEMPERATURE_UNITS.find((u) => u.id === temperatureUnitId)?.label ?? 'K'
+  const timeUnit = TIME_RANGE_UNITS.find((u) => u.id === timeUnitId) ?? TIME_RANGE_UNITS[1]
+  const timeAxisUnitLabel = timeUnit.shortLabel
 
   // Evolving temperature and pressure points fed to the solver, sorted for step interpolation
   const evolvingPoints = useMemo(() => {
@@ -39,7 +68,8 @@ export function EnvironmentPlot() {
   const hasEvolvingConditions = Boolean(conditions.evolving?.enabled) && evolvingPoints.length > 0
 
   // Format environmental data, mirroring the solver's step interpolation
-  // (most recent evolving value at or before each result's time)
+  // (most recent evolving value at or before each result's time), converted into the
+  // sidebar's selected display units.
   const envData = useMemo(() => {
     if (!simulation.results) return []
 
@@ -50,19 +80,29 @@ export function EnvironmentPlot() {
       if (hasEvolvingConditions) {
         for (const point of evolvingPoints) {
           if (point.time > result.time) break
-          if (point.temperature !== undefined) temperature = point.temperature
-          if (point.pressure !== undefined) pressure = point.pressure
+          // A null entry means "not set at this point" (e.g. a row that only carried rate
+          // parameters), not "set to nothing" -- it should leave the carried-forward value
+          // alone rather than blanking it out.
+          if (point.temperature != null) temperature = point.temperature
+          if (point.pressure != null) pressure = point.pressure
         }
       }
 
       return {
-        timeSeconds: result.time,
-        timeHours: result.time / 3600,
-        temperature,
-        pressure,
+        time: result.time / timeUnit.divisor,
+        temperature: fromKelvin(temperature, temperatureUnitId),
+        pressure: pressure / pressureUnit.divisor,
       }
     })
-  }, [simulation.results, conditions.initial, hasEvolvingConditions, evolvingPoints])
+  }, [
+    simulation.results,
+    conditions.initial,
+    hasEvolvingConditions,
+    evolvingPoints,
+    temperatureUnitId,
+    pressureUnit,
+    timeUnit,
+  ])
 
   if (!simulation.results || simulation.status !== 'succeeded') {
     return (
@@ -81,149 +121,155 @@ export function EnvironmentPlot() {
 
   return (
     <div className="space-y-4">
-      {/* Temperature Plot */}
+      {/* Temperature & Pressure Profile */}
       <Card>
-        <CardHeader>
-          <CardTitle>Temperature Profile</CardTitle>
-          <CardDescription>Temperature over simulation time</CardDescription>
-        </CardHeader>
         <CardContent>
-          <ResponsiveContainer width="100%" height={300}>
-            <LineChart data={envData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#D8D6D2" />
-              <XAxis
-                dataKey="timeHours"
-                label={{
-                  value: 'Time (hours)',
-                  position: 'insideBottom',
-                  offset: -5,
-                  style: { fill: '#1f2937', fontWeight: 400 },
-                }}
-                stroke="#5f6368"
-                tick={{ fontSize: 12, fill: '#5f6368' }}
-              />
-              <YAxis
-                label={{
-                  value: 'Temperature (K)',
-                  angle: -90,
-                  position: 'insideLeft',
-                  style: { fill: '#1f2937', fontWeight: 400 },
-                }}
-                stroke="#5f6368"
-                tick={{ fontSize: 12, fill: '#5f6368' }}
-              />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: 'white',
-                  border: '2px solid #D8D6D2',
-                  borderRadius: '8px',
-                }}
-              />
-              <Legend />
-              <Line
-                type="monotone"
-                dataKey="temperature"
-                stroke="#FAA119"
-                strokeWidth={2}
-                dot={false}
-                name="Temperature (K)"
-              />
-            </LineChart>
-          </ResponsiveContainer>
+          <div className="flex flex-col lg:flex-row gap-4">
+            {/* Sidebar */}
+            <div className="w-full lg:w-[12rem] flex-shrink-0 space-y-5 pt-5">
+              <div>
+                <div className="flex flex-col gap-2">
+                  <Toggle
+                    checked={showTemperature}
+                    label={<span className="inline-block w-24 text-left">Temperature</span>}
+                    onChange={() => toggleMetric('temperature')}
+                    size="sm"
+                    activeTrackClassName="bg-[#FAA119]"
+                  />
+                  <Toggle
+                    checked={showPressure}
+                    label={<span className="inline-block w-24 text-left">Pressure</span>}
+                    onChange={() => toggleMetric('pressure')}
+                    size="sm"
+                    activeTrackClassName="bg-[#0057C2]"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <div className="space-y-3">
+                  <div>
+                    <label className={FIELD_LABEL}>Time</label>
+                    <UnitDropdown
+                      unitId={timeUnitId}
+                      onChange={setTimeUnitId}
+                      units={TIME_RANGE_UNITS}
+                      wrapperClassName={DROPDOWN_WRAPPER}
+                      buttonClassName={DROPDOWN_BUTTON}
+                      centerLabel
+                    />
+                  </div>
+                  <div>
+                    <label className={FIELD_LABEL}>Temperature</label>
+                    <UnitDropdown
+                      unitId={temperatureUnitId}
+                      onChange={setTemperatureUnitId}
+                      units={TEMPERATURE_UNITS}
+                      wrapperClassName={DROPDOWN_WRAPPER}
+                      buttonClassName={DROPDOWN_BUTTON}
+                      centerLabel
+                    />
+                  </div>
+                  <div>
+                    <label className={FIELD_LABEL}>Pressure</label>
+                    <UnitDropdown
+                      unitId={pressureUnitId}
+                      onChange={setPressureUnitId}
+                      units={PRESSURE_UNITS}
+                      wrapperClassName={DROPDOWN_WRAPPER}
+                      buttonClassName={DROPDOWN_BUTTON}
+                      centerLabel
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Chart */}
+            <div className="flex-1 min-w-0">
+              <ResponsiveContainer width="100%" height={600}>
+                <LineChart data={envData} margin={{ top: 30, right: 40, left: 20, bottom: 10 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#D8D6D2" />
+                  <XAxis
+                    dataKey="time"
+                    label={{
+                      value: `Time (${timeAxisUnitLabel})`,
+                      position: 'insideBottom',
+                      offset: -5,
+                      style: { fill: '#1f2937', fontWeight: 600, fontSize: 14 },
+                    }}
+                    stroke="#5f6368"
+                    tick={{ fontSize: 12, fill: '#5f6368' }}
+                  />
+                  {showTemperature && (
+                    <YAxis
+                      yAxisId="temperature"
+                      orientation="left"
+                      label={{
+                        value: `Temperature (${temperatureUnitLabel})`,
+                        angle: -90,
+                        position: 'insideLeft',
+                        style: { fill: '#FAA119', fontWeight: 600, fontSize: 13 },
+                      }}
+                      stroke="#FAA119"
+                      tick={{ fontSize: 11, fill: '#FAA119' }}
+                      padding={{ top: 20, bottom: 20 }}
+                    />
+                  )}
+                  {showPressure && (
+                    <YAxis
+                      yAxisId="pressure"
+                      orientation={showTemperature ? 'right' : 'left'}
+                      label={{
+                        value: `Pressure (${pressureUnit.label})`,
+                        angle: showTemperature ? 90 : -90,
+                        position: showTemperature ? 'insideRight' : 'insideLeft',
+                        style: { fill: '#0057C2', fontWeight: 600, fontSize: 13 },
+                      }}
+                      stroke="#0057C2"
+                      tick={{ fontSize: 11, fill: '#0057C2' }}
+                      padding={{ top: 20, bottom: 20 }}
+                    />
+                  )}
+                  <Tooltip
+                    wrapperStyle={{ zIndex: 10 }}
+                    content={({ active, payload, label }) => (
+                      <ChartTooltipContent
+                        active={active}
+                        payload={payload}
+                        timeLabel={`${label?.toFixed(2)} ${timeAxisUnitLabel}`}
+                        maxVisible={2}
+                      />
+                    )}
+                  />
+                  {showTemperature && (
+                    <Line
+                      yAxisId="temperature"
+                      type="monotone"
+                      dataKey="temperature"
+                      stroke="#FAA119"
+                      strokeWidth={2}
+                      dot={false}
+                      name={`Temperature (${temperatureUnitLabel})`}
+                    />
+                  )}
+                  {showPressure && (
+                    <Line
+                      yAxisId="pressure"
+                      type="monotone"
+                      dataKey="pressure"
+                      stroke="#0057C2"
+                      strokeWidth={2}
+                      dot={false}
+                      name={`Pressure (${pressureUnit.label})`}
+                    />
+                  )}
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
         </CardContent>
       </Card>
-
-      {/* Pressure Plot */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Pressure Profile</CardTitle>
-          <CardDescription>Pressure over simulation time</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <ResponsiveContainer width="100%" height={300}>
-            <LineChart data={envData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#D8D6D2" />
-              <XAxis
-                dataKey="timeHours"
-                label={{
-                  value: 'Time (hours)',
-                  position: 'insideBottom',
-                  offset: -5,
-                  style: { fill: '#1f2937', fontWeight: 400 },
-                }}
-                stroke="#5f6368"
-                tick={{ fontSize: 12, fill: '#5f6368' }}
-              />
-              <YAxis
-                label={{
-                  value: 'Pressure (Pa)',
-                  angle: -90,
-                  position: 'insideLeft',
-                  style: { fill: '#1f2937', fontWeight: 400 },
-                }}
-                stroke="#5f6368"
-                tick={{ fontSize: 12, fill: '#5f6368' }}
-              />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: 'white',
-                  border: '2px solid #D8D6D2',
-                  borderRadius: '8px',
-                }}
-              />
-              <Legend />
-              <Line
-                type="monotone"
-                dataKey="pressure"
-                stroke="#0057C2"
-                strokeWidth={2}
-                dot={false}
-                name="Pressure (Pa)"
-              />
-            </LineChart>
-          </ResponsiveContainer>
-        </CardContent>
-      </Card>
-
-      <div
-        className={`border rounded-lg p-3 text-xs ${hasEvolvingConditions ? 'bg-[#00A2B4]/20 border-[#00A2B4]/50' : 'bg-[#00357A]/20 border-[#0057C2]/50'}`}
-      >
-        <p
-          className="font-semibold mb-1 flex items-center gap-2 text-heading"
-        >
-          <Info className="w-4 h-4" />
-          Environmental Conditions:
-        </p>
-        {hasEvolvingConditions ? (
-          <ul className="space-y-0.5 ml-4 text-ink">
-            <li>
-              • <strong>Evolving conditions enabled</strong> - Temperature and pressure vary over
-              time
-            </li>
-            <li>
-              • Temperature range: {Math.min(...envData.map((d) => d.temperature)).toFixed(2)} -{' '}
-              {Math.max(...envData.map((d) => d.temperature)).toFixed(2)} K
-            </li>
-            <li>
-              • Pressure range: {Math.min(...envData.map((d) => d.pressure)).toFixed(0)} -{' '}
-              {Math.max(...envData.map((d) => d.pressure)).toFixed(0)} Pa
-            </li>
-            <li>• Interpolation method: Step (most recent value at or before each time)</li>
-          </ul>
-        ) : (
-          <ul className="space-y-0.5 ml-4 text-ink">
-            <li>
-              • Temperature: {conditions.initial.temperature} K (
-              {(conditions.initial.temperature - 273.15).toFixed(2)}°C) - Constant
-            </li>
-            <li>
-              • Pressure: {conditions.initial.pressure} Pa (
-              {(conditions.initial.pressure / 101325).toFixed(4)} atm) - Constant
-            </li>
-            <li>• Environmental conditions remain constant throughout simulation</li>
-          </ul>
-        )}
-      </div>
     </div>
   )
 }

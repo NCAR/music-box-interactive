@@ -1,6 +1,7 @@
+// shortLabel is the abbreviated form ("s"/"hr") used in chart axis titles and tooltips,
 export const TIME_RANGE_UNITS = [
-  { id: 'seconds', label: 'Seconds', divisor: 1 },
-  { id: 'hours', label: 'Hours', divisor: 3600 },
+  { id: 'seconds', label: 'Seconds', shortLabel: 's', divisor: 1 },
+  { id: 'hours', label: 'Hours', shortLabel: 'hr', divisor: 3600 },
 ]
 
 // sigDigits uses exponential notation for integrated rates (~1e-6 to 1e-8),
