@@ -9,7 +9,8 @@ import {
 } from './flowUtils'
 import { FlowPanel } from './FlowPanel'
 import { useSelector } from 'react-redux'
-import { Card, CardContent, CardDescription } from '../ui/card'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card'
+import { LIST_CARD, LIST_CARD_CONTENT } from '../Mechanism/fieldStyles'
 import { Waypoints, StickyNote } from 'lucide-react'
 import { EMPTY_ARRAY } from '../../utils/emptyArray'
 
@@ -38,7 +39,7 @@ export function FlowDiagram() {
   const [rateRange, setRateRange] = useState({ start: 0, end: 0 })
 
   const [selectedSpecies, setSelectedSpecies] = useState([])
-  const [reactionType, setReactionType] = useState('')
+  const [reactionTypes, setReactionTypes] = useState([])
 
   // If no simulation results, show placeholder
   const simulation = useSelector((state) => state.simulation)
@@ -61,7 +62,7 @@ export function FlowDiagram() {
       .filter(
         ({ reaction }) =>
           isReactionVisible(reaction, selectedSpecies, thirdBodyNames) &&
-          matchesReactionType(reaction, reactionType)
+          matchesReactionType(reaction, reactionTypes)
       )
 
     if (visibleReactions.length === 0) return
@@ -95,7 +96,7 @@ export function FlowDiagram() {
     species,
     simulation.excludedResults,
     selectedSpecies,
-    reactionType,
+    reactionTypes,
     timeRange.start,
     timeRange.end,
   ])
@@ -115,64 +116,49 @@ export function FlowDiagram() {
   }
 
   return (
-    <Card>
-      <CardContent className="space-y-3 xs:space-y-4">
-        <FlowPanel
-          arrowScaling={arrowScaling}
-          setArrowScaling={setArrowScaling}
-          range={timeRange}
-          setRange={setTimeRange}
-          rateRange={rateRange}
-          setRateRange={setRateRange}
-          selectedSpecies={selectedSpecies}
-          reactionType={reactionType}
-          setReactionType={setReactionType}
-          setSelectedSpecies={setSelectedSpecies}
-          valueDisplay={valueDisplay}
-          setValueDisplay={setValueDisplay}
-        />
-        <div className="border border-border rounded-lg p-2 xs:p-3 sm:p-4 bg-surface h-[40rem]">
-          <FlowGraph
+    <Card className={LIST_CARD}>
+      <CardHeader className="py-4">
+        <CardTitle className="text-lg">Flow diagram</CardTitle>
+        <CardDescription>
+          Flux between species and reactions over the selected time range
+        </CardDescription>
+      </CardHeader>
+      <CardContent className={LIST_CARD_CONTENT}>
+        <div className="flex flex-col lg:flex-row gap-4 flex-1 min-h-0">
+          <FlowPanel
+            arrowScaling={arrowScaling}
+            setArrowScaling={setArrowScaling}
+            range={timeRange}
+            setRange={setTimeRange}
+            rateRange={rateRange}
+            setRateRange={setRateRange}
             selectedSpecies={selectedSpecies}
-            reactionType={reactionType}
-            rateRange={{
-              start: rateRange.start,
-              end: rateRange.end,
-              isLogScale: arrowScaling === 'logarithmic',
-              maxArrowWidth: MAX_ARROW_WIDTH,
-            }}
-            timeRange={{
-              start: timeRange.start,
-              end: timeRange.end,
-            }}
+            reactionTypes={reactionTypes}
+            setReactionTypes={setReactionTypes}
+            setSelectedSpecies={setSelectedSpecies}
             valueDisplay={valueDisplay}
+            setValueDisplay={setValueDisplay}
           />
-        </div>
 
-        {/* Note Box */}
-        <div className="flex items-start gap-2 text-sm text-muted bg-blue-50/40 border border-blue-200 rounded-lg p-3 mt-2 xs:mt-3 sm:mt-4">
-          <StickyNote className="w-5 h-5 flex-shrink-0 mt-0.5" />
-          <div className="flex flex-col gap-1">
-            <CardDescription className="text-base font-semibold">Notes:</CardDescription>
-            <CardDescription className="text-base flex gap-2">
-              <span>•</span>
-              <span>
-                Each arrow shows the flux — the species production or consumption rate,
-                integrated over the selected time range, in mol m-3, and scaled by that
-                species' stoichiometric coefficient in the reaction.
-              </span>
-            </CardDescription>
-            <CardDescription className="text-base flex gap-2">
-              <span>•</span>
-              <span>Absolute: magnitude of the total {"\u00A0"}{"\u00A0"}|{"\u00A0"}{"\u00A0"} Relative: contribution to the total (%)</span>
-            </CardDescription>
-            <CardDescription className="text-base flex gap-2">
-              <span>•</span>
-              <span>
-                Linear: proportional differences in magnitude {"\u00A0"}{"\u00A0"}|{"\u00A0"}{"\u00A0"} Logarithmic: scaled according to
-                the logarithm of the magnitude.
-              </span>
-            </CardDescription>
+          {/* Main content: diagram */}
+          <div className="flex-1 min-h-0 flex flex-col gap-3 lg:overflow-y-auto">
+            <div className="flex-1 min-h-[28rem] p-2 xs:p-3 sm:p-4 bg-surface">
+              <FlowGraph
+                selectedSpecies={selectedSpecies}
+                reactionTypes={reactionTypes}
+                rateRange={{
+                  start: rateRange.start,
+                  end: rateRange.end,
+                  isLogScale: arrowScaling === 'logarithmic',
+                  maxArrowWidth: MAX_ARROW_WIDTH,
+                }}
+                timeRange={{
+                  start: timeRange.start,
+                  end: timeRange.end,
+                }}
+                valueDisplay={valueDisplay}
+              />
+            </div>
           </div>
         </div>
       </CardContent>

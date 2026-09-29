@@ -451,6 +451,51 @@ export function Flux() {
             <div>
               <button
                 type="button"
+                onClick={() => setTimeRangeOpen((open) => !open)}
+                className="w-full flex items-center justify-between text-sm font-semibold text-ink mb-2"
+              >
+                Time range
+                {timeRangeOpen ? (
+                  <ChevronUp className="w-4 h-4" />
+                ) : (
+                  <ChevronDown className="w-4 h-4" />
+                )}
+              </button>
+
+              {timeRangeOpen && (
+                <div className="flex flex-col gap-2">
+                  <UnitDropdown unitId={timeRangeUnitId} onChange={setTimeRangeUnitId} />
+
+                  <div className="flex items-center border border-border rounded-lg bg-white">
+                    <RangeBoundInput
+                      value={timeRange.start}
+                      divisor={timeRangeUnit.divisor}
+                      decimals={4}
+                      min={0}
+                      max={timeRange.end}
+                      onCommit={(start) => setTimeRange({ start, end: timeRange.end })}
+                      className="w-1/2 h-8 px-2 bg-white text-ink rounded-l-lg text-sm text-center focus:outline-none focus:relative focus:z-10 focus:ring-2 focus:ring-action"
+                    />
+                    <span className="flex items-center justify-center h-8 px-1 text-muted font-normal bg-white">
+                      –
+                    </span>
+                    <RangeBoundInput
+                      value={timeRange.end}
+                      divisor={timeRangeUnit.divisor}
+                      decimals={4}
+                      min={timeRange.start}
+                      max={duration}
+                      onCommit={(end) => setTimeRange({ start: timeRange.start, end })}
+                      className="w-1/2 h-8 px-2 bg-white text-ink rounded-r-lg text-sm text-center focus:outline-none focus:relative focus:z-10 focus:ring-2 focus:ring-action"
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div>
+              <button
+                type="button"
                 onClick={() => setReactionsOpen((open) => !open)}
                 className="w-full flex items-center justify-between text-sm font-semibold text-ink mb-2"
               >
@@ -561,51 +606,6 @@ export function Flux() {
                         )}
                       </div>
                     )}
-                  </div>
-                </div>
-              )}
-            </div>
-
-            <div>
-              <button
-                type="button"
-                onClick={() => setTimeRangeOpen((open) => !open)}
-                className="w-full flex items-center justify-between text-sm font-semibold text-ink mb-2"
-              >
-                Time range
-                {timeRangeOpen ? (
-                  <ChevronUp className="w-4 h-4" />
-                ) : (
-                  <ChevronDown className="w-4 h-4" />
-                )}
-              </button>
-
-              {timeRangeOpen && (
-                <div className="flex flex-col gap-2">
-                  <UnitDropdown unitId={timeRangeUnitId} onChange={setTimeRangeUnitId} />
-
-                  <div className="flex items-center border border-border rounded-lg bg-white">
-                    <RangeBoundInput
-                      value={timeRange.start}
-                      divisor={timeRangeUnit.divisor}
-                      decimals={4}
-                      min={0}
-                      max={timeRange.end}
-                      onCommit={(start) => setTimeRange({ start, end: timeRange.end })}
-                      className="w-1/2 h-8 px-2 bg-white text-ink rounded-l-lg text-sm text-center focus:outline-none focus:relative focus:z-10 focus:ring-2 focus:ring-action"
-                    />
-                    <span className="flex items-center justify-center h-8 px-1 text-muted font-normal bg-white">
-                      –
-                    </span>
-                    <RangeBoundInput
-                      value={timeRange.end}
-                      divisor={timeRangeUnit.divisor}
-                      decimals={4}
-                      min={timeRange.start}
-                      max={duration}
-                      onCommit={(end) => setTimeRange({ start: timeRange.start, end })}
-                      className="w-1/2 h-8 px-2 bg-white text-ink rounded-r-lg text-sm text-center focus:outline-none focus:relative focus:z-10 focus:ring-2 focus:ring-action"
-                    />
                   </div>
                 </div>
               )}

@@ -67,38 +67,43 @@ const drawnReactions = (container) =>
     .map((node) => node.textContent)
     .filter((text) => text.includes('→'))
 
-const renderGraph = (type) =>
+const renderGraph = (types) =>
   render(
     <Provider store={makeStore()}>
       <FlowGraph
         selectedSpecies={['NO2', 'NO', 'O3']}
         rateRange={{ start: 0, end: 0 }}
         timeRange={{ start: 0, end: 1 }}
-        reactionType={type}
+        reactionTypes={types}
       />
     </Provider>
   )
 
 describe('matchesReactionType', () => {
   it('lets everything through when no type is chosen', () => {
-    expect(matchesReactionType({ type: 'ARRHENIUS' }, '')).toBe(true)
+    expect(matchesReactionType({ type: 'ARRHENIUS' }, [])).toBe(true)
   })
 
-  it('matches only the chosen type', () => {
-    expect(matchesReactionType({ type: 'SURFACE' }, 'SURFACE')).toBe(true)
-    expect(matchesReactionType({ type: 'ARRHENIUS' }, 'SURFACE')).toBe(false)
+  it('matches only the chosen types', () => {
+    expect(matchesReactionType({ type: 'SURFACE' }, ['SURFACE'])).toBe(true)
+    expect(matchesReactionType({ type: 'ARRHENIUS' }, ['SURFACE'])).toBe(false)
+    expect(matchesReactionType({ type: 'ARRHENIUS' }, ['SURFACE', 'ARRHENIUS'])).toBe(true)
   })
 })
 
 describe('flow diagram reaction type filter', () => {
   it('draws every reaction when no type is chosen', () => {
-    expect(drawnReactions(renderGraph('').container)).toHaveLength(2)
+    expect(drawnReactions(renderGraph([]).container)).toHaveLength(2)
   })
 
   it('narrows the diagram to the chosen type', () => {
-    const labels = drawnReactions(renderGraph('PHOTOLYSIS').container)
+    const labels = drawnReactions(renderGraph(['PHOTOLYSIS']).container)
     expect(labels).toHaveLength(1)
     expect(labels[0]).toMatch(/O3/)
+  })
+
+  it('draws the union when several types are chosen', () => {
+    expect(drawnReactions(renderGraph(['PHOTOLYSIS', 'ARRHENIUS']).container)).toHaveLength(2)
   })
 
   it('offers the types present, with counts, in the panel', () => {
@@ -115,14 +120,42 @@ describe('flow diagram reaction type filter', () => {
           setSelectedSpecies={() => {}}
           valueDisplay="absolute"
           setValueDisplay={() => {}}
-          reactionType=""
-          setReactionType={() => {}}
+          reactionTypes={[]}
+          setReactionTypes={() => {}}
         />
       </Provider>
     )
 
-    fireEvent.click(container.querySelector('[aria-haspopup="listbox"]'))
-    const options = [...document.querySelectorAll('[role="option"]')].map((o) => o.textContent)
-    expect(options).toEqual(['All reactions (2)', 'Arrhenius (1)', 'Photolysis (1)'])
+    const labels = [...container.querySelectorAll('button')].map((b) => b.textContent)
+    expect(labels).toEqual(
+      expect.arrayContaining(['All reactions (2)', 'Arrhenius (1)', 'Photolysis (1)'])
+    )
+  })
+
+  it('toggles types on and off in the panel', () => {
+    const calls = []
+    const { getByText } = render(
+      <Provider store={makeStore()}>
+        <FlowPanel
+          arrowScaling="logarithmic"
+          setArrowScaling={() => {}}
+          range={{ start: 0, end: 1 }}
+          setRange={() => {}}
+          rateRange={{ start: 0, end: 0 }}
+          setRateRange={() => {}}
+          selectedSpecies={['NO2']}
+          setSelectedSpecies={() => {}}
+          valueDisplay="absolute"
+          setValueDisplay={() => {}}
+          reactionTypes={['ARRHENIUS']}
+          setReactionTypes={(next) => calls.push(next)}
+        />
+      </Provider>
+    )
+
+    fireEvent.click(getByText('Photolysis (1)'))
+    fireEvent.click(getByText('Arrhenius (1)'))
+    fireEvent.click(getByText('All reactions (2)'))
+    expect(calls).toEqual([['ARRHENIUS', 'PHOTOLYSIS'], [], []])
   })
 })

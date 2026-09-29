@@ -14,8 +14,8 @@ export function PlotsPage() {
   const tabs = [
     { id: 'species', label: 'Species', Icon: Atom, component: SpeciesPlot },
     { id: 'reactions', label: 'Reaction Rates', Icon: FlaskConical, component: Flux },
-    { id: 'environment', label: 'Environment', Icon: Thermometer, component: EnvironmentPlot },
     { id: 'flow-diagram', label: 'Flow Diagram', Icon: Waypoints, component: FlowDiagram },
+    { id: 'environment', label: 'Environment', Icon: Thermometer, component: EnvironmentPlot },
   ]
 
   const ActiveComponent = tabs.find((t) => t.id === activeTab)?.component

@@ -1,11 +1,12 @@
 import { useState, useRef, useCallback, useMemo, useEffect } from 'react'
 import { useSelector } from 'react-redux'
-import { ChevronDown, Check } from 'lucide-react'
+import { Check } from 'lucide-react'
 import { useClickOutside } from '../../hooks/useClickOutside'
 import { getResultSpeciesNames } from './speciesFormat'
-import { Dropdown } from '../ui/dropdown'
 import { RangeBoundInput } from './RangeBoundInput'
 import { TIME_RANGE_UNITS } from './timeRangeUnits'
+import { UnitDropdown } from './UnitDropdown'
+import { TEXT_INPUT_SM } from '../Mechanism/fieldStyles'
 import { getReactionTypeLabel } from '../Mechanism/reactions/reactionRegistry'
 import { EMPTY_ARRAY } from '../../utils/emptyArray'
 
@@ -15,6 +16,21 @@ const SPECIES_CHIP_VISIBLE = 25
 // Mechanisms at or under this size default to all species selected.
 // Larger mechanisms default to none to keep graphs readable.
 const SPECIES_AUTO_SELECT_THRESHOLD = 15
+
+const SECTION_LABEL = 'text-sm font-semibold text-ink mb-2'
+const UNIT_DROPDOWN_WRAPPER = 'relative flex-shrink-0 mr-3'
+const UNIT_DROPDOWN_BUTTON =
+  'flex items-center gap-1 w-full h-8 px-2 border border-gray-300 rounded-lg text-sm text-gray-800 hover:bg-gray-50 bg-white'
+const RANGE_ROW = 'flex items-center mr-3 border border-border rounded-lg bg-white'
+const RANGE_INPUT =
+  'flex-1 min-w-0 h-8 px-2 bg-white text-ink rounded-lg text-sm text-center focus:outline-none focus:relative focus:z-10 focus:ring-2 focus:ring-action'
+
+const filterButtonClass = (selected) =>
+  `w-full text-left text-sm px-1.5 py-1 rounded ${
+    selected
+      ? 'text-assist-secondary-foreground font-semibold bg-assist-secondary'
+      : 'text-muted hover:bg-surface-hover'
+  }`
 
 const VALUE_DISPLAY_OPTIONS = [
   { id: 'absolute', label: 'Absolute' },
@@ -34,7 +50,8 @@ const ARROW_SCALING_OPTIONS = [
  *   - Arrow Width Scaling (linear or logarithmic)
  *   - Time Range selection (seconds or hours)
  *   - Integrated reaction rate range selection (in mol m-3)
- *   - Species Selection Dropdown
+ *   - Species search and selection list
+ * Rendered as the sidebar of the flow diagram card.
  */
 
 export function FlowPanel({
@@ -46,8 +63,8 @@ export function FlowPanel({
   setRateRange,
   selectedSpecies,
   setSelectedSpecies,
-  reactionType,
-  setReactionType,
+  reactionTypes,
+  setReactionTypes,
   valueDisplay,
   setValueDisplay,
 }) {
@@ -61,27 +78,30 @@ export function FlowPanel({
       counts.set(type, (counts.get(type) ?? 0) + 1)
     }
 
-    return [
-      { value: '', label: `All reactions (${reactions?.length ?? 0})` },
-      ...[...counts.keys()]
-        .sort()
-        .map((type) => ({
-          value: type,
-          label: `${getReactionTypeLabel(type)} (${counts.get(type)})`,
-        })),
-    ]
+    return [...counts.keys()].sort().map((type) => ({
+      value: type,
+      label: `${getReactionTypeLabel(type)} (${counts.get(type)})`,
+    }))
   }, [reactions])
 
-  // A selection goes stale when the mechanism changes; fall back to showing everything.
-  const activeReactionType = reactionTypeOptions.some((option) => option.value === reactionType)
-    ? reactionType
-    : ''
+  // Selections go stale when the mechanism changes; drop types that no longer exist so the
+  // graph never filters by a type the list can't show.
+  const activeReactionTypes = reactionTypes.filter((type) =>
+    reactionTypeOptions.some((option) => option.value === type)
+  )
 
-  // The fallback only updates the dropdown display. Reset the shared filter state,
-  // or the graph may keep filtering by a type that the UI shows as "All".
   useEffect(() => {
-    if (activeReactionType !== reactionType) setReactionType(activeReactionType)
-  }, [activeReactionType, reactionType, setReactionType])
+    if (activeReactionTypes.length !== reactionTypes.length) setReactionTypes(activeReactionTypes)
+  }, [activeReactionTypes, reactionTypes, setReactionTypes])
+
+  const toggleReactionType = (type) => {
+    setReactionTypes(
+      reactionTypes.includes(type)
+        ? reactionTypes.filter((t) => t !== type)
+        : [...reactionTypes, type]
+    )
+  }
+
   // Upper bound for Time Range — results never extend past the simulation length.
   const duration = useSelector((state) => state.conditions.basic.duration)
   const speciesNames = useMemo(() => getResultSpeciesNames(results), [results])
@@ -101,35 +121,14 @@ export function FlowPanel({
   }, [speciesNames, displaySpecies.length, initialized, setSelectedSpecies])
 
   const [speciesSearch, setSpeciesSearch] = useState('')
-  const [selectAllMenuOpen, setSelectAllMenuOpen] = useState(false)
   const [speciesOverflowOpen, setSpeciesOverflowOpen] = useState(false)
-  const [valueDisplayMenuOpen, setValueDisplayMenuOpen] = useState(false)
-  const [arrowScalingMenuOpen, setArrowScalingMenuOpen] = useState(false)
   const [timeRangeUnitId, setTimeRangeUnitId] = useState('seconds')
-  const [timeRangeUnitMenuOpen, setTimeRangeUnitMenuOpen] = useState(false)
-  const selectAllMenuRef = useRef(null)
   const speciesOverflowRef = useRef(null)
-  const valueDisplayMenuRef = useRef(null)
-  const arrowScalingMenuRef = useRef(null)
-  const timeRangeUnitMenuRef = useRef(null)
-  const closeSelectAllMenu = useCallback(() => setSelectAllMenuOpen(false), [])
   const closeSpeciesOverflow = useCallback(() => setSpeciesOverflowOpen(false), [])
-  const closeValueDisplayMenu = useCallback(() => setValueDisplayMenuOpen(false), [])
-  const closeArrowScalingMenu = useCallback(() => setArrowScalingMenuOpen(false), [])
-  const closeTimeRangeUnitMenu = useCallback(() => setTimeRangeUnitMenuOpen(false), [])
-  useClickOutside(selectAllMenuRef, closeSelectAllMenu, selectAllMenuOpen)
   useClickOutside(speciesOverflowRef, closeSpeciesOverflow, speciesOverflowOpen)
-  useClickOutside(valueDisplayMenuRef, closeValueDisplayMenu, valueDisplayMenuOpen)
-  useClickOutside(arrowScalingMenuRef, closeArrowScalingMenu, arrowScalingMenuOpen)
-  useClickOutside(timeRangeUnitMenuRef, closeTimeRangeUnitMenu, timeRangeUnitMenuOpen)
 
   const timeRangeUnit =
     TIME_RANGE_UNITS.find((u) => u.id === timeRangeUnitId) ?? TIME_RANGE_UNITS[0]
-
-  const valueDisplayOption =
-    VALUE_DISPLAY_OPTIONS.find((o) => o.id === valueDisplay) ?? VALUE_DISPLAY_OPTIONS[0]
-  const arrowScalingOption =
-    ARROW_SCALING_OPTIONS.find((o) => o.id === arrowScaling) ?? ARROW_SCALING_OPTIONS[0]
 
   const toggleSpecies = (name) => {
     setSelectedSpecies(
@@ -164,300 +163,183 @@ export function FlowPanel({
     (name) => !displaySpecies.includes(name)
   )
 
-  const allFilteredSelected =
-    filteredSpecies.length > 0 && filteredSpecies.every((name) => displaySpecies.includes(name))
-  const noneSelected = displaySpecies.length === 0
-  const selectAllStatusLabel = allFilteredSelected
-    ? 'Select all'
-    : noneSelected
-      ? 'Deselect all'
-      : 'Custom'
-
   return (
-    <div className="flex flex-wrap items-start gap-3 p-2 xs:p-3 sm:p-4 w-full rounded-lg bg-surface-alt text-ink mt-2 xs:mt-3 sm:mt-4">
-      {/* Row 1: Value Display | Arrow Scaling | Time Range | Flux */}
-      <div className="flex flex-wrap items-center justify-between gap-3 w-full text-sm font-semibold">
-        <div className="relative" ref={valueDisplayMenuRef}>
+    <div className="w-full lg:w-[16.8rem] flex-shrink-0 space-y-5 lg:overflow-y-auto">
+      <div>
+        <p className={SECTION_LABEL}>Value display</p>
+        <UnitDropdown
+          unitId={valueDisplay}
+          onChange={setValueDisplay}
+          units={VALUE_DISPLAY_OPTIONS}
+          wrapperClassName={UNIT_DROPDOWN_WRAPPER}
+          buttonClassName={UNIT_DROPDOWN_BUTTON}
+          centerLabel
+        />
+      </div>
+
+      <div>
+        <p className={SECTION_LABEL}>Arrow scaling</p>
+        <UnitDropdown
+          unitId={arrowScaling}
+          onChange={setArrowScaling}
+          units={ARROW_SCALING_OPTIONS}
+          wrapperClassName={UNIT_DROPDOWN_WRAPPER}
+          buttonClassName={UNIT_DROPDOWN_BUTTON}
+          centerLabel
+        />
+      </div>
+
+      <div>
+        <p className={SECTION_LABEL}>Time range</p>
+        <UnitDropdown
+          unitId={timeRangeUnitId}
+          onChange={setTimeRangeUnitId}
+          units={TIME_RANGE_UNITS}
+          wrapperClassName={`${UNIT_DROPDOWN_WRAPPER} mb-2`}
+          buttonClassName={UNIT_DROPDOWN_BUTTON}
+          centerLabel
+        />
+        <div className={RANGE_ROW}>
+          <RangeBoundInput
+            value={range.start}
+            divisor={timeRangeUnit.divisor}
+            min={0}
+            max={range.end}
+            onCommit={(start) => setRange({ start, end: range.end })}
+            className={RANGE_INPUT}
+          />
+          <span className="px-1 text-muted font-normal">-</span>
+          <RangeBoundInput
+            value={range.end}
+            divisor={timeRangeUnit.divisor}
+            min={range.start}
+            max={duration}
+            onCommit={(end) => setRange({ start: range.start, end })}
+            className={RANGE_INPUT}
+          />
+        </div>
+      </div>
+
+      <div>
+        <p className={SECTION_LABEL}>Flux (mol m-3)</p>
+        <div className={RANGE_ROW}>
+          <RangeBoundInput
+            value={rateRange.start}
+            sigDigits={3}
+            min={0}
+            max={rateRange.end}
+            onCommit={(start) => setRateRange({ start, end: rateRange.end })}
+            className={RANGE_INPUT}
+          />
+          <span className="px-1 text-muted font-normal">-</span>
+          <RangeBoundInput
+            value={rateRange.end}
+            sigDigits={3}
+            min={rateRange.start}
+            onCommit={(end) => setRateRange({ start: rateRange.start, end })}
+            className={RANGE_INPUT}
+          />
+        </div>
+      </div>
+
+      <div>
+        <p className={SECTION_LABEL}>Reactions</p>
+        <div className="max-h-64 overflow-y-auto flex flex-col gap-0.5 pr-1">
           <button
             type="button"
-            onClick={() => setValueDisplayMenuOpen((open) => !open)}
-            className="flex items-center justify-between gap-1 w-fit h-8 bg-blue-100/50 text-ink border border-border rounded-lg text-sm font-bold px-2.5 whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-action transition-colors duration-200"
+            onClick={() => setReactionTypes([])}
+            className={filterButtonClass(activeReactionTypes.length === 0)}
           >
-            <span className="pr-2">{valueDisplayOption.label}</span>
-            <ChevronDown className="w-3.5 h-3.5 flex-shrink-0" />
+            All reactions ({reactions?.length ?? 0})
           </button>
-
-          {valueDisplayMenuOpen && (
-            <div className="absolute z-10 mt-1 min-w-[12rem] bg-white border border-border rounded-lg shadow-lg py-1">
-              {VALUE_DISPLAY_OPTIONS.map((option) => (
-                <button
-                  key={option.id}
-                  type="button"
-                  onClick={() => {
-                    setValueDisplay(option.id)
-                    setValueDisplayMenuOpen(false)
-                  }}
-                  className="w-full flex items-center gap-2 text-left text-sm font-bold px-3 py-1.5 text-ink hover:bg-surface-hover whitespace-nowrap"
-                >
-                  <Check
-                    className={`w-3.5 h-3.5 flex-shrink-0 ${
-                      valueDisplay === option.id ? 'opacity-100' : 'opacity-0'
-                    }`}
-                  />
-                  {option.label}
-                </button>
-              ))}
-            </div>
-          )}
+          {reactionTypeOptions.map((option) => (
+            <button
+              key={option.value}
+              type="button"
+              onClick={() => toggleReactionType(option.value)}
+              className={filterButtonClass(activeReactionTypes.includes(option.value))}
+            >
+              {option.label}
+            </button>
+          ))}
         </div>
+      </div>
 
-        <div className="relative" ref={arrowScalingMenuRef}>
+      <div>
+        <p className={SECTION_LABEL}>Species</p>
+        <input
+          type="text"
+          value={speciesSearch}
+          onChange={(e) => {
+            setSpeciesSearch(e.target.value)
+            setSpeciesOverflowOpen(false)
+          }}
+          placeholder="Search by name"
+          className={`w-[calc(100%-0.75rem)] block !h-8 mb-2 focus:!border-action ${TEXT_INPUT_SM}`}
+        />
+
+        <div className="flex items-center gap-2 mb-2 pl-1">
           <button
             type="button"
-            onClick={() => setArrowScalingMenuOpen((open) => !open)}
-            className="flex items-center justify-between gap-1 w-32 h-8 bg-blue-100/50 text-ink border border-border rounded-lg text-sm font-bold px-2.5 focus:outline-none focus:ring-2 focus:ring-action transition-colors duration-200"
+            onClick={() => setSelectedSpecies(filteredSpecies)}
+            className="text-sm text-action hover:underline"
           >
-            <span className="pr-2">{arrowScalingOption.label}</span>
-            <ChevronDown className="w-3.5 h-3.5 flex-shrink-0" />
+            Select all
           </button>
-
-          {arrowScalingMenuOpen && (
-            <div className="absolute z-10 mt-1 min-w-[9rem] bg-white border border-border rounded-lg shadow-lg py-1">
-              {ARROW_SCALING_OPTIONS.map((option) => (
-                <button
-                  key={option.id}
-                  type="button"
-                  onClick={() => {
-                    setArrowScaling(option.id)
-                    setArrowScalingMenuOpen(false)
-                  }}
-                  className="w-full flex items-center gap-2 text-left text-sm font-bold px-3 py-1.5 text-ink hover:bg-surface-hover"
-                >
-                  <Check
-                    className={`w-3.5 h-3.5 flex-shrink-0 ${
-                      arrowScaling === option.id ? 'opacity-100' : 'opacity-0'
-                    }`}
-                  />
-                  {option.label}
-                </button>
-              ))}
-            </div>
-          )}
+          <span className="text-sm text-muted">|</span>
+          <button
+            type="button"
+            onClick={() => setSelectedSpecies([])}
+            className="text-sm text-action hover:underline"
+          >
+            Deselect all
+          </button>
         </div>
 
-        {/* Time Range */}
-        <div className="flex items-center gap-2">
-          <div className="flex items-center border border-border rounded-lg bg-white">
-            <div className="relative border-r border-border" ref={timeRangeUnitMenuRef}>
+        <div className="flex flex-col gap-0.5">
+          {visibleFilteredSpecies.map((name) => (
+            <button
+              key={name}
+              type="button"
+              onClick={() => toggleSpecies(name)}
+              className={filterButtonClass(displaySpecies.includes(name))}
+            >
+              {name}
+            </button>
+          ))}
+
+          {overflowFilteredSpecies.length > 0 && (
+            <div className="relative" ref={speciesOverflowRef}>
               <button
                 type="button"
-                onClick={() => setTimeRangeUnitMenuOpen((open) => !open)}
-                className="flex items-center justify-between gap-1 w-24 h-8 bg-blue-100/50 text-ink rounded-l-lg text-sm font-bold px-2.5 focus:outline-none focus:ring-2 focus:ring-action transition-colors duration-200"
+                onClick={() => setSpeciesOverflowOpen((open) => !open)}
+                className="text-left text-sm px-1.5 py-1 rounded text-muted hover:bg-surface-hover"
               >
-                {timeRangeUnit.label}
-                <ChevronDown className="w-3.5 h-3.5 flex-shrink-0" />
+                +{overflowFilteredSpecies.length} others
               </button>
 
-              {timeRangeUnitMenuOpen && (
-                <div className="absolute z-10 mt-1 min-w-[8rem] bg-white border border-border rounded-lg shadow-lg py-1">
-                  {TIME_RANGE_UNITS.map((unit) => (
+              {speciesOverflowOpen && (
+                <div className="absolute z-20 mt-1 w-48 max-h-56 overflow-y-auto bg-white border border-border rounded-lg shadow-lg py-1">
+                  {overflowFilteredSpecies.map((name) => (
                     <button
-                      key={unit.id}
+                      key={name}
                       type="button"
-                      onClick={() => {
-                        setTimeRangeUnitId(unit.id)
-                        setTimeRangeUnitMenuOpen(false)
-                      }}
-                      className="w-full flex items-center gap-2 text-left text-sm font-bold px-3 py-1.5 text-ink hover:bg-surface-hover"
+                      onClick={() => toggleSpecies(name)}
+                      className="w-full flex items-center gap-2 text-left text-sm px-3 py-1.5 text-ink hover:bg-surface-hover"
                     >
                       <Check
                         className={`w-3.5 h-3.5 flex-shrink-0 ${
-                          timeRangeUnitId === unit.id ? 'opacity-100' : 'opacity-0'
+                          displaySpecies.includes(name) ? 'opacity-100' : 'opacity-0'
                         }`}
                       />
-                      {unit.label}
+                      <span className="flex-1 truncate">{name}</span>
                     </button>
                   ))}
                 </div>
               )}
             </div>
-
-            <RangeBoundInput
-              value={range.start}
-              divisor={timeRangeUnit.divisor}
-              min={0}
-              max={range.end}
-              onCommit={(start) => setRange({ start, end: range.end })}
-              className="w-20 h-8 px-2 bg-white text-ink text-sm text-center focus:outline-none focus:relative focus:z-10 focus:ring-2 focus:ring-action"
-            />
-
-            <span className="flex items-center justify-center h-8 px-2 text-muted font-normal bg-white">
-              -
-            </span>
-
-            <RangeBoundInput
-              value={range.end}
-              divisor={timeRangeUnit.divisor}
-              min={range.start}
-              max={duration}
-              onCommit={(end) => setRange({ start: range.start, end })}
-              className="w-20 h-8 px-2 bg-white text-ink rounded-r-lg text-sm text-center focus:outline-none focus:relative focus:z-10 focus:ring-2 focus:ring-action"
-            />
-          </div>
+          )}
         </div>
-
-        {/* Flux Range */}
-        <div className="flex items-center gap-2">
-          <span>Flux (mol m-3)</span>
-
-          <div className="flex items-center border border-border rounded-lg bg-white">
-            <RangeBoundInput
-              value={rateRange.start}
-              sigDigits={3}
-              min={0}
-              max={rateRange.end}
-              onCommit={(start) => setRateRange({ start, end: rateRange.end })}
-              className="w-28 h-8 px-2 bg-white text-ink rounded-l-lg text-sm text-center focus:outline-none focus:relative focus:z-10 focus:ring-2 focus:ring-action"
-            />
-
-            <span className="flex items-center justify-center h-8 px-2 text-muted font-normal bg-white">
-              -
-            </span>
-
-            <RangeBoundInput
-              value={rateRange.end}
-              sigDigits={3}
-              min={rateRange.start}
-              onCommit={(end) => setRateRange({ start: rateRange.start, end })}
-              className="w-28 h-8 px-2 bg-white text-ink rounded-r-lg text-sm text-center focus:outline-none focus:relative focus:z-10 focus:ring-2 focus:ring-action"
-            />
-          </div>
-        </div>
-      </div>
-
-      {/* Row 2: Reaction type | Select All / Deselect All + Search */}
-      <div className="w-full flex items-center gap-3">
-        <Dropdown
-          value={activeReactionType}
-          onChange={setReactionType}
-          options={reactionTypeOptions}
-          className="h-8 w-44 flex-shrink-0 border border-border bg-blue-100/50 px-2.5 text-sm font-bold text-ink"
-        />
-
-        <div className="flex items-center border border-border rounded-lg divide-x divide-gray-300 bg-white">
-          <div className="relative" ref={selectAllMenuRef}>
-            <button
-              type="button"
-              onClick={() => setSelectAllMenuOpen((open) => !open)}
-              className="flex items-center justify-between gap-1 w-32 h-8 bg-blue-100/50 text-ink rounded-l-lg text-sm font-bold px-2.5 focus:outline-none focus:ring-2 focus:ring-action transition-colors duration-200"
-            >
-              {selectAllStatusLabel}
-              <ChevronDown className="w-3.5 h-3.5 flex-shrink-0" />
-            </button>
-
-            {selectAllMenuOpen && (
-              <div className="absolute z-10 mt-1 min-w-[9rem] bg-white border border-border rounded-lg shadow-lg py-1">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setSelectedSpecies(filteredSpecies)
-                    setSelectAllMenuOpen(false)
-                  }}
-                  className="w-full flex items-center gap-2 text-left text-sm font-bold px-3 py-1.5 text-ink hover:bg-surface-hover"
-                >
-                  <Check
-                    className={`w-3.5 h-3.5 flex-shrink-0 ${
-                      allFilteredSelected ? 'opacity-100' : 'opacity-0'
-                    }`}
-                  />
-                  Select all
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setSelectedSpecies([])
-                    setSelectAllMenuOpen(false)
-                  }}
-                  className="w-full flex items-center gap-2 text-left text-sm font-bold px-3 py-1.5 text-ink hover:bg-surface-hover"
-                >
-                  <Check
-                    className={`w-3.5 h-3.5 flex-shrink-0 ${
-                      noneSelected ? 'opacity-100' : 'opacity-0'
-                    }`}
-                  />
-                  Deselect all
-                </button>
-              </div>
-            )}
-          </div>
-
-          <input
-            type="text"
-            value={speciesSearch}
-            onChange={(e) => {
-              setSpeciesSearch(e.target.value)
-              setSpeciesOverflowOpen(false)
-            }}
-            placeholder="Search species"
-            className="w-[30rem] h-8 px-3 bg-white text-ink placeholder:text-muted rounded-r-lg text-base font-mono focus:outline-none focus:relative focus:z-10 focus:ring-2 focus:ring-action"
-          />
-        </div>
-      </div>
-
-      {/* Row 3: Species chips */}
-      <div className="flex flex-wrap items-center gap-1.5 pl-2">
-        <h4 className="font-semibold text-sm xs:text-base text-muted mr-1">
-          {displaySpecies.length} selected
-        </h4>
-        {visibleFilteredSpecies.map((name) => (
-          <button
-            key={name}
-            onClick={() => toggleSpecies(name)}
-            className={`px-2 xs:px-3 py-1 rounded-full text-sm font-medium transition-all ${
-              displaySpecies.includes(name)
-                ? 'bg-[#E6807A] text-white shadow-md'
-                : 'bg-surface-alt text-muted hover:bg-surface-hover'
-            }`}
-          >
-            {name}
-          </button>
-        ))}
-        {overflowFilteredSpecies.length > 0 && (
-          <div className="relative" ref={speciesOverflowRef}>
-            <button
-              type="button"
-              onClick={() => setSpeciesOverflowOpen((open) => !open)}
-              className="px-2 xs:px-3 py-1 rounded-full text-sm font-medium bg-surface-alt text-muted border border-border hover:bg-surface-hover transition-all"
-            >
-              +{overflowFilteredSpecies.length} others
-            </button>
-
-            {speciesOverflowOpen && (
-              <div className="absolute z-20 mt-1 w-56 max-h-64 overflow-y-auto bg-white border border-border rounded-lg shadow-lg py-1">
-                {overflowFilteredSpecies.map((name) => (
-                  <button
-                    key={name}
-                    type="button"
-                    onClick={() => toggleSpecies(name)}
-                    className="w-full flex items-center gap-2 text-left text-sm font-medium px-3 py-1.5 hover:bg-surface-hover text-ink"
-                  >
-                    <span
-                      className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${
-                        displaySpecies.includes(name) ? 'bg-[#E6807A]' : 'bg-border'
-                      }`}
-                    />
-                    <span className="flex-1 truncate">{name}</span>
-                    <Check
-                      className={`w-3.5 h-3.5 flex-shrink-0 ${
-                        displaySpecies.includes(name) ? 'opacity-100' : 'opacity-0'
-                      }`}
-                    />
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
       </div>
     </div>
   )
