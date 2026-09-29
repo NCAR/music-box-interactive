@@ -130,7 +130,10 @@ describe('buildSolverConditions', () => {
     expect(mgr.getConditionsAtTime(30).airDensity).toBe(41)
   })
 
-  it('defaults a null/missing additionalSeries entry to 0 rather than omitting it', () => {
+  it('leaves a null additionalSeries entry alone rather than forcing it to 0', () => {
+    // A blank cell means "not set", not zero. This prevents changing one cell from
+    // implicitly zeroing other unset rows. Without an override at t=30, ConditionsManager
+    // carries forward the last set value (1.0e-4 from t=0).
     const result = buildSolverConditions({
       initial: { temperature: 298.15, pressure: 101325, concentrations: {} },
       rateConstants: {},
@@ -145,7 +148,7 @@ describe('buildSolverConditions', () => {
     })
 
     const mgr = reload(result)
-    expect(mgr.getConditionsAtTime(30).rateParams['PHOTO.photo1']).toBe(0)
+    expect(mgr.getConditionsAtTime(30).rateParams['PHOTO.photo1']).toBe(1.0e-4)
   })
 
   it('leaves ENV.temperature.K unset at evolving times when no temperature series is given', () => {

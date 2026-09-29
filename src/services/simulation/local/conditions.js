@@ -70,15 +70,6 @@ export const buildSolverConditions = (conditions) => {
   const temperature0 = reduxInitial.temperature ?? sourceInitial.temperature ?? DEFAULT_TEMPERATURE_K
   const pressure0 = reduxInitial.pressure ?? sourceInitial.pressure ?? DEFAULT_PRESSURE_PA
 
-  const mgr = new ConditionsManager([])
-
-  mgr.setCondition(0, {
-    temperature: temperature0,
-    pressure: pressure0,
-    concentrations: filterFinite(reduxInitial.concentrations),
-    rateParameters: filterFinite(conditions.rateConstants),
-  })
-
   const evolvingFromUi = conditions.evolving || {}
   const uiHasEvolvingState =
     evolvingFromUi.enabled === true ||
@@ -90,6 +81,45 @@ export const buildSolverConditions = (conditions) => {
   const additionalSeries = evolving.additionalSeries || {}
   const hasTemperatureSeries = Array.isArray(evolving.temperature) && evolving.temperature.length > 0
   const hasPressureSeries = Array.isArray(evolving.pressure) && evolving.pressure.length > 0
+
+  // A null (or missing) value at t=0 leaves initial.concentrations / rateConstants) in place.
+  const zeroIndex = Array.isArray(evolving.times) ? evolving.times.indexOf(0) : -1
+  const headersOverriddenAtZero = (kind) =>
+    evolving.enabled && zeroIndex !== -1
+      ? new Set(
+          Object.entries(additionalSeries).flatMap(([header, series]) => {
+            if (!Array.isArray(series) || series[zeroIndex] == null) return []
+            return classifySeriesHeader(header).kind === kind ? [header] : []
+          })
+        )
+      : new Set()
+
+  const speciesOverriddenAtZero = new Set(
+    [...headersOverriddenAtZero('concentration')].map(
+      (header) => classifySeriesHeader(header).species
+    )
+  )
+  const initialConcentrations = Object.fromEntries(
+    Object.entries(filterFinite(reduxInitial.concentrations)).filter(
+      ([species]) => !speciesOverriddenAtZero.has(species)
+    )
+  )
+
+  const rateParametersOverriddenAtZero = headersOverriddenAtZero('rateParameter')
+  const initialRateParameters = Object.fromEntries(
+    Object.entries(filterFinite(conditions.rateConstants)).filter(
+      ([header]) => !rateParametersOverriddenAtZero.has(header)
+    )
+  )
+
+  const mgr = new ConditionsManager([])
+
+  mgr.setCondition(0, {
+    temperature: temperature0,
+    pressure: pressure0,
+    concentrations: initialConcentrations,
+    rateParameters: initialRateParameters,
+  })
 
   if (evolving.enabled && Array.isArray(evolving.times) && evolving.times.length > 0) {
     evolving.times.forEach((time, index) => {
@@ -106,15 +136,21 @@ export const buildSolverConditions = (conditions) => {
       Object.entries(additionalSeries).forEach(([header, series]) => {
         if (!Array.isArray(series) || series.length === 0) return
         const raw = series[index]
-        const value = raw == null ? 0 : raw
-
         const classified = classifySeriesHeader(header)
+
+        // A concentration or rate-parameter event only fires where a value is actually set
+        if (classified.kind === 'concentration') {
+          if (raw != null) moment.concentrations[classified.species] = raw
+          return
+        }
+        if (classified.kind === 'rateParameter') {
+          if (raw != null) moment.rateParameters[header] = raw
+          return
+        }
+
+        const value = raw == null ? 0 : raw
         if (classified.kind === 'airDensity') {
           moment.airDensity = value
-        } else if (classified.kind === 'concentration') {
-          moment.concentrations[classified.species] = value
-        } else if (classified.kind === 'rateParameter') {
-          moment.rateParameters[header] = value
         }
         // 'unknown' headers would be silently dropped by ConditionsManager when solving
         // anyway, so there's nothing useful to do with one here.

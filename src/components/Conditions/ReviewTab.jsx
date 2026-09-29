@@ -163,12 +163,16 @@ export function ReviewTab() {
                     <div>
                       <h6 className="font-bold text-xs xs:text-sm text-muted mb-1">Evolving:</h6>
                       <ul className="ml-3 xs:ml-4 space-y-1 text-xs xs:text-sm text-muted">
-                        {Object.entries(conditions.evolving).map(([key, value]) => (
-                          <li key={key}>
-                            <span className="font-semibold">{key}:</span>{' '}
-                            <span className="font-medium">{JSON.stringify(value)}</span>
-                          </li>
-                        ))}
+                        {Object.entries(conditions.evolving)
+                          // UI-only bookkeeping (which reaction type a row was added under) --
+                          // not part of the configuration this tab is reviewing.
+                          .filter(([key]) => key !== 'rowReactionType')
+                          .map(([key, value]) => (
+                            <li key={key}>
+                              <span className="font-semibold">{key}:</span>{' '}
+                              <span className="font-medium">{JSON.stringify(value)}</span>
+                            </li>
+                          ))}
                       </ul>
                     </div>
                   )}

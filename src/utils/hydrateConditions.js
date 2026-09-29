@@ -10,10 +10,16 @@ const dataBlocks = (conditions) => conditions?.data || []
 export function hydrateInitialConditions(conditions) {
   const blocks = dataBlocks(conditions)
 
-  // A single-row block is a snapshot (initial condition). Multi-row blocks are excluded so
-  // an evolving series isn't also read as a static initial value.
+  // A single-row block is a snapshot only if declared at time.s = 0.
+  // Multi-row blocks and single-row blocks at later times are not snapshots.
+  // Blocks without a time.s column are treated as unconditional snapshots.
+  const isZeroTimeRow = (block) => {
+    const timeIndex = (block?.headers || []).indexOf('time.s')
+    if (timeIndex === -1) return true
+    return block?.rows?.[0]?.[timeIndex] === 0
+  }
   const snapshotBlocks = blocks.filter(
-    (block) => block?.headers?.length && block?.rows?.length === 1
+    (block) => block?.headers?.length && block?.rows?.length === 1 && isZeroTimeRow(block)
   )
   const snapshotRows = parseConditions({ data: snapshotBlocks })
   const snapshotConds = new ConditionsManager(snapshotRows)
@@ -77,6 +83,13 @@ export function hydrateEvolvingConditions(conditions) {
     const rows = block?.rows || []
     if (!headers.includes('time.s')) return false
     if (rows.length > 1) return true
+
+    // time.s = 0 snapshots with only env/CONC content are handled by hydrateInitialConditions.
+    // If they include other headers (e.g. rate parameters), those still need an evolving entry.
+    // Single-row blocks at later times are not handled by hydrateInitialConditions and must be captured here.
+    const timeIndex = headers.indexOf('time.s')
+    const isZeroTimeRow = rows[0]?.[timeIndex] === 0
+    if (!isZeroTimeRow) return true
     return headers.some((header) => !isEnvOnlyHeader(header) && !header.startsWith('CONC.'))
   })
 
@@ -114,8 +127,7 @@ export function hydrateEvolvingConditions(conditions) {
     (header) =>
       header !== 'time.s' &&
       header !== 'ENV.temperature.K' &&
-      header !== 'ENV.pressure.Pa' &&
-      !header.startsWith('CONC.')
+      header !== 'ENV.pressure.Pa'
   )
   const additionalSeries = Object.fromEntries(
     additionalHeaders.map((header) => [
