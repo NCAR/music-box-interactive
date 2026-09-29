@@ -393,7 +393,7 @@ export function SimulationChart({ results, metadata }) {
       <CardContent className={LIST_CARD_CONTENT}>
         <div className="flex flex-col lg:flex-row gap-4 flex-1 min-h-0">
           {/* Sidebar controls */}
-          <div className="w-full lg:w-56 flex-shrink-0 space-y-5 lg:overflow-y-auto">
+          <div className="w-full lg:w-60 flex-shrink-0 space-y-5 lg:overflow-y-auto">
             <div>
               <p className="text-sm font-semibold text-ink mb-2">Time unit</p>
               <UnitDropdown
@@ -585,7 +585,7 @@ export function SimulationChart({ results, metadata }) {
 
           {/* Larger chart for bigger screens */}
           <ResponsiveContainer width="100%" height="100%" className="hidden xs:block">
-            <LineChart data={chartData} margin={{ top: 5, right: 20, left: 15, bottom: 3 }}>
+            <LineChart data={chartData} margin={{ top: 5, right: 0, left: 10, bottom: 3 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#D8D6D2" />
 
               <XAxis
