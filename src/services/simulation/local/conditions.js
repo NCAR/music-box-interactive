@@ -100,9 +100,10 @@ export const buildConditionsManager = (conditions) => {
 
   const mgr = new ConditionsManager([])
 
+  const evolvingSetsAtZero = evolving.enabled && zeroIndex !== -1
   mgr.setCondition(0, {
-    temperature: temperature0,
-    pressure: pressure0,
+    ...(evolvingSetsAtZero && hasTemperatureSeries ? {} : { temperature: temperature0 }),
+    ...(evolvingSetsAtZero && hasPressureSeries ? {} : { pressure: pressure0 }),
     concentrations: initialConcentrations,
     rateParameters: initialRateParameters,
   })

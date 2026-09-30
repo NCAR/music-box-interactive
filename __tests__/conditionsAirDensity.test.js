@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import { buildConditionsManager } from '../src/services/simulation/local/conditions'
 import { airDensityAtTime } from '../src/utils/environmentSeries'
 import { airDensityMolM3 } from '../src/utils/concentrationUnits'
@@ -49,5 +49,42 @@ describe('air density for the Conditions tab follows the solver', () => {
       })
     )
     expect(airDensityAtTime(mgr, 100)).toBeGreaterThan(0)
+  })
+})
+
+describe('initial temperature and pressure at time 0', () => {
+  const at0 = (mgr) => mgr.getConditionsAtTime(0)
+
+  it('does not add them on top of a time-0 evolving row, so the solver never warns', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const mgr = buildConditionsManager(
+      state({ times: [0, 100], temperature: [300, 310], pressure: [100000, 95000] })
+    )
+    expect(warn).not.toHaveBeenCalled()
+    expect(at0(mgr).temperature).toBe(300)
+    expect(at0(mgr).pressure).toBe(100000)
+    warn.mockRestore()
+  })
+
+  it('still falls back to the initial values for an unset time-0 cell', () => {
+    const mgr = buildConditionsManager(
+      state({ times: [0, 100], temperature: [null, 310], pressure: [null, 95000] })
+    )
+    expect(at0(mgr).temperature).toBe(280)
+    expect(at0(mgr).pressure).toBe(90000)
+  })
+
+  it('still uses them when evolving conditions are off, as their only source', () => {
+    const mgr = buildConditionsManager(
+      state({ enabled: false, times: [], temperature: [], pressure: [] })
+    )
+    expect(at0(mgr).temperature).toBe(280)
+    expect(at0(mgr).pressure).toBe(90000)
+  })
+
+  it('still uses them when the evolving table has no series for that field', () => {
+    const mgr = buildConditionsManager(state({ times: [0, 100], temperature: [], pressure: [] }))
+    expect(at0(mgr).temperature).toBe(280)
+    expect(at0(mgr).pressure).toBe(90000)
   })
 })
