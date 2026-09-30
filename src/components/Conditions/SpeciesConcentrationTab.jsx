@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 import { ChevronDown, ChevronUp, Check } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card'
@@ -22,7 +22,9 @@ import { useClickOutside } from '../../hooks/useClickOutside'
 import { EMPTY_ARRAY } from '../../utils/emptyArray'
 import { LIST_CARD, LIST_CARD_CONTENT, TEXT_INPUT_SM } from '../Mechanism/fieldStyles'
 import { UnitDropdown } from '../Plots/UnitDropdown'
-import { CONCENTRATION_UNITS, airDensityMolM3, toMolM3, fromMolM3 } from '../../utils/concentrationUnits'
+import { CONCENTRATION_UNITS, toMolM3, fromMolM3 } from '../../utils/concentrationUnits'
+import { airDensityAtTime } from '../../utils/environmentSeries'
+import { buildConditionsManager } from '../../services/simulation/local/conditions'
 import {
   DEFAULT_TEMPERATURE,
   DEFAULT_PRESSURE,
@@ -46,14 +48,11 @@ const UNIT_DROPDOWN_WRAPPER = 'relative flex-shrink-0 mr-3'
 const UNIT_DROPDOWN_BUTTON =
   'flex items-center gap-1 w-full h-8 px-2 border border-gray-300 rounded-lg text-sm text-gray-800 hover:bg-gray-50 bg-white'
 
-// Unlike ReactionTab's rate constants (always tiny, so the magnitude-conditional format reads
-// as "always exponential" in practice), species concentrations span a much wider range -- always
-// showing scientific notation keeps the column readable instead of dumping full float precision
-// for a mid-magnitude value like 0.0213338320238172.
+// Use scientific notation to keep the column readable
 const formatValue = (value) => {
   if (typeof value !== 'number') return String(value)
   if (value === 0) return '0'
-  return value.toExponential(2)
+  return value.toExponential(4)
 }
 
 const hasName = (species) => typeof species.name === 'string' && species.name.trim() !== ''
@@ -87,6 +86,8 @@ export function SpeciesConcentrationTab() {
   const evolvingTemperature = useSelector((state) => state.conditions.evolving.temperature)
   const evolvingPressure = useSelector((state) => state.conditions.evolving.pressure)
   const additionalSeries = useSelector((state) => state.conditions.evolving.additionalSeries)
+  const conditionsState = useSelector((state) => state.conditions)
+  const conditionsManager = useMemo(() => buildConditionsManager(conditionsState), [conditionsState])
 
   const [selectedSpeciesNames, setSelectedSpeciesNames] = useState(new Set())
   const [speciesSearch, setSpeciesSearch] = useState('')
@@ -224,9 +225,7 @@ export function SpeciesConcentrationTab() {
       return
     }
 
-    const temperature = evolvingTemperature[index] ?? DEFAULT_TEMPERATURE
-    const pressure = evolvingPressure[index] ?? DEFAULT_PRESSURE
-    const airDensity = airDensityMolM3(pressure, temperature)
+    const airDensity = airDensityAtTime(conditionsManager, evolvingTimes[index])
     const parsed = displayed === null ? null : toMolM3(displayed, concentrationUnitId, airDensity)
 
     const existing = Array.isArray(additionalSeries[key])
@@ -603,9 +602,7 @@ export function SpeciesConcentrationTab() {
                   </thead>
                   <tbody>
                     {timeEntries.map(({ time, index }) => {
-                      const temperature = evolvingTemperature[index] ?? DEFAULT_TEMPERATURE
-                      const pressure = evolvingPressure[index] ?? DEFAULT_PRESSURE
-                      const airDensity = airDensityMolM3(pressure, temperature)
+                      const airDensity = airDensityAtTime(conditionsManager, time)
 
                       return (
                         <tr key={index} className="border-b border-gray-200 hover:bg-gray-50">

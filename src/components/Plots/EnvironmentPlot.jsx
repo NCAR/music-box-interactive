@@ -9,7 +9,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from 'recharts'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card'
+import { Card, CardContent } from '../ui/card'
 import { Toggle } from '../ui/toggle'
 import { Thermometer } from 'lucide-react'
 import { ChartTooltipContent } from '../SimulationChart'
@@ -17,6 +17,7 @@ import { UnitDropdown } from './UnitDropdown'
 import { TEMPERATURE_UNITS, fromKelvin } from './temperatureUnits'
 import { PRESSURE_UNITS } from './pressureUnits'
 import { TIME_RANGE_UNITS } from './timeRangeUnits'
+import { buildEnvironmentSeries } from '../../utils/environmentSeries'
 import { FIELD_LABEL, DROPDOWN_WRAPPER, DROPDOWN_BUTTON } from '../Mechanism/fieldStyles'
 
 /**
@@ -25,7 +26,6 @@ import { FIELD_LABEL, DROPDOWN_WRAPPER, DROPDOWN_BUTTON } from '../Mechanism/fie
  */
 export function EnvironmentPlot() {
   const simulation = useSelector((state) => state.simulation)
-  const conditions = useSelector((state) => state.conditions)
 
   const [temperatureUnitId, setTemperatureUnitId] = useState('K')
   const [pressureUnitId, setPressureUnitId] = useState('Pa')
@@ -50,59 +50,16 @@ export function EnvironmentPlot() {
   const timeUnit = TIME_RANGE_UNITS.find((u) => u.id === timeUnitId) ?? TIME_RANGE_UNITS[1]
   const timeAxisUnitLabel = timeUnit.shortLabel
 
-  // Evolving temperature and pressure points fed to the solver, sorted for step interpolation
-  const evolvingPoints = useMemo(() => {
-    const times = conditions.evolving?.times
-    if (!Array.isArray(times) || times.length === 0) return []
-
-    return times
-      .map((time, index) => ({
-        time,
-        temperature: conditions.evolving.temperature?.[index],
-        pressure: conditions.evolving.pressure?.[index],
-      }))
-      .filter((point) => typeof point.time === 'number' && Number.isFinite(point.time))
-      .sort((a, b) => a.time - b.time)
-  }, [conditions.evolving])
-
-  const hasEvolvingConditions = Boolean(conditions.evolving?.enabled) && evolvingPoints.length > 0
-
-  // Format environmental data, mirroring the solver's step interpolation
-  // (most recent evolving value at or before each result's time), converted into the
-  // sidebar's selected display units.
-  const envData = useMemo(() => {
-    if (!simulation.results) return []
-
-    return simulation.results.map((result) => {
-      let temperature = conditions.initial.temperature
-      let pressure = conditions.initial.pressure
-
-      if (hasEvolvingConditions) {
-        for (const point of evolvingPoints) {
-          if (point.time > result.time) break
-          // A null entry means "not set at this point" (e.g. a row that only carried rate
-          // parameters), not "set to nothing" -- it should leave the carried-forward value
-          // alone rather than blanking it out.
-          if (point.temperature != null) temperature = point.temperature
-          if (point.pressure != null) pressure = point.pressure
-        }
-      }
-
-      return {
-        time: result.time / timeUnit.divisor,
-        temperature: fromKelvin(temperature, temperatureUnitId),
-        pressure: pressure / pressureUnit.divisor,
-      }
-    })
-  }, [
-    simulation.results,
-    conditions.initial,
-    hasEvolvingConditions,
-    evolvingPoints,
-    temperatureUnitId,
-    pressureUnit,
-    timeUnit,
-  ])
+  // Solver-reported conditions at each output step, in the sidebar's selected units.
+  const envData = useMemo(
+    () =>
+      buildEnvironmentSeries(simulation.results).map((point) => ({
+        time: point.time / timeUnit.divisor,
+        temperature: fromKelvin(point.temperature, temperatureUnitId),
+        pressure: point.pressure / pressureUnit.divisor,
+      })),
+    [simulation.results, temperatureUnitId, pressureUnit, timeUnit]
+  )
 
   if (!simulation.results || simulation.status !== 'succeeded') {
     return (

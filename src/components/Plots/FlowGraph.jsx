@@ -129,6 +129,8 @@ export function FlowGraph({
   timeRange,
   reactionTypes = EMPTY_ARRAY,
   valueDisplay = 'absolute',
+  fluxUnitLabel = 'mol m-3',
+  intervalDivisors = null,
 }) {
   const ref = useRef()
   const tooltipRef = useRef()
@@ -171,7 +173,8 @@ export function FlowGraph({
         index,
         results,
         timeStart,
-        timeEnd
+        timeEnd,
+        intervalDivisors
       )
     })
 
@@ -396,7 +399,7 @@ export function FlowGraph({
           .html(
             valueDisplay === 'relative'
               ? `<div>${d.percent.toFixed(1)}%</div>`
-              : `<div>${(d.rate ?? 0).toExponential(3)} mol m-3</div>`
+              : `<div>${(d.rate ?? 0).toExponential(4)} ${fluxUnitLabel}</div>`
           )
       })
       .on('mouseleave', () => tooltip.style('display', 'none'))
@@ -512,7 +515,7 @@ export function FlowGraph({
       .append('tspan')
       .attr('x', 0)
       .attr('dy', 0)
-      .text((d) => `${d.rate.toExponential(3)} mol m⁻³`)
+      .text((d) => `${d.rate.toExponential(4)} ${fluxUnitLabel}`)
 
     svg.on('click', () => setSelectedNode(null))
 
@@ -551,7 +554,7 @@ export function FlowGraph({
 
     sim.alpha(0.4).restart()
     return () => sim.stop()
-  }, [selectedSpecies, reactionTypes, rateRange, timeRange, reactions, species, results, valueDisplay])
+  }, [selectedSpecies, reactionTypes, rateRange, timeRange, reactions, species, results, valueDisplay, fluxUnitLabel, intervalDivisors])
 
   // Sync selectedNode → D3 rate label visibility & rect highlight
   useEffect(() => {

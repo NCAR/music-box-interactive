@@ -9,6 +9,7 @@ import { UnitDropdown } from './UnitDropdown'
 import { TEXT_INPUT_SM } from '../Mechanism/fieldStyles'
 import { getReactionTypeLabel } from '../Mechanism/reactions/reactionRegistry'
 import { EMPTY_ARRAY } from '../../utils/emptyArray'
+import { selectRunDuration } from '../../redux/slices/simulationSlice'
 
 // Show at most this many species as chips before collapsing the rest into a "+N others" menu
 const SPECIES_CHIP_VISIBLE = 25
@@ -49,7 +50,7 @@ const ARROW_SCALING_OPTIONS = [
  *   - Value Display (absolute magnitude or relative contribution)
  *   - Arrow Width Scaling (linear or logarithmic)
  *   - Time Range selection (seconds or hours)
- *   - Integrated reaction rate range selection (in mol m-3)
+ *   - Integrated reaction rate range selection (in the selected concentration unit)
  *   - Species search and selection list
  * Rendered as the sidebar of the flow diagram card.
  */
@@ -67,6 +68,10 @@ export function FlowPanel({
   setReactionTypes,
   valueDisplay,
   setValueDisplay,
+  concentrationUnitId,
+  concentrationUnits,
+  setConcentrationUnitId,
+  fluxUnitLabel = 'mol m-3',
 }) {
   const results = useSelector((state) => state.simulation.results)
   const reactions = useSelector((state) => state.mechanism.config.mechanism?.reactions || EMPTY_ARRAY)
@@ -103,7 +108,7 @@ export function FlowPanel({
   }
 
   // Upper bound for Time Range — results never extend past the simulation length.
-  const duration = useSelector((state) => state.conditions.basic.duration)
+  const duration = useSelector(selectRunDuration)
   const speciesNames = useMemo(() => getResultSpeciesNames(results), [results])
   const displaySpecies = selectedSpecies || []
 
@@ -220,12 +225,27 @@ export function FlowPanel({
         </div>
       </div>
 
+      {/* Relative mode shows percentages, which have no unit */}
+      {valueDisplay !== 'relative' && setConcentrationUnitId && (
+        <div>
+          <p className={SECTION_LABEL}>Flux unit</p>
+          <UnitDropdown
+            unitId={concentrationUnitId}
+            onChange={setConcentrationUnitId}
+            units={concentrationUnits}
+            wrapperClassName={UNIT_DROPDOWN_WRAPPER}
+            buttonClassName={UNIT_DROPDOWN_BUTTON}
+            centerLabel
+          />
+        </div>
+      )}
+
       <div>
-        <p className={SECTION_LABEL}>Flux (mol m-3)</p>
+        <p className={SECTION_LABEL}>Flux ({fluxUnitLabel})</p>
         <div className={RANGE_ROW}>
           <RangeBoundInput
             value={rateRange.start}
-            sigDigits={3}
+            sigDigits={4}
             min={0}
             max={rateRange.end}
             onCommit={(start) => setRateRange({ start, end: rateRange.end })}
@@ -234,7 +254,7 @@ export function FlowPanel({
           <span className="px-1 text-muted font-normal">-</span>
           <RangeBoundInput
             value={rateRange.end}
-            sigDigits={3}
+            sigDigits={4}
             min={rateRange.start}
             onCommit={(end) => setRateRange({ start: rateRange.start, end })}
             className={RANGE_INPUT}

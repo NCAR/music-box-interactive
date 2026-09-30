@@ -25,16 +25,11 @@ import {
   insertAdditionalSeriesValue,
   removeEvolvingTimeRows,
   commitEvolvingTime,
+  rowHasConcentrations,
   ensureZeroTimeRow,
 } from './evolvingSeries'
+import { DENSITY_SERIES_KEY } from '../../utils/environmentSeries'
 
-// Air number density is optional, so its values are stored in the evolving slice's generic
-// additionalSeries map, alongside hidden series like PHOTO.*, instead of
-// getting a dedicated array field.
-const DENSITY_SERIES_KEY = 'ENV.air number density.mol m-3'
-
-// Unlike the Species editor's equal-width columns, the left column fits its content (like TimeTab),
-// while the right column expands to fill the remaining space.
 const EDITOR_GRID = 'grid grid-cols-1 gap-4 lg:grid-cols-[auto_1fr] lg:items-start'
 
 const NUMBER_INPUT =
@@ -261,6 +256,17 @@ export function EnvironmentTab() {
     }, 600)
   }
 
+  // Concentrations are stored in mol m-3, so changing the air density changes the displayed
+  // ppth/ppm/ppb/ppt value. The stored concentration itself does not change.
+  const warnIfConcentrationsAffected = (index) => {
+    if (!rowHasConcentrations(evolving.additionalSeries, index)) return
+    toast({
+      title: 'Concentrations stay in mol m-3',
+      description:
+        'This row has species concentrations. Their stored values in mol m-3 are unchanged, but their equivalents (ppm, ppb ...) will now display differently.',
+      })
+  }
+
   const commitTemperature = (index, rawValue) => {
     const parsed = parseFloat(rawValue)
     if (isNaN(parsed)) {
@@ -277,6 +283,7 @@ export function EnvironmentTab() {
     next[index] = parsed
     dispatch(setEvolvingTemperature(next))
     flashCell('temperature', index)
+    warnIfConcentrationsAffected(index)
   }
 
   const commitPressure = (index, rawValue) => {
@@ -295,6 +302,7 @@ export function EnvironmentTab() {
     next[index] = parsed
     dispatch(setEvolvingPressure(next))
     flashCell('pressure', index)
+    warnIfConcentrationsAffected(index)
   }
 
   const commitDensity = (index, rawValue) => {
@@ -321,6 +329,7 @@ export function EnvironmentTab() {
       setEvolvingAdditionalSeries({ ...evolving.additionalSeries, [DENSITY_SERIES_KEY]: next })
     )
     flashCell('density', index)
+    warnIfConcentrationsAffected(index)
   }
 
   const commitTime = (index, rawValue) => {

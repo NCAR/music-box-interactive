@@ -17,18 +17,11 @@ import {
   LIST_CARD_CONTENT,
   TEXT_INPUT,
   TEXT_INPUT_SM,
-  DROPDOWN_WRAPPER,
-  DROPDOWN_BUTTON,
 } from './fieldStyles'
-import { UnitDropdown } from '../Plots/UnitDropdown'
-import { CONCENTRATION_UNITS, airDensityMolM3, toMolM3, fromMolM3 } from '../../utils/concentrationUnits'
-
-// A unit choice
-const CONCENTRATION_PILL = 'Constant concentration'
 import { SPECIES_PROPERTIES } from '../../services/simulation/local/speciesProperties'
 import { withPhaseInfo } from '../../services/simulation/local/mechanism'
 
-
+const CONCENTRATION_PILL = 'Constant concentration'
 const CUSTOM_PILL_MAX_LENGTH = 512
 
 // The add form width is determined by the widest property row.
@@ -167,7 +160,7 @@ function PhaseSelector({ value, onChange, phaseNames, size = 'default', allowCus
   )
 }
 
-function PropertySelector({ properties, onChange, concentrationUnitId, onConcentrationUnitChange }) {
+function PropertySelector({ properties, onChange }) {
   const togglePill = (field) => {
     const next = { ...properties }
     if (field.pill in next) {
@@ -209,27 +202,6 @@ function PropertySelector({ properties, onChange, concentrationUnitId, onConcent
                 checked={properties[field.pill] === true}
                 onChange={(checked) => setPropertyValue(field.pill, checked)}
               />
-            ) : field.pill === CONCENTRATION_PILL ? (
-              <div key={field.pill}>
-                <label className={FIELD_LABEL}>{field.pill}</label>
-                <div className="flex flex-col gap-2">
-                  <UnitDropdown
-                    unitId={concentrationUnitId}
-                    onChange={onConcentrationUnitChange}
-                    units={CONCENTRATION_UNITS}
-                    wrapperClassName={DROPDOWN_WRAPPER}
-                    buttonClassName={DROPDOWN_BUTTON}
-                    centerLabel
-                  />
-                  <input
-                    type="text"
-                    value={properties[field.pill]}
-                    onChange={(e) => setPropertyValue(field.pill, e.target.value)}
-                    placeholder={field.placeholder}
-                    className={TEXT_INPUT.replace('text-center', 'text-left')}
-                  />
-                </div>
-              </div>
             ) : (
               <div key={field.pill}>
                 <label className={FIELD_LABEL}>
@@ -260,10 +232,8 @@ function getSpeciesFields(species) {
 // A species renders as a collapsed chip showing only its name. Clicking it unfolds the phase
 // and property values in place; an expanded chip claims a full row of the wrapping list so its
 // controls have room. Expansion is local state -- opening one leaves the others alone.
-function SpeciesChip({ species, phaseNames, onPhaseChange, onFieldSave, onRemove, airDensity }) {
+function SpeciesChip({ species, phaseNames, onPhaseChange, onFieldSave, onRemove }) {
   const [expanded, setExpanded] = useState(false)
-  // Its own unit choice: display only, converted back to the stored mol m-3 value on save.
-  const [concentrationUnitId, setConcentrationUnitId] = useState('mol_m3')
 
   if (!expanded) {
     return (
@@ -329,50 +299,6 @@ function SpeciesChip({ species, phaseNames, onPhaseChange, onFieldSave, onRemove
                 onChange={(checked) => onFieldSave(species.name, field, checked)}
               />
             </div>
-          ) : field.pill === CONCENTRATION_PILL ? (
-            <div key={field.key} className="flex flex-col gap-1">
-              {/* No unit in the label here -- the dropdown is the unit now. */}
-              <label className="text-[11px] uppercase tracking-wide text-muted">
-                {field.pill}
-              </label>
-              <div className="flex flex-col gap-2 max-w-xs">
-                <UnitDropdown
-                  unitId={concentrationUnitId}
-                  onChange={setConcentrationUnitId}
-                  units={CONCENTRATION_UNITS}
-                  wrapperClassName={DROPDOWN_WRAPPER}
-                  buttonClassName={DROPDOWN_BUTTON}
-                  centerLabel
-                />
-                <input
-                  key={concentrationUnitId}
-                  type="text"
-                  defaultValue={fromMolM3(field.value, concentrationUnitId, airDensity) ?? ''}
-                  onBlur={(e) => {
-                    const raw = e.target.value.trim()
-                    if (!raw) {
-                      onFieldSave(species.name, field, '')
-                      return
-                    }
-                    const parsed = Number(raw)
-                    onFieldSave(
-                      species.name,
-                      field,
-                      Number.isNaN(parsed)
-                        ? raw
-                        : String(toMolM3(parsed, concentrationUnitId, airDensity))
-                    )
-                  }}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      e.currentTarget.blur()
-                    }
-                  }}
-                  placeholder={field.placeholder}
-                  className={TEXT_INPUT_SM.replace('text-center', 'text-left')}
-                />
-              </div>
-            </div>
           ) : (
             <div key={field.key} className="flex flex-col gap-1">
               <label className="text-[11px] uppercase tracking-wide text-muted">
@@ -405,14 +331,11 @@ export function SpeciesEditor() {
   const species = useMemo(() => withPhaseInfo(storedSpecies ?? [], phases), [storedSpecies, phases])
   // A mechanism with no phase yet gets "gas" when its first species is added.
   const phaseNames = useMemo(() => (phases?.length ? phases.map((p) => p.name) : ['gas']), [phases])
-  const initialConditions = useSelector((state) => state.conditions.initial)
   const { toast } = useToast()
-  const airDensity = airDensityMolM3(initialConditions.pressure, initialConditions.temperature)
 
   const [newSpeciesName, setNewSpeciesName] = useState('')
   const [newSpeciesPhase, setNewSpeciesPhase] = useState('')
   const [newSpeciesProperties, setNewSpeciesProperties] = useState({})
-  const [addFormConcentrationUnitId, setAddFormConcentrationUnitId] = useState('mol_m3')
   const [speciesSearch, setSpeciesSearch] = useState('')
   const speciesQuery = speciesSearch.trim().toLowerCase()
   // Sorted case-insensitively with natural numeric ordering (e.g., C2H6 before C10H22).
@@ -424,8 +347,6 @@ export function SpeciesEditor() {
     const rawConcentration = newSpeciesProperties[CONCENTRATION_PILL]
     const trimmedConcentration =
       typeof rawConcentration === 'string' ? rawConcentration.trim() : ''
-    let convertedProperties = newSpeciesProperties
-
     if (trimmedConcentration !== '') {
       const parsedConcentration = Number(trimmedConcentration)
       if (Number.isNaN(parsedConcentration)) {
@@ -436,21 +357,13 @@ export function SpeciesEditor() {
         })
         return
       }
-      if (addFormConcentrationUnitId === 'ppb') {
-        convertedProperties = {
-          ...newSpeciesProperties,
-          [CONCENTRATION_PILL]: String(
-            toMolM3(parsedConcentration, addFormConcentrationUnitId, airDensity)
-          ),
-        }
-      }
     }
 
     const added = addSpeciesIfValid({
       species,
       newSpeciesName,
       newSpeciesPhase,
-      newSpeciesProperties: convertedProperties,
+      newSpeciesProperties,
       speciesProperties: SPECIES_PROPERTIES,
       dispatch,
       toast,
@@ -548,7 +461,6 @@ export function SpeciesEditor() {
             onPhaseChange={handlePhaseSave}
             onFieldSave={handleFieldSave}
             onRemove={handleRemoveSpecies}
-            airDensity={airDensity}
           />
         ))
       )}
@@ -599,8 +511,6 @@ export function SpeciesEditor() {
                 <PropertySelector
                   properties={newSpeciesProperties}
                   onChange={setNewSpeciesProperties}
-                  concentrationUnitId={addFormConcentrationUnitId}
-                  onConcentrationUnitChange={setAddFormConcentrationUnitId}
                 />
               </div>
             </div>

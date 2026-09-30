@@ -1,4 +1,4 @@
-import { React, useState, useEffect } from 'react'
+import { React, useState, useEffect, useMemo } from 'react'
 import { FlowGraph } from './FlowGraph'
 import {
   computeIntegratedReactionRate,
@@ -13,6 +13,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui
 import { LIST_CARD, LIST_CARD_CONTENT } from '../Mechanism/fieldStyles'
 import { Waypoints, StickyNote } from 'lucide-react'
 import { EMPTY_ARRAY } from '../../utils/emptyArray'
+import { selectRunDuration } from '../../redux/slices/simulationSlice'
+import { useResultsConcentrationUnit } from '../../hooks/useConcentrationUnit'
+import { CONCENTRATION_UNITS, buildIntervalDivisors } from '../../utils/concentrationUnits'
 
 /*
  * FlowDiagram Component
@@ -27,8 +30,13 @@ export function FlowDiagram() {
   // Fixed spread between the thinnest and thickest edges (BASE=2px up to MAX_ARROW_WIDTH+2px)
   const MAX_ARROW_WIDTH = 4
 
-  const duration = useSelector((state) => state.conditions.basic.duration)
+  const duration = useSelector(selectRunDuration)
   const [timeRange, setTimeRange] = useState({ start: 0, end: duration })
+
+  // A rerun can change the run length while this tab stays mounted; resync the window to it.
+  useEffect(() => {
+    setTimeRange({ start: 0, end: duration })
+  }, [duration])
 
   // const example = useSelector((state) => state);
   // console.log('FlowPanel example state:', example);
@@ -49,6 +57,22 @@ export function FlowDiagram() {
   // The integrated reaction rate depends on the selected time window, so its magnitude
   // changes with the time range and species selection. The range must therefore be
   // recalculated whenever either changes to avoid stale scaling that can mute edges.
+  // Mixing-ratio units convert each interval's increase with that interval's own air density,
+  // so every flux value (edges, labels and the range) is already in the selected unit.
+  // Relative mode shows percentages, which have no unit.
+  const {
+    unitId: concentrationUnitId,
+    units: concentrationUnits,
+    setUnitId: setConcentrationUnitId,
+    airDensities,
+  } = useResultsConcentrationUnit(simulation.excludedResults)
+  const fluxUnit = valueDisplay === 'relative' ? 'mol_m3' : concentrationUnitId
+  const fluxUnitLabel = CONCENTRATION_UNITS.find((u) => u.id === fluxUnit)?.label ?? 'mol m-3'
+  const intervalDivisors = useMemo(
+    () => buildIntervalDivisors(fluxUnit, airDensities),
+    [fluxUnit, airDensities]
+  )
+
   useEffect(() => {
     if (!reactions || reactions.length === 0) return
     if (!selectedSpecies || selectedSpecies.length === 0) return
@@ -78,7 +102,8 @@ export function FlowDiagram() {
         index,
         simulation.excludedResults,
         timeStart,
-        timeEnd
+        timeEnd,
+        intervalDivisors
       )
       return getReactionEdges(reaction, rate, thirdBodyNames).map((edge) => edge.value)
     })
@@ -99,6 +124,7 @@ export function FlowDiagram() {
     reactionTypes,
     timeRange.start,
     timeRange.end,
+    intervalDivisors,
   ])
   if (!simulation.results || simulation.status !== 'succeeded') {
     return (
@@ -138,6 +164,10 @@ export function FlowDiagram() {
             setSelectedSpecies={setSelectedSpecies}
             valueDisplay={valueDisplay}
             setValueDisplay={setValueDisplay}
+            concentrationUnitId={concentrationUnitId}
+            concentrationUnits={concentrationUnits}
+            setConcentrationUnitId={setConcentrationUnitId}
+            fluxUnitLabel={fluxUnitLabel}
           />
 
           {/* Main content: diagram */}
@@ -157,6 +187,8 @@ export function FlowDiagram() {
                   end: timeRange.end,
                 }}
                 valueDisplay={valueDisplay}
+                fluxUnitLabel={fluxUnitLabel}
+                intervalDivisors={intervalDivisors}
               />
             </div>
           </div>

@@ -86,8 +86,8 @@ describe('flow diagram node identity', () => {
     )
 
     // Keyed by name, the map overwrites and both nodes report 5.000e+1.
-    expect(rates).toContain('5.000e+0 mol m⁻³')
-    expect(rates).toContain('5.000e+1 mol m⁻³')
+    expect(rates).toContain('5.0000e+0 mol m-3')
+    expect(rates).toContain('5.0000e+1 mol m-3')
   })
 
   // Separate nodes with correct rates are not enough on their own: identical text makes them
