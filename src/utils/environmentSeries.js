@@ -4,12 +4,19 @@ import { airDensityMolM3 } from './concentrationUnits'
 // additionalSeries map, alongside hidden series like PHOTO.*, aligned with evolving.times.
 export const DENSITY_SERIES_KEY = 'ENV.air number density.mol m-3'
 
-// Air density (mol m-3) for one entered condition: a provided value wins, otherwise the ideal
+// Air density (mol m-3) for one set of conditions: a provided value wins, otherwise the ideal
 // gas law.
 export const resolveAirDensity = ({ density, pressure, temperature }) =>
-  typeof density === 'number' && Number.isFinite(density)
+  typeof density === 'number' && Number.isFinite(density) && density > 0
     ? density
     : airDensityMolM3(pressure, temperature)
+
+// Air density at `time` under the conditions a ConditionsManager holds (see
+// buildConditionsManager).
+export function airDensityAtTime(conditionsManager, time) {
+  const { temperature, pressure, airDensity } = conditionsManager.getConditionsAtTime(time)
+  return resolveAirDensity({ density: airDensity, pressure, temperature })
+}
 
 // Temperature (K) and pressure (Pa) at each result time, as reported by the solver.
 export function buildEnvironmentSeries(results) {

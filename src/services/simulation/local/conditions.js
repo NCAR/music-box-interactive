@@ -43,27 +43,13 @@ const classifySeriesHeader = (header) => {
   return { kind: 'unknown' }
 }
 
-// Builds the real music-box v1 conditions, one setCondition() call per moment, so a downloaded
-// or run config always matches what MusicBox itself understands. time.s = 0 isn't special to
-// MusicBox -- it's just whatever's set at the earliest time -- so it's built the same way as
-// every other moment, not as a separate "initial conditions" case.
-export const buildSolverConditions = (conditions) => {
+// Builds the ConditionsManager for the conditions in Redux, one setCondition() call per moment,
+// so a downloaded or run config always matches what MusicBox understands.
+//
+// Anything that needs the conditions in effect at a time (e.g. the air density) should ask
+// this manager via getConditionsAtTime(t).
+export const buildConditionsManager = (conditions) => {
   const source = conditions.conditions || {}
-  const sourceWithoutFilepaths = { ...source }
-  delete sourceWithoutFilepaths.filepaths
-
-  const sourceHasInlineData = Array.isArray(source.data) && source.data.length > 0
-  const uiHasState = hasUiConditionState(conditions)
-  const uiHydrated = hasHydratedUiState(conditions)
-
-  // For untouched source-only payloads (e.g. uploaded configs), keep authored data.
-  // Once UI state is hydrated/edited, rebuild from Redux so removals are reflected.
-  if (sourceHasInlineData && !uiHasState && !uiHydrated) {
-    return {
-      ...sourceWithoutFilepaths,
-      data: source.data,
-    }
-  }
 
   const reduxInitial = conditions.initial || {}
   const sourceInitial = source.initial || {}
@@ -159,6 +145,31 @@ export const buildSolverConditions = (conditions) => {
       mgr.setCondition(time, moment)
     })
   }
+
+
+  return mgr
+}
+
+// Builds the solver's conditions block from the same manager (see buildConditionsManager).
+export const buildSolverConditions = (conditions) => {
+  const source = conditions.conditions || {}
+  const sourceWithoutFilepaths = { ...source }
+  delete sourceWithoutFilepaths.filepaths
+
+  const sourceHasInlineData = Array.isArray(source.data) && source.data.length > 0
+  const uiHasState = hasUiConditionState(conditions)
+  const uiHydrated = hasHydratedUiState(conditions)
+
+  // For untouched source-only payloads (e.g. uploaded configs), keep authored data.
+  // Once UI state is hydrated/edited, rebuild from Redux so removals are reflected.
+  if (sourceHasInlineData && !uiHasState && !uiHydrated) {
+    return {
+      ...sourceWithoutFilepaths,
+      data: source.data,
+    }
+  }
+
+  const mgr = buildConditionsManager(conditions)
 
   return {
     ...sourceWithoutFilepaths,
