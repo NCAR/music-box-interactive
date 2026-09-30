@@ -2,7 +2,7 @@ import { useState, useCallback, useEffect, useMemo } from 'react'
 import { createPortal } from 'react-dom'
 import { useSelector, useDispatch } from 'react-redux'
 import { ChevronDown, ChevronUp } from 'lucide-react'
-import { useToast } from '@/hooks/use-toast'
+import { useNotify } from '@/hooks/use-notify'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card'
 import { Button } from '../ui/button'
 import { Toggle } from '../ui/toggle'
@@ -331,7 +331,7 @@ export function SpeciesEditor() {
   const species = useMemo(() => withPhaseInfo(storedSpecies ?? [], phases), [storedSpecies, phases])
   // A mechanism with no phase yet gets "gas" when its first species is added.
   const phaseNames = useMemo(() => (phases?.length ? phases.map((p) => p.name) : ['gas']), [phases])
-  const { toast } = useToast()
+  const notify = useNotify()
 
   const [newSpeciesName, setNewSpeciesName] = useState('')
   const [newSpeciesPhase, setNewSpeciesPhase] = useState('')
@@ -350,11 +350,7 @@ export function SpeciesEditor() {
     if (trimmedConcentration !== '') {
       const parsedConcentration = Number(trimmedConcentration)
       if (Number.isNaN(parsedConcentration)) {
-        toast({
-          title: 'Error',
-          description: 'Constant concentration must be a valid number',
-          variant: 'destructive',
-        })
+        notify.invalidInput('Constant concentration must be a valid number.')
         return
       }
     }
@@ -366,7 +362,7 @@ export function SpeciesEditor() {
       newSpeciesProperties,
       speciesProperties: SPECIES_PROPERTIES,
       dispatch,
-      toast,
+      notify,
       addSpecies,
     })
 
@@ -381,11 +377,7 @@ export function SpeciesEditor() {
 
   const handleRemoveSpecies = (speciesName) => {
     dispatch(removeSpecies(speciesName))
-    toast({
-      title: 'Species Removed',
-      description: `"${speciesName}" has been removed from the mechanism`,
-      variant: 'delete',
-    })
+    notify.removed('Species Removed', `"${speciesName}" was removed from the mechanism.`)
   }
 
   // Saves any numeric field on a species -- a top-level key like molecular weight, or a named
@@ -421,11 +413,7 @@ export function SpeciesEditor() {
     const parsedValue = Number.parseFloat(trimmedValue)
 
     if (Number.isNaN(parsedValue)) {
-      toast({
-        title: 'Error',
-        description: `${field.label} must be a valid number`,
-        variant: 'destructive',
-      })
+      notify.invalidInput(`${field.label} must be a valid number.`)
       return
     }
 

@@ -7,7 +7,7 @@ import ExampleLoader from '../ExampleLoader'
 import CurrentExampleIndicator from '../CurrentExampleIndicator'
 import { resetMechanism, setSelectedMechanism } from '../../redux/slices/mechanismSlice'
 import { resetConditions, setExampleLoaded } from '../../redux/slices/conditionsSlice'
-import { useToast } from '@/hooks/use-toast'
+import { useNotify } from '@/hooks/use-notify'
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert'
 import { Rocket, PenLine, FolderOpen, Library } from 'lucide-react'
 import { loadMusicBoxConfig } from '../../services/config/loadMusicBoxConfig'
@@ -17,7 +17,7 @@ import { parseUploadedMusicBoxConfig } from '../../services/config/parseUploaded
 export function DashboardPage() {
   const dispatch = useDispatch()
   const navigate = useNavigate()
-  const { toast } = useToast()
+  const notify = useNotify()
   const fileInputRef = useRef(null)
   const [showConfirmation, setShowConfirmation] = useState(false)
   const [showExamples, setShowExamples] = useState(false)
@@ -33,10 +33,7 @@ export function DashboardPage() {
     dispatch(setSelectedMechanism('custom'))
     // hide examples on fresh start
     setShowExamples(false)
-    toast({
-      title: 'Started Fresh!',
-      description: 'Add species in the Mechanism section.',
-    })
+    notify.info('Started Fresh', 'Add species in the Mechanism section.')
     setShowConfirmation(false)
     navigate('/mechanism')
   }
@@ -61,19 +58,16 @@ export function DashboardPage() {
         })
         setShowExamples(false)
 
-        toast({
-          variant: 'success',
-          title: 'Configuration Loaded Successfully!',
-          description: `Loaded ${config.mechanism.species?.length || 0} species and ${config.mechanism.reactions?.length || 0} reactions from ${file.name}`,
-        })
+        notify.success(
+          'Configuration Loaded',
+          `Loaded ${config.mechanism.species?.length || 0} species and ${config.mechanism.reactions?.length || 0} reactions from ${file.name}.`
+        )
       })
       .catch((err) => {
-        toast({
-          title: 'Failed to Load Configuration',
-          description:
-            err?.message || 'Failed to load configuration file. Please check the file format.',
-          variant: 'destructive',
-        })
+        notify.error(
+          'Failed to Load Configuration',
+          err?.message || 'Failed to load configuration file. Please check the file format.'
+        )
       })
   }
 

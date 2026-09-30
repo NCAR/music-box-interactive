@@ -17,7 +17,7 @@ import {
   setEvolvingAdditionalSeries,
   untagEvolvingRows,
 } from '../../redux/slices/conditionsSlice'
-import { useToast } from '@/hooks/use-toast'
+import { useNotify } from '@/hooks/use-notify'
 import { useClickOutside } from '../../hooks/useClickOutside'
 import { EMPTY_ARRAY } from '../../utils/emptyArray'
 import { LIST_CARD, LIST_CARD_CONTENT, TEXT_INPUT_SM } from '../Mechanism/fieldStyles'
@@ -74,7 +74,7 @@ const MIN_VALUE_COLUMN_PX = 160 // one reasonable column's worth of room
  */
 export function SpeciesConcentrationTab() {
   const dispatch = useDispatch()
-  const { toast } = useToast()
+  const notify = useNotify()
   const initial = useSelector((state) => state.conditions.initial)
   const conditions = useSelector((state) => state.conditions.conditions)
   const hydratedExampleId = useSelector((state) => state.conditions.hydration.initialExampleId)
@@ -163,10 +163,7 @@ export function SpeciesConcentrationTab() {
     const names = namedSpecies.map((species) => species.name)
     setSelectedSpeciesNames(new Set(names.slice(0, MAX_SELECTED_SPECIES)))
     if (names.length > MAX_SELECTED_SPECIES) {
-      toast({
-        title: 'Selection Limited',
-        description: `Selected the first ${MAX_SELECTED_SPECIES} of ${names.length} species. Use search to select others.`,
-      })
+      notify.warning('Selection Limited', `Selected the first ${MAX_SELECTED_SPECIES} of ${names.length} species. Use search to select others.`)
     }
   }
 
@@ -217,11 +214,7 @@ export function SpeciesConcentrationTab() {
     const trimmed = rawValue.trim()
     const displayed = trimmed === '' ? null : parseFloat(trimmed)
     if (trimmed !== '' && (isNaN(displayed) || displayed < 0)) {
-      toast({
-        title: 'Invalid Input',
-        description: 'Concentration must be a valid number zero or greater',
-        variant: 'destructive',
-      })
+      notify.invalidInput('Concentration must be a valid number zero or greater.')
       return
     }
 
@@ -260,11 +253,7 @@ export function SpeciesConcentrationTab() {
     if (outcome.kind === 'invalid') {
       // Leave the draft in place so the invalid text stays visible to fix, instead of
       // silently reverting to the last committed value.
-      toast({
-        title: 'Invalid Input',
-        description: 'Time must be a valid number zero or greater',
-        variant: 'destructive',
-      })
+      notify.invalidInput('Time must be a valid number zero or greater.')
       return
     }
 
@@ -276,11 +265,7 @@ export function SpeciesConcentrationTab() {
 
     if (outcome.kind === 'unchanged') return
     if (outcome.kind === 'duplicate') {
-      toast({
-        title: 'Duplicate Time Point',
-        description: `A time point already exists at t=${outcome.newTime}s`,
-        variant: 'destructive',
-      })
+      notify.error('Duplicate Time Point', `A time point already exists at t=${outcome.newTime}s.`)
       return
     }
 
@@ -290,11 +275,7 @@ export function SpeciesConcentrationTab() {
     dispatch(setEvolvingPressure(result.pressure))
     dispatch(setEvolvingAdditionalSeries(result.additionalSeries))
 
-    toast({
-      title: 'Time Point Updated',
-      description: `Moved time point to t=${result.newTime}s`,
-      variant: 'success',
-    })
+    notify.success('Time Point Updated', `Moved time point to t=${result.newTime}s.`)
   }
 
   const toggleSelected = (index) => {
@@ -334,11 +315,7 @@ export function SpeciesConcentrationTab() {
     dispatch(setEvolvingAdditionalSeries(result.additionalSeries))
     dispatch(untagEvolvingRows(result.removedTimes))
 
-    toast({
-      title: result.removedCount === 1 ? 'Time Point Removed' : 'Time Points Removed',
-      description: `Removed ${result.removedCount} time point${result.removedCount === 1 ? '' : 's'}`,
-      variant: 'delete',
-    })
+    notify.removed(result.removedCount === 1 ? 'Time Point Removed' : 'Time Points Removed', `Removed ${result.removedCount} time point${result.removedCount === 1 ? '' : 's'}.`)
     setSelectedIndices(new Set())
   }
 
@@ -346,20 +323,12 @@ export function SpeciesConcentrationTab() {
     const trimmed = newTimeValue.trim()
     const time = parseFloat(trimmed)
     if (trimmed === '' || isNaN(time) || time < 0) {
-      toast({
-        title: 'Invalid Input',
-        description: 'Time must be a valid number zero or greater',
-        variant: 'destructive',
-      })
+      notify.invalidInput('Time must be a valid number zero or greater.')
       return
     }
 
     if (evolvingTimes.includes(time)) {
-      toast({
-        title: 'Duplicate Time Point',
-        description: `A time point already exists at t=${time}s`,
-        variant: 'destructive',
-      })
+      notify.error('Duplicate Time Point', `A time point already exists at t=${time}s.`)
       return
     }
 
@@ -386,11 +355,7 @@ export function SpeciesConcentrationTab() {
     dispatch(setEvolvingPressure(newPressure))
     dispatch(setEvolvingAdditionalSeries(newAdditionalSeries))
 
-    toast({
-      title: 'Time Point Added',
-      description: `Added time point at t=${time}s`,
-      variant: 'success',
-    })
+    notify.success('Time Point Added', `Added time point at t=${time}s.`)
     setNewTimeValue('')
     setAddTimeOpen(false)
   }

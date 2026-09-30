@@ -12,7 +12,7 @@ import {
   AlertCircle,
   Lightbulb,
 } from 'lucide-react'
-import { useToast } from '@/hooks/use-toast'
+import { useNotify } from '@/hooks/use-notify'
 import { buildDownloadableConfig } from '../../services/config/downloadConfig'
 
 /**
@@ -22,7 +22,7 @@ import { buildDownloadableConfig } from '../../services/config/downloadConfig'
 export function ReviewTab() {
   const mechanism = useSelector((state) => state.mechanism)
   const conditions = useSelector((state) => state.conditions)
-  const { toast } = useToast()
+  const notify = useNotify()
 
   const configuration = buildDownloadableConfig({ mechanism, conditions })
   const sourceMechanism = mechanism.config?.mechanism || {}
@@ -33,16 +33,9 @@ export function ReviewTab() {
   const handleCopyToClipboard = async () => {
     try {
       await navigator.clipboard.writeText(JSON.stringify(configuration, null, 2))
-      toast({
-        title: 'Copied to Clipboard!',
-        description: 'Configuration has been copied to your clipboard.',
-      })
+      notify.success('Copied to Clipboard', 'Configuration has been copied to your clipboard.')
     } catch (_error) {
-      toast({
-        title: 'Copy Failed',
-        description: 'Failed to copy configuration to clipboard.',
-        variant: 'destructive',
-      })
+      notify.error('Copy Failed', 'Failed to copy configuration to clipboard.')
     }
   }
 

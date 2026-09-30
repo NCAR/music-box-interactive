@@ -1,6 +1,6 @@
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../ui/card'
 import { Copy } from 'lucide-react'
-import { useToast } from '@/hooks/use-toast'
+import { useNotify } from '@/hooks/use-notify'
 
 // lucide-react's Github icon is deprecated (github.com/lucide-icons/lucide/issues/670),
 // so the mark is inlined here instead.
@@ -70,21 +70,14 @@ function GithubLink({ href, label }) {
  * Background on MusicBox, the frameworks it is built on, and its sponsors
  */
 function AboutPage() {
-  const { toast } = useToast()
+  const notify = useNotify()
 
   const handleCopyInstallCommand = async (command) => {
     try {
       await navigator.clipboard.writeText(command)
-      toast({
-        title: 'Copied to Clipboard!',
-        description: `"${command}" has been copied to your clipboard.`,
-      })
+      notify.success('Copied to Clipboard', `"${command}" has been copied to your clipboard.`)
     } catch (_error) {
-      toast({
-        title: 'Copy Failed',
-        description: 'Failed to copy the command to your clipboard.',
-        variant: 'destructive',
-      })
+      notify.error('Copy Failed', 'Failed to copy the command to your clipboard.')
     }
   }
 
