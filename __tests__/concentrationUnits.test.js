@@ -22,8 +22,8 @@ import { buildTracerConcentrationKeys } from '../src/services/simulation/local/t
 const AIR = airDensityMolM3(101325, 298.15) // ~40.9 mol m-3
 
 describe('concentration unit conversion', () => {
-  it('offers mol m-3, ppm, ppb and ppt', () => {
-    expect(CONCENTRATION_UNITS.map((u) => u.id)).toEqual(['mol_m3', 'ppm', 'ppb', 'ppt'])
+  it('offers mol m-3, ppth, ppm, ppb and ppt', () => {
+    expect(CONCENTRATION_UNITS.map((u) => u.id)).toEqual(['mol_m3', 'ppth', 'ppm', 'ppb', 'ppt'])
   })
 
   it('leaves mol m-3 untouched and needs no air density', () => {
@@ -33,6 +33,7 @@ describe('concentration unit conversion', () => {
   })
 
   it.each([
+    ['ppth', 1e-3],
     ['ppm', 1e-6],
     ['ppb', 1e-9],
     ['ppt', 1e-12],
@@ -41,7 +42,7 @@ describe('concentration unit conversion', () => {
     expect(fromMolM3(factor * AIR, unit, AIR)).toBeCloseTo(1, 10)
   })
 
-  it.each(['ppm', 'ppb', 'ppt'])('round-trips %s', (unit) => {
+  it.each(['ppth', 'ppm', 'ppb', 'ppt'])('round-trips %s', (unit) => {
     expect(fromMolM3(toMolM3(37.5, unit, AIR), unit, AIR)).toBeCloseTo(37.5, 10)
   })
 
