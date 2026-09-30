@@ -79,7 +79,11 @@ const filterProductConcentrations = (results, excludeConcentrationKeys) => {
     }
 
     filteredResults.push({ ...point, concentrations: filteredConcentrations })
-    excludedResults.push({ time: point.time, concentrations: excludedConcentrations })
+    excludedResults.push({
+      time: point.time,
+      concentrations: excludedConcentrations,
+      environment: point.environment,
+    })
   }
 
   return {

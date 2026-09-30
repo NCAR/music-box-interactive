@@ -9,7 +9,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from 'recharts'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card'
+import { Card, CardContent } from '../ui/card'
 import { Toggle } from '../ui/toggle'
 import { Thermometer } from 'lucide-react'
 import { ChartTooltipContent } from '../SimulationChart'
@@ -26,7 +26,6 @@ import { FIELD_LABEL, DROPDOWN_WRAPPER, DROPDOWN_BUTTON } from '../Mechanism/fie
  */
 export function EnvironmentPlot() {
   const simulation = useSelector((state) => state.simulation)
-  const conditions = useSelector((state) => state.conditions)
 
   const [temperatureUnitId, setTemperatureUnitId] = useState('K')
   const [pressureUnitId, setPressureUnitId] = useState('Pa')
@@ -51,15 +50,15 @@ export function EnvironmentPlot() {
   const timeUnit = TIME_RANGE_UNITS.find((u) => u.id === timeUnitId) ?? TIME_RANGE_UNITS[1]
   const timeAxisUnitLabel = timeUnit.shortLabel
 
-  // Format environmental data (solver step interpolation) in the sidebar's selected units.
+  // Solver-reported conditions at each output step, in the sidebar's selected units.
   const envData = useMemo(
     () =>
-      buildEnvironmentSeries(conditions, simulation.results).map((point) => ({
+      buildEnvironmentSeries(simulation.results).map((point) => ({
         time: point.time / timeUnit.divisor,
         temperature: fromKelvin(point.temperature, temperatureUnitId),
         pressure: point.pressure / pressureUnit.divisor,
       })),
-    [simulation.results, conditions, temperatureUnitId, pressureUnit, timeUnit]
+    [simulation.results, temperatureUnitId, pressureUnit, timeUnit]
   )
 
   if (!simulation.results || simulation.status !== 'succeeded') {

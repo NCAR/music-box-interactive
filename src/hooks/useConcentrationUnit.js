@@ -1,5 +1,4 @@
 import { useContext, useMemo, useState } from 'react'
-import { useSelector } from 'react-redux'
 import { buildEnvironmentSeries } from '../utils/environmentSeries'
 import {
   ConcentrationUnitContext,
@@ -13,8 +12,7 @@ export function useConcentrationUnit() {
   return shared ?? local
 }
 
-// Temperature and pressure at each of the given results' times, for air-density conversion.
+// Solver-reported temperature, pressure and air density at each result time
 export function useEnvironmentSeries(results) {
-  const conditions = useSelector((state) => state.conditions)
-  return useMemo(() => buildEnvironmentSeries(conditions, results), [conditions, results])
+  return useMemo(() => buildEnvironmentSeries(results), [results])
 }
