@@ -6,10 +6,10 @@ import { getResultSpeciesNames } from './speciesFormat'
 import { RangeBoundInput } from './RangeBoundInput'
 import { TIME_RANGE_UNITS } from './timeRangeUnits'
 import { UnitDropdown } from './UnitDropdown'
-import { CONCENTRATION_UNITS } from '../../utils/concentrationUnits'
 import { TEXT_INPUT_SM } from '../Mechanism/fieldStyles'
 import { getReactionTypeLabel } from '../Mechanism/reactions/reactionRegistry'
 import { EMPTY_ARRAY } from '../../utils/emptyArray'
+import { selectRunDuration } from '../../redux/slices/simulationSlice'
 
 // Show at most this many species as chips before collapsing the rest into a "+N others" menu
 const SPECIES_CHIP_VISIBLE = 25
@@ -69,6 +69,7 @@ export function FlowPanel({
   valueDisplay,
   setValueDisplay,
   concentrationUnitId,
+  concentrationUnits,
   setConcentrationUnitId,
   fluxUnitLabel = 'mol m-3',
 }) {
@@ -107,7 +108,7 @@ export function FlowPanel({
   }
 
   // Upper bound for Time Range — results never extend past the simulation length.
-  const duration = useSelector((state) => state.conditions.basic.duration)
+  const duration = useSelector(selectRunDuration)
   const speciesNames = useMemo(() => getResultSpeciesNames(results), [results])
   const displaySpecies = selectedSpecies || []
 
@@ -231,7 +232,7 @@ export function FlowPanel({
           <UnitDropdown
             unitId={concentrationUnitId}
             onChange={setConcentrationUnitId}
-            units={CONCENTRATION_UNITS}
+            units={concentrationUnits}
             wrapperClassName={UNIT_DROPDOWN_WRAPPER}
             buttonClassName={UNIT_DROPDOWN_BUTTON}
             centerLabel

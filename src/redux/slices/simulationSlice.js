@@ -43,4 +43,9 @@ export const simulationSlice = createSlice({
 export const { setStatus, setResults, setExcludedResults, setMetadata, setError, clearSimulation, resetSimulation } =
   simulationSlice.actions
 
+// Length of the run the results came from. The conditions may have been edited since, so this
+// reads what the run recorded rather than the current setting.
+export const selectRunDuration = (state) =>
+  state.simulation.metadata?.duration || state.simulation.results?.at(-1)?.time || 0
+
 export default simulationSlice.reducer

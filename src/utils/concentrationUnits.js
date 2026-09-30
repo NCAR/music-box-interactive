@@ -39,3 +39,17 @@ export function fromMolM3(valueMolM3, unitId, airDensity) {
     ? valueMolM3 / (MIXING_RATIO_FACTORS[unitId] * airDensity)
     : valueMolM3
 }
+
+// Array forms: `airDensities` holds one air number density (mol m-3) per value, so the caller
+// decides where the densities come from (solver output, entered conditions, ...).
+export function fromMolM3Array(values, unitId, airDensities) {
+  return values.map((value, i) => fromMolM3(value, unitId, airDensities[i]))
+}
+
+// One divisor per sample, for converting the increase over the interval that STARTS at that
+// sample (conditions are step-held, so an interval uses its starting conditions). Null when
+// the unit needs no air density.
+export function buildIntervalDivisors(unitId, airDensities) {
+  if (!isMixingRatioUnit(unitId) || !airDensities) return null
+  return airDensities.map((density) => concentrationDivisor(unitId, density))
+}

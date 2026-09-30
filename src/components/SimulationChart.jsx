@@ -16,9 +16,8 @@ import { UnitDropdown } from './Plots/UnitDropdown'
 import { LIST_CARD, LIST_CARD_CONTENT, TEXT_INPUT_SM } from './Mechanism/fieldStyles'
 import { getSpeciesDisplayName } from './Plots/speciesFormat'
 import { useClickOutside } from '../hooks/useClickOutside'
-import { useConcentrationUnit, useEnvironmentSeries } from '../hooks/useConcentrationUnit'
-import { CONCENTRATION_UNITS, fromMolM3, isMixingRatioUnit } from '../utils/concentrationUnits'
-import { airDensitySeries } from '../utils/environmentSeries'
+import { useResultsConcentrationUnit } from '../hooks/useConcentrationUnit'
+import { fromMolM3, isMixingRatioUnit } from '../utils/concentrationUnits'
 import { CHART_COLORS } from './chartColors'
 import { TIME_RANGE_UNITS as TIME_UNITS } from './Plots/timeRangeUnits'
 
@@ -186,13 +185,17 @@ export function SimulationChart({ results, metadata }) {
   const [selectedSpecies, setSelectedSpecies] = useState([])
   const [initialized, setInitialized] = useState(false)
   const [timeUnitId, setTimeUnitId] = useState('seconds')
-  const [plotUnitId, setPlotUnitId] = useConcentrationUnit()
-  const environmentSeries = useEnvironmentSeries(results)
+  const {
+    unitId: plotUnitId,
+    unit: plotUnit,
+    units: plotUnits,
+    setUnitId: setPlotUnitId,
+    airDensities,
+  } = useResultsConcentrationUnit(results)
   const [speciesOverflowOpen, setSpeciesOverflowOpen] = useState(false)
   const speciesOverflowRef = useRef(null)
 
   const timeUnit = TIME_UNITS.find((u) => u.id === timeUnitId) ?? TIME_UNITS[0]
-  const plotUnit = CONCENTRATION_UNITS.find((u) => u.id === plotUnitId) ?? CONCENTRATION_UNITS[0]
   const plotUnitAxisLabel = `Concentration (${plotUnit.label})`
 
   const closeSpeciesOverflow = useCallback(() => setSpeciesOverflowOpen(false), [])
@@ -232,7 +235,7 @@ export function SimulationChart({ results, metadata }) {
     if (!Array.isArray(results) || results.length === 0) return []
 
     // Mixing ratios scale with the air density at each point's time; mol m-3 needs none.
-    const densities = isMixingRatioUnit(plotUnitId) ? airDensitySeries(environmentSeries) : null
+    const densities = isMixingRatioUnit(plotUnitId) ? airDensities : null
 
     return results.map((result, index) => {
       const time = result.time ?? result.timestamp ?? result.date ?? 0
@@ -265,16 +268,14 @@ export function SimulationChart({ results, metadata }) {
 
       return point
     })
-  }, [results, allSpecies, timeUnit.divisor, plotUnitId, environmentSeries])
+  }, [results, allSpecies, timeUnit.divisor, plotUnitId, airDensities])
 
   // Tooltip shows "0" for points sitting on the floor, whatever unit the floor converts to.
   const zeroBelow = useMemo(() => {
     if (!isMixingRatioUnit(plotUnitId)) return undefined
-    const floors = airDensitySeries(environmentSeries).map((d) =>
-      fromMolM3(MIN_VALUE, plotUnitId, d)
-    )
+    const floors = airDensities.map((d) => fromMolM3(MIN_VALUE, plotUnitId, d))
     return floors.length > 0 ? Math.max(...floors) * 1.01 : undefined
-  }, [plotUnitId, environmentSeries])
+  }, [plotUnitId, airDensities])
 
   // Keep axis bounds visually consistent across time units.
   // Recharts' "auto" domain varies padding based on magnitude.
@@ -430,7 +431,7 @@ export function SimulationChart({ results, metadata }) {
               <UnitDropdown
                 unitId={plotUnitId}
                 onChange={setPlotUnitId}
-                units={CONCENTRATION_UNITS}
+                units={plotUnits}
                 wrapperClassName={`${UNIT_DROPDOWN_WRAPPER} mb-2`}
                 buttonClassName={UNIT_DROPDOWN_BUTTON}
                 centerLabel

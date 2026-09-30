@@ -32,9 +32,9 @@ import { Card, CardContent } from '../ui/card'
 import { CHART_COLORS } from '../chartColors'
 import { ChartLegendContent, ChartTooltipContent } from '../SimulationChart'
 import { EMPTY_ARRAY } from '../../utils/emptyArray'
-import { useConcentrationUnit, useEnvironmentSeries } from '../../hooks/useConcentrationUnit'
-import { CONCENTRATION_UNITS } from '../../utils/concentrationUnits'
-import { buildIntervalDivisors } from '../../utils/environmentSeries'
+import { selectRunDuration } from '../../redux/slices/simulationSlice'
+import { useResultsConcentrationUnit } from '../../hooks/useConcentrationUnit'
+import { buildIntervalDivisors } from '../../utils/concentrationUnits'
 
 // Species rows shown before the list collapses into a "+N others" popover.
 const SPECIES_VISIBLE = 10
@@ -193,7 +193,7 @@ function FluxReactionRow({ reaction, flux, checked, onToggleCheck }) {
 export function Flux() {
   const simulation = useSelector((state) => state.simulation)
   const reactions = useSelector((state) => state.mechanism.config.mechanism?.reactions || EMPTY_ARRAY)
-  const duration = useSelector((state) => state.conditions.basic.duration)
+  const duration = useSelector(selectRunDuration)
 
   const [reactionsOpen, setReactionsOpen] = useState(true)
   const [speciesOpen, setSpeciesOpen] = useState(true)
@@ -205,8 +205,13 @@ export function Flux() {
   const [speciesOverflowOpen, setSpeciesOverflowOpen] = useState(false)
   const [timeRange, setTimeRange] = useState({ start: 0, end: duration })
   const [timeRangeUnitId, setTimeRangeUnitId] = useState('seconds')
-  const [concentrationUnitId, setConcentrationUnitId] = useConcentrationUnit()
-  const environmentSeries = useEnvironmentSeries(simulation.excludedResults)
+  const {
+    unitId: concentrationUnitId,
+    unit: concentrationUnit,
+    units: concentrationUnits,
+    setUnitId: setConcentrationUnitId,
+    airDensities,
+  } = useResultsConcentrationUnit(simulation.excludedResults)
   const [sortOrder, setSortOrder] = useState('desc')
   const [sortMenuOpen, setSortMenuOpen] = useState(false)
   const [selectedReactionKeys, setSelectedReactionKeys] = useState([])
@@ -233,11 +238,9 @@ export function Flux() {
 
   // Mixing-ratio units convert each interval's increase with that interval's own air density,
   // then sum, so the flux stays exact when conditions evolve within the window.
-  const concentrationUnit =
-    CONCENTRATION_UNITS.find((u) => u.id === concentrationUnitId) ?? CONCENTRATION_UNITS[0]
   const intervalDivisors = useMemo(
-    () => buildIntervalDivisors(concentrationUnitId, environmentSeries),
-    [concentrationUnitId, environmentSeries]
+    () => buildIntervalDivisors(concentrationUnitId, airDensities),
+    [concentrationUnitId, airDensities]
   )
 
   const speciesNames = useMemo(
@@ -532,7 +535,7 @@ export function Flux() {
               <UnitDropdown
                 unitId={concentrationUnitId}
                 onChange={setConcentrationUnitId}
-                units={CONCENTRATION_UNITS}
+                units={concentrationUnits}
               />
             </div>
 

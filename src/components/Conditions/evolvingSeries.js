@@ -125,3 +125,14 @@ export function ensureZeroTimeRow(
     additionalSeries: insertAdditionalSeriesValue(additionalSeries, 0),
   }
 }
+
+// Whether the row at `index` carries any species concentration. Concentrations live in
+// additionalSeries under CONC.<name> keys, aligned with the evolving times.
+// The environment tab uses it to decide whether to show the 
+// "Concentrations stay in mol m-3" warning. 
+export function rowHasConcentrations(additionalSeries, index) {
+  return Object.entries(additionalSeries ?? {}).some(
+    ([key, series]) =>
+      key.startsWith('CONC.') && Array.isArray(series) && typeof series[index] === 'number'
+  )
+}

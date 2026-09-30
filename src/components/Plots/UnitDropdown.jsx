@@ -37,7 +37,7 @@ export function UnitDropdown({
               key={u.id}
               type="button"
               disabled={u.disabled}
-              title={u.disabled ? 'Conversion not yet supported' : undefined}
+              title={u.disabled ? (u.disabledReason ?? 'Conversion not yet supported') : undefined}
               onClick={() => {
                 onChange(u.id)
                 setOpen(false)

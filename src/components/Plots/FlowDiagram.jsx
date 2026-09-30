@@ -13,9 +13,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui
 import { LIST_CARD, LIST_CARD_CONTENT } from '../Mechanism/fieldStyles'
 import { Waypoints, StickyNote } from 'lucide-react'
 import { EMPTY_ARRAY } from '../../utils/emptyArray'
-import { useConcentrationUnit, useEnvironmentSeries } from '../../hooks/useConcentrationUnit'
-import { CONCENTRATION_UNITS } from '../../utils/concentrationUnits'
-import { buildIntervalDivisors } from '../../utils/environmentSeries'
+import { selectRunDuration } from '../../redux/slices/simulationSlice'
+import { useResultsConcentrationUnit } from '../../hooks/useConcentrationUnit'
+import { CONCENTRATION_UNITS, buildIntervalDivisors } from '../../utils/concentrationUnits'
 
 /*
  * FlowDiagram Component
@@ -30,8 +30,13 @@ export function FlowDiagram() {
   // Fixed spread between the thinnest and thickest edges (BASE=2px up to MAX_ARROW_WIDTH+2px)
   const MAX_ARROW_WIDTH = 4
 
-  const duration = useSelector((state) => state.conditions.basic.duration)
+  const duration = useSelector(selectRunDuration)
   const [timeRange, setTimeRange] = useState({ start: 0, end: duration })
+
+  // A rerun can change the run length while this tab stays mounted; resync the window to it.
+  useEffect(() => {
+    setTimeRange({ start: 0, end: duration })
+  }, [duration])
 
   // const example = useSelector((state) => state);
   // console.log('FlowPanel example state:', example);
@@ -43,7 +48,6 @@ export function FlowDiagram() {
 
   const [selectedSpecies, setSelectedSpecies] = useState([])
   const [reactionTypes, setReactionTypes] = useState([])
-  const [concentrationUnitId, setConcentrationUnitId] = useConcentrationUnit()
 
   // If no simulation results, show placeholder
   const simulation = useSelector((state) => state.simulation)
@@ -56,12 +60,17 @@ export function FlowDiagram() {
   // Mixing-ratio units convert each interval's increase with that interval's own air density,
   // so every flux value (edges, labels and the range) is already in the selected unit.
   // Relative mode shows percentages, which have no unit.
-  const environmentSeries = useEnvironmentSeries(simulation.excludedResults)
+  const {
+    unitId: concentrationUnitId,
+    units: concentrationUnits,
+    setUnitId: setConcentrationUnitId,
+    airDensities,
+  } = useResultsConcentrationUnit(simulation.excludedResults)
   const fluxUnit = valueDisplay === 'relative' ? 'mol_m3' : concentrationUnitId
   const fluxUnitLabel = CONCENTRATION_UNITS.find((u) => u.id === fluxUnit)?.label ?? 'mol m-3'
   const intervalDivisors = useMemo(
-    () => buildIntervalDivisors(fluxUnit, environmentSeries),
-    [fluxUnit, environmentSeries]
+    () => buildIntervalDivisors(fluxUnit, airDensities),
+    [fluxUnit, airDensities]
   )
 
   useEffect(() => {
@@ -156,6 +165,7 @@ export function FlowDiagram() {
             valueDisplay={valueDisplay}
             setValueDisplay={setValueDisplay}
             concentrationUnitId={concentrationUnitId}
+            concentrationUnits={concentrationUnits}
             setConcentrationUnitId={setConcentrationUnitId}
             fluxUnitLabel={fluxUnitLabel}
           />

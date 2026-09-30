@@ -2,17 +2,15 @@ import { describe, it, expect } from 'vitest'
 import {
   CONCENTRATION_UNITS,
   airDensityMolM3,
+  buildIntervalDivisors,
   concentrationDivisor,
   fromMolM3,
+  fromMolM3Array,
   isMixingRatioUnit,
   toMolM3,
 } from '../src/utils/concentrationUnits'
-import {
-  DENSITY_SERIES_KEY,
-  airDensitySeries,
-  buildEnvironmentSeries,
-  buildIntervalDivisors,
-} from '../src/utils/environmentSeries'
+import { normalizeSimulationResults } from '../src/services/simulation/local/results'
+import { airDensitiesFromResults, buildEnvironmentSeries } from '../src/utils/environmentSeries'
 import {
   computeIntegratedReactionRate,
   computeReactionSeries,
@@ -56,86 +54,116 @@ describe('concentration unit conversion', () => {
   })
 })
 
+const solved = (rows) =>
+  rows.map(([time, temperature, pressure, airDensity]) => ({
+    time,
+    concentrations: {},
+    environment: { temperature, pressure, airDensity },
+  }))
+
 describe('environment series', () => {
-  const conditions = {
-    initial: { temperature: 300, pressure: 100000 },
-    evolving: {
-      enabled: true,
-      times: [0, 10],
-      temperature: [null, 250],
-      pressure: [null, 90000],
-    },
-  }
-  const results = [{ time: 0 }, { time: 5 }, { time: 10 }, { time: 20 }]
-
-  it('steps evolving values in at their time and keeps initial ones before', () => {
-    const series = buildEnvironmentSeries(conditions, results)
-    expect(series.map((p) => p.temperature)).toEqual([300, 300, 250, 250])
-    expect(series.map((p) => p.pressure)).toEqual([100000, 100000, 90000, 90000])
+  it('reads temperature and pressure from the solver output', () => {
+    const series = buildEnvironmentSeries(
+      solved([
+        [0, 300, 100000, 40.1],
+        [10, 250, 90000, 43.3],
+      ])
+    )
+    expect(series).toEqual([
+      { time: 0, temperature: 300, pressure: 100000 },
+      { time: 10, temperature: 250, pressure: 90000 },
+    ])
   })
 
-  it('uses initial conditions throughout when evolving is disabled', () => {
-    const series = buildEnvironmentSeries({ ...conditions, evolving: { enabled: false } }, results)
-    expect(series.every((p) => p.temperature === 300)).toBe(true)
+  it('returns nothing for missing results', () => {
+    expect(buildEnvironmentSeries(null)).toEqual([])
+  })
+})
+
+describe('air densities from results', () => {
+  it('uses the solver density as is, without recomputing from temperature and pressure', () => {
+    expect(airDensitiesFromResults(solved([[0, 300, 100000, 55], [5, 300, 100000, 56]]))).toEqual([
+      55, 56,
+    ])
   })
 
-  it('prefers a provided air density over the ideal gas law, carrying it forward', () => {
-    const withDensity = {
-      ...conditions,
-      evolving: {
-        ...conditions.evolving,
-        additionalSeries: { [DENSITY_SERIES_KEY]: [null, 55] },
-      },
-    }
-    const series = buildEnvironmentSeries(withDensity, results)
-    expect(series.map((p) => p.density)).toEqual([null, null, 55, 55])
-    const densities = airDensitySeries(series)
-    expect(densities[0]).toBeCloseTo(airDensityMolM3(100000, 300), 10)
-    expect(densities.slice(2)).toEqual([55, 55])
+  it('reports none when any point lacks a density, rather than guessing', () => {
+    expect(airDensitiesFromResults(solved([[0, 300, 100000, 55], [5, 300, 100000, null]]))).toBeNull()
+    expect(airDensitiesFromResults(solved([[0, 300, 100000, 0]]))).toBeNull()
+    expect(airDensitiesFromResults([{ time: 0, concentrations: {} }])).toBeNull()
+    expect(airDensitiesFromResults(null)).toBeNull()
+    expect(airDensitiesFromResults([])).toBeNull()
+  })
+})
+
+describe('array conversion', () => {
+  it('converts each value with its own air density', () => {
+    const densities = [40, 50]
+    expect(fromMolM3Array([4e-8, 5e-8], 'ppb', densities)).toEqual([
+      fromMolM3(4e-8, 'ppb', 40),
+      fromMolM3(5e-8, 'ppb', 50),
+    ])
+    expect(fromMolM3Array([1, 2], 'mol_m3', densities)).toEqual([1, 2])
   })
 })
 
 describe('interval divisors', () => {
-  const series = buildEnvironmentSeries(
-    {
-      initial: { temperature: 300, pressure: 100000 },
-      evolving: { enabled: true, times: [0, 10], temperature: [null, 250], pressure: [null, 90000] },
-    },
-    [{ time: 0 }, { time: 5 }, { time: 10 }, { time: 20 }]
-  )
+  const densities = [airDensityMolM3(100000, 300), airDensityMolM3(100000, 300), airDensityMolM3(90000, 250), airDensityMolM3(90000, 250)]
+  const times = [0, 5, 10, 20]
 
-  it('is null when the unit needs no air density', () => {
-    expect(buildIntervalDivisors('mol_m3', series)).toBeNull()
+  it('is null when the unit needs no air density, or none is known', () => {
+    expect(buildIntervalDivisors('mol_m3', densities)).toBeNull()
+    expect(buildIntervalDivisors('ppb', null)).toBeNull()
   })
 
   it('sums each interval converted with its own density', () => {
-    const divisors = buildIntervalDivisors('ppb', series)
-    const results = [0, 1, 3, 6].map((v, i) => ({
-      time: series[i].time,
-      concentrations: { 'tracer.0': v },
-    }))
+    const divisors = buildIntervalDivisors('ppb', densities)
     const reaction = { name: 'r' }
-    const keys = buildTracerConcentrationKeys(0, reaction.name)
-    const withKeys = results.map((r) => ({
-      time: r.time,
-      concentrations: { [keys[0]]: r.concentrations['tracer.0'] },
+    const [key] = buildTracerConcentrationKeys(0, reaction.name)
+    const results = [0, 1, 3, 6].map((value, i) => ({
+      time: times[i],
+      concentrations: { [key]: value },
     }))
+
     const expected = 1 / divisors[0] + 2 / divisors[1] + 3 / divisors[2]
-    expect(computeIntegratedReactionRate(reaction, 0, withKeys, 0, 20, divisors)).toBeCloseTo(
+    expect(computeIntegratedReactionRate(reaction, 0, results, 0, 20, divisors)).toBeCloseTo(
       expected,
       12
     )
     // Without divisors it is still the plain difference between the window's endpoints.
-    expect(computeIntegratedReactionRate(reaction, 0, withKeys, 0, 20)).toBe(6)
+    expect(computeIntegratedReactionRate(reaction, 0, results, 0, 20)).toBe(6)
 
     const cumulative = computeReactionSeries(
       [{ key: 'r', reaction, index: 0 }],
-      withKeys,
+      results,
       0,
       20,
       divisors
     ).map((p) => p.r)
     expect(cumulative[0]).toBe(0)
     expect(cumulative[3]).toBeCloseTo(expected, 12)
+  })
+})
+
+describe('solver output parsing', () => {
+  it('carries the environment columns beside, not among, the concentrations', () => {
+    const [point] = normalizeSimulationResults({
+      columns: [
+        'time.s',
+        'ENV.temperature.K',
+        'ENV.pressure.Pa',
+        'ENV.air number density.mol m-3',
+        'CONC.O3.mol m-3',
+      ],
+      data: {
+        'time.s': [0],
+        'ENV.temperature.K': [298.15],
+        'ENV.pressure.Pa': [101325],
+        'ENV.air number density.mol m-3': [40.87],
+        'CONC.O3.mol m-3': [1e-6],
+      },
+    })
+    expect(point.environment).toEqual({ temperature: 298.15, pressure: 101325, airDensity: 40.87 })
+    expect(Object.keys(point.concentrations)).toEqual(['CONC.O3.mol m-3'])
   })
 })
