@@ -23,9 +23,11 @@ import {
   ensureZeroTimeRow,
   insertTimeRow,
   removeTimeRows,
+  rowHasValues,
   rowHasConcentrations,
   setCell,
 } from '../../services/conditions/table'
+import { HideUnsetRowsCheckbox } from './HideUnsetRowsCheckbox'
 
 const EDITOR_GRID = 'grid grid-cols-1 gap-4 lg:grid-cols-[auto_1fr] lg:items-start'
 
@@ -83,6 +85,7 @@ export function EnvironmentTab() {
   const [densityEnabled, setDensityEnabled] = useState(false)
   const [newDensity, setNewDensity] = useState('')
   const [selectedIndices, setSelectedIndices] = useState(new Set())
+  const [hideUnsetRows, setHideUnsetRows] = useState(false)
   const [rowDrafts, setRowDrafts] = useState({})
   const [justUpdatedCell, setJustUpdatedCell] = useState(null)
 
@@ -143,7 +146,16 @@ export function EnvironmentTab() {
     setNewDensity('')
   }
 
-  const removableIndices = times.map((_, index) => index)
+  const shownColumnValues = [temperatures, pressures, densitySeries]
+  const timeEntries = times
+    .map((time, index) => ({ time, index }))
+    .filter(({ index }) => !hideUnsetRows || rowHasValues(shownColumnValues, index))
+  const removableIndices = timeEntries.map((entry) => entry.index)
+
+  const handleHideUnsetRowsChange = (checked) => {
+    setHideUnsetRows(checked)
+    setSelectedIndices(new Set())
+  }
 
   const toggleSelected = (index) => {
     if (!removableIndices.includes(index)) return
@@ -167,7 +179,11 @@ export function EnvironmentTab() {
   }
 
   const handleRemoveSelected = () => {
-    const result = removeTimeRows(table, selectedIndices)
+    // Only rows the user can see are removed, so a hidden row never disappears unseen.
+    const result = removeTimeRows(
+      table,
+      [...selectedIndices].filter((index) => removableIndices.includes(index))
+    )
     if (!result) return
 
     dispatch(setConditionsTable(result.table))
@@ -437,16 +453,19 @@ export function EnvironmentTab() {
                 {times.length} condition{times.length === 1 ? '' : 's'}
               </CardTitle>
             </div>
-            {selectedIndices.size > 0 && (
-              <Button
-                variant="glass"
-                size="sm"
-                onClick={handleRemoveSelected}
-                className="rounded-lg bg-white text-red-600 hover:bg-red-50 flex-shrink-0"
-              >
-                Remove selected ({selectedIndices.size})
-              </Button>
-            )}
+            <div className="flex items-center gap-2 flex-shrink-0">
+              <HideUnsetRowsCheckbox checked={hideUnsetRows} onChange={handleHideUnsetRowsChange} />
+              {selectedIndices.size > 0 && (
+                <Button
+                  variant="glass"
+                  size="sm"
+                  onClick={handleRemoveSelected}
+                  className="rounded-lg bg-white text-red-600 hover:bg-red-50 flex-shrink-0"
+                >
+                  Remove selected ({selectedIndices.size})
+                </Button>
+              )}
+            </div>
           </div>
         </CardHeader>
         <CardContent className={LIST_CARD_CONTENT}>
@@ -483,7 +502,14 @@ export function EnvironmentTab() {
                       </tr>
                     </thead>
                     <tbody>
-                      {times.map((time, index) => {
+                      {timeEntries.length === 0 && (
+                        <tr>
+                          <td colSpan={hasDensityColumn ? 5 : 4} className="px-4 py-8 text-center text-gray-500">
+                            No rows have values for the columns shown.
+                          </td>
+                        </tr>
+                      )}
+                      {timeEntries.map(({ time, index }) => {
                         const density = densitySeries?.[index]
 
                         return (

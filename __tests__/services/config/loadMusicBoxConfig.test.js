@@ -4,7 +4,11 @@ import { configureStore } from '@reduxjs/toolkit'
 import mechanismReducer, { addSpecies, addReaction } from '../../../src/redux/slices/mechanismSlice'
 import conditionsReducer from '../../../src/redux/slices/conditionsSlice'
 import simulationReducer, { setStatus } from '../../../src/redux/slices/simulationSlice'
-import { loadMusicBoxConfig, toReduxConfig } from '../../../src/services/config/loadMusicBoxConfig'
+import {
+  loadMusicBoxConfig,
+  notifyIgnoredThirdBodySpecies,
+  toReduxConfig,
+} from '../../../src/services/config/loadMusicBoxConfig'
 
 // Exercises loadMusicBoxConfig directly -- the step between parsing an uploaded/example config
 // and it actually landing in Redux, which nothing else in the suite calls outside of
@@ -178,6 +182,37 @@ describe('loadMusicBoxConfig', () => {
     expect(state.mechanism.selectedMechanism).toBe('Chapman Mechanism')
   })
 
+  it('ignores a third-body concentration and reports the species', async () => {
+    const config = baseConfig({
+      conditions: {
+        data: [{ headers: ['time.s', 'CONC.A.mol m-3', 'CONC.B.mol m-3'], rows: [[0, 1, 2]] }],
+      },
+    })
+    const store = makeStore()
+    const result = await loadMusicBoxConfig(config, {
+      dispatch: store.dispatch,
+      navigate: vi.fn(),
+      meta: {},
+    })
+
+    // B is the third body in baseConfig.
+    expect(result).toEqual({ ignoredThirdBodySpecies: ['B'] })
+    expect(store.getState().conditions.table).toEqual({
+      times: [0],
+      columns: { 'CONC.A.mol m-3': [1] },
+    })
+  })
+
+  it('reports nothing when no third-body concentration is set', async () => {
+    const store = makeStore()
+    const result = await loadMusicBoxConfig(baseConfig(), {
+      dispatch: store.dispatch,
+      navigate: vi.fn(),
+      meta: {},
+    })
+    expect(result).toEqual({ ignoredThirdBodySpecies: [] })
+  })
+
   it('falls back to the example id, then "custom", when no mechanism_name is given', async () => {
     expect(
       (await load(baseConfig(), { id: 'uploaded' })).store.getState().mechanism.selectedMechanism
@@ -263,5 +298,22 @@ describe('toReduxConfig', () => {
 
     expect(reaction.reactants).toEqual([{ name: 'A', coefficient: 2, __note: 'kept' }])
     expect(reaction.products).toEqual([{ name: 'C', coefficient: 1 }])
+  })
+})
+
+describe('notifyIgnoredThirdBodySpecies', () => {
+  it('warns with the species and the reason', () => {
+    const notify = { warning: vi.fn() }
+    notifyIgnoredThirdBodySpecies(notify, ['M'])
+    expect(notify.warning).toHaveBeenCalledWith(
+      'Third-Body Concentrations Ignored',
+      expect.stringMatching(/for M\. This is a third-body species: .*air density/)
+    )
+  })
+
+  it('does not warn when nothing was ignored', () => {
+    const notify = { warning: vi.fn() }
+    notifyIgnoredThirdBodySpecies(notify, [])
+    expect(notify.warning).not.toHaveBeenCalled()
   })
 })

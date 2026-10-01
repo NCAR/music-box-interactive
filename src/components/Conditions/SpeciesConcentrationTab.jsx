@@ -12,13 +12,16 @@ import { UnitDropdown } from '../Plots/UnitDropdown'
 import { CONCENTRATION_UNITS, toMolM3, fromMolM3 } from '../../utils/concentrationUnits'
 import { airDensityAtTime } from '../../utils/environmentSeries'
 import { buildConditionsManager } from '../../services/simulation/local/conditions'
+import { isThirdBody } from '../../services/simulation/local/speciesProperties'
 import {
   commitTime as commitTableTime,
   ensureZeroTimeRow,
   insertTimeRow,
   removeTimeRows,
+  rowHasValues,
   setCell,
 } from '../../services/conditions/table'
+import { HideUnsetRowsCheckbox } from './HideUnsetRowsCheckbox'
 
 const filterButtonClass = (selected) =>
   `w-full text-left text-sm px-1.5 py-1 rounded ${
@@ -42,6 +45,10 @@ const formatValue = (value) => {
 }
 
 const hasName = (species) => typeof species.name === 'string' && species.name.trim() !== ''
+
+const THIRD_BODY_TOOLTIP =
+  'This is a third-body species. The solver gets its concentration from the air density, so ' +
+  'its concentration cannot be set.'
 
 const CONC_PREFIX = 'CONC.'
 
@@ -72,6 +79,7 @@ export function SpeciesConcentrationTab() {
 
   const [selectedSpeciesNames, setSelectedSpeciesNames] = useState(new Set())
   const [speciesSearch, setSpeciesSearch] = useState('')
+  const [hideUnsetRows, setHideUnsetRows] = useState(false)
   const [concentrationUnitId, setConcentrationUnitId] = useState('mol_m3')
   const [rowDrafts, setRowDrafts] = useState({})
   const [justUpdatedCell, setJustUpdatedCell] = useState(null)
@@ -86,6 +94,9 @@ export function SpeciesConcentrationTab() {
   useClickOutside(addTimeRef, () => setAddTimeOpen(false), addTimeOpen)
 
   const namedSpecies = mechanismSpecies.filter(hasName)
+  // Third-body species stay in the list and the search, but they cannot be selected.
+  const selectableSpecies = namedSpecies.filter((species) => !isThirdBody(species))
+  const thirdBodyNames = new Set(namedSpecies.filter(isThirdBody).map((species) => species.name))
 
   const speciesQuery = speciesSearch.trim().toLowerCase()
   const filteredSpecies = speciesQuery
@@ -95,7 +106,10 @@ export function SpeciesConcentrationTab() {
   // Keep the selection pointed at species that are still present, falling back to the first
   // few in the mechanism when it changes out from under the current selection.
   useEffect(() => {
-    const currentSpecies = mechanismSpecies.filter(hasName)
+    // A species that becomes a third body is deselected.
+    const currentSpecies = mechanismSpecies.filter(
+      (species) => hasName(species) && !isThirdBody(species)
+    )
     setSelectedSpeciesNames((prev) => {
       const stillValid = [...prev].filter((name) =>
         currentSpecies.some((species) => species.name === name)
@@ -117,6 +131,7 @@ export function SpeciesConcentrationTab() {
   )
 
   const toggleSpeciesName = (name) => {
+    if (thirdBodyNames.has(name)) return
     setSelectedSpeciesNames((prev) => {
       const next = new Set(prev)
       if (next.has(name)) next.delete(name)
@@ -126,7 +141,7 @@ export function SpeciesConcentrationTab() {
   }
 
   const handleSelectAllSpecies = () => {
-    const names = namedSpecies.map((species) => species.name)
+    const names = selectableSpecies.map((species) => species.name)
     setSelectedSpeciesNames(new Set(names.slice(0, MAX_SELECTED_SPECIES)))
     if (names.length > MAX_SELECTED_SPECIES) {
       notify.warning('Selection Limited', `Selected the first ${MAX_SELECTED_SPECIES} of ${names.length} species. Use search to select others.`)
@@ -154,14 +169,18 @@ export function SpeciesConcentrationTab() {
     name: species.name,
   }))
 
-  const timeEntries = rowTimes.map((time, index) => ({ time, index }))
+  const shownColumnValues = columns.map((column) => tableColumns[column.key])
+  const allTimeEntries = rowTimes.map((time, index) => ({ time, index }))
+  const timeEntries = hideUnsetRows
+    ? allTimeEntries.filter(({ index }) => rowHasValues(shownColumnValues, index))
+    : allTimeEntries
   const removableIndices = timeEntries.map((entry) => entry.index)
 
   useEffect(() => {
     setRowDrafts({})
     setJustUpdatedCell(null)
     setSelectedIndices(new Set())
-  }, [selectedSpeciesNames, rowTimes])
+  }, [selectedSpeciesNames, rowTimes, hideUnsetRows])
 
   const cellDraftKey = (key, index) => `${key}::${index}`
 
@@ -258,7 +277,11 @@ export function SpeciesConcentrationTab() {
   }
 
   const handleRemoveSelected = () => {
-    const result = removeTimeRows(table, selectedIndices)
+    // Only rows the user can see are removed, so a hidden row never disappears unseen.
+    const result = removeTimeRows(
+      table,
+      [...selectedIndices].filter((index) => removableIndices.includes(index))
+    )
     if (!result) return
 
     dispatch(setConditionsTable(result.table))
@@ -304,6 +327,7 @@ export function SpeciesConcentrationTab() {
             </CardDescription>
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
+            <HideUnsetRowsCheckbox checked={hideUnsetRows} onChange={setHideUnsetRows} />
             {/* Always mounted (just hidden) so the header's height never shifts */}
             <Button
               variant="glass"
@@ -411,16 +435,28 @@ export function SpeciesConcentrationTab() {
                   </div>
 
                   <div className="flex flex-col gap-0.5">
-                    {visibleSpecies.map((species) => (
-                      <button
-                        key={species.id ?? species.name}
-                        type="button"
-                        onClick={() => toggleSpeciesName(species.name)}
-                        className={filterButtonClass(selectedSpeciesNames.has(species.name))}
-                      >
-                        {species.name}
-                      </button>
-                    ))}
+                    {visibleSpecies.map((species) =>
+                      isThirdBody(species) ? (
+                        <button
+                          key={species.id ?? species.name}
+                          type="button"
+                          disabled
+                          title={THIRD_BODY_TOOLTIP}
+                          className="w-full text-left text-sm px-1.5 py-1 rounded text-gray-400 cursor-not-allowed"
+                        >
+                          {species.name}
+                        </button>
+                      ) : (
+                        <button
+                          key={species.id ?? species.name}
+                          type="button"
+                          onClick={() => toggleSpeciesName(species.name)}
+                          className={filterButtonClass(selectedSpeciesNames.has(species.name))}
+                        >
+                          {species.name}
+                        </button>
+                      )
+                    )}
 
                     {overflowSpecies.length > 0 && (
                       <div className="relative" ref={speciesOverflowRef}>
@@ -438,8 +474,14 @@ export function SpeciesConcentrationTab() {
                               <button
                                 key={species.id ?? species.name}
                                 type="button"
+                                disabled={isThirdBody(species)}
+                                title={isThirdBody(species) ? THIRD_BODY_TOOLTIP : undefined}
                                 onClick={() => toggleSpeciesName(species.name)}
-                                className="w-full flex items-center gap-2 text-left text-sm px-3 py-1.5 text-ink hover:bg-surface-hover"
+                                className={`w-full flex items-center gap-2 text-left text-sm px-3 py-1.5 ${
+                                  isThirdBody(species)
+                                    ? 'text-gray-400 cursor-not-allowed'
+                                    : 'text-ink hover:bg-surface-hover'
+                                }`}
                               >
                                 <Check
                                   className={`w-3.5 h-3.5 flex-shrink-0 ${
@@ -497,6 +539,13 @@ export function SpeciesConcentrationTab() {
                     </tr>
                   </thead>
                   <tbody>
+                    {timeEntries.length === 0 && (
+                      <tr>
+                        <td colSpan={columns.length + 2} className="px-4 py-8 text-center text-gray-500">
+                          No rows have values for the columns shown.
+                        </td>
+                      </tr>
+                    )}
                     {timeEntries.map(({ time, index }) => {
                       const airDensity = airDensityAtTime(conditionsManager, time)
 

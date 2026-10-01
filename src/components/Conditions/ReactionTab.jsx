@@ -18,8 +18,15 @@ import {
   ensureZeroTimeRow,
   insertTimeRow,
   removeTimeRows,
+  rowHasValues,
   setCell,
 } from '../../services/conditions/table'
+import {
+  SURFACE_PROPERTIES,
+  defaultRateHeader,
+  rateParameterUnit,
+} from '../../services/conditions/conditionItems'
+import { HideUnsetRowsCheckbox } from './HideUnsetRowsCheckbox'
 
 const filterButtonClass = (selected) =>
   `w-full text-left text-sm px-1.5 py-1 rounded ${
@@ -68,7 +75,25 @@ const REACTION_TYPES = [
   { id: 'SURFACE', label: 'Surface', prefix: 'SURF' },
   { id: 'EMISSION', label: 'Emissions', prefix: 'EMIS' },
   { id: 'FIRST_ORDER_LOSS', label: 'Loss', prefix: 'LOSS' },
+  { id: 'USER_DEFINED', label: 'User defined', prefix: 'USER' },
 ]
+
+// The surface properties to offer: the two that music-box knows, plus any other property
+// that the table holds for a surface reaction of the mechanism.
+const surfacePropertiesFor = (reactions, tableColumns) => {
+  const stored = reactions
+    .filter((reaction) => reaction.type === 'SURFACE' && hasName(reaction))
+    .flatMap((reaction) => {
+      const prefix = `SURF.${reaction.name}.`
+      return Object.keys(tableColumns || {})
+        .filter((key) => key.startsWith(prefix))
+        .map((key) => stripPropertyUnit(key.slice(prefix.length)))
+    })
+  const known = SURFACE_PROPERTIES.map((p) => p.property)
+  return [...known, ...[...new Set(stored)].filter((property) => !known.includes(property)).sort()]
+}
+
+const withUnit = (label, unit) => (unit ? `${label} (${unit})` : label)
 
 /**
  * ReactionTab Component
@@ -92,6 +117,7 @@ export function ReactionTab() {
   const [selectedReactionNames, setSelectedReactionNames] = useState(new Set())
   const [selectedSurfaceProperty, setSelectedSurfaceProperty] = useState(null)
   const [reactionSearch, setReactionSearch] = useState('')
+  const [hideUnsetRows, setHideUnsetRows] = useState(false)
   const [rowDrafts, setRowDrafts] = useState({})
   const [justUpdatedCell, setJustUpdatedCell] = useState(null)
   const [selectedIndices, setSelectedIndices] = useState(new Set())
@@ -127,20 +153,13 @@ export function ReactionTab() {
     ? reactionsOfType.filter((reaction) => reaction.name.toLowerCase().includes(reactionQuery))
     : reactionsOfType
 
-  // When a surface reaction is present, the nested surface dropdown lists its two available properties:
+  // When a surface reaction is present, the nested surface dropdown lists its properties:
   // effective radius and particle number concentration.
-  const surfacePropertyOptions = [
-    ...new Set(
-      mechanismReactions
-        .filter((reaction) => reaction.type === 'SURFACE' && hasName(reaction))
-        .flatMap((reaction) => {
-          const prefix = `SURF.${reaction.name}.`
-          return Object.keys(tableColumns || {})
-            .filter((key) => key.startsWith(prefix))
-            .map((key) => stripPropertyUnit(key.slice(prefix.length)))
-        })
-    ),
-  ].sort()
+  const surfacePropertyOptions = surfacePropertiesFor(mechanismReactions, tableColumns)
+
+  // All the values in the table have the same unit, from the reaction type (and, for a
+  // surface reaction, the selected property).
+  const valueUnit = rateParameterUnit(reactionType.prefix, isSurface ? selectedSurfaceProperty : null)
 
   // Selected reactions beyond the visible cap stay visible until deselected.
   const baseVisibleReactions = filteredReactionsOfType.slice(0, REACTIONS_VISIBLE)
@@ -201,18 +220,7 @@ export function ReactionTab() {
   // selector outputs -- rather than depending on surfacePropertyOptions, which is a fresh array
   // every render.
   useEffect(() => {
-    const options = [
-      ...new Set(
-        mechanismReactions
-          .filter((reaction) => reaction.type === 'SURFACE' && hasName(reaction))
-          .flatMap((reaction) => {
-            const prefix = `SURF.${reaction.name}.`
-            return Object.keys(tableColumns || {})
-              .filter((key) => key.startsWith(prefix))
-              .map((key) => stripPropertyUnit(key.slice(prefix.length)))
-          })
-      ),
-    ]
+    const options = surfacePropertiesFor(mechanismReactions, tableColumns)
     setSelectedSurfaceProperty((prev) => (options.includes(prev) ? prev : (options[0] ?? null)))
   }, [mechanismReactions, tableColumns])
 
@@ -231,14 +239,21 @@ export function ReactionTab() {
           candidate.startsWith(surfacePrefix) &&
           stripPropertyUnit(candidate.slice(surfacePrefix.length)) === selectedSurfaceProperty
       )
-      return key ? [{ key, label: reaction.name }] : []
+      return [
+        {
+          key: key ?? defaultRateHeader('SURF', reaction.name, selectedSurfaceProperty),
+          label: reaction.name,
+        },
+      ]
     }
 
     const bareKey = `${reactionType.prefix}.${reaction.name}`
     const existingKey = Object.keys(tableColumns || {}).find(
       (key) => key === bareKey || key.startsWith(`${bareKey}.`)
     )
-    return [{ key: existingKey ?? bareKey, label: reaction.name }]
+    return [
+      { key: existingKey ?? defaultRateHeader(reactionType.prefix, reaction.name), label: reaction.name },
+    ]
   })
 
   // Row indices where the active type already has a value, checked across every reaction of
@@ -269,13 +284,17 @@ export function ReactionTab() {
   // A row shows under the active type if it has no type tags (added from Environment, or
   // predates this feature -- universal), was added/re-added under this type, or already has
   // data here.
-  const visibleTimeEntries = rowTimes
+  const typeTimeEntries = rowTimes
     .map((time, index) => ({ time, index }))
     .filter(({ time, index }) => {
       const tags = rowReactionTypes[String(time)]
       if (!Array.isArray(tags) || tags.length === 0 || tags.includes(reactionTypeId)) return true
       return typeDataIndices.has(index)
     })
+  const shownColumnValues = columns.map((column) => tableColumns[column.key])
+  const visibleTimeEntries = hideUnsetRows
+    ? typeTimeEntries.filter(({ index }) => rowHasValues(shownColumnValues, index))
+    : typeTimeEntries
   const removableIndices = visibleTimeEntries.map((entry) => entry.index)
 
   // Clear on rowTimes changing
@@ -283,7 +302,7 @@ export function ReactionTab() {
     setRowDrafts({})
     setJustUpdatedCell(null)
     setSelectedIndices(new Set())
-  }, [selectedReactionNames, reactionTypeId, rowTimes])
+  }, [selectedReactionNames, reactionTypeId, rowTimes, hideUnsetRows])
 
   const cellDraftKey = (key, index) => `${key}::${index}`
 
@@ -379,7 +398,11 @@ export function ReactionTab() {
   }
 
   const handleRemoveSelected = () => {
-    const result = removeTimeRows(table, selectedIndices)
+    // Only rows the user can see are removed, so a hidden row never disappears unseen.
+    const result = removeTimeRows(
+      table,
+      [...selectedIndices].filter((index) => removableIndices.includes(index))
+    )
     if (!result) return
 
     dispatch(setConditionsTable(result.table))
@@ -436,10 +459,11 @@ export function ReactionTab() {
               {'Rate constant parameters'}
             </CardTitle>
             <CardDescription className="whitespace-nowrap">
-              Set time-varying rate constant parameters
+              Set time-varying rate constant parameters{valueUnit ? `, in ${valueUnit}` : ''}
             </CardDescription>
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
+            <HideUnsetRowsCheckbox checked={hideUnsetRows} onChange={setHideUnsetRows} />
             {/* Always mounted (just hidden) so the header's height never shifts */}
             <Button
               variant="glass"
@@ -539,7 +563,7 @@ export function ReactionTab() {
                                 onClick={() => setSelectedSurfaceProperty(property)}
                                 className={filterButtonClass(selectedSurfaceProperty === property)}
                               >
-                                {property}
+                                {withUnit(property, rateParameterUnit('SURF', property))}
                               </button>
                             ))}
                           </div>
@@ -650,7 +674,7 @@ export function ReactionTab() {
                 <p className="text-center text-gray-500 py-8">
                   No rate constant parameters configured
                 </p>
-              ) : visibleTimeEntries.length === 0 ? (
+              ) : typeTimeEntries.length === 0 ? (
                 <p className="text-center text-gray-500 py-8">
                   No time points for {reactionType.label} yet. Click "Add" above to create one.
                 </p>
@@ -686,11 +710,21 @@ export function ReactionTab() {
                       {columns.map((column) => (
                         <th key={column.key} className="text-left px-4 py-2 font-semibold">
                           {column.label}
+                          {valueUnit && (
+                            <span className="ml-1 font-normal whitespace-nowrap">({valueUnit})</span>
+                          )}
                         </th>
                       ))}
                     </tr>
                   </thead>
                   <tbody>
+                    {visibleTimeEntries.length === 0 && (
+                      <tr>
+                        <td colSpan={columns.length + 2} className="px-4 py-8 text-center text-gray-500">
+                          No rows have values for the columns shown.
+                        </td>
+                      </tr>
+                    )}
                     {visibleTimeEntries.map(({ time, index }) => (
                       <tr key={index} className="border-b border-gray-200 hover:bg-gray-50">
                         <td className="px-4 py-2">

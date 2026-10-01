@@ -204,3 +204,37 @@ export function rowHasConcentrations(table, index) {
     ([header, values]) => header.startsWith('CONC.') && isFiniteNumber(values?.[index])
   )
 }
+
+// Whether any of the columns (value arrays, or undefined for a missing column) has a value in
+// the row at `index`. The "Hide unset rows" filter of the Conditions tabs uses this.
+export function rowHasValues(columns, index) {
+  return columns.some((values) => isFiniteNumber(values?.[index]))
+}
+
+// The table without the concentration columns of `speciesNames`. A row that only had values in
+// those columns is removed too. Returns { table, dropped }, where `dropped` lists the species
+// that had a value.
+export function dropConcentrations(table, speciesNames) {
+  const names = new Set(speciesNames)
+  const isDropped = (header) => header.startsWith('CONC.') && names.has(header.split('.')[1])
+  const droppedHeaders = Object.keys(table.columns).filter(isDropped)
+  if (droppedHeaders.length === 0) return { table, dropped: [] }
+
+  const kept = Object.keys(table.columns).filter((header) => !isDropped(header))
+  const keptValues = kept.map((header) => columnValues(table, header))
+  const droppedValues = droppedHeaders.map((header) => columnValues(table, header))
+  const emptiedRows = table.times
+    .map((_, index) => index)
+    .filter((index) => rowHasValues(droppedValues, index) && !rowHasValues(keptValues, index))
+
+  const keptTable = {
+    times: table.times,
+    columns: Object.fromEntries(kept.map((header, i) => [header, keptValues[i]])),
+  }
+  return {
+    table: removeTimeRows(keptTable, emptiedRows)?.table ?? keptTable,
+    dropped: droppedHeaders
+      .filter((_, i) => droppedValues[i].some((value) => value !== null))
+      .map((header) => header.split('.')[1]),
+  }
+}

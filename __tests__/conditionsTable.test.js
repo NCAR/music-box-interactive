@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest'
 import {
   columnValues,
   commitTime,
+  dropConcentrations,
   ensureZeroTimeRow,
   findHeader,
   insertTimeRow,
@@ -93,5 +94,33 @@ describe('row operations', () => {
     expect(findHeader(table(), 'PHOTO.j')).toBe('PHOTO.j.s-1')
     expect(findHeader(table(), 'PHOTO.j.1/s')).toBe('PHOTO.j.s-1')
     expect(findHeader(table(), 'CONC.O3')).toBeUndefined()
+  })
+})
+
+describe('dropConcentrations', () => {
+  it('removes the columns of the species, and the rows that only they set', () => {
+    const result = dropConcentrations(
+      {
+        times: [0, 60, 120],
+        columns: {
+          'ENV.temperature.K': [300, null, null],
+          'CONC.M.mol m-3': [40, 41, null],
+          'CONC.O3.mol m-3': [1, null, 2],
+        },
+      },
+      ['M']
+    )
+    expect(result).toEqual({
+      dropped: ['M'],
+      table: {
+        times: [0, 120],
+        columns: { 'ENV.temperature.K': [300, null], 'CONC.O3.mol m-3': [1, 2] },
+      },
+    })
+  })
+
+  it('changes nothing when no column belongs to the species', () => {
+    const table = { times: [0], columns: { 'CONC.O3.mol m-3': [1] } }
+    expect(dropConcentrations(table, ['M'])).toEqual({ table, dropped: [] })
   })
 })

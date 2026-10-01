@@ -5,6 +5,7 @@ import { Button } from '../ui/button'
 import { useNotify } from '@/hooks/use-notify'
 import { EMPTY_ARRAY } from '../../utils/emptyArray'
 import { listConditionItems } from '../../services/conditions/conditionItems'
+import { isThirdBody } from '../../services/simulation/local/speciesProperties'
 import {
   ConditionsUploadError,
   buildConditionsUpload,
@@ -36,7 +37,11 @@ export function ConditionsButtons({ className = '' }) {
       const files = await readConditionsFiles(file)
       const parsed = files.map(parseConditionsCsv)
       const items = listConditionItems({ species, reactions, table })
-      setPendingUpload({ fileName: file.name, upload: buildConditionsUpload(parsed, items) })
+      const thirdBodyNames = new Set(species.filter(isThirdBody).map((entry) => entry.name))
+      setPendingUpload({
+        fileName: file.name,
+        upload: buildConditionsUpload(parsed, items, { thirdBodyNames }),
+      })
     } catch (error) {
       const message =
         error instanceof ConditionsUploadError ? error.message : 'The file could not be read.'

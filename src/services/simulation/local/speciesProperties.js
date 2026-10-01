@@ -78,3 +78,7 @@ export const pickDeclared = (source, keys) => {
   }
   return picked
 }
+
+// A third-body species (M and others) stands for all the molecules in the air. The solver
+// gets its concentration from the air density, so the conditions cannot set it.
+export const isThirdBody = (species) => species?.['is third body'] === true

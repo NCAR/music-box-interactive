@@ -81,11 +81,12 @@ export function parseConditionsCsv({ name, text }) {
   return { name, headers, rows }
 }
 
-// All the uploaded files, merged by time. Returns
+// All the uploaded files, merged by time. `thirdBodyNames` gives a clearer skip reason for the
+// concentration columns of third-body species, which `items` leaves out. Returns
 // { columns: [{ header, key, item, file }], skipped: [{ header, file, reason }], cells, times },
 // where cells is a Map of time -> Map of key -> number | null. A null is an empty cell in the
 // file. A key without an entry at a time is not in the file at that time.
-export function buildConditionsUpload(parsedFiles, items) {
+export function buildConditionsUpload(parsedFiles, items, { thirdBodyNames = new Set() } = {}) {
   const itemsByKey = new Map(items.map((item) => [item.key, item]))
   const columns = []
   const skipped = []
@@ -97,6 +98,14 @@ export function buildConditionsUpload(parsedFiles, items) {
       if (index === 0) return null
       const key = headerKey(header)
       const item = itemsByKey.get(key)
+      if (!item && key.startsWith('CONC.') && thirdBodyNames.has(key.slice('CONC.'.length))) {
+        skipped.push({
+          header,
+          file: name,
+          reason: 'third-body species; its concentration cannot be set',
+        })
+        return null
+      }
       if (!item) {
         const reason = /^(ENV|CONC|PHOTO|EMIS|LOSS|USER|SURF)\./.test(header)
           ? 'not in the mechanism'

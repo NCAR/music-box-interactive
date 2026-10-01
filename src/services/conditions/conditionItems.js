@@ -1,3 +1,4 @@
+import { isThirdBody } from '../simulation/local/speciesProperties'
 import {
   DENSITY_HEADER,
   PRESSURE_HEADER,
@@ -16,20 +17,40 @@ export const CATEGORIES = [
   { id: 'rate', label: 'Rate parameters', fileName: 'rate_parameters.csv' },
 ]
 
-// The mechanism reaction types that take a rate parameter from the conditions. A null unit
-// writes the header without a unit, because the unit of the value depends on the reaction.
+// The mechanism reaction types that take a rate parameter from the conditions, with the unit
+// of the value. A surface reaction has one value for each of SURFACE_PROPERTIES instead.
 export const RATE_TYPES = [
   { reactionType: 'PHOTOLYSIS', prefix: 'PHOTO', label: 'Photolysis', unit: 's-1' },
   { reactionType: 'EMISSION', prefix: 'EMIS', label: 'Emission', unit: 'mol m-3 s-1' },
   { reactionType: 'FIRST_ORDER_LOSS', prefix: 'LOSS', label: 'Loss', unit: 's-1' },
-  { reactionType: 'USER_DEFINED', prefix: 'USER', label: 'User defined', unit: null },
+  { reactionType: 'USER_DEFINED', prefix: 'USER', label: 'User defined', unit: 's-1' },
   { reactionType: 'SURFACE', prefix: 'SURF', label: 'Surface', unit: null },
 ]
 
-const SURFACE_PROPERTIES = [
-  { property: 'effective radius', unit: 'm' },
-  { property: 'particle number concentration', unit: '# m-3' },
+// `unit` is the header unit that music-box uses. `displayUnit` is the unit that the app shows.
+export const SURFACE_PROPERTIES = [
+  { property: 'effective radius', unit: 'm', displayUnit: 'm' },
+  { property: 'particle number concentration', unit: '# m-3', displayUnit: 'particles m-3' },
 ]
+
+// The header for a new rate-parameter column: PREFIX.name.unit, or
+// SURF.name.property.unit for a surface reaction.
+export function defaultRateHeader(prefix, name, property = null) {
+  if (prefix === 'SURF') {
+    const known = SURFACE_PROPERTIES.find((p) => p.property === property)
+    return known ? `SURF.${name}.${property}.${known.unit}` : `SURF.${name}.${property}`
+  }
+  const unit = RATE_TYPES.find((type) => type.prefix === prefix)?.unit
+  return unit ? `${prefix}.${name}.${unit}` : `${prefix}.${name}`
+}
+
+// The unit to show for a rate-parameter value. `property` is only for a surface reaction.
+export function rateParameterUnit(prefix, property = null) {
+  if (prefix === 'SURF') {
+    return SURFACE_PROPERTIES.find((p) => p.property === property)?.displayUnit ?? null
+  }
+  return RATE_TYPES.find((type) => type.prefix === prefix)?.unit ?? null
+}
 
 const ENVIRONMENT_ITEMS = [
   { header: TEMPERATURE_HEADER, label: 'Temperature', group: 'Temperature' },
@@ -61,15 +82,18 @@ export function listConditionItems({ species = [], reactions = [], table } = {})
   )
   const items = [...ENVIRONMENT_ITEMS]
 
-  species.filter(hasName).forEach((entry) => {
-    items.push({
-      key: `CONC.${entry.name}`,
-      header: `CONC.${entry.name}.mol m-3`,
-      label: entry.name,
-      category: 'species',
-      group: 'Species',
+  // A third-body species gets its concentration from the air density, so it has no column.
+  species
+    .filter((entry) => hasName(entry) && !isThirdBody(entry))
+    .forEach((entry) => {
+      items.push({
+        key: `CONC.${entry.name}`,
+        header: `CONC.${entry.name}.mol m-3`,
+        label: entry.name,
+        category: 'species',
+        group: 'Species',
+      })
     })
-  })
 
   const seen = new Set(items.map((item) => item.key))
   const addRateItem = (item) => {
@@ -84,9 +108,9 @@ export function listConditionItems({ species = [], reactions = [], table } = {})
       .forEach((reaction) => {
         if (type.prefix === 'SURF') {
           const prefix = `SURF.${reaction.name}.`
-          const properties = SURFACE_PROPERTIES.map(({ property, unit }) => ({
+          const properties = SURFACE_PROPERTIES.map(({ property }) => ({
             key: `${prefix}${property}`,
-            header: `${prefix}${property}.${unit}`,
+            header: defaultRateHeader('SURF', reaction.name, property),
           }))
           // A stored property that is not one of the two known ones still gets a column.
           stored.forEach((header, key) => {
@@ -108,7 +132,7 @@ export function listConditionItems({ species = [], reactions = [], table } = {})
         const key = `${type.prefix}.${reaction.name}`
         addRateItem({
           key,
-          header: stored.get(key) ?? (type.unit ? `${key}.${type.unit}` : key),
+          header: stored.get(key) ?? defaultRateHeader(type.prefix, reaction.name),
           label: reaction.name,
           group: type.label,
         })
