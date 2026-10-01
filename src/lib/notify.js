@@ -4,7 +4,7 @@
 //   invalidInput / error -> red     a value or action was rejected
 //   success              -> green   a confirmation that something was done
 //   warning              -> yellow  a limit, or a side effect the user should know about
-//   removed              -> red     something was deleted
+//   removed              -> blue    something was deleted, with a trash icon (not an error)
 //   info                 -> blue    a neutral notice (the default style)
 export const createNotify = (toast) => ({
   invalidInput: (description) => toast({ title: 'Invalid Input', description, variant: 'destructive' }),

@@ -27,7 +27,7 @@ const toastVariants = cva(
         success: 'success group border-[#5BA67A]',
         warning: 'warning group border-[#E8BE52]',
         destructive: 'destructive group border-[#E9665A]',
-        delete: 'delete group border-[#E9665A]',
+        delete: 'delete group border-[#3B7DD8]',
       },
     },
     defaultVariants: {

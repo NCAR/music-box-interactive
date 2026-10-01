@@ -1,10 +1,9 @@
 // Left-hand icon panel of a toast: a tinted panel with a filled glyph, colored per variant.
-// Removals share the error look, since they are red too.
 const STYLES = {
   success: { panel: '#D5EADF', glyph: '#5BA67A', shape: 'check' },
   warning: { panel: '#FAF0D2', glyph: '#E8BE52', shape: 'triangle' },
   destructive: { panel: '#F7CFCB', glyph: '#E9665A', shape: 'exclamation' },
-  delete: { panel: '#F7CFCB', glyph: '#E9665A', shape: 'exclamation' },
+  delete: { panel: '#DCE8F7', glyph: '#3B7DD8', shape: 'trash' },
   default: { panel: '#DCE8F7', glyph: '#3B7DD8', shape: 'info' },
 }
 
@@ -37,6 +36,15 @@ function Glyph({ shape, color }) {
           <rect x="14.8" y="8" width="2.4" height="10" rx="1.2" fill="#fff" />
           <circle cx="16" cy="22.5" r="1.5" fill="#fff" />
         </>
+      )}
+      {shape === 'trash' && (
+        <g stroke="#fff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" fill="none">
+          <path d="M10.5 11.5 H21.5" />
+          <path d="M14 11.5 V10 H18 V11.5" />
+          <path d="M11.8 11.5 L12.6 21.5 H19.4 L20.2 11.5" />
+          <path d="M14.5 14.5 V19" />
+          <path d="M17.5 14.5 V19" />
+        </g>
       )}
       {shape === 'info' && (
         <>
