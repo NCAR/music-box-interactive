@@ -157,6 +157,20 @@ export const conditionsSlice = createSlice({
       state.source_file = action.payload
     },
 
+    // Replaces the initial, rate-constant and evolving conditions with the result of a
+    // conditions upload (see applyConditionsUpload). Marks the example hydrated, so the
+    // hydration on MechanismPage does not overwrite the upload.
+    applyConditionsData: (state, action) => {
+      const { initial, rateConstants, evolving, exampleId } = action.payload
+      state.initial = initial
+      state.rateConstants = rateConstants
+      state.evolving = evolving
+      if (exampleId) {
+        state.hydration.initialExampleId = exampleId
+        state.hydration.evolvingExampleId = exampleId
+      }
+    },
+
     // Load full conditions (from example)
     loadConditions: (state, action) => {
       return { ...state, ...action.payload }
@@ -189,6 +203,7 @@ export const {
   markInitialHydrated,
   markEvolvingHydrated,
   loadConditions,
+  applyConditionsData,
   setConditions,
   setExampleLoaded,
   setSourceFile,

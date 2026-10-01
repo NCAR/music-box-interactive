@@ -11,3 +11,49 @@ export function toCsv(headers, rows) {
   }
   return lines.join('\n')
 }
+
+// Splits CSV text into rows of string cells. Handles quoted cells (with "" escapes, commas and
+// line breaks inside), CRLF line endings and a leading byte-order mark. Blank lines are dropped.
+export function parseCsv(text) {
+  const source = String(text ?? '').replace(/^\uFEFF/, '')
+  const rows = []
+  let row = []
+  let cell = ''
+  let inQuotes = false
+
+  const endCell = () => {
+    row.push(cell)
+    cell = ''
+  }
+  const endRow = () => {
+    endCell()
+    if (row.some((value) => value.trim() !== '')) rows.push(row)
+    row = []
+  }
+
+  for (let i = 0; i < source.length; i++) {
+    const char = source[i]
+    if (inQuotes) {
+      if (char === '"' && source[i + 1] === '"') {
+        cell += '"'
+        i++
+      } else if (char === '"') {
+        inQuotes = false
+      } else {
+        cell += char
+      }
+    } else if (char === '"') {
+      inQuotes = true
+    } else if (char === ',') {
+      endCell()
+    } else if (char === '\n' || char === '\r') {
+      if (char === '\r' && source[i + 1] === '\n') i++
+      endRow()
+    } else {
+      cell += char
+    }
+  }
+  if (cell !== '' || row.length > 0) endRow()
+
+  return rows
+}
