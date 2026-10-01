@@ -162,7 +162,7 @@ export function DashboardPage() {
                 </div>
                 <h3 className="font-bold text-sm">Run Simulation</h3>
                 <p className="text-xs text-muted">
-                  Click <strong>Run Simulation</strong> in the Review tab under Conditions.
+                  Click <strong>Run Simulation</strong> in the sidebar.
                 </p>
               </div>
 
