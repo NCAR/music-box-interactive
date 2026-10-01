@@ -13,7 +13,7 @@ import {
   untagEvolvingRows,
   renameEvolvingRowTag,
 } from '../../redux/slices/conditionsSlice'
-import { useToast } from '@/hooks/use-toast'
+import { useNotify } from '@/hooks/use-notify'
 import { useClickOutside } from '../../hooks/useClickOutside'
 import { EMPTY_ARRAY } from '../../utils/emptyArray'
 import { LIST_CARD, LIST_CARD_CONTENT, TEXT_INPUT_SM } from '../Mechanism/fieldStyles'
@@ -82,7 +82,7 @@ const REACTION_TYPES = [
  */
 export function ReactionTab() {
   const dispatch = useDispatch()
-  const { toast } = useToast()
+  const notify = useNotify()
   const mechanismReactions = useSelector(
     (state) => state.mechanism.config.mechanism?.reactions || EMPTY_ARRAY
   )
@@ -172,10 +172,7 @@ export function ReactionTab() {
     const names = reactionsOfType.map((reaction) => reaction.name)
     setSelectedReactionNames(new Set(names.slice(0, REACTIONS_VISIBLE)))
     if (names.length > MAX_SELECTED_REACTION) {
-      toast({
-        title: 'Selection Limited',
-        description: `Selected the first ${MAX_SELECTED_REACTION} of ${names.length} reactions. Use search to select others.`,
-      })
+      notify.warning('Selection Limited', `Selected the first ${MAX_SELECTED_REACTION} of ${names.length} reactions. Use search to select others.`)
     }
   }
 
@@ -311,11 +308,7 @@ export function ReactionTab() {
     const trimmed = rawValue.trim()
     const parsed = trimmed === '' ? null : parseFloat(trimmed)
     if (trimmed !== '' && (isNaN(parsed) || parsed < 0)) {
-      toast({
-        title: 'Invalid Input',
-        description: 'Value must be a valid number zero or greater',
-        variant: 'destructive',
-      })
+      notify.invalidInput('Value must be a valid number zero or greater.')
       return
     }
 
@@ -351,11 +344,7 @@ export function ReactionTab() {
     if (outcome.kind === 'invalid') {
       // Leave the draft in place so the invalid text stays visible to fix, instead of
       // silently reverting to the last committed value.
-      toast({
-        title: 'Invalid Input',
-        description: 'Time must be a valid number zero or greater',
-        variant: 'destructive',
-      })
+      notify.invalidInput('Time must be a valid number zero or greater.')
       return
     }
 
@@ -367,11 +356,7 @@ export function ReactionTab() {
 
     if (outcome.kind === 'unchanged') return
     if (outcome.kind === 'duplicate') {
-      toast({
-        title: 'Duplicate Time Point',
-        description: `A time point already exists at t=${outcome.newTime}s`,
-        variant: 'destructive',
-      })
+      notify.error('Duplicate Time Point', `A time point already exists at t=${outcome.newTime}s.`)
       return
     }
 
@@ -382,11 +367,7 @@ export function ReactionTab() {
     dispatch(setEvolvingAdditionalSeries(result.additionalSeries))
     dispatch(renameEvolvingRowTag({ oldTime: result.oldTime, newTime: result.newTime }))
 
-    toast({
-      title: 'Time Point Updated',
-      description: `Moved time point to t=${result.newTime}s`,
-      variant: 'success',
-    })
+    notify.success('Time Point Updated', `Moved time point to t=${result.newTime}s.`)
   }
 
   const toggleSelected = (index) => {
@@ -427,11 +408,7 @@ export function ReactionTab() {
     dispatch(setEvolvingAdditionalSeries(result.additionalSeries))
     dispatch(untagEvolvingRows(result.removedTimes))
 
-    toast({
-      title: result.removedCount === 1 ? 'Time Point Removed' : 'Time Points Removed',
-      description: `Removed ${result.removedCount} time point${result.removedCount === 1 ? '' : 's'}`,
-      variant: 'delete',
-    })
+    notify.removed(result.removedCount === 1 ? 'Time Point Removed' : 'Time Points Removed', `Removed ${result.removedCount} time point${result.removedCount === 1 ? '' : 's'}.`)
     setSelectedIndices(new Set())
   }
 
@@ -439,11 +416,7 @@ export function ReactionTab() {
     const trimmed = newTimeValue.trim()
     const time = parseFloat(trimmed)
     if (trimmed === '' || isNaN(time) || time < 0) {
-      toast({
-        title: 'Invalid Input',
-        description: 'Time must be a valid number zero or greater',
-        variant: 'destructive',
-      })
+      notify.invalidInput('Time must be a valid number zero or greater.')
       return
     }
 
@@ -451,11 +424,7 @@ export function ReactionTab() {
       const tags = evolvingRowReactionType[String(time)]
       const alreadyVisibleHere = !Array.isArray(tags) || tags.length === 0 || tags.includes(reactionTypeId)
       if (alreadyVisibleHere) {
-        toast({
-          title: 'Duplicate Time Point',
-          description: `A time point already exists at t=${time}s`,
-          variant: 'destructive',
-        })
+        notify.error('Duplicate Time Point', `A time point already exists at t=${time}s.`)
         return
       }
 
@@ -494,11 +463,7 @@ export function ReactionTab() {
     // every other reaction type's table.
     dispatch(tagEvolvingRow({ time, typeId: reactionTypeId }))
 
-    toast({
-      title: 'Time Point Added',
-      description: `Added time point at t=${time}s`,
-      variant: 'success',
-    })
+    notify.success('Time Point Added', `Added time point at t=${time}s.`)
     setNewTimeValue('')
     setAddTimeOpen(false)
   }

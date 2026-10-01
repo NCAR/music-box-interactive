@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from 'react-redux'
 import { useNavigate } from 'react-router-dom'
 import { setError, setMetadata, setResults, setStatus } from '../redux/slices/simulationSlice'
 import { toast } from '@/hooks/use-toast'
+import { createNotify } from '../lib/notify'
 import { runLocalSimulation } from '../services/simulation/localSolver'
 
 export function useRunSimulation() {
@@ -57,11 +58,7 @@ export function useRunSimulation() {
       const message = error?.message || 'Failed to create MICM solver from mechanism'
       dispatch(setError({ message }))
       dispatch(setStatus('failed'))
-      toast({
-        title: 'Simulation Failed',
-        description: message,
-        variant: 'delete',
-      })
+      createNotify(toast).error('Simulation Failed', message)
     }
   }, [conditions, dispatch, isDisabled, mechanismData, navigate])
 

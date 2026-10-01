@@ -1,7 +1,7 @@
 import { Fragment, useState } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 import { ChevronDown, ChevronUp, Lightbulb } from 'lucide-react'
-import { useToast } from '@/hooks/use-toast'
+import { useNotify } from '@/hooks/use-notify'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card'
 import { Button } from '../ui/button'
 import { Dropdown } from '../ui/dropdown'
@@ -260,7 +260,7 @@ function ReactionChip({ reaction, onRemove, onComponentsSave, onParameterSave })
 
 export function ReactionEditor() {
   const dispatch = useDispatch()
-  const { toast } = useToast()
+  const notify = useNotify()
   const reactions = useSelector((state) => state.mechanism.config.mechanism?.reactions || EMPTY_ARRAY)
   const species = useSelector((state) => state.mechanism.config.mechanism?.species || EMPTY_ARRAY)
 
@@ -307,24 +307,16 @@ export function ReactionEditor() {
     )
 
     if (unknown.length > 0) {
-      toast({
-        title: unknown.length === 1 ? 'Unknown species' : 'Unknown species',
-        description: `${unknown.join(', ')} ${
+      notify.error(unknown.length === 1 ? 'Unknown Species' : 'Unknown Species', `${unknown.join(', ')} ${
           unknown.length === 1 ? 'is not' : 'are not'
         } defined in this mechanism. Add ${
           unknown.length === 1 ? 'it' : 'them'
-        } in the Species tab first.`,
-        variant: 'destructive',
-      })
+        } in the Species tab first.`)
       return
     }
 
     dispatch(addReaction(newReaction))
-    toast({
-      title: 'Reaction Added',
-      description: `Successfully added reaction: ${newReaction.name || formatReactionDisplay(newReaction)}`,
-      variant: 'success',
-    })
+    notify.success('Reaction Added', `Successfully added reaction: ${newReaction.name || formatReactionDisplay(newReaction)}.`)
   }
 
   // Edits go through the same validation as adding, so an edit cannot introduce a species
@@ -336,13 +328,9 @@ export function ReactionEditor() {
     )
 
     if (unknown.length > 0) {
-      toast({
-        title: 'Unknown species',
-        description: `${unknown.join(', ')} ${
+      notify.error('Unknown Species', `${unknown.join(', ')} ${
           unknown.length === 1 ? 'is not' : 'are not'
-        } defined in this mechanism.`,
-        variant: 'destructive',
-      })
+        } defined in this mechanism.`)
       return false
     }
 
@@ -354,22 +342,14 @@ export function ReactionEditor() {
     const parsed = parseReactionString(rawValue)
 
     if (parsed.length === 0) {
-      toast({
-        title: 'Error',
-        description: `${field.label} cannot be empty.`,
-        variant: 'destructive',
-      })
+      notify.invalidInput(`${field.label} cannot be empty.`)
       return
     }
 
     // `gas-phase species` holds one species as a plain string, not a component array.
     if (field.single) {
       if (parsed.length > 1) {
-        toast({
-          title: 'Error',
-          description: `${field.label} must be a single species.`,
-          variant: 'destructive',
-        })
+        notify.invalidInput(`${field.label} must be a single species.`)
         return
       }
       saveReaction({ ...reaction, [field.key]: parsed[0].name })
@@ -393,11 +373,7 @@ export function ReactionEditor() {
     const parsedValue = Number.parseFloat(trimmedValue)
 
     if (Number.isNaN(parsedValue)) {
-      toast({
-        title: 'Error',
-        description: `${key} must be a valid number.`,
-        variant: 'destructive',
-      })
+      notify.invalidInput(`${key} must be a valid number.`)
       return
     }
 
@@ -408,11 +384,7 @@ export function ReactionEditor() {
   const handleRemoveReaction = (reactionId) => {
     const reaction = reactions.find((r) => r.id === reactionId)
     dispatch(removeReaction(reactionId))
-    toast({
-      title: 'Reaction Removed',
-      description: `Removed reaction: ${reaction?.name || (reaction && buildGeneratedReactionName(reaction)) || 'Unknown'}`,
-      variant: 'delete',
-    })
+    notify.removed('Reaction Removed', `Removed reaction: ${reaction?.name || (reaction && buildGeneratedReactionName(reaction)) || 'Unknown'}.`)
   }
 
   const reactionChips = (

@@ -5,26 +5,18 @@ export function addSpeciesIfValid({
   newSpeciesProperties = {},
   speciesProperties = [],
   dispatch,
-  toast,
+  notify,
   addSpecies,
 }) {
   if (!newSpeciesName) {
-    toast({
-      title: 'Error',
-      description: 'Please enter a species name',
-      variant: 'destructive',
-    })
+    notify.invalidInput('Please enter a species name.')
     return false
   }
 
   const normalizedName = newSpeciesName.trim()
 
   if (species.find((s) => s.name === normalizedName)) {
-    toast({
-      title: 'Error',
-      description: `Species "${normalizedName}" already exists`,
-      variant: 'destructive',
-    })
+    notify.error('Duplicate Species', `Species "${normalizedName}" already exists.`)
     return false
   }
 
@@ -50,11 +42,7 @@ export function addSpeciesIfValid({
 
     const parsedValue = Number.parseFloat(trimmedValue)
     if (Number.isNaN(parsedValue)) {
-      toast({
-        title: 'Error',
-        description: `${field.label} must be a valid number`,
-        variant: 'destructive',
-      })
+      notify.invalidInput(`${field.label} must be a valid number.`)
       return false
     }
 
@@ -69,11 +57,7 @@ export function addSpeciesIfValid({
     })
   )
 
-  toast({
-    title: 'Success',
-    description: `Species "${normalizedName}" added successfully`,
-    variant: 'success',
-  })
+  notify.success('Species Added', `Added species "${normalizedName}".`)
 
   return true
 }

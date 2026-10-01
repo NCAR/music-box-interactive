@@ -1,4 +1,5 @@
 import { useToast } from '@/hooks/use-toast'
+import { ToastIcon } from '@/components/ui/toast-icon'
 import {
   Toast,
   ToastClose,
@@ -16,7 +17,8 @@ export function Toaster() {
       {toasts.map(function ({ id, title, description, action, ...props }) {
         return (
           <Toast key={id} {...props}>
-            <div className="grid gap-1">
+            <ToastIcon variant={props.variant} />
+            <div className="grid flex-1 gap-1 p-4 pr-8">
               {title && <ToastTitle>{title}</ToastTitle>}
               {description && <ToastDescription>{description}</ToastDescription>}
             </div>

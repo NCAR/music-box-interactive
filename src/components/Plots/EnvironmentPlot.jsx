@@ -36,7 +36,7 @@ export function EnvironmentPlot() {
 
   const toggleMetric = (metric) => {
     setVisibleMetrics((prev) => {
-      // Keep at least one metric visible -- an empty chart isn't a useful state.
+      // Keep at least one metric visible
       if (prev.has(metric) && prev.size === 1) return prev
       const next = new Set(prev)
       if (next.has(metric)) next.delete(metric)

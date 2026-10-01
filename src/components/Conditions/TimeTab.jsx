@@ -7,7 +7,7 @@ import { RangeBoundInput } from '../Plots/RangeBoundInput'
 import { UnitDropdown } from '../Plots/UnitDropdown'
 import { TIME_RANGE_UNITS, formatBound } from '../Plots/timeRangeUnits'
 import { TEXT_INPUT_SM } from '../Mechanism/fieldStyles'
-import { useToast } from '@/hooks/use-toast'
+import { useNotify } from '@/hooks/use-notify'
 
 const NUMBER_INPUT = `w-72 ${TEXT_INPUT_SM}`
 
@@ -64,7 +64,7 @@ const FIELDS = [
 export function TimeTab() {
   const dispatch = useDispatch()
   const basic = useSelector((state) => state.conditions.basic)
-  const { toast } = useToast()
+  const notify = useNotify()
 
   const [unitIds, setUnitIds] = useState(() =>
     Object.fromEntries(FIELDS.map((field) => [field.key, field.defaultUnit]))
@@ -105,11 +105,9 @@ export function TimeTab() {
                     onBelowMin={
                       field.key === 'outputFrequency'
                         ? () => {
-                            toast({
-                              title: 'Invalid output time step',
-                              description: 'Output time step must be greater than or equal to simulation time step.',
-                              variant: 'destructive',
-                            })
+                            notify.invalidInput(
+                              'Output time step must be greater than or equal to the simulation time step.'
+                            )
                           }
                         : undefined
                     }

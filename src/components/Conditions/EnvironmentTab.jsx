@@ -3,7 +3,7 @@ import { useSelector, useDispatch } from 'react-redux'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card'
 import { Button } from '../ui/button'
 import { Toggle } from '../ui/toggle'
-import { useToast } from '@/hooks/use-toast'
+import { useNotify } from '@/hooks/use-notify'
 import {
   setEvolvingEnabled,
   setEvolvingTimes,
@@ -67,7 +67,7 @@ function formatConversion(value, decimals = 4) {
  */
 export function EnvironmentTab() {
   const dispatch = useDispatch()
-  const { toast } = useToast()
+  const notify = useNotify()
   const evolving = useSelector((state) => state.conditions.evolving)
 
   const [unitIds, setUnitIds] = useState({
@@ -102,11 +102,7 @@ export function EnvironmentTab() {
       isNaN(rawPressure) ||
       (densityEnabled && !densityIsBlank && isNaN(rawDensity))
     ) {
-      toast({
-        title: 'Invalid Input',
-        description: 'All values must be valid numbers',
-        variant: 'destructive',
-      })
+      notify.invalidInput('All values must be valid numbers.')
       return
     }
 
@@ -126,11 +122,7 @@ export function EnvironmentTab() {
       : null
 
     if (evolving.times.includes(time)) {
-      toast({
-        title: 'Duplicate Time Point',
-        description: `A condition already exists at t=${rawTime} ${timeUnit.label.toLowerCase()}`,
-        variant: 'destructive',
-      })
+      notify.error('Duplicate Time Point', `A time point already exists at t=${rawTime} ${timeUnit.label.toLowerCase()}.`)
       return
     }
 
@@ -171,11 +163,7 @@ export function EnvironmentTab() {
     dispatch(setEvolvingPressure(newPresses))
     dispatch(setEvolvingAdditionalSeries(newAdditionalSeries))
 
-    toast({
-      title: 'Condition Added',
-      description: `Added condition at time ${rawTime} ${timeUnit.label.toLowerCase()}`,
-      variant: 'success',
-    })
+    notify.success('Time Point Added', `Added time point at t=${rawTime} ${timeUnit.label.toLowerCase()}.`)
 
     setNewTime('')
     setNewTemperature('')
@@ -224,11 +212,7 @@ export function EnvironmentTab() {
     dispatch(setEvolvingAdditionalSeries(result.additionalSeries))
     dispatch(untagEvolvingRows(result.removedTimes))
 
-    toast({
-      title: result.removedCount === 1 ? 'Condition Removed' : 'Conditions Removed',
-      description: `Removed ${result.removedCount} condition${result.removedCount === 1 ? '' : 's'}`,
-      variant: 'delete',
-    })
+    notify.removed(result.removedCount === 1 ? 'Time Point Removed' : 'Time Points Removed', `Removed ${result.removedCount} time point${result.removedCount === 1 ? '' : 's'}.`)
 
     setSelectedIndices(new Set())
   }
@@ -260,21 +244,13 @@ export function EnvironmentTab() {
   // ppth/ppm/ppb/ppt value. The stored concentration itself does not change.
   const warnIfConcentrationsAffected = (index) => {
     if (!rowHasConcentrations(evolving.additionalSeries, index)) return
-    toast({
-      title: 'Concentrations stay in mol m-3',
-      description:
-        'This row has species concentrations. Their stored values in mol m-3 are unchanged, but their equivalents (ppm, ppb ...) will now display differently.',
-      })
+    notify.warning('Concentrations stay in mol m-3', 'This row has species concentrations. Their stored values in mol m-3 are unchanged, but their equivalents (ppm, ppb ...) will now display differently.')
   }
 
   const commitTemperature = (index, rawValue) => {
     const parsed = parseFloat(rawValue)
     if (isNaN(parsed)) {
-      toast({
-        title: 'Invalid Input',
-        description: 'Temperature must be a valid number',
-        variant: 'destructive',
-      })
+      notify.invalidInput('Temperature must be a valid number.')
       return
     }
     clearCellDraft('temperature', index)
@@ -289,11 +265,7 @@ export function EnvironmentTab() {
   const commitPressure = (index, rawValue) => {
     const parsed = parseFloat(rawValue)
     if (isNaN(parsed)) {
-      toast({
-        title: 'Invalid Input',
-        description: 'Pressure must be a valid number',
-        variant: 'destructive',
-      })
+      notify.invalidInput('Pressure must be a valid number.')
       return
     }
     clearCellDraft('pressure', index)
@@ -311,11 +283,7 @@ export function EnvironmentTab() {
       ? idealGasDensity(evolving.pressure[index], evolving.temperature[index])
       : parseFloat(rawValue)
     if (!isBlank && isNaN(parsed)) {
-      toast({
-        title: 'Invalid Input',
-        description: 'Air number density must be a valid number',
-        variant: 'destructive',
-      })
+      notify.invalidInput('Air number density must be a valid number.')
       return
     }
     clearCellDraft('density', index)
@@ -347,11 +315,7 @@ export function EnvironmentTab() {
     if (outcome.kind === 'invalid') {
       // Leave the draft in place so the invalid text stays visible to fix, instead of
       // silently reverting to the last committed value.
-      toast({
-        title: 'Invalid Input',
-        description: 'Time must be a valid number zero or greater',
-        variant: 'destructive',
-      })
+      notify.invalidInput('Time must be a valid number zero or greater.')
       return
     }
 
@@ -359,11 +323,7 @@ export function EnvironmentTab() {
 
     if (outcome.kind === 'unchanged') return
     if (outcome.kind === 'duplicate') {
-      toast({
-        title: 'Duplicate Time Point',
-        description: `A condition already exists at t=${outcome.newTime}s`,
-        variant: 'destructive',
-      })
+      notify.error('Duplicate Time Point', `A time point already exists at t=${outcome.newTime}s.`)
       return
     }
 
@@ -373,11 +333,7 @@ export function EnvironmentTab() {
     dispatch(setEvolvingPressure(result.pressure))
     dispatch(setEvolvingAdditionalSeries(result.additionalSeries))
 
-    toast({
-      title: 'Condition Updated',
-      description: `Moved condition to t=${result.newTime}s`,
-      variant: 'success',
-    })
+    notify.success('Time Point Updated', `Moved time point to t=${result.newTime}s.`)
   }
 
   // Live “stored as” hints, shown only for non-base units.
