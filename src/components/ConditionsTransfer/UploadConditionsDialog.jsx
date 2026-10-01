@@ -4,20 +4,21 @@ import { Dialog } from '../ui/dialog'
 import { Button } from '../ui/button'
 import { ConditionItemPicker } from './ConditionItemPicker'
 import { useNotify } from '@/hooks/use-notify'
-import { applyConditionsData } from '../../redux/slices/conditionsSlice'
-import { withHydratedConditions } from '../../services/conditions/conditionsTable'
+import { setConditionsTable, setRowReactionTypes } from '../../redux/slices/conditionsSlice'
 import { applyConditionsUpload } from '../../services/conditions/importConditions'
 
 const MODES = [
   {
     id: 'replace',
     label: 'Replace all conditions',
-    detail: 'Clears all the conditions first. Columns that are not selected become unset.',
+    detail:
+      'Clears all the conditions first. The table then holds only the selected columns of the file.',
   },
   {
     id: 'merge',
     label: 'Merge by column',
-    detail: 'Changes only the selected columns at the times in the file. All other conditions stay.',
+    detail:
+      'Changes only the selected columns at the times in the file. All other conditions stay.',
   },
 ]
 
@@ -28,8 +29,8 @@ const MAX_LISTED_SKIPPED = 5
 export function UploadConditionsDialog({ fileName, upload, onClose }) {
   const dispatch = useDispatch()
   const notify = useNotify()
-  const exampleId = useSelector((state) => state.mechanism.currentExample?.id)
-  const rawConditions = useSelector((state) => state.conditions)
+  const table = useSelector((state) => state.conditions.table)
+  const rowReactionTypes = useSelector((state) => state.conditions.rowReactionType)
 
   // The picker shows each column under the header that the file uses.
   const items = useMemo(
@@ -47,9 +48,20 @@ export function UploadConditionsDialog({ fileName, upload, onClose }) {
       : `${times.length} ${times.length === 1 ? 'time' : 'times'}, from ${times[0]} s to ${times[times.length - 1]} s`
 
   const handleApply = () => {
-    const conditions = withHydratedConditions(rawConditions, exampleId)
-    const next = applyConditionsUpload(conditions, upload, { keys: selected, mode, emptyOverwrites })
-    dispatch(applyConditionsData({ ...next, exampleId }))
+    const next = applyConditionsUpload(table, upload, { keys: selected, mode, emptyOverwrites })
+    dispatch(setConditionsTable(next))
+    // A row tag only means something for a row that still exists.
+    dispatch(
+      setRowReactionTypes(
+        mode === 'replace'
+          ? {}
+          : Object.fromEntries(
+              Object.entries(rowReactionTypes || {}).filter(([time]) =>
+                next.times.includes(Number(time))
+              )
+            )
+      )
+    )
 
     notify.success('Conditions Uploaded', `Applied ${selected.size} columns from ${fileName}.`)
     if (skipped.length > 0) {
@@ -91,12 +103,17 @@ export function UploadConditionsDialog({ fileName, upload, onClose }) {
 
         {skipped.length > 0 && (
           <section>
-            <h3 className="mb-2 text-sm font-semibold text-ink">Skipped columns ({skipped.length})</h3>
+            <h3 className="mb-2 text-sm font-semibold text-ink">
+              Skipped columns ({skipped.length})
+            </h3>
             <ul className="max-h-32 overflow-y-auto rounded-lg border border-border bg-caution px-3 py-2 text-xs">
               {skipped.map((s) => (
                 <li key={`${s.file}:${s.header}`} className="py-0.5">
                   <span className="font-mono text-ink">{s.header}</span>
-                  <span className="text-muted"> ({s.file}): {s.reason}</span>
+                  <span className="text-muted">
+                    {' '}
+                    ({s.file}): {s.reason}
+                  </span>
                 </li>
               ))}
             </ul>

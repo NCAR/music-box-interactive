@@ -1,19 +1,22 @@
 import { useState } from 'react'
 import { Dropdown } from '../ui/dropdown'
-import { CATEGORIES } from '../../services/conditions/conditionsTable'
+import { CATEGORIES } from '../../services/conditions/conditionItems'
 import { TEXT_INPUT_SM } from '../Mechanism/fieldStyles'
 
 const ALL = 'all'
 
 function DataPointCount({ count }) {
   return (
-    <span className={`w-16 flex-shrink-0 text-right text-xs ${count > 0 ? 'text-action' : 'text-muted'}`}>
+    <span
+      className={`w-16 flex-shrink-0 text-right text-xs ${count > 0 ? 'text-action' : 'text-muted'}`}
+    >
       {count === 0 ? 'No data' : `${count} ${count === 1 ? 'point' : 'points'}`}
     </span>
   )
 }
 
-const linkButton = 'text-sm font-medium text-action hover:underline disabled:text-muted disabled:no-underline'
+const linkButton =
+  'text-sm font-medium text-action hover:underline disabled:text-muted disabled:no-underline'
 
 // A checkbox list of condition items with a text search, a category filter and a type filter.
 // Select all / Deselect all act on the items that the filters show.
@@ -35,7 +38,9 @@ export function ConditionItemPicker({ items, selected, onChange, dataCounts }) {
   ]
   const groups = [
     ...new Set(
-      items.filter((item) => category === ALL || item.category === category).map((item) => item.group)
+      items
+        .filter((item) => category === ALL || item.category === category)
+        .map((item) => item.group)
     ),
   ]
   const groupOptions = [
@@ -94,17 +99,29 @@ export function ConditionItemPicker({ items, selected, onChange, dataCounts }) {
           {selected.size} of {items.length} selected
         </span>
         <div className="flex gap-3">
-          <button type="button" className={linkButton} onClick={() => setVisible(true)} disabled={visible.length === 0}>
+          <button
+            type="button"
+            className={linkButton}
+            onClick={() => setVisible(true)}
+            disabled={visible.length === 0}
+          >
             Select all
           </button>
-          <button type="button" className={linkButton} onClick={() => setVisible(false)} disabled={visible.length === 0}>
+          <button
+            type="button"
+            className={linkButton}
+            onClick={() => setVisible(false)}
+            disabled={visible.length === 0}
+          >
             Deselect all
           </button>
         </div>
       </div>
 
       <ul className="max-h-72 overflow-y-auto rounded-lg border border-border divide-y divide-border">
-        {visible.length === 0 && <li className="px-3 py-4 text-center text-sm text-muted">No matches</li>}
+        {visible.length === 0 && (
+          <li className="px-3 py-4 text-center text-sm text-muted">No matches</li>
+        )}
         {visible.map((item) => (
           <li key={item.key}>
             <label className="flex cursor-pointer items-center gap-3 px-3 py-2 hover:bg-surface-hover">

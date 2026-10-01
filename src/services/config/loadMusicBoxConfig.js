@@ -11,10 +11,9 @@ import {
   setDuration,
   setTimeStep,
   setOutputFrequency,
-  setConditions,
-  setExampleLoaded,
-  setSourceFile,
+  setConditionsTable,
 } from '../../redux/slices/conditionsSlice'
+import { tableFromConditionsConfig } from '../conditions/table'
 import { resetSimulation } from '../../redux/slices/simulationSlice'
 
 // MUSICA's parser validates the mechanism, fills in default values, and gives back the canonical
@@ -58,13 +57,8 @@ export async function loadMusicBoxConfig(config, { dispatch, navigate, meta = {}
   dispatch(setTimeStep(chemTimeStep))
   dispatch(setOutputFrequency(outputTimeStep))
 
-  if (config?.['__source file'] != null) {
-    dispatch(setSourceFile(config['__source file']))
-  } else {
-    dispatch(setSourceFile(null))
-  }
-
-  dispatch(setConditions(config?.conditions))
+  // The conditions go into the table once, here. Nothing converts them again later.
+  dispatch(setConditionsTable(tableFromConditionsConfig(config?.conditions)))
   dispatch(
     setCurrentExample({
       id: meta.id,
@@ -74,7 +68,6 @@ export async function loadMusicBoxConfig(config, { dispatch, navigate, meta = {}
     })
   )
   dispatch(setSelectedMechanism(meta.mechanism_name || meta.id || 'custom'))
-  dispatch(setExampleLoaded(false))
 
   navigate('/mechanism')
 }

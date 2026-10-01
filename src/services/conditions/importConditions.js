@@ -1,18 +1,7 @@
 import { unzipSync } from 'fflate'
 import { parseCsv } from '../../utils/csv'
-import {
-  DENSITY_KEY,
-  PRESSURE_KEY,
-  TEMPERATURE_KEY,
-  buildConditionsTable,
-  headerKey,
-  headerUnit,
-  isAcceptedUnit,
-} from './conditionsTable'
-import { DENSITY_SERIES_KEY } from '../../utils/environmentSeries'
-import { DEFAULT_PRESSURE, DEFAULT_TEMPERATURE } from '../../components/Conditions/evolvingSeries'
-
-const TIME_HEADER = 'time.s'
+import { isAcceptedUnit } from './conditionItems'
+import { TIME_HEADER, columnValues, headerKey, headerUnit } from './table'
 
 // __MACOSX/ and .DS_Store are artifacts of zipping a folder on macOS, not real content.
 const IGNORED_PATH_PATTERN = /(^|\/)(__MACOSX|\.DS_Store)(\/|$)/i
@@ -116,7 +105,11 @@ export function buildConditionsUpload(parsedFiles, items) {
         return null
       }
       if (!isAcceptedUnit(key, headerUnit(header))) {
-        skipped.push({ header, file: name, reason: `unit "${headerUnit(header)}" is not supported` })
+        skipped.push({
+          header,
+          file: name,
+          reason: `unit "${headerUnit(header)}" is not supported`,
+        })
         return null
       }
       if (columnKeys.has(key)) {
@@ -142,88 +135,54 @@ export function buildConditionsUpload(parsedFiles, items) {
   return { columns, skipped, cells, times }
 }
 
-// The Redux conditions after the upload. Pure: the caller dispatches the result with
-// applyConditionsData.
+// The conditions table after the upload. Pure.
 //   keys            - the selected column keys; the other columns in the file are ignored
 //   mode            - 'replace' clears all the conditions first; 'merge' changes only the
 //                     selected columns at the times in the file
 //   emptyOverwrites - in merge mode, an empty cell clears the existing value at that time
-//
-// All values go to the evolving series, with t=0 as the initial row. The Conditions tabs
-// show these series, so the initial snapshot values are moved there too.
-export function applyConditionsUpload(conditions, upload, { keys, mode, emptyOverwrites = false }) {
+export function applyConditionsUpload(table, upload, { keys, mode, emptyOverwrites = false }) {
   const replace = mode === 'replace'
-  const base = replace ? { times: [0], rows: new Map([[0, new Map()]]) } : buildConditionsTable(conditions)
-  const rows = new Map([...base.rows].map(([time, row]) => [time, new Map(row)]))
-  const keptTimes = new Set(rows.keys())
 
+  // Each column as a Map of time -> value, under the header it is stored with. An existing
+  // header keeps its spelling.
+  const columns = new Map()
+  const headerFor = new Map()
+  if (!replace) {
+    Object.keys(table.columns).forEach((header) => {
+      const values = columnValues(table, header)
+      columns.set(header, new Map(table.times.map((time, index) => [time, values[index]])))
+      headerFor.set(headerKey(header), header)
+    })
+  }
+  upload.columns.forEach(({ key, header }) => {
+    if (!keys.has(key) || headerFor.has(key)) return
+    headerFor.set(key, header)
+    columns.set(header, new Map())
+  })
+
+  const times = new Set(replace ? [] : table.times)
   upload.cells.forEach((cellRow, time) => {
     cellRow.forEach((value, key) => {
       if (!keys.has(key)) return
-      if (!rows.has(time)) rows.set(time, new Map())
+      const column = columns.get(headerFor.get(key))
       if (value !== null) {
-        rows.get(time).set(key, value)
-        keptTimes.add(time)
+        column.set(time, value)
+        times.add(time)
       } else if (emptyOverwrites && !replace) {
-        rows.get(time).delete(key)
+        column.delete(time)
       }
     })
   })
 
-  // A time that only had empty cells for the selected columns does not add a new row.
-  const times = [...rows.keys()].filter((time) => keptTimes.has(time)).sort((a, b) => a - b)
-
-  // The header that each key is stored under. An existing header keeps its spelling.
-  const headers = new Map()
-  if (!replace) {
-    Object.keys(conditions?.evolving?.additionalSeries || {}).forEach((header) =>
-      headers.set(headerKey(header), header)
-    )
-    Object.keys(conditions?.rateConstants || {}).forEach((header) => {
-      if (!headers.has(headerKey(header))) headers.set(headerKey(header), header)
-    })
-  }
-  upload.columns.forEach(({ key, header }) => {
-    if (keys.has(key) && !headers.has(key)) headers.set(key, header)
-  })
-  headers.set(DENSITY_KEY, DENSITY_SERIES_KEY)
-
-  const seriesKeys = new Set()
-  times.forEach((time) =>
-    rows.get(time).forEach((_, key) => {
-      if (key !== TEMPERATURE_KEY && key !== PRESSURE_KEY) seriesKeys.add(key)
-    })
-  )
-  const column = (key) => times.map((time) => rows.get(time).get(key) ?? null)
-  const additionalSeries = Object.fromEntries(
-    [...seriesKeys].map((key) => [headers.get(key) ?? (key.startsWith('CONC.') ? `${key}.mol m-3` : key), column(key)])
-  )
-
-  const zeroRow = rows.get(0) ?? new Map()
-  const rowReactionType = replace
-    ? {}
-    : Object.fromEntries(
-        Object.entries(conditions?.evolving?.rowReactionType || {}).filter(([time]) =>
-          times.includes(Number(time))
-        )
-      )
-
+  // A time that only has empty cells for the selected columns does not add a new row.
+  const sortedTimes = [...times].sort((a, b) => a - b)
   return {
-    initial: {
-      ...(conditions?.initial || {}),
-      temperature: zeroRow.get(TEMPERATURE_KEY) ?? DEFAULT_TEMPERATURE,
-      pressure: zeroRow.get(PRESSURE_KEY) ?? DEFAULT_PRESSURE,
-      concentrations: {},
-    },
-    rateConstants: {},
-    evolving: {
-      ...(conditions?.evolving || {}),
-      enabled: true,
-      times,
-      temperature: column(TEMPERATURE_KEY),
-      pressure: column(PRESSURE_KEY),
-      additionalSeries,
-      rowReactionType,
-    },
+    times: sortedTimes,
+    columns: Object.fromEntries(
+      [...columns].map(([header, values]) => [
+        header,
+        sortedTimes.map((time) => values.get(time) ?? null),
+      ])
+    ),
   }
 }

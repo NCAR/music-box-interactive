@@ -4,7 +4,7 @@ import { Download, Upload } from 'lucide-react'
 import { Button } from '../ui/button'
 import { useNotify } from '@/hooks/use-notify'
 import { EMPTY_ARRAY } from '../../utils/emptyArray'
-import { listConditionItems } from '../../services/conditions/conditionsTable'
+import { listConditionItems } from '../../services/conditions/conditionItems'
 import {
   ConditionsUploadError,
   buildConditionsUpload,
@@ -20,8 +20,10 @@ export function ConditionsButtons({ className = '' }) {
   const notify = useNotify()
   const fileInputRef = useRef(null)
   const species = useSelector((state) => state.mechanism.config.mechanism?.species || EMPTY_ARRAY)
-  const reactions = useSelector((state) => state.mechanism.config.mechanism?.reactions || EMPTY_ARRAY)
-  const conditions = useSelector((state) => state.conditions)
+  const reactions = useSelector(
+    (state) => state.mechanism.config.mechanism?.reactions || EMPTY_ARRAY
+  )
+  const table = useSelector((state) => state.conditions.table)
   const [downloadOpen, setDownloadOpen] = useState(false)
   const [pendingUpload, setPendingUpload] = useState(null)
 
@@ -33,7 +35,7 @@ export function ConditionsButtons({ className = '' }) {
     try {
       const files = await readConditionsFiles(file)
       const parsed = files.map(parseConditionsCsv)
-      const items = listConditionItems({ species, reactions, conditions })
+      const items = listConditionItems({ species, reactions, table })
       setPendingUpload({ fileName: file.name, upload: buildConditionsUpload(parsed, items) })
     } catch (error) {
       const message =

@@ -59,9 +59,10 @@ describe('Upload Conditions dialog', () => {
     fireEvent.click(screen.getByRole('checkbox', { name: /O3/ }))
     fireEvent.click(screen.getByRole('button', { name: 'Apply' }))
 
-    const { evolving } = store.getState().conditions
-    expect(evolving.times).toEqual([0, 60])
-    expect(evolving.additionalSeries).toEqual({ 'CONC.NO2.mol m-3': [2e-7, 3e-7] })
+    expect(store.getState().conditions.table).toEqual({
+      times: [0, 60],
+      columns: { 'CONC.NO2.mol m-3': [2e-7, 3e-7] },
+    })
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
     expect(toast).toHaveBeenCalledWith(expect.objectContaining({ title: 'Columns Skipped' }))
   })
@@ -98,9 +99,7 @@ describe('Download Conditions dialog', () => {
     // Temperature, pressure, air density, two species, one photolysis rate.
     expect(checkboxes).toHaveLength(6)
     checkboxes.forEach((checkbox) => expect(checkbox).toBeChecked())
-    // The default temperature and pressure are the only values, at t=0.
-    expect(screen.getAllByText('1 point')).toHaveLength(2)
-    expect(screen.getAllByText('No data')).toHaveLength(4)
+    expect(screen.getAllByText('No data')).toHaveLength(6)
 
     fireEvent.click(screen.getByRole('button', { name: 'Deselect all' }))
     expect(screen.getByRole('button', { name: 'Download' })).toBeDisabled()

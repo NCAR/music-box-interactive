@@ -10,6 +10,7 @@ import { buildDownloadableConfig } from '../src/services/config/downloadConfig'
 import { parseUploadedMusicBoxConfig } from '../src/services/config/parseUploadedMusicBoxConfig'
 import { loadMusicBoxConfig, toReduxConfig } from '../src/services/config/loadMusicBoxConfig'
 import { durationSeconds, stepSeconds } from './helpers/boxModelOptions'
+import { tableFromConditionsConfig } from '../src/services/conditions/table'
 
 import analyticalConfig from '@ncar/music-box/examples/analytical/my_config.json' with { type: 'json' }
 import chapmanConfig from '@ncar/music-box/examples/chapman/my_config.json' with { type: 'json' }
@@ -38,7 +39,7 @@ const buildInputs = async (config) => {
       currentExample: { name: config.mechanism?.name || 'example' },
     },
     conditions: {
-      conditions: config.conditions,
+      table: tableFromConditionsConfig(config.conditions),
       basic: {
         timeStep: stepSeconds(options, 'chemistry time step'),
         outputFrequency: stepSeconds(options, 'output time step'),
@@ -119,7 +120,8 @@ describe('download -> upload round trip', () => {
     expect(state.conditions.basic.timeStep).toBe(conditions.basic.timeStep)
     expect(state.conditions.basic.outputFrequency).toBe(conditions.basic.outputFrequency)
     expect(state.conditions.basic.duration).toBe(conditions.basic.duration)
-    expect(state.conditions.conditions.data.length).toBe(downloaded.conditions.data.length)
+    const reloaded = buildDownloadableConfig({ mechanism: state.mechanism, conditions: state.conditions })
+    expect(reloaded.conditions).toEqual(downloaded.conditions)
   })
 
   it('round trips a config downloaded with edited species/reactions', async () => {

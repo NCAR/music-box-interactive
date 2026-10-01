@@ -6,12 +6,7 @@ import { ConditionItemPicker } from './ConditionItemPicker'
 import { useNotify } from '@/hooks/use-notify'
 import { EMPTY_ARRAY } from '../../utils/emptyArray'
 import { TEXT_INPUT_SM } from '../Mechanism/fieldStyles'
-import {
-  buildConditionsTable,
-  countDataPoints,
-  listConditionItems,
-  withHydratedConditions,
-} from '../../services/conditions/conditionsTable'
+import { countDataPoints, listConditionItems } from '../../services/conditions/conditionItems'
 import { downloadConditions } from '../../services/conditions/exportConditions'
 
 const LAYOUTS = [
@@ -29,19 +24,16 @@ const parseTime = (text) => (text.trim() === '' ? null : Number(text))
 export function DownloadConditionsDialog({ onClose }) {
   const notify = useNotify()
   const species = useSelector((state) => state.mechanism.config.mechanism?.species || EMPTY_ARRAY)
-  const reactions = useSelector((state) => state.mechanism.config.mechanism?.reactions || EMPTY_ARRAY)
-  const exampleId = useSelector((state) => state.mechanism.currentExample?.id)
-  const rawConditions = useSelector((state) => state.conditions)
+  const reactions = useSelector(
+    (state) => state.mechanism.config.mechanism?.reactions || EMPTY_ARRAY
+  )
+  const table = useSelector((state) => state.conditions.table)
 
-  const conditions = useMemo(
-    () => withHydratedConditions(rawConditions, exampleId),
-    [rawConditions, exampleId]
-  )
   const items = useMemo(
-    () => listConditionItems({ species, reactions, conditions }),
-    [species, reactions, conditions]
+    () => listConditionItems({ species, reactions, table }),
+    [species, reactions, table]
   )
-  const dataCounts = useMemo(() => countDataPoints(buildConditionsTable(conditions)), [conditions])
+  const dataCounts = useMemo(() => countDataPoints(table), [table])
 
   const [selected, setSelected] = useState(() => new Set(items.map((item) => item.key)))
   const [layout, setLayout] = useState('single')
@@ -60,7 +52,7 @@ export function DownloadConditionsDialog({ onClose }) {
   const handleDownload = () => {
     try {
       downloadConditions({
-        conditions,
+        table,
         items: items.filter((item) => selected.has(item.key)),
         layout,
         timeRange: { start: startTime, end: endTime },
@@ -91,7 +83,12 @@ export function DownloadConditionsDialog({ onClose }) {
       <div className="space-y-5">
         <section>
           <h3 className="mb-2 text-sm font-semibold text-ink">Columns</h3>
-          <ConditionItemPicker items={items} selected={selected} onChange={setSelected} dataCounts={dataCounts} />
+          <ConditionItemPicker
+            items={items}
+            selected={selected}
+            onChange={setSelected}
+            dataCounts={dataCounts}
+          />
         </section>
 
         <section>

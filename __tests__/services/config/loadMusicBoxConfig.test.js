@@ -132,12 +132,26 @@ describe('loadMusicBoxConfig', () => {
     expect(basic.duration).toBe(100)
   })
 
-  it('stores the raw conditions and the full uploaded config', async () => {
-    const config = baseConfig()
+  it('converts the conditions into the table once, and stores the full uploaded config', async () => {
+    const config = baseConfig({
+      conditions: {
+        data: [
+          { headers: ['time.s', 'ENV.temperature.K', 'CONC.A.mol m-3'], rows: [[0, 250, 1e-6]] },
+          { headers: ['time.s', 'PHOTO.p1.s-1'], rows: [[0, 1e-4], [60, 2e-4]] },
+        ],
+      },
+    })
     const { store } = await load(config)
     const storedConfig = store.getState().mechanism.config
 
-    expect(store.getState().conditions.conditions).toEqual(config.conditions)
+    expect(store.getState().conditions.table).toEqual({
+      times: [0, 60],
+      columns: {
+        'ENV.temperature.K': [250, null],
+        'CONC.A.mol m-3': [1e-6, null],
+        'PHOTO.p1.s-1': [1e-4, 2e-4],
+      },
+    })
     expect(storedConfig['box model options']).toEqual(config['box model options'])
     expect(storedConfig.mechanism.name).toBe(config.mechanism.name)
     expect(storedConfig.mechanism.phases).toEqual(config.mechanism.phases)
@@ -150,15 +164,7 @@ describe('loadMusicBoxConfig', () => {
     )
   })
 
-  it('sets the source file when the config declares one, and clears it when it does not', async () => {
-    const withSource = await load(baseConfig({ '__source file': 'my_config.json' }))
-    expect(withSource.store.getState().conditions.source_file).toBe('my_config.json')
-
-    const withoutSource = await load(baseConfig())
-    expect(withoutSource.store.getState().conditions.source_file).toBeNull()
-  })
-
-  it('records the passed-in example metadata and marks the example as not yet loaded', async () => {
+  it('records the passed-in example metadata', async () => {
     const meta = {
       id: 'chapman',
       name: 'Chapman',
@@ -170,7 +176,6 @@ describe('loadMusicBoxConfig', () => {
 
     expect(state.mechanism.currentExample).toEqual(meta)
     expect(state.mechanism.selectedMechanism).toBe('Chapman Mechanism')
-    expect(state.conditions.exampleLoaded).toBe(false)
   })
 
   it('falls back to the example id, then "custom", when no mechanism_name is given', async () => {

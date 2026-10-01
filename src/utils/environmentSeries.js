@@ -1,9 +1,5 @@
 import { airDensityMolM3 } from './concentrationUnits'
 
-// Air number density is optional, so its entered values live in the evolving slice's generic
-// additionalSeries map, alongside hidden series like PHOTO.*, aligned with evolving.times.
-export const DENSITY_SERIES_KEY = 'ENV.air number density.mol m-3'
-
 // Air density (mol m-3) at `time` under the conditions a ConditionsManager holds (see
 // buildConditionsManager): a provided density wins, otherwise the ideal gas law -- the solver's
 // own rule. A non-positive density is not a usable air density, so it counts as not provided.
