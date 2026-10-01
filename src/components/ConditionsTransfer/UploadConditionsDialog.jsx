@@ -124,41 +124,50 @@ export function UploadConditionsDialog({ fileName, upload, onClose }) {
           <h3 className="mb-2 text-sm font-semibold text-ink">How to apply</h3>
           <div className="space-y-2">
             {MODES.map((option) => (
-              <label key={option.id} className="flex cursor-pointer items-start gap-3">
-                <input
-                  type="radio"
-                  name="conditions-upload-mode"
-                  checked={mode === option.id}
-                  onChange={() => setMode(option.id)}
-                  className="mt-1 accent-action"
-                />
-                <span>
-                  <span className="block text-sm text-ink">{option.label}</span>
-                  <span className="block text-xs text-muted">{option.detail}</span>
-                </span>
-              </label>
+              <div key={option.id}>
+                <label className="flex cursor-pointer items-start gap-3">
+                  <input
+                    type="radio"
+                    name="conditions-upload-mode"
+                    checked={mode === option.id}
+                    onChange={() => setMode(option.id)}
+                    className="mt-1 accent-action"
+                  />
+                  <span>
+                    <span className="block text-sm text-ink">{option.label}</span>
+                    <span className="block text-xs text-muted">{option.detail}</span>
+                  </span>
+                </label>
+
+                {/* The option belongs to Merge: Replace clears everything first, so an empty
+                    cell has no existing value to overwrite. */}
+                {option.id === 'merge' && (
+                  <label
+                    className={`ml-7 mt-2 flex items-start gap-3 ${
+                      mode === 'merge' ? 'cursor-pointer' : 'opacity-50'
+                    }`}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={emptyOverwrites}
+                      disabled={mode !== 'merge'}
+                      onChange={(e) => setEmptyOverwrites(e.target.checked)}
+                      className="mt-0.5 h-4 w-4 accent-action"
+                    />
+                    <span>
+                      <span className="block text-sm text-ink">
+                        Empty cells overwrite existing data
+                      </span>
+                      <span className="block text-xs text-muted">
+                        When on, an empty cell clears the existing value at that time. When off,
+                        the existing value stays.
+                      </span>
+                    </span>
+                  </label>
+                )}
+              </div>
             ))}
           </div>
-
-          <label
-            className={`mt-3 flex items-start gap-3 ${mode === 'merge' ? 'cursor-pointer' : 'opacity-50'}`}
-          >
-            <input
-              type="checkbox"
-              checked={emptyOverwrites}
-              disabled={mode !== 'merge'}
-              onChange={(e) => setEmptyOverwrites(e.target.checked)}
-              className="mt-1 h-4 w-4 accent-action"
-            />
-            <span>
-              <span className="block text-sm text-ink">Empty cells overwrite existing data</span>
-              <span className="block text-xs text-muted">
-                {mode === 'merge'
-                  ? 'When on, an empty cell clears the existing value at that time. When off, the existing value stays.'
-                  : 'Only for Merge by column. Replace clears all the conditions first.'}
-              </span>
-            </span>
-          </label>
         </section>
       </div>
     </Dialog>

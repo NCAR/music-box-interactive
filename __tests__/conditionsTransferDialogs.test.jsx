@@ -82,6 +82,9 @@ describe('Upload Conditions dialog', () => {
     await screen.findByRole('dialog', { name: 'Upload Conditions' })
 
     const option = screen.getByRole('checkbox', { name: /Empty cells overwrite/ })
+    // The option sits under the Merge choice, not under Replace.
+    const mergeBlock = screen.getByRole('radio', { name: /Merge by column/ }).closest('label').parentElement
+    expect(mergeBlock).toContainElement(option)
     expect(option).toBeDisabled()
     expect(option).not.toBeChecked()
     fireEvent.click(screen.getByRole('radio', { name: /Merge by column/ }))
