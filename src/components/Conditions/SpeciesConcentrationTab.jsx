@@ -3,20 +3,7 @@ import { useSelector, useDispatch } from 'react-redux'
 import { ChevronDown, ChevronUp, Check } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card'
 import { Button } from '../ui/button'
-import { hydrateInitialConditions } from '../../utils/hydrateConditions'
-import {
-  setTemperature,
-  setPressure,
-  setConcentrations,
-  setRateConstants,
-  markInitialHydrated,
-  setEvolvingEnabled,
-  setEvolvingTimes,
-  setEvolvingTemperature,
-  setEvolvingPressure,
-  setEvolvingAdditionalSeries,
-  untagEvolvingRows,
-} from '../../redux/slices/conditionsSlice'
+import { setConditionsTable, untagTimeRows } from '../../redux/slices/conditionsSlice'
 import { useNotify } from '@/hooks/use-notify'
 import { useClickOutside } from '../../hooks/useClickOutside'
 import { EMPTY_ARRAY } from '../../utils/emptyArray'
@@ -25,14 +12,16 @@ import { UnitDropdown } from '../Plots/UnitDropdown'
 import { CONCENTRATION_UNITS, toMolM3, fromMolM3 } from '../../utils/concentrationUnits'
 import { airDensityAtTime } from '../../utils/environmentSeries'
 import { buildConditionsManager } from '../../services/simulation/local/conditions'
+import { isThirdBody } from '../../services/simulation/local/speciesProperties'
 import {
-  DEFAULT_TEMPERATURE,
-  DEFAULT_PRESSURE,
-  insertAdditionalSeriesValue,
-  removeEvolvingTimeRows,
-  commitEvolvingTime,
+  commitTime as commitTableTime,
   ensureZeroTimeRow,
-} from './evolvingSeries'
+  insertTimeRow,
+  removeTimeRows,
+  rowHasValues,
+  setCell,
+} from '../../services/conditions/table'
+import { HideUnsetRowsCheckbox } from './HideUnsetRowsCheckbox'
 
 const filterButtonClass = (selected) =>
   `w-full text-left text-sm px-1.5 py-1 rounded ${
@@ -57,6 +46,10 @@ const formatValue = (value) => {
 
 const hasName = (species) => typeof species.name === 'string' && species.name.trim() !== ''
 
+const THIRD_BODY_TOOLTIP =
+  'This is a third-body species. The solver gets its concentration from the air density, so ' +
+  'its concentration cannot be set.'
+
 const CONC_PREFIX = 'CONC.'
 
 const DEFAULT_SELECTED_SPECIES = 3
@@ -75,22 +68,18 @@ const MIN_VALUE_COLUMN_PX = 160 // one reasonable column's worth of room
 export function SpeciesConcentrationTab() {
   const dispatch = useDispatch()
   const notify = useNotify()
-  const initial = useSelector((state) => state.conditions.initial)
-  const conditions = useSelector((state) => state.conditions.conditions)
-  const hydratedExampleId = useSelector((state) => state.conditions.hydration.initialExampleId)
-  const currentExample = useSelector((state) => state.mechanism.currentExample)
   const mechanismSpecies = useSelector(
     (state) => state.mechanism.config.mechanism?.species || EMPTY_ARRAY
   )
-  const evolvingTimes = useSelector((state) => state.conditions.evolving.times)
-  const evolvingTemperature = useSelector((state) => state.conditions.evolving.temperature)
-  const evolvingPressure = useSelector((state) => state.conditions.evolving.pressure)
-  const additionalSeries = useSelector((state) => state.conditions.evolving.additionalSeries)
+  const table = useSelector((state) => state.conditions.table)
+  const rowTimes = table.times
+  const tableColumns = table.columns
   const conditionsState = useSelector((state) => state.conditions)
   const conditionsManager = useMemo(() => buildConditionsManager(conditionsState), [conditionsState])
 
   const [selectedSpeciesNames, setSelectedSpeciesNames] = useState(new Set())
   const [speciesSearch, setSpeciesSearch] = useState('')
+  const [hideUnsetRows, setHideUnsetRows] = useState(false)
   const [concentrationUnitId, setConcentrationUnitId] = useState('mol_m3')
   const [rowDrafts, setRowDrafts] = useState({})
   const [justUpdatedCell, setJustUpdatedCell] = useState(null)
@@ -104,22 +93,10 @@ export function SpeciesConcentrationTab() {
   const addTimeRef = useRef(null)
   useClickOutside(addTimeRef, () => setAddTimeOpen(false), addTimeOpen)
 
-  useEffect(() => {
-    const exampleId = currentExample?.id
-
-    if (!exampleId || hydratedExampleId === exampleId) {
-      return
-    }
-
-    const hydrated = hydrateInitialConditions(conditions)
-    if (hydrated.temperature !== null) dispatch(setTemperature(hydrated.temperature))
-    if (hydrated.pressure !== null) dispatch(setPressure(hydrated.pressure))
-    dispatch(setConcentrations(hydrated.concentrations))
-    dispatch(setRateConstants(hydrated.rateConstants))
-    dispatch(markInitialHydrated(exampleId))
-  }, [currentExample, dispatch, conditions, hydratedExampleId])
-
   const namedSpecies = mechanismSpecies.filter(hasName)
+  // Third-body species stay in the list and the search, but they cannot be selected.
+  const selectableSpecies = namedSpecies.filter((species) => !isThirdBody(species))
+  const thirdBodyNames = new Set(namedSpecies.filter(isThirdBody).map((species) => species.name))
 
   const speciesQuery = speciesSearch.trim().toLowerCase()
   const filteredSpecies = speciesQuery
@@ -129,7 +106,10 @@ export function SpeciesConcentrationTab() {
   // Keep the selection pointed at species that are still present, falling back to the first
   // few in the mechanism when it changes out from under the current selection.
   useEffect(() => {
-    const currentSpecies = mechanismSpecies.filter(hasName)
+    // A species that becomes a third body is deselected.
+    const currentSpecies = mechanismSpecies.filter(
+      (species) => hasName(species) && !isThirdBody(species)
+    )
     setSelectedSpeciesNames((prev) => {
       const stillValid = [...prev].filter((name) =>
         currentSpecies.some((species) => species.name === name)
@@ -151,6 +131,7 @@ export function SpeciesConcentrationTab() {
   )
 
   const toggleSpeciesName = (name) => {
+    if (thirdBodyNames.has(name)) return
     setSelectedSpeciesNames((prev) => {
       const next = new Set(prev)
       if (next.has(name)) next.delete(name)
@@ -160,7 +141,7 @@ export function SpeciesConcentrationTab() {
   }
 
   const handleSelectAllSpecies = () => {
-    const names = namedSpecies.map((species) => species.name)
+    const names = selectableSpecies.map((species) => species.name)
     setSelectedSpeciesNames(new Set(names.slice(0, MAX_SELECTED_SPECIES)))
     if (names.length > MAX_SELECTED_SPECIES) {
       notify.warning('Selection Limited', `Selected the first ${MAX_SELECTED_SPECIES} of ${names.length} species. Use search to select others.`)
@@ -175,7 +156,7 @@ export function SpeciesConcentrationTab() {
   // discovery ReactionTab uses for PHOTO./SURF. -- tolerate a stored unit suffix.
   const concentrationKeyFor = (speciesName) => {
     const bareKey = `${CONC_PREFIX}${speciesName}`
-    const existingKey = Object.keys(additionalSeries || {}).find(
+    const existingKey = Object.keys(tableColumns || {}).find(
       (key) => key === bareKey || key.startsWith(`${bareKey}.`)
     )
     return existingKey ?? `${bareKey}.mol m-3`
@@ -188,14 +169,18 @@ export function SpeciesConcentrationTab() {
     name: species.name,
   }))
 
-  const timeEntries = evolvingTimes.map((time, index) => ({ time, index }))
+  const shownColumnValues = columns.map((column) => tableColumns[column.key])
+  const allTimeEntries = rowTimes.map((time, index) => ({ time, index }))
+  const timeEntries = hideUnsetRows
+    ? allTimeEntries.filter(({ index }) => rowHasValues(shownColumnValues, index))
+    : allTimeEntries
   const removableIndices = timeEntries.map((entry) => entry.index)
 
   useEffect(() => {
     setRowDrafts({})
     setJustUpdatedCell(null)
     setSelectedIndices(new Set())
-  }, [selectedSpeciesNames, evolvingTimes])
+  }, [selectedSpeciesNames, rowTimes, hideUnsetRows])
 
   const cellDraftKey = (key, index) => `${key}::${index}`
 
@@ -218,13 +203,10 @@ export function SpeciesConcentrationTab() {
       return
     }
 
-    const airDensity = airDensityAtTime(conditionsManager, evolvingTimes[index])
+    const airDensity = airDensityAtTime(conditionsManager, rowTimes[index])
     const parsed = displayed === null ? null : toMolM3(displayed, concentrationUnitId, airDensity)
 
-    const existing = Array.isArray(additionalSeries[key])
-      ? [...additionalSeries[key]]
-      : new Array(evolvingTimes.length).fill(null)
-    while (existing.length < evolvingTimes.length) existing.push(null)
+    const existing = tableColumns[key] ?? []
 
     // Clicking into a cell and back out without typing anything shouldn't flash it or write to
     // Redux -- only an actual change counts as an update.
@@ -236,19 +218,14 @@ export function SpeciesConcentrationTab() {
     })
     if (unchanged) return
 
-    existing[index] = parsed
-    dispatch(setEvolvingAdditionalSeries({ ...additionalSeries, [key]: existing }))
+    dispatch(setConditionsTable(setCell(table, key, index, parsed)))
     flashUpdated(cellDraftKey(key, index))
   }
 
   const TIME_DRAFT_KEY = '__time__'
 
   const commitTime = (index, rawValue) => {
-    const outcome = commitEvolvingTime(
-      { times: evolvingTimes, temperature: evolvingTemperature, pressure: evolvingPressure, additionalSeries },
-      index,
-      rawValue
-    )
+    const outcome = commitTableTime(table, index, rawValue)
 
     if (outcome.kind === 'invalid') {
       // Leave the draft in place so the invalid text stays visible to fix, instead of
@@ -270,10 +247,7 @@ export function SpeciesConcentrationTab() {
     }
 
     const { result } = outcome
-    dispatch(setEvolvingTimes(result.times))
-    dispatch(setEvolvingTemperature(result.temperature))
-    dispatch(setEvolvingPressure(result.pressure))
-    dispatch(setEvolvingAdditionalSeries(result.additionalSeries))
+    dispatch(setConditionsTable(result.table))
 
     notify.success('Time Point Updated', `Moved time point to t=${result.newTime}s.`)
   }
@@ -303,17 +277,15 @@ export function SpeciesConcentrationTab() {
   }
 
   const handleRemoveSelected = () => {
-    const result = removeEvolvingTimeRows(
-      { times: evolvingTimes, temperature: evolvingTemperature, pressure: evolvingPressure, additionalSeries },
-      selectedIndices
+    // Only rows the user can see are removed, so a hidden row never disappears unseen.
+    const result = removeTimeRows(
+      table,
+      [...selectedIndices].filter((index) => removableIndices.includes(index))
     )
     if (!result) return
 
-    dispatch(setEvolvingTimes(result.times))
-    dispatch(setEvolvingTemperature(result.temperature))
-    dispatch(setEvolvingPressure(result.pressure))
-    dispatch(setEvolvingAdditionalSeries(result.additionalSeries))
-    dispatch(untagEvolvingRows(result.removedTimes))
+    dispatch(setConditionsTable(result.table))
+    dispatch(untagTimeRows(result.removedTimes))
 
     notify.removed(result.removedCount === 1 ? 'Time Point Removed' : 'Time Points Removed', `Removed ${result.removedCount} time point${result.removedCount === 1 ? '' : 's'}.`)
     setSelectedIndices(new Set())
@@ -327,33 +299,15 @@ export function SpeciesConcentrationTab() {
       return
     }
 
-    if (evolvingTimes.includes(time)) {
+    if (rowTimes.includes(time)) {
       notify.error('Duplicate Time Point', `A time point already exists at t=${time}s.`)
       return
     }
 
-    // t=0 is always the default starting point
-    const withZero = ensureZeroTimeRow(
-      { times: evolvingTimes, temperature: evolvingTemperature, pressure: evolvingPressure, additionalSeries },
-      time
-    )
-
-    const newTimes = [...withZero.times, time].sort((a, b) => a - b)
-    const insertIndex = newTimes.indexOf(time)
-
-    const newTemperature = [...withZero.temperature]
-    newTemperature.splice(insertIndex, 0, DEFAULT_TEMPERATURE)
-
-    const newPressure = [...withZero.pressure]
-    newPressure.splice(insertIndex, 0, DEFAULT_PRESSURE)
-
-    const newAdditionalSeries = insertAdditionalSeriesValue(withZero.additionalSeries, insertIndex)
-
-    dispatch(setEvolvingEnabled(true))
-    dispatch(setEvolvingTimes(newTimes))
-    dispatch(setEvolvingTemperature(newTemperature))
-    dispatch(setEvolvingPressure(newPressure))
-    dispatch(setEvolvingAdditionalSeries(newAdditionalSeries))
+    // t=0 is always the default starting point. The new row sets nothing, so the
+    // environment holds its earlier values.
+    const withZero = time === 0 ? table : ensureZeroTimeRow(table)
+    dispatch(setConditionsTable(insertTimeRow(withZero, time).table))
 
     notify.success('Time Point Added', `Added time point at t=${time}s.`)
     setNewTimeValue('')
@@ -373,6 +327,7 @@ export function SpeciesConcentrationTab() {
             </CardDescription>
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
+            <HideUnsetRowsCheckbox checked={hideUnsetRows} onChange={setHideUnsetRows} />
             {/* Always mounted (just hidden) so the header's height never shifts */}
             <Button
               variant="glass"
@@ -480,16 +435,28 @@ export function SpeciesConcentrationTab() {
                   </div>
 
                   <div className="flex flex-col gap-0.5">
-                    {visibleSpecies.map((species) => (
-                      <button
-                        key={species.id ?? species.name}
-                        type="button"
-                        onClick={() => toggleSpeciesName(species.name)}
-                        className={filterButtonClass(selectedSpeciesNames.has(species.name))}
-                      >
-                        {species.name}
-                      </button>
-                    ))}
+                    {visibleSpecies.map((species) =>
+                      isThirdBody(species) ? (
+                        <button
+                          key={species.id ?? species.name}
+                          type="button"
+                          disabled
+                          title={THIRD_BODY_TOOLTIP}
+                          className="w-full text-left text-sm px-1.5 py-1 rounded text-gray-400 cursor-not-allowed"
+                        >
+                          {species.name}
+                        </button>
+                      ) : (
+                        <button
+                          key={species.id ?? species.name}
+                          type="button"
+                          onClick={() => toggleSpeciesName(species.name)}
+                          className={filterButtonClass(selectedSpeciesNames.has(species.name))}
+                        >
+                          {species.name}
+                        </button>
+                      )
+                    )}
 
                     {overflowSpecies.length > 0 && (
                       <div className="relative" ref={speciesOverflowRef}>
@@ -507,8 +474,14 @@ export function SpeciesConcentrationTab() {
                               <button
                                 key={species.id ?? species.name}
                                 type="button"
+                                disabled={isThirdBody(species)}
+                                title={isThirdBody(species) ? THIRD_BODY_TOOLTIP : undefined}
                                 onClick={() => toggleSpeciesName(species.name)}
-                                className="w-full flex items-center gap-2 text-left text-sm px-3 py-1.5 text-ink hover:bg-surface-hover"
+                                className={`w-full flex items-center gap-2 text-left text-sm px-3 py-1.5 ${
+                                  isThirdBody(species)
+                                    ? 'text-gray-400 cursor-not-allowed'
+                                    : 'text-ink hover:bg-surface-hover'
+                                }`}
                               >
                                 <Check
                                   className={`w-3.5 h-3.5 flex-shrink-0 ${
@@ -531,7 +504,7 @@ export function SpeciesConcentrationTab() {
           {/* Main content: time table */}
           <div className="flex-1 min-h-0 lg:relative">
             <div className="border border-gray-200 rounded-lg overflow-auto lg:absolute lg:inset-0">
-              {evolvingTimes.length === 0 ? (
+              {rowTimes.length === 0 ? (
                 <p className="text-center text-gray-500 py-8">
                   No time points configured. Click "Add" above to create one.
                 </p>
@@ -566,6 +539,13 @@ export function SpeciesConcentrationTab() {
                     </tr>
                   </thead>
                   <tbody>
+                    {timeEntries.length === 0 && (
+                      <tr>
+                        <td colSpan={columns.length + 2} className="px-4 py-8 text-center text-gray-500">
+                          No rows have values for the columns shown.
+                        </td>
+                      </tr>
+                    )}
                     {timeEntries.map(({ time, index }) => {
                       const airDensity = airDensityAtTime(conditionsManager, time)
 
@@ -598,15 +578,7 @@ export function SpeciesConcentrationTab() {
                             />
                           </td>
                           {columns.map((column) => {
-                            const stored = additionalSeries?.[column.key]?.[index]
-                            // Species that haven't been touched in this table yet still show
-                            // their legacy snapshot value at t=0; editing the cell migrates
-                            // that species onto its own CONC series from then on.
-                            const legacyFallback =
-                              time === 0 && (stored === null || stored === undefined)
-                                ? initial.concentrations[column.name]
-                                : undefined
-                            const raw = stored ?? legacyFallback
+                            const raw = tableColumns?.[column.key]?.[index]
                             const draftKey = cellDraftKey(column.key, index)
                             const displayValue =
                               rowDrafts[draftKey] ??

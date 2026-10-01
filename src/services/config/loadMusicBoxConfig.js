@@ -11,10 +11,10 @@ import {
   setDuration,
   setTimeStep,
   setOutputFrequency,
-  setConditions,
-  setExampleLoaded,
-  setSourceFile,
+  setConditionsTable,
 } from '../../redux/slices/conditionsSlice'
+import { dropConcentrations, tableFromConditionsConfig } from '../conditions/table'
+import { isThirdBody } from '../simulation/local/speciesProperties'
 import { resetSimulation } from '../../redux/slices/simulationSlice'
 
 // MUSICA's parser validates the mechanism, fills in default values, and gives back the canonical
@@ -43,6 +43,10 @@ export async function toReduxConfig(config) {
 // Loads a music-box config into Redux. conditions.data must already hold every
 // CSV-derived block inline; callers resolve filepaths before calling this. Rejects when the
 // mechanism is not valid, before any Redux state changes.
+//
+// Resolves to { ignoredThirdBodySpecies }: the third-body species whose concentration the
+// config sets. The solver gets a third-body concentration from the air density, so those
+// values are not loaded. The caller tells the user (see notifyIgnoredThirdBodySpecies).
 export async function loadMusicBoxConfig(config, { dispatch, navigate, meta = {} } = {}) {
   const reduxConfig = await toReduxConfig(config)
 
@@ -58,13 +62,15 @@ export async function loadMusicBoxConfig(config, { dispatch, navigate, meta = {}
   dispatch(setTimeStep(chemTimeStep))
   dispatch(setOutputFrequency(outputTimeStep))
 
-  if (config?.['__source file'] != null) {
-    dispatch(setSourceFile(config['__source file']))
-  } else {
-    dispatch(setSourceFile(null))
-  }
-
-  dispatch(setConditions(config?.conditions))
+  // The conditions go into the table once, here. Nothing converts them again later.
+  const thirdBodyNames = (reduxConfig.mechanism?.species || [])
+    .filter(isThirdBody)
+    .map((s) => s.name)
+  const { table, dropped } = dropConcentrations(
+    tableFromConditionsConfig(config?.conditions),
+    thirdBodyNames
+  )
+  dispatch(setConditionsTable(table))
   dispatch(
     setCurrentExample({
       id: meta.id,
@@ -74,7 +80,18 @@ export async function loadMusicBoxConfig(config, { dispatch, navigate, meta = {}
     })
   )
   dispatch(setSelectedMechanism(meta.mechanism_name || meta.id || 'custom'))
-  dispatch(setExampleLoaded(false))
 
   navigate('/mechanism')
+  return { ignoredThirdBodySpecies: dropped }
+}
+
+// Shows the warning for the third-body concentrations that loadMusicBoxConfig ignored.
+export function notifyIgnoredThirdBodySpecies(notify, species) {
+  if (!species?.length) return
+  notify.warning(
+    'Third-Body Concentrations Ignored',
+    `The configuration sets a concentration for ${species.join(', ')}. ` +
+      `${species.length === 1 ? 'This is a third-body species' : 'These are third-body species'}: ` +
+      'the solver gets the concentration from the air density, so the value was not loaded.'
+  )
 }

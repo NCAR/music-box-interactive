@@ -4,27 +4,29 @@ import { ChevronDown, ChevronUp, Check } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card'
 import { Button } from '../ui/button'
 import {
-  setEvolvingEnabled,
-  setEvolvingTimes,
-  setEvolvingTemperature,
-  setEvolvingPressure,
-  setEvolvingAdditionalSeries,
-  tagEvolvingRow,
-  untagEvolvingRows,
-  renameEvolvingRowTag,
+  setConditionsTable,
+  tagTimeRow,
+  untagTimeRows,
+  renameTimeRowTag,
 } from '../../redux/slices/conditionsSlice'
 import { useNotify } from '@/hooks/use-notify'
 import { useClickOutside } from '../../hooks/useClickOutside'
 import { EMPTY_ARRAY } from '../../utils/emptyArray'
 import { LIST_CARD, LIST_CARD_CONTENT, TEXT_INPUT_SM } from '../Mechanism/fieldStyles'
 import {
-  DEFAULT_TEMPERATURE,
-  DEFAULT_PRESSURE,
-  insertAdditionalSeriesValue,
-  removeEvolvingTimeRows,
-  commitEvolvingTime,
+  commitTime as commitTableTime,
   ensureZeroTimeRow,
-} from './evolvingSeries'
+  insertTimeRow,
+  removeTimeRows,
+  rowHasValues,
+  setCell,
+} from '../../services/conditions/table'
+import {
+  SURFACE_PROPERTIES,
+  defaultRateHeader,
+  rateParameterUnit,
+} from '../../services/conditions/conditionItems'
+import { HideUnsetRowsCheckbox } from './HideUnsetRowsCheckbox'
 
 const filterButtonClass = (selected) =>
   `w-full text-left text-sm px-1.5 py-1 rounded ${
@@ -73,7 +75,25 @@ const REACTION_TYPES = [
   { id: 'SURFACE', label: 'Surface', prefix: 'SURF' },
   { id: 'EMISSION', label: 'Emissions', prefix: 'EMIS' },
   { id: 'FIRST_ORDER_LOSS', label: 'Loss', prefix: 'LOSS' },
+  { id: 'USER_DEFINED', label: 'User defined', prefix: 'USER' },
 ]
+
+// The surface properties to offer: the two that music-box knows, plus any other property
+// that the table holds for a surface reaction of the mechanism.
+const surfacePropertiesFor = (reactions, tableColumns) => {
+  const stored = reactions
+    .filter((reaction) => reaction.type === 'SURFACE' && hasName(reaction))
+    .flatMap((reaction) => {
+      const prefix = `SURF.${reaction.name}.`
+      return Object.keys(tableColumns || {})
+        .filter((key) => key.startsWith(prefix))
+        .map((key) => stripPropertyUnit(key.slice(prefix.length)))
+    })
+  const known = SURFACE_PROPERTIES.map((p) => p.property)
+  return [...known, ...[...new Set(stored)].filter((property) => !known.includes(property)).sort()]
+}
+
+const withUnit = (label, unit) => (unit ? `${label} (${unit})` : label)
 
 /**
  * ReactionTab Component
@@ -86,18 +106,18 @@ export function ReactionTab() {
   const mechanismReactions = useSelector(
     (state) => state.mechanism.config.mechanism?.reactions || EMPTY_ARRAY
   )
-  const evolvingTimes = useSelector((state) => state.conditions.evolving.times)
-  const evolvingTemperature = useSelector((state) => state.conditions.evolving.temperature)
-  const evolvingPressure = useSelector((state) => state.conditions.evolving.pressure)
-  const additionalSeries = useSelector((state) => state.conditions.evolving.additionalSeries)
-  const evolvingRowReactionType = useSelector(
-    (state) => state.conditions.evolving.rowReactionType || EMPTY_ROW_TAGS
+  const table = useSelector((state) => state.conditions.table)
+  const rowTimes = table.times
+  const tableColumns = table.columns
+  const rowReactionTypes = useSelector(
+    (state) => state.conditions.rowReactionType || EMPTY_ROW_TAGS
   )
 
   const [reactionTypeId, setReactionTypeId] = useState(REACTION_TYPES[0].id)
   const [selectedReactionNames, setSelectedReactionNames] = useState(new Set())
   const [selectedSurfaceProperty, setSelectedSurfaceProperty] = useState(null)
   const [reactionSearch, setReactionSearch] = useState('')
+  const [hideUnsetRows, setHideUnsetRows] = useState(false)
   const [rowDrafts, setRowDrafts] = useState({})
   const [justUpdatedCell, setJustUpdatedCell] = useState(null)
   const [selectedIndices, setSelectedIndices] = useState(new Set())
@@ -133,20 +153,13 @@ export function ReactionTab() {
     ? reactionsOfType.filter((reaction) => reaction.name.toLowerCase().includes(reactionQuery))
     : reactionsOfType
 
-  // When a surface reaction is present, the nested surface dropdown lists its two available properties:
+  // When a surface reaction is present, the nested surface dropdown lists its properties:
   // effective radius and particle number concentration.
-  const surfacePropertyOptions = [
-    ...new Set(
-      mechanismReactions
-        .filter((reaction) => reaction.type === 'SURFACE' && hasName(reaction))
-        .flatMap((reaction) => {
-          const prefix = `SURF.${reaction.name}.`
-          return Object.keys(additionalSeries || {})
-            .filter((key) => key.startsWith(prefix))
-            .map((key) => stripPropertyUnit(key.slice(prefix.length)))
-        })
-    ),
-  ].sort()
+  const surfacePropertyOptions = surfacePropertiesFor(mechanismReactions, tableColumns)
+
+  // All the values in the table have the same unit, from the reaction type (and, for a
+  // surface reaction, the selected property).
+  const valueUnit = rateParameterUnit(reactionType.prefix, isSurface ? selectedSurfaceProperty : null)
 
   // Selected reactions beyond the visible cap stay visible until deselected.
   const baseVisibleReactions = filteredReactionsOfType.slice(0, REACTIONS_VISIBLE)
@@ -203,24 +216,13 @@ export function ReactionTab() {
   }, [reactionTypeId, mechanismReactions])
 
   // Keep the selected surface property pointed at one that's present, falling back to the
-  // first available option. Recomputes from mechanismReactions/additionalSeries -- both stable
+  // first available option. Recomputes from mechanismReactions/tableColumns -- both stable
   // selector outputs -- rather than depending on surfacePropertyOptions, which is a fresh array
   // every render.
   useEffect(() => {
-    const options = [
-      ...new Set(
-        mechanismReactions
-          .filter((reaction) => reaction.type === 'SURFACE' && hasName(reaction))
-          .flatMap((reaction) => {
-            const prefix = `SURF.${reaction.name}.`
-            return Object.keys(additionalSeries || {})
-              .filter((key) => key.startsWith(prefix))
-              .map((key) => stripPropertyUnit(key.slice(prefix.length)))
-          })
-      ),
-    ]
+    const options = surfacePropertiesFor(mechanismReactions, tableColumns)
     setSelectedSurfaceProperty((prev) => (options.includes(prev) ? prev : (options[0] ?? null)))
-  }, [mechanismReactions, additionalSeries])
+  }, [mechanismReactions, tableColumns])
 
   const selectedReactions = reactionsOfType.filter((reaction) =>
     selectedReactionNames.has(reaction.name)
@@ -232,19 +234,26 @@ export function ReactionTab() {
     if (isSurface) {
       if (!selectedSurfaceProperty) return []
       const surfacePrefix = `SURF.${reaction.name}.`
-      const key = Object.keys(additionalSeries || {}).find(
+      const key = Object.keys(tableColumns || {}).find(
         (candidate) =>
           candidate.startsWith(surfacePrefix) &&
           stripPropertyUnit(candidate.slice(surfacePrefix.length)) === selectedSurfaceProperty
       )
-      return key ? [{ key, label: reaction.name }] : []
+      return [
+        {
+          key: key ?? defaultRateHeader('SURF', reaction.name, selectedSurfaceProperty),
+          label: reaction.name,
+        },
+      ]
     }
 
     const bareKey = `${reactionType.prefix}.${reaction.name}`
-    const existingKey = Object.keys(additionalSeries || {}).find(
+    const existingKey = Object.keys(tableColumns || {}).find(
       (key) => key === bareKey || key.startsWith(`${bareKey}.`)
     )
-    return [{ key: existingKey ?? bareKey, label: reaction.name }]
+    return [
+      { key: existingKey ?? defaultRateHeader(reactionType.prefix, reaction.name), label: reaction.name },
+    ]
   })
 
   // Row indices where the active type already has a value, checked across every reaction of
@@ -253,19 +262,19 @@ export function ReactionTab() {
   const typeDataIndices = new Set(
     reactionsOfType.flatMap((reaction) => {
       const keys = isSurface
-        ? Object.keys(additionalSeries || {}).filter((key) =>
+        ? Object.keys(tableColumns || {}).filter((key) =>
             key.startsWith(`SURF.${reaction.name}.`)
           )
         : (() => {
             const bareKey = `${reactionType.prefix}.${reaction.name}`
-            const existingKey = Object.keys(additionalSeries || {}).find(
+            const existingKey = Object.keys(tableColumns || {}).find(
               (key) => key === bareKey || key.startsWith(`${bareKey}.`)
             )
             return existingKey ? [existingKey] : []
           })()
 
       return keys.flatMap((key) => {
-        const series = additionalSeries?.[key]
+        const series = tableColumns?.[key]
         if (!Array.isArray(series)) return []
         return series.flatMap((value, index) => (value != null ? [index] : []))
       })
@@ -275,21 +284,25 @@ export function ReactionTab() {
   // A row shows under the active type if it has no type tags (added from Environment, or
   // predates this feature -- universal), was added/re-added under this type, or already has
   // data here.
-  const visibleTimeEntries = evolvingTimes
+  const typeTimeEntries = rowTimes
     .map((time, index) => ({ time, index }))
     .filter(({ time, index }) => {
-      const tags = evolvingRowReactionType[String(time)]
+      const tags = rowReactionTypes[String(time)]
       if (!Array.isArray(tags) || tags.length === 0 || tags.includes(reactionTypeId)) return true
       return typeDataIndices.has(index)
     })
+  const shownColumnValues = columns.map((column) => tableColumns[column.key])
+  const visibleTimeEntries = hideUnsetRows
+    ? typeTimeEntries.filter(({ index }) => rowHasValues(shownColumnValues, index))
+    : typeTimeEntries
   const removableIndices = visibleTimeEntries.map((entry) => entry.index)
 
-  // Clear on evolvingTimes changing
+  // Clear on rowTimes changing
   useEffect(() => {
     setRowDrafts({})
     setJustUpdatedCell(null)
     setSelectedIndices(new Set())
-  }, [selectedReactionNames, reactionTypeId, evolvingTimes])
+  }, [selectedReactionNames, reactionTypeId, rowTimes, hideUnsetRows])
 
   const cellDraftKey = (key, index) => `${key}::${index}`
 
@@ -312,10 +325,7 @@ export function ReactionTab() {
       return
     }
 
-    const existing = Array.isArray(additionalSeries[key])
-      ? [...additionalSeries[key]]
-      : new Array(evolvingTimes.length).fill(null)
-    while (existing.length < evolvingTimes.length) existing.push(null)
+    const existing = tableColumns[key] ?? []
 
     // Clicking into a cell and back out without typing anything shouldn't flash it or write to
     // Redux -- only an actual change counts as an update.
@@ -327,19 +337,14 @@ export function ReactionTab() {
     })
     if (unchanged) return
 
-    existing[index] = parsed
-    dispatch(setEvolvingAdditionalSeries({ ...additionalSeries, [key]: existing }))
+    dispatch(setConditionsTable(setCell(table, key, index, parsed)))
     flashUpdated(cellDraftKey(key, index))
   }
 
   const TIME_DRAFT_KEY = '__time__'
 
   const commitTime = (index, rawValue) => {
-    const outcome = commitEvolvingTime(
-      { times: evolvingTimes, temperature: evolvingTemperature, pressure: evolvingPressure, additionalSeries },
-      index,
-      rawValue
-    )
+    const outcome = commitTableTime(table, index, rawValue)
 
     if (outcome.kind === 'invalid') {
       // Leave the draft in place so the invalid text stays visible to fix, instead of
@@ -361,11 +366,8 @@ export function ReactionTab() {
     }
 
     const { result } = outcome
-    dispatch(setEvolvingTimes(result.times))
-    dispatch(setEvolvingTemperature(result.temperature))
-    dispatch(setEvolvingPressure(result.pressure))
-    dispatch(setEvolvingAdditionalSeries(result.additionalSeries))
-    dispatch(renameEvolvingRowTag({ oldTime: result.oldTime, newTime: result.newTime }))
+    dispatch(setConditionsTable(result.table))
+    dispatch(renameTimeRowTag({ oldTime: result.oldTime, newTime: result.newTime }))
 
     notify.success('Time Point Updated', `Moved time point to t=${result.newTime}s.`)
   }
@@ -396,17 +398,15 @@ export function ReactionTab() {
   }
 
   const handleRemoveSelected = () => {
-    const result = removeEvolvingTimeRows(
-      { times: evolvingTimes, temperature: evolvingTemperature, pressure: evolvingPressure, additionalSeries },
-      selectedIndices
+    // Only rows the user can see are removed, so a hidden row never disappears unseen.
+    const result = removeTimeRows(
+      table,
+      [...selectedIndices].filter((index) => removableIndices.includes(index))
     )
     if (!result) return
 
-    dispatch(setEvolvingTimes(result.times))
-    dispatch(setEvolvingTemperature(result.temperature))
-    dispatch(setEvolvingPressure(result.pressure))
-    dispatch(setEvolvingAdditionalSeries(result.additionalSeries))
-    dispatch(untagEvolvingRows(result.removedTimes))
+    dispatch(setConditionsTable(result.table))
+    dispatch(untagTimeRows(result.removedTimes))
 
     notify.removed(result.removedCount === 1 ? 'Time Point Removed' : 'Time Points Removed', `Removed ${result.removedCount} time point${result.removedCount === 1 ? '' : 's'}.`)
     setSelectedIndices(new Set())
@@ -420,8 +420,8 @@ export function ReactionTab() {
       return
     }
 
-    if (evolvingTimes.includes(time)) {
-      const tags = evolvingRowReactionType[String(time)]
+    if (rowTimes.includes(time)) {
+      const tags = rowReactionTypes[String(time)]
       const alreadyVisibleHere = !Array.isArray(tags) || tags.length === 0 || tags.includes(reactionTypeId)
       if (alreadyVisibleHere) {
         notify.error('Duplicate Time Point', `A time point already exists at t=${time}s.`)
@@ -430,38 +430,20 @@ export function ReactionTab() {
 
       // The row exists but was created under a different type and has no data of its own here
       // yet -- silently reveal it under this type too instead of refusing the add outright.
-      dispatch(tagEvolvingRow({ time, typeId: reactionTypeId }))
+      dispatch(tagTimeRow({ time, typeId: reactionTypeId }))
       setNewTimeValue('')
       setAddTimeOpen(false)
       return
     }
 
-    // t=0 is always the default starting point
-    const withZero = ensureZeroTimeRow(
-      { times: evolvingTimes, temperature: evolvingTemperature, pressure: evolvingPressure, additionalSeries },
-      time
-    )
-
-    const newTimes = [...withZero.times, time].sort((a, b) => a - b)
-    const insertIndex = newTimes.indexOf(time)
-
-    const newTemperature = [...withZero.temperature]
-    newTemperature.splice(insertIndex, 0, DEFAULT_TEMPERATURE)
-
-    const newPressure = [...withZero.pressure]
-    newPressure.splice(insertIndex, 0, DEFAULT_PRESSURE)
-
-    const newAdditionalSeries = insertAdditionalSeriesValue(withZero.additionalSeries, insertIndex)
-
-    dispatch(setEvolvingEnabled(true))
-    dispatch(setEvolvingTimes(newTimes))
-    dispatch(setEvolvingTemperature(newTemperature))
-    dispatch(setEvolvingPressure(newPressure))
-    dispatch(setEvolvingAdditionalSeries(newAdditionalSeries))
+    // t=0 is always the default starting point. The new row sets nothing, so the
+    // environment holds its earlier values.
+    const withZero = time === 0 ? table : ensureZeroTimeRow(table)
+    dispatch(setConditionsTable(insertTimeRow(withZero, time).table))
     // Scopes this row to the active type until it also has data under another one (see
     // visibleTimeEntries above) -- so it's immediately visible here without leaking into
     // every other reaction type's table.
-    dispatch(tagEvolvingRow({ time, typeId: reactionTypeId }))
+    dispatch(tagTimeRow({ time, typeId: reactionTypeId }))
 
     notify.success('Time Point Added', `Added time point at t=${time}s.`)
     setNewTimeValue('')
@@ -477,10 +459,11 @@ export function ReactionTab() {
               {'Rate constant parameters'}
             </CardTitle>
             <CardDescription className="whitespace-nowrap">
-              Set time-varying rate constant parameters
+              Set time-varying rate constant parameters{valueUnit ? `, in ${valueUnit}` : ''}
             </CardDescription>
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
+            <HideUnsetRowsCheckbox checked={hideUnsetRows} onChange={setHideUnsetRows} />
             {/* Always mounted (just hidden) so the header's height never shifts */}
             <Button
               variant="glass"
@@ -580,7 +563,7 @@ export function ReactionTab() {
                                 onClick={() => setSelectedSurfaceProperty(property)}
                                 className={filterButtonClass(selectedSurfaceProperty === property)}
                               >
-                                {property}
+                                {withUnit(property, rateParameterUnit('SURF', property))}
                               </button>
                             ))}
                           </div>
@@ -687,11 +670,11 @@ export function ReactionTab() {
           {/* Main content: time table */}
           <div className="flex-1 min-h-0 lg:relative">
             <div className="border border-gray-200 rounded-lg overflow-auto lg:absolute lg:inset-0">
-              {evolvingTimes.length === 0 ? (
+              {rowTimes.length === 0 ? (
                 <p className="text-center text-gray-500 py-8">
                   No rate constant parameters configured
                 </p>
-              ) : visibleTimeEntries.length === 0 ? (
+              ) : typeTimeEntries.length === 0 ? (
                 <p className="text-center text-gray-500 py-8">
                   No time points for {reactionType.label} yet. Click "Add" above to create one.
                 </p>
@@ -727,11 +710,21 @@ export function ReactionTab() {
                       {columns.map((column) => (
                         <th key={column.key} className="text-left px-4 py-2 font-semibold">
                           {column.label}
+                          {valueUnit && (
+                            <span className="ml-1 font-normal whitespace-nowrap">({valueUnit})</span>
+                          )}
                         </th>
                       ))}
                     </tr>
                   </thead>
                   <tbody>
+                    {visibleTimeEntries.length === 0 && (
+                      <tr>
+                        <td colSpan={columns.length + 2} className="px-4 py-8 text-center text-gray-500">
+                          No rows have values for the columns shown.
+                        </td>
+                      </tr>
+                    )}
                     {visibleTimeEntries.map(({ time, index }) => (
                       <tr key={index} className="border-b border-gray-200 hover:bg-gray-50">
                         <td className="px-4 py-2">
@@ -761,7 +754,7 @@ export function ReactionTab() {
                           />
                         </td>
                         {columns.map((column) => {
-                          const stored = additionalSeries?.[column.key]?.[index]
+                          const stored = tableColumns?.[column.key]?.[index]
                           const draftKey = cellDraftKey(column.key, index)
                           const displayValue =
                             rowDrafts[draftKey] ??

@@ -6,11 +6,14 @@ import { Button } from '../ui/button'
 import ExampleLoader from '../ExampleLoader'
 import CurrentExampleIndicator from '../CurrentExampleIndicator'
 import { resetMechanism, setSelectedMechanism } from '../../redux/slices/mechanismSlice'
-import { resetConditions, setExampleLoaded } from '../../redux/slices/conditionsSlice'
+import { resetConditions } from '../../redux/slices/conditionsSlice'
 import { useNotify } from '@/hooks/use-notify'
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert'
 import { Rocket, PenLine, FolderOpen, Library } from 'lucide-react'
-import { loadMusicBoxConfig } from '../../services/config/loadMusicBoxConfig'
+import {
+  loadMusicBoxConfig,
+  notifyIgnoredThirdBodySpecies,
+} from '../../services/config/loadMusicBoxConfig'
 import { parseUploadedMusicBoxConfig } from '../../services/config/parseUploadedMusicBoxConfig'
 
 // dashboard with quick actions and example loader
@@ -29,7 +32,6 @@ export function DashboardPage() {
   const confirmStartFromScratch = () => {
     dispatch(resetMechanism())
     dispatch(resetConditions())
-    dispatch(setExampleLoaded(false))
     dispatch(setSelectedMechanism('custom'))
     // hide examples on fresh start
     setShowExamples(false)
@@ -47,7 +49,7 @@ export function DashboardPage() {
 
     parseUploadedMusicBoxConfig(file)
       .then(async (config) => {
-        await loadMusicBoxConfig(config, {
+        const { ignoredThirdBodySpecies } = await loadMusicBoxConfig(config, {
           dispatch,
           navigate,
           meta: {
@@ -62,6 +64,7 @@ export function DashboardPage() {
           'Configuration Loaded',
           `Loaded ${config.mechanism.species?.length || 0} species and ${config.mechanism.reactions?.length || 0} reactions from ${file.name}.`
         )
+        notifyIgnoredThirdBodySpecies(notify, ignoredThirdBodySpecies)
       })
       .catch((err) => {
         notify.error(

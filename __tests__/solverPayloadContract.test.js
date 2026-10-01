@@ -18,6 +18,7 @@ import chapmanConfig from '@ncar/music-box/examples/chapman/my_config.json' with
 import flowTubeConfig from '@ncar/music-box/examples/flow_tube/my_config.json' with { type: 'json' }
 import carbonBond5Config from '@ncar/music-box/examples/carbon_bond_5/my_config.json' with { type: 'json' }
 import ts1Config from '@ncar/music-box/examples/ts1/my_config.json' with { type: 'json' }
+import { tableFromConditionsConfig } from '../src/services/conditions/table'
 
 // These tests validate the mechanism schema strictly and rejects any unrecognized or missing key.
 // The component tests in RunSimulationButton.*.test.jsx cover the React and Redux wiring, which
@@ -39,7 +40,7 @@ const buildInputs = async (config) => {
       currentExample: { name: config.mechanism?.name || 'example' },
     },
     conditions: {
-      conditions: config.conditions,
+      table: tableFromConditionsConfig(config.conditions),
       basic: {
         timeStep: stepSeconds(options, 'chemistry time step'),
         outputFrequency: stepSeconds(options, 'output time step'),

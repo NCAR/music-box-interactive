@@ -4,7 +4,11 @@ import { useNavigate } from 'react-router-dom'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card'
 
 import { writeConfigFiles, resolveConditionsFilepathsFromFile } from '@ncar/music-box'
-import { loadMusicBoxConfig } from '../services/config/loadMusicBoxConfig'
+import {
+  loadMusicBoxConfig,
+  notifyIgnoredThirdBodySpecies,
+} from '../services/config/loadMusicBoxConfig'
+import { useNotify } from '@/hooks/use-notify'
 
 import chapmanConfig from '@ncar/music-box/examples/chapman/my_config.json' with { type: 'json' }
 import analyticalConfig from '@ncar/music-box/examples/analytical/my_config.json' with { type: 'json' }
@@ -86,6 +90,7 @@ export function ExampleLoader() {
   const [loading] = useState(false)
   const [error] = useState(null)
   const dispatch = useDispatch()
+  const notify = useNotify()
 
   const loadExample = async (example) => {
     // Write the CSVs in, then let @ncar/music-box resolve conditions.filepaths itself.
@@ -93,7 +98,7 @@ export function ExampleLoader() {
     await writeConfigFiles(dir, csvFilesForExample(example.dir))
     const config = await resolveConditionsFilepathsFromFile(example.config, dir)
 
-    await loadMusicBoxConfig(config, {
+    const { ignoredThirdBodySpecies } = await loadMusicBoxConfig(config, {
       dispatch,
       navigate,
       meta: {
@@ -103,6 +108,7 @@ export function ExampleLoader() {
         mechanism_name: example.mechanism_name,
       },
     })
+    notifyIgnoredThirdBodySpecies(notify, ignoredThirdBodySpecies)
   }
 
   return (

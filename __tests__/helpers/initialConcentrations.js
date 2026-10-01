@@ -15,7 +15,7 @@ export const expectedInitialConcentrations = (config, csvContents = []) => {
       continue
     }
 
-    // Only the t=0 row defines the initial state. The subsequent rows define evolving conditions.
+    // Only the t=0 row defines the initial state. The later rows change the conditions over time.
     const timeIndex = block.headers.indexOf('time.s')
     const row = timeIndex === -1 ? block.rows[0] : block.rows.find((r) => r[timeIndex] === 0)
     if (!row) continue

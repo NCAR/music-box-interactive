@@ -1,6 +1,7 @@
 // Conditions Redux Slice
-// Manages simulation conditions (basic, initial, evolving)
+// Manages the simulation time settings and the conditions table (see services/conditions/table)
 import { createSlice } from '@reduxjs/toolkit'
+import { emptyTable } from '../../services/conditions/table'
 
 const initialState = {
   // Basic Configuration
@@ -10,40 +11,12 @@ const initialState = {
     outputFrequency: 10, // Store every 10 steps to reduce data points
   },
 
-  // Initial Conditions
-  initial: {
-    temperature: 298.15, // K
-    pressure: 101325, // Pa
-    concentrations: {},
-  },
+  // All conditions, from t=0 on: { times, columns: { [header]: (number | null)[] } }
+  table: emptyTable(),
 
-  // Evolving Conditions (time-series)
-  evolving: {
-    enabled: false,
-    times: [], // array of time points
-    temperature: [], // array of temperature values
-    pressure: [], // array of pressure values
-    interpolationMethod: 'linear', // 'linear' | 'step' | 'cubic'
-    // Hidden evolving series such as PHOTO.* are preserved here even if the UI does not display them.
-    additionalSeries: {},
-    // Rate constants can also evolve
-    rateConstants: {},
-    // UI-only: maps each time value to its relevant reaction type(s); missing entries are universal.
-    // Not used in the solver payload.
-    rowReactionType: {},
-  },
-
-  hydration: {
-    initialExampleId: null,
-    evolvingExampleId: null,
-  },
-
-  conditions: {},
-  exampleLoaded: true,
-  source_file: {},
-
-  // Rate Constants (photolysis rates, etc.)
-  rateConstants: {},
+  // UI-only: maps each time value to its relevant reaction type(s); missing entries are universal.
+  // Not used in the solver payload.
+  rowReactionType: {},
 }
 
 export const conditionsSlice = createSlice({
@@ -61,105 +34,41 @@ export const conditionsSlice = createSlice({
       state.basic.outputFrequency = action.payload
     },
 
-    // Initial conditions
-    setTemperature: (state, action) => {
-      state.initial.temperature = action.payload
-    },
-    setPressure: (state, action) => {
-      state.initial.pressure = action.payload
-    },
-    setConcentrations: (state, action) => {
-      state.initial.concentrations = action.payload
-    },
-    setConcentration: (state, action) => {
-      const { species, value } = action.payload
-      state.initial.concentrations[species] = value
-    },
-    removeConcentration: (state, action) => {
-      delete state.initial.concentrations[action.payload]
+    // Replaces the whole conditions table. Every edit builds the next table with the pure
+    // functions in services/conditions/table and dispatches it here.
+    setConditionsTable: (state, action) => {
+      state.table = action.payload || emptyTable()
     },
 
-    // Rate constants
-    setRateConstants: (state, action) => {
-      state.rateConstants = action.payload
-    },
-    setRateConstant: (state, action) => {
-      const { name, value } = action.payload
-      state.rateConstants[name] = value
-    },
-
-    // Evolving conditions
-    setEvolvingEnabled: (state, action) => {
-      state.evolving.enabled = action.payload
-    },
-    setEvolvingTimes: (state, action) => {
-      state.evolving.times = action.payload
-    },
-    setEvolvingTemperature: (state, action) => {
-      state.evolving.temperature = action.payload
-    },
-    setEvolvingPressure: (state, action) => {
-      state.evolving.pressure = action.payload
-    },
-    setInterpolationMethod: (state, action) => {
-      state.evolving.interpolationMethod = action.payload
-    },
-    setEvolvingAdditionalSeries: (state, action) => {
-      state.evolving.additionalSeries = action.payload || {}
-    },
-    tagEvolvingRow: (state, action) => {
+    tagTimeRow: (state, action) => {
       const { time, typeId } = action.payload
-      state.evolving.rowReactionType ??= {}
       const key = String(time)
-      const existing = state.evolving.rowReactionType[key]
+      const existing = state.rowReactionType[key]
       if (!Array.isArray(existing)) {
-        state.evolving.rowReactionType[key] = [typeId]
+        state.rowReactionType[key] = [typeId]
       } else if (!existing.includes(typeId)) {
         existing.push(typeId)
       }
     },
-    untagEvolvingRows: (state, action) => {
-      state.evolving.rowReactionType ??= {}
+    untagTimeRows: (state, action) => {
       action.payload.forEach((time) => {
-        delete state.evolving.rowReactionType[String(time)]
+        delete state.rowReactionType[String(time)]
       })
     },
     // Moves a row's type tag(s) when its time value itself is edited, so ReactionTab's
     // per-type visibility scoping survives the row moving to a new time.
-    renameEvolvingRowTag: (state, action) => {
+    renameTimeRowTag: (state, action) => {
       const { oldTime, newTime } = action.payload
-      state.evolving.rowReactionType ??= {}
       const oldKey = String(oldTime)
-      const tags = state.evolving.rowReactionType[oldKey]
+      const tags = state.rowReactionType[oldKey]
       if (tags) {
-        delete state.evolving.rowReactionType[oldKey]
-        state.evolving.rowReactionType[String(newTime)] = tags
+        delete state.rowReactionType[oldKey]
+        state.rowReactionType[String(newTime)] = tags
       }
     },
-
-    markInitialHydrated: (state, action) => {
-      state.hydration.initialExampleId = action.payload || null
-    },
-    markEvolvingHydrated: (state, action) => {
-      state.hydration.evolvingExampleId = action.payload || null
-    },
-
-    // Set conditions json directly (for loading examples)
-    setConditions: (state, action) => {
-      state.conditions = action.payload
-    },
-
-    setExampleLoaded: (state, action) => {
-      state.exampleLoaded = action.payload
-    },
-
-    setSourceFile: (state, action) => {
-      state.source_file = action.payload
-    },
-
-    // Load full conditions (from example)
-    loadConditions: (state, action) => {
-      return { ...state, ...action.payload }
+    // Replaces the row tags, e.g. after an upload removes or replaces rows.
+    setRowReactionTypes: (state, action) => {
+      state.rowReactionType = action.payload || {}
     },
 
     resetConditions: () => initialState,
@@ -170,28 +79,11 @@ export const {
   setDuration,
   setTimeStep,
   setOutputFrequency,
-  setTemperature,
-  setPressure,
-  setConcentrations,
-  setConcentration,
-  removeConcentration,
-  setRateConstants,
-  setRateConstant,
-  setEvolvingEnabled,
-  setEvolvingTimes,
-  setEvolvingTemperature,
-  setEvolvingPressure,
-  setInterpolationMethod,
-  setEvolvingAdditionalSeries,
-  tagEvolvingRow,
-  untagEvolvingRows,
-  renameEvolvingRowTag,
-  markInitialHydrated,
-  markEvolvingHydrated,
-  loadConditions,
-  setConditions,
-  setExampleLoaded,
-  setSourceFile,
+  setConditionsTable,
+  tagTimeRow,
+  untagTimeRows,
+  renameTimeRowTag,
+  setRowReactionTypes,
   resetConditions,
 } = conditionsSlice.actions
 

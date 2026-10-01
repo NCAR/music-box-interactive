@@ -4,14 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui
 import { Button } from '../ui/button'
 import { Toggle } from '../ui/toggle'
 import { useNotify } from '@/hooks/use-notify'
-import {
-  setEvolvingEnabled,
-  setEvolvingTimes,
-  setEvolvingTemperature,
-  setEvolvingPressure,
-  setEvolvingAdditionalSeries,
-  untagEvolvingRows,
-} from '../../redux/slices/conditionsSlice'
+import { setConditionsTable, untagTimeRows } from '../../redux/slices/conditionsSlice'
 import { UnitDropdown } from '../Plots/UnitDropdown'
 import { TIME_RANGE_UNITS } from '../Plots/timeRangeUnits'
 import { TEMPERATURE_UNITS, toKelvin } from '../Plots/temperatureUnits'
@@ -22,13 +15,19 @@ import { cn } from '../../lib/utils'
 import {
   DEFAULT_TEMPERATURE,
   DEFAULT_PRESSURE,
-  insertAdditionalSeriesValue,
-  removeEvolvingTimeRows,
-  commitEvolvingTime,
-  rowHasConcentrations,
+  TEMPERATURE_HEADER,
+  PRESSURE_HEADER,
+  DENSITY_HEADER,
+  columnValues,
+  commitTime as commitTableTime,
   ensureZeroTimeRow,
-} from './evolvingSeries'
-import { DENSITY_SERIES_KEY } from '../../utils/environmentSeries'
+  insertTimeRow,
+  removeTimeRows,
+  rowHasValues,
+  rowHasConcentrations,
+  setCell,
+} from '../../services/conditions/table'
+import { HideUnsetRowsCheckbox } from './HideUnsetRowsCheckbox'
 
 const EDITOR_GRID = 'grid grid-cols-1 gap-4 lg:grid-cols-[auto_1fr] lg:items-start'
 
@@ -68,7 +67,11 @@ function formatConversion(value, decimals = 4) {
 export function EnvironmentTab() {
   const dispatch = useDispatch()
   const notify = useNotify()
-  const evolving = useSelector((state) => state.conditions.evolving)
+  const table = useSelector((state) => state.conditions.table)
+  const times = table.times
+  const temperatures = columnValues(table, TEMPERATURE_HEADER)
+  const pressures = columnValues(table, PRESSURE_HEADER)
+  const densitySeries = table.columns[DENSITY_HEADER] ? columnValues(table, DENSITY_HEADER) : null
 
   const [unitIds, setUnitIds] = useState({
     time: 'seconds',
@@ -82,6 +85,7 @@ export function EnvironmentTab() {
   const [densityEnabled, setDensityEnabled] = useState(false)
   const [newDensity, setNewDensity] = useState('')
   const [selectedIndices, setSelectedIndices] = useState(new Set())
+  const [hideUnsetRows, setHideUnsetRows] = useState(false)
   const [rowDrafts, setRowDrafts] = useState({})
   const [justUpdatedCell, setJustUpdatedCell] = useState(null)
 
@@ -121,47 +125,18 @@ export function EnvironmentTab() {
         : idealGasDensity(pressure, temperature)
       : null
 
-    if (evolving.times.includes(time)) {
+    if (times.includes(time)) {
       notify.error('Duplicate Time Point', `A time point already exists at t=${rawTime} ${timeUnit.label.toLowerCase()}.`)
       return
     }
 
     // t=0 is always the default starting point
-    const withZero = ensureZeroTimeRow(
-      {
-        times: evolving.times,
-        temperature: evolving.temperature,
-        pressure: evolving.pressure,
-        additionalSeries: evolving.additionalSeries,
-      },
-      time
-    )
-
-    const newTimes = [...withZero.times, time].sort((a, b) => a - b)
-    const insertIndex = newTimes.indexOf(time)
-
-    const newTemps = [...withZero.temperature]
-    newTemps.splice(insertIndex, 0, temperature)
-
-    const newPresses = [...withZero.pressure]
-    newPresses.splice(insertIndex, 0, pressure)
-
-    let newAdditionalSeries = insertAdditionalSeriesValue(withZero.additionalSeries, insertIndex)
-
-    if (densityEnabled) {
-      const existingDensitySeries = Array.isArray(withZero.additionalSeries?.[DENSITY_SERIES_KEY])
-        ? withZero.additionalSeries[DENSITY_SERIES_KEY]
-        : new Array(withZero.times.length).fill(null)
-      const nextDensitySeries = [...existingDensitySeries]
-      nextDensitySeries.splice(insertIndex, 0, density)
-      newAdditionalSeries = { ...newAdditionalSeries, [DENSITY_SERIES_KEY]: nextDensitySeries }
-    }
-
-    dispatch(setEvolvingEnabled(true))
-    dispatch(setEvolvingTimes(newTimes))
-    dispatch(setEvolvingTemperature(newTemps))
-    dispatch(setEvolvingPressure(newPresses))
-    dispatch(setEvolvingAdditionalSeries(newAdditionalSeries))
+    const withZero = time === 0 ? table : ensureZeroTimeRow(table)
+    const { table: inserted, index } = insertTimeRow(withZero, time)
+    let next = setCell(inserted, TEMPERATURE_HEADER, index, temperature)
+    next = setCell(next, PRESSURE_HEADER, index, pressure)
+    if (densityEnabled) next = setCell(next, DENSITY_HEADER, index, density)
+    dispatch(setConditionsTable(next))
 
     notify.success('Time Point Added', `Added time point at t=${rawTime} ${timeUnit.label.toLowerCase()}.`)
 
@@ -171,7 +146,16 @@ export function EnvironmentTab() {
     setNewDensity('')
   }
 
-  const removableIndices = evolving.times.map((_, index) => index)
+  const shownColumnValues = [temperatures, pressures, densitySeries]
+  const timeEntries = times
+    .map((time, index) => ({ time, index }))
+    .filter(({ index }) => !hideUnsetRows || rowHasValues(shownColumnValues, index))
+  const removableIndices = timeEntries.map((entry) => entry.index)
+
+  const handleHideUnsetRowsChange = (checked) => {
+    setHideUnsetRows(checked)
+    setSelectedIndices(new Set())
+  }
 
   const toggleSelected = (index) => {
     if (!removableIndices.includes(index)) return
@@ -195,22 +179,15 @@ export function EnvironmentTab() {
   }
 
   const handleRemoveSelected = () => {
-    const result = removeEvolvingTimeRows(
-      {
-        times: evolving.times,
-        temperature: evolving.temperature,
-        pressure: evolving.pressure,
-        additionalSeries: evolving.additionalSeries,
-      },
-      selectedIndices
+    // Only rows the user can see are removed, so a hidden row never disappears unseen.
+    const result = removeTimeRows(
+      table,
+      [...selectedIndices].filter((index) => removableIndices.includes(index))
     )
     if (!result) return
 
-    dispatch(setEvolvingTimes(result.times))
-    dispatch(setEvolvingTemperature(result.temperature))
-    dispatch(setEvolvingPressure(result.pressure))
-    dispatch(setEvolvingAdditionalSeries(result.additionalSeries))
-    dispatch(untagEvolvingRows(result.removedTimes))
+    dispatch(setConditionsTable(result.table))
+    dispatch(untagTimeRows(result.removedTimes))
 
     notify.removed(result.removedCount === 1 ? 'Time Point Removed' : 'Time Points Removed', `Removed ${result.removedCount} time point${result.removedCount === 1 ? '' : 's'}.`)
 
@@ -243,7 +220,7 @@ export function EnvironmentTab() {
   // Concentrations are stored in mol m-3, so changing the air density changes the displayed
   // ppth/ppm/ppb/ppt value. The stored concentration itself does not change.
   const warnIfConcentrationsAffected = (index) => {
-    if (!rowHasConcentrations(evolving.additionalSeries, index)) return
+    if (!rowHasConcentrations(table, index)) return
     notify.warning('Concentrations stay in mol m-3', 'This row has species concentrations. Their stored values in mol m-3 are unchanged, but their equivalents (ppm, ppb ...) will now display differently.')
   }
 
@@ -254,10 +231,8 @@ export function EnvironmentTab() {
       return
     }
     clearCellDraft('temperature', index)
-    if (evolving.temperature[index] === parsed) return
-    const next = [...evolving.temperature]
-    next[index] = parsed
-    dispatch(setEvolvingTemperature(next))
+    if (temperatures[index] === parsed) return
+    dispatch(setConditionsTable(setCell(table, TEMPERATURE_HEADER, index, parsed)))
     flashCell('temperature', index)
     warnIfConcentrationsAffected(index)
   }
@@ -269,10 +244,8 @@ export function EnvironmentTab() {
       return
     }
     clearCellDraft('pressure', index)
-    if (evolving.pressure[index] === parsed) return
-    const next = [...evolving.pressure]
-    next[index] = parsed
-    dispatch(setEvolvingPressure(next))
+    if (pressures[index] === parsed) return
+    dispatch(setConditionsTable(setCell(table, PRESSURE_HEADER, index, parsed)))
     flashCell('pressure', index)
     warnIfConcentrationsAffected(index)
   }
@@ -280,37 +253,21 @@ export function EnvironmentTab() {
   const commitDensity = (index, rawValue) => {
     const isBlank = rawValue.trim() === ''
     const parsed = isBlank
-      ? idealGasDensity(evolving.pressure[index], evolving.temperature[index])
+      ? idealGasDensity(pressures[index], temperatures[index])
       : parseFloat(rawValue)
     if (!isBlank && isNaN(parsed)) {
       notify.invalidInput('Air number density must be a valid number.')
       return
     }
     clearCellDraft('density', index)
-    const existing = Array.isArray(evolving.additionalSeries?.[DENSITY_SERIES_KEY])
-      ? evolving.additionalSeries[DENSITY_SERIES_KEY]
-      : new Array(evolving.times.length).fill(null)
-    if (existing[index] === parsed) return
-    const next = [...existing]
-    next[index] = parsed
-    dispatch(
-      setEvolvingAdditionalSeries({ ...evolving.additionalSeries, [DENSITY_SERIES_KEY]: next })
-    )
+    if (columnValues(table, DENSITY_HEADER)[index] === parsed) return
+    dispatch(setConditionsTable(setCell(table, DENSITY_HEADER, index, parsed)))
     flashCell('density', index)
     warnIfConcentrationsAffected(index)
   }
 
   const commitTime = (index, rawValue) => {
-    const outcome = commitEvolvingTime(
-      {
-        times: evolving.times,
-        temperature: evolving.temperature,
-        pressure: evolving.pressure,
-        additionalSeries: evolving.additionalSeries,
-      },
-      index,
-      rawValue
-    )
+    const outcome = commitTableTime(table, index, rawValue)
 
     if (outcome.kind === 'invalid') {
       // Leave the draft in place so the invalid text stays visible to fix, instead of
@@ -328,10 +285,7 @@ export function EnvironmentTab() {
     }
 
     const { result } = outcome
-    dispatch(setEvolvingTimes(result.times))
-    dispatch(setEvolvingTemperature(result.temperature))
-    dispatch(setEvolvingPressure(result.pressure))
-    dispatch(setEvolvingAdditionalSeries(result.additionalSeries))
+    dispatch(setConditionsTable(result.table))
 
     notify.success('Time Point Updated', `Moved time point to t=${result.newTime}s.`)
   }
@@ -496,29 +450,31 @@ export function EnvironmentTab() {
           <div className="flex items-center justify-between gap-3">
             <div>
               <CardTitle>
-                {evolving.times.length} condition{evolving.times.length === 1 ? '' : 's'}
+                {times.length} condition{times.length === 1 ? '' : 's'}
               </CardTitle>
             </div>
-            {selectedIndices.size > 0 && (
-              <Button
-                variant="glass"
-                size="sm"
-                onClick={handleRemoveSelected}
-                className="rounded-lg bg-white text-red-600 hover:bg-red-50 flex-shrink-0"
-              >
-                Remove selected ({selectedIndices.size})
-              </Button>
-            )}
+            <div className="flex items-center gap-2 flex-shrink-0">
+              <HideUnsetRowsCheckbox checked={hideUnsetRows} onChange={handleHideUnsetRowsChange} />
+              {selectedIndices.size > 0 && (
+                <Button
+                  variant="glass"
+                  size="sm"
+                  onClick={handleRemoveSelected}
+                  className="rounded-lg bg-white text-red-600 hover:bg-red-50 flex-shrink-0"
+                >
+                  Remove selected ({selectedIndices.size})
+                </Button>
+              )}
+            </div>
           </div>
         </CardHeader>
         <CardContent className={LIST_CARD_CONTENT}>
-          {evolving.times.length === 0 ? (
+          {times.length === 0 ? (
             <p className="text-center text-gray-500 py-8">
               No conditions added. Add your first condition on the left.
             </p>
           ) : (
             (() => {
-              const densitySeries = evolving.additionalSeries?.[DENSITY_SERIES_KEY]
               const hasDensityColumn = Array.isArray(densitySeries) && densitySeries.some((v) => v != null)
               const allSelected =
                 removableIndices.length > 0 && removableIndices.every((i) => selectedIndices.has(i))
@@ -546,7 +502,14 @@ export function EnvironmentTab() {
                       </tr>
                     </thead>
                     <tbody>
-                      {evolving.times.map((time, index) => {
+                      {timeEntries.length === 0 && (
+                        <tr>
+                          <td colSpan={hasDensityColumn ? 5 : 4} className="px-4 py-8 text-center text-gray-500">
+                            No rows have values for the columns shown.
+                          </td>
+                        </tr>
+                      )}
+                      {timeEntries.map(({ time, index }) => {
                         const density = densitySeries?.[index]
 
                         return (
@@ -587,8 +550,8 @@ export function EnvironmentTab() {
                                 inputMode="decimal"
                                 value={
                                   rowDrafts[cellKey('temperature', index)] ??
-                                  (evolving.temperature[index] != null
-                                    ? formatConversion(evolving.temperature[index])
+                                  (temperatures[index] != null
+                                    ? formatConversion(temperatures[index])
                                     : '')
                                 }
                                 onChange={(e) =>
@@ -615,8 +578,8 @@ export function EnvironmentTab() {
                                 inputMode="decimal"
                                 value={
                                   rowDrafts[cellKey('pressure', index)] ??
-                                  (evolving.pressure[index] != null
-                                    ? formatConversion(evolving.pressure[index])
+                                  (pressures[index] != null
+                                    ? formatConversion(pressures[index])
                                     : '')
                                 }
                                 onChange={(e) =>
@@ -650,13 +613,9 @@ export function EnvironmentTab() {
                                     handleCellDraftChange('density', index, e.target.value)
                                   }
                                   placeholder={
-                                    evolving.pressure[index] != null &&
-                                    evolving.temperature[index] != null
+                                    pressures[index] != null && temperatures[index] != null
                                       ? formatConversion(
-                                          idealGasDensity(
-                                            evolving.pressure[index],
-                                            evolving.temperature[index]
-                                          )
+                                          idealGasDensity(pressures[index], temperatures[index])
                                         )
                                       : ''
                                   }

@@ -11,6 +11,7 @@ import chapmanConfig from '@ncar/music-box/examples/chapman/my_config.json' with
 import flowTubeConfig from '@ncar/music-box/examples/flow_tube/my_config.json' with { type: 'json' }
 import carbonBond5Config from '@ncar/music-box/examples/carbon_bond_5/my_config.json' with { type: 'json' }
 import ts1Config from '@ncar/music-box/examples/ts1/my_config.json' with { type: 'json' }
+import { tableFromConditionsConfig } from '../src/services/conditions/table'
 
 // Mirrors solverPayloadContract.test.js's buildInputs -- same shape Run Simulation feeds
 // buildLocalSimulationPayload, and what Download Config now feeds MusicBox's own export.
@@ -30,7 +31,7 @@ const buildInputs = async (config) => {
       currentExample: { name: config.mechanism?.name || 'example' },
     },
     conditions: {
-      conditions: config.conditions,
+      table: tableFromConditionsConfig(config.conditions),
       basic: {
         timeStep: stepSeconds(options, 'chemistry time step'),
         outputFrequency: stepSeconds(options, 'output time step'),
@@ -49,10 +50,7 @@ describe('downloadConfig', () => {
     }
     const blankConditions = {
       basic: { duration: 250000, timeStep: 200, outputFrequency: 10 },
-      initial: { temperature: 298.15, pressure: 101325, concentrations: {} },
-      evolving: { enabled: false, times: [], temperature: [], pressure: [], additionalSeries: {} },
-      conditions: {},
-      rateConstants: {},
+      table: { times: [], columns: {} },
     }
 
     const configuration = buildDownloadableConfig({ mechanism: blankMechanism, conditions: blankConditions })
