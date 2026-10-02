@@ -193,13 +193,14 @@ export function applyConditionsUpload(table, upload, { keys, mode, emptyOverwrit
 
   // A time that only has empty cells for the selected columns does not add a new row.
   const sortedTimes = [...times].sort((a, b) => a - b)
+  const existing = new Set(replace ? [] : Object.keys(table.columns))
   return {
     times: sortedTimes,
     columns: Object.fromEntries(
-      [...columns].map(([header, values]) => [
-        header,
-        sortedTimes.map((time) => values.get(time) ?? null),
-      ])
+      [...columns]
+        .map(([header, values]) => [header, sortedTimes.map((time) => values.get(time) ?? null)])
+        // A new column with no values adds nothing, e.g. an empty column of a downloaded file.
+        .filter(([header, values]) => existing.has(header) || values.some((value) => value !== null))
     ),
   }
 }

@@ -12,6 +12,7 @@ import { UnitDropdown } from '../Plots/UnitDropdown'
 import { CONCENTRATION_UNITS, toMolM3, fromMolM3 } from '../../utils/concentrationUnits'
 import { airDensityAtTime } from '../../utils/environmentSeries'
 import { buildConditionsManager } from '../../services/simulation/local/conditions'
+import { concentrationColumnKey } from '../../services/conditions/speciesColumns'
 import { isThirdBody } from '../../services/simulation/local/speciesProperties'
 import {
   commitTime as commitTableTime,
@@ -50,7 +51,6 @@ const THIRD_BODY_TOOLTIP =
   'This is a third-body species. The solver gets its concentration from the air density, so ' +
   'its concentration cannot be set.'
 
-const CONC_PREFIX = 'CONC.'
 
 const DEFAULT_SELECTED_SPECIES = 3
 const SPECIES_VISIBLE = 20
@@ -77,7 +77,8 @@ export function SpeciesConcentrationTab() {
   const conditionsState = useSelector((state) => state.conditions)
   const conditionsManager = useMemo(() => buildConditionsManager(conditionsState), [conditionsState])
 
-  const [selectedSpeciesNames, setSelectedSpeciesNames] = useState(new Set())
+  // The selected species, by id, so a rename keeps the selection.
+  const [selectedSpeciesIds, setSelectedSpeciesIds] = useState(new Set())
   const [speciesSearch, setSpeciesSearch] = useState('')
   const [hideUnsetRows, setHideUnsetRows] = useState(false)
   const [concentrationUnitId, setConcentrationUnitId] = useState('mol_m3')
@@ -96,7 +97,7 @@ export function SpeciesConcentrationTab() {
   const namedSpecies = mechanismSpecies.filter(hasName)
   // Third-body species stay in the list and the search, but they cannot be selected.
   const selectableSpecies = namedSpecies.filter((species) => !isThirdBody(species))
-  const thirdBodyNames = new Set(namedSpecies.filter(isThirdBody).map((species) => species.name))
+  const thirdBodyIds = new Set(namedSpecies.filter(isThirdBody).map((species) => species.id))
 
   const speciesQuery = speciesSearch.trim().toLowerCase()
   const filteredSpecies = speciesQuery
@@ -110,12 +111,12 @@ export function SpeciesConcentrationTab() {
     const currentSpecies = mechanismSpecies.filter(
       (species) => hasName(species) && !isThirdBody(species)
     )
-    setSelectedSpeciesNames((prev) => {
-      const stillValid = [...prev].filter((name) =>
-        currentSpecies.some((species) => species.name === name)
+    setSelectedSpeciesIds((prev) => {
+      const stillValid = [...prev].filter((id) =>
+        currentSpecies.some((species) => species.id === id)
       )
       if (stillValid.length > 0) return new Set(stillValid)
-      return new Set(currentSpecies.slice(0, DEFAULT_SELECTED_SPECIES).map((s) => s.name))
+      return new Set(currentSpecies.slice(0, DEFAULT_SELECTED_SPECIES).map((s) => s.id))
     })
   }, [mechanismSpecies])
 
@@ -123,48 +124,39 @@ export function SpeciesConcentrationTab() {
   const baseVisibleSpecies = filteredSpecies.slice(0, SPECIES_VISIBLE)
   const overflowCandidateSpecies = filteredSpecies.slice(SPECIES_VISIBLE)
   const pinnedOverflowSpecies = overflowCandidateSpecies.filter((species) =>
-    selectedSpeciesNames.has(species.name)
+    selectedSpeciesIds.has(species.id)
   )
   const visibleSpecies = [...baseVisibleSpecies, ...pinnedOverflowSpecies]
   const overflowSpecies = overflowCandidateSpecies.filter(
-    (species) => !selectedSpeciesNames.has(species.name)
+    (species) => !selectedSpeciesIds.has(species.id)
   )
 
-  const toggleSpeciesName = (name) => {
-    if (thirdBodyNames.has(name)) return
-    setSelectedSpeciesNames((prev) => {
+  const toggleSpecies = (id) => {
+    if (thirdBodyIds.has(id)) return
+    setSelectedSpeciesIds((prev) => {
       const next = new Set(prev)
-      if (next.has(name)) next.delete(name)
-      else next.add(name)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
       return next
     })
   }
 
   const handleSelectAllSpecies = () => {
-    const names = selectableSpecies.map((species) => species.name)
-    setSelectedSpeciesNames(new Set(names.slice(0, MAX_SELECTED_SPECIES)))
+    const names = selectableSpecies.map((species) => species.id)
+    setSelectedSpeciesIds(new Set(names.slice(0, MAX_SELECTED_SPECIES)))
     if (names.length > MAX_SELECTED_SPECIES) {
       notify.warning('Selection Limited', `Selected the first ${MAX_SELECTED_SPECIES} of ${names.length} species. Use search to select others.`)
     }
   }
 
   const handleDeselectAllSpecies = () => {
-    setSelectedSpeciesNames(new Set())
+    setSelectedSpeciesIds(new Set())
   }
 
-  // A species' data lives under CONC.<name> (or CONC.<name>.<unit> once stored), same key
-  // discovery ReactionTab uses for PHOTO./SURF. -- tolerate a stored unit suffix.
-  const concentrationKeyFor = (speciesName) => {
-    const bareKey = `${CONC_PREFIX}${speciesName}`
-    const existingKey = Object.keys(tableColumns || {}).find(
-      (key) => key === bareKey || key.startsWith(`${bareKey}.`)
-    )
-    return existingKey ?? `${bareKey}.mol m-3`
-  }
-
-  const selectedSpecies = namedSpecies.filter((species) => selectedSpeciesNames.has(species.name))
+  // A species' data lives under CONC#<speciesId> (see speciesColumns), so a rename keeps it.
+  const selectedSpecies = namedSpecies.filter((species) => selectedSpeciesIds.has(species.id))
   const columns = selectedSpecies.map((species) => ({
-    key: concentrationKeyFor(species.name),
+    key: concentrationColumnKey(species.id),
     label: species.name,
     name: species.name,
   }))
@@ -180,7 +172,7 @@ export function SpeciesConcentrationTab() {
     setRowDrafts({})
     setJustUpdatedCell(null)
     setSelectedIndices(new Set())
-  }, [selectedSpeciesNames, rowTimes, hideUnsetRows])
+  }, [selectedSpeciesIds, rowTimes, hideUnsetRows])
 
   const cellDraftKey = (key, index) => `${key}::${index}`
 
@@ -450,8 +442,8 @@ export function SpeciesConcentrationTab() {
                         <button
                           key={species.id ?? species.name}
                           type="button"
-                          onClick={() => toggleSpeciesName(species.name)}
-                          className={filterButtonClass(selectedSpeciesNames.has(species.name))}
+                          onClick={() => toggleSpecies(species.id)}
+                          className={filterButtonClass(selectedSpeciesIds.has(species.id))}
                         >
                           {species.name}
                         </button>
@@ -476,7 +468,7 @@ export function SpeciesConcentrationTab() {
                                 type="button"
                                 disabled={isThirdBody(species)}
                                 title={isThirdBody(species) ? THIRD_BODY_TOOLTIP : undefined}
-                                onClick={() => toggleSpeciesName(species.name)}
+                                onClick={() => toggleSpecies(species.id)}
                                 className={`w-full flex items-center gap-2 text-left text-sm px-3 py-1.5 ${
                                   isThirdBody(species)
                                     ? 'text-gray-400 dark:text-muted cursor-not-allowed'
@@ -485,7 +477,7 @@ export function SpeciesConcentrationTab() {
                               >
                                 <Check
                                   className={`w-3.5 h-3.5 flex-shrink-0 ${
-                                    selectedSpeciesNames.has(species.name) ? 'opacity-100' : 'opacity-0'
+                                    selectedSpeciesIds.has(species.id) ? 'opacity-100' : 'opacity-0'
                                   }`}
                                 />
                                 <span className="flex-1 truncate">{species.name}</span>

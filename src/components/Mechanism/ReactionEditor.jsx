@@ -6,10 +6,11 @@ import { useNotify } from '@/hooks/use-notify'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card'
 import { Button } from '../ui/button'
 import { Dropdown } from '../ui/dropdown'
-import { addReaction, removeReaction, updateReaction } from '../../redux/slices/mechanismSlice'
+import { addReaction, removeReaction, updateReaction, selectNamedReactions } from '../../redux/slices/mechanismSlice'
 import {
+  applyReactionEquation,
   buildGeneratedReactionName,
-  hasDeclaredName,
+  isEquationEditable,
   parseReactionString,
 } from './reactions/reactionUtils'
 import {
@@ -43,7 +44,8 @@ const formatReactionComponents = (components) => {
     .map((component) => {
       const name = component.name || ''
       const coefficient = Number(component.coefficient)
-      const coeffPrefix = Number.isFinite(coefficient) && coefficient > 1 ? coefficient : ''
+      // A coefficient below 1 shows too (0.5OH), so that an edit does not lose it.
+      const coeffPrefix = Number.isFinite(coefficient) && coefficient !== 1 ? coefficient : ''
 
       return `${coeffPrefix}${name}`
     })
@@ -155,7 +157,14 @@ const formatParameterValue = (value) => {
 }
 
 // A reaction renders as a collapsed chip. Clicking it unfolds its type, rate parameter, and name.
-function ReactionChip({ reaction, onRemove, onComponentsSave, onParameterSave }) {
+function ReactionChip({
+  reaction,
+  onRemove,
+  onNameSave,
+  onEquationSave,
+  onComponentsSave,
+  onParameterSave,
+}) {
   const [expanded, setExpanded] = useState(false)
   const formula = formatReactionDisplay(reaction)
   const parameters = rateParameters(reaction)
@@ -196,6 +205,30 @@ function ReactionChip({ reaction, onRemove, onComponentsSave, onParameterSave })
           <label className="text-[11px] uppercase tracking-wide text-muted">Type</label>
           <p className="text-sm text-ink">{reaction.type}</p>
         </div>
+
+        {/* One text for the whole equation. A branched reaction has two product lists, so it is
+            edited only in the fields below. */}
+        {isEquationEditable(componentFields(reaction)) && (
+          <div className="flex flex-col gap-1">
+            <label className="text-[11px] uppercase tracking-wide text-muted">Equation</label>
+            <input
+              type="text"
+              key={formula}
+              defaultValue={formula}
+              onBlur={(e) => {
+                if (e.target.value !== formula) onEquationSave(reaction, e.target.value)
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.currentTarget.blur()
+                }
+              }}
+              placeholder="O1D + N2 → O + N2"
+              aria-label={`Equation of ${formula}`}
+              className={`w-full ${TEXT_INPUT_SM.replace('text-center', 'text-left')} font-mono`}
+            />
+          </div>
+        )}
 
         {componentFields(reaction).map((field) => (
           <div key={field.key} className="flex flex-col gap-1">
@@ -248,12 +281,26 @@ function ReactionChip({ reaction, onRemove, onComponentsSave, onParameterSave })
           </div>
         )}
 
-        {hasDeclaredName(reaction) && (
-          <div className="flex flex-col gap-1">
-            <label className="text-[11px] uppercase tracking-wide text-muted">Name</label>
-            <p className="text-sm text-ink">{reaction.name}</p>
-          </div>
-        )}
+        <div className="flex flex-col gap-1">
+          <label className="text-[11px] uppercase tracking-wide text-muted">Name</label>
+          {/* An empty name removes it. */}
+          <input
+            type="text"
+            key={reaction.name ?? ''}
+            defaultValue={reaction.name ?? ''}
+            onBlur={(e) => {
+              if (e.target.value !== (reaction.name ?? '')) onNameSave(reaction, e.target.value)
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.currentTarget.blur()
+              }
+            }}
+            placeholder="no name"
+            aria-label={`Name of ${formula}`}
+            className={`w-full ${TEXT_INPUT_SM.replace('text-center', 'text-left')}`}
+          />
+        </div>
       </div>
     </div>
   )
@@ -262,7 +309,7 @@ function ReactionChip({ reaction, onRemove, onComponentsSave, onParameterSave })
 export function ReactionEditor() {
   const dispatch = useDispatch()
   const notify = useNotify()
-  const reactions = useSelector((state) => state.mechanism.config.mechanism?.reactions || EMPTY_ARRAY)
+  const reactions = useSelector(selectNamedReactions)
   const species = useSelector((state) => state.mechanism.config.mechanism?.species || EMPTY_ARRAY)
   const conditionColumns = useSelector((state) => state.conditions?.table?.columns)
 
@@ -361,6 +408,29 @@ export function ReactionEditor() {
     saveReaction({ ...reaction, [field.key]: parsed })
   }
 
+  // A side that has species cannot become empty, as in the fields of each list. A side that is
+  // empty already (a photolysis without products) can stay empty.
+  const handleEquationSave = (reaction, rawValue) => {
+    const fields = componentFields(reaction).map((field) => ({
+      ...field,
+      required: field.value !== '',
+    }))
+    const result = applyReactionEquation(reaction, rawValue, fields)
+    if (result.error) {
+      notify.invalidInput(result.error)
+      return
+    }
+    saveReaction(result.reaction)
+  }
+
+  const handleNameSave = (reaction, rawValue) => {
+    const name = rawValue.trim()
+    const updated = { ...reaction }
+    if (name) updated.name = name
+    else delete updated.name
+    saveReaction(updated)
+  }
+
   const handleParameterSave = (reaction, key, rawValue) => {
     const trimmedValue = rawValue.trim()
     const updated = { ...reaction }
@@ -407,6 +477,8 @@ export function ReactionEditor() {
             key={reaction.id}
             reaction={reaction}
             onRemove={handleRemoveReaction}
+            onNameSave={handleNameSave}
+            onEquationSave={handleEquationSave}
             onComponentsSave={handleComponentsSave}
             onParameterSave={handleParameterSave}
           />

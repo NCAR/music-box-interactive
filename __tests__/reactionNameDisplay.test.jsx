@@ -5,7 +5,7 @@ import { configureStore } from '@reduxjs/toolkit'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 
-import mechanismReducer from '../src/redux/slices/mechanismSlice'
+import mechanismReducer, { selectNamedReactions } from '../src/redux/slices/mechanismSlice'
 import conditionsReducer from '../src/redux/slices/conditionsSlice'
 import simulationReducer from '../src/redux/slices/simulationSlice'
 import ExampleLoader from '../src/components/ExampleLoader'
@@ -65,15 +65,15 @@ describe('reaction name display', () => {
     expect(reactions.every((r) => typeof r.id === 'string' && r.id.length > 0)).toBe(true)
   })
 
-  it('a reaction the mechanism did not name shows no Name row', async () => {
+  it('a reaction the mechanism did not name shows an empty Name field', async () => {
     const store = await loadChapman()
-    const reactions = store.getState().mechanism.config.mechanism.reactions
+    const reactions = selectNamedReactions(store.getState())
     const unnamed = reactions.find((r) => r.type === 'ARRHENIUS' && !r.name)
 
     expect(unnamed).toBeDefined()
     const firstReactant = unnamed.reactants[0].name
     expandChip(new RegExp(`^${firstReactant}`))
-    expect(screen.queryByText('Name')).toBeNull()
+    expect(screen.getByRole('textbox', { name: /^Name of / }).value).toBe('')
   })
 
   it('a reaction the mechanism named still shows it', async () => {
@@ -83,7 +83,27 @@ describe('reaction name display', () => {
 
     // exact formula, so a different O2-containing reaction is not picked
     expandChip(/^O2 → 2O/)
-    expect(screen.getByText('Name')).toBeInTheDocument()
-    expect(screen.getByText('O2_1')).toBeInTheDocument()
+    expect(screen.getByRole('textbox', { name: /^Name of / }).value).toBe('O2_1')
+  })
+})
+
+describe('editing a reaction name', () => {
+  it('sets and clears the name of a reaction', async () => {
+    const store = await loadChapman()
+    expandChip(/^O2 → 2O/)
+    const input = screen.getByRole('textbox', { name: /^Name of / })
+    const nameOf = () =>
+      selectNamedReactions(store.getState()).find(
+        (r) => r.reactants?.[0]?.name === 'O2' && r.type === 'PHOTOLYSIS'
+      )?.name
+
+    fireEvent.change(input, { target: { value: 'jO2' } })
+    fireEvent.blur(input)
+    expect(nameOf()).toBe('jO2')
+
+    const cleared = screen.getByRole('textbox', { name: /^Name of / })
+    fireEvent.change(cleared, { target: { value: '' } })
+    fireEvent.blur(cleared)
+    expect(nameOf()).toBeUndefined()
   })
 })

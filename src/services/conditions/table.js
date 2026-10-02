@@ -201,7 +201,9 @@ export function commitTime(table, index, rawValue) {
 // warn that a changed air density changes how those concentrations read in ppm, ppb, ...
 export function rowHasConcentrations(table, index) {
   return Object.entries(table?.columns || {}).some(
-    ([header, values]) => header.startsWith('CONC.') && isFiniteNumber(values?.[index])
+    // CONC#<speciesId> in the app, CONC.<name> in a config (see speciesColumns).
+    ([header, values]) =>
+      (header.startsWith('CONC.') || header.startsWith('CONC#')) && isFiniteNumber(values?.[index])
   )
 }
 

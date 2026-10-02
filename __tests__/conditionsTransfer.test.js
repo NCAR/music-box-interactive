@@ -12,7 +12,10 @@ import {
 } from '../src/services/conditions/importConditions'
 import { headerKey } from '../src/services/conditions/table'
 
-const species = [{ name: 'O3' }, { name: 'NO2' }]
+const species = [
+  { id: 's-o3', name: 'O3' },
+  { id: 's-no2', name: 'NO2' },
+]
 const reactions = [
   { id: 'r-photo', type: 'PHOTOLYSIS', name: 'O3_1' },
   { id: 'r-emis', type: 'EMISSION', name: 'NO2_emis' },
@@ -25,9 +28,9 @@ const baseTable = () => ({
   columns: {
     'ENV.temperature.K': [290, 280],
     'ENV.pressure.Pa': [100000, null],
-    'CONC.O3': [1e-6, null],
-    'CONC.NO2.mol m-3': [2e-7, null],
-    // Rate parameters are stored under the reaction id.
+    // Concentrations are stored under the species id, rate parameters under the reaction id.
+    'CONC#s-o3': [1e-6, null],
+    'CONC#s-no2': [2e-7, null],
     'PHOTO#r-photo': [1e-4, 5e-5],
   },
 })
@@ -78,8 +81,8 @@ describe('countDataPoints', () => {
     expect(Object.fromEntries(countDataPoints(baseTable()))).toEqual({
       'ENV.temperature': 2,
       'ENV.pressure': 1,
-      'CONC.O3': 1,
-      'CONC.NO2': 1,
+      'CONC#s-o3': 1,
+      'CONC#s-no2': 1,
       'PHOTO#r-photo': 2,
     })
   })
@@ -166,7 +169,7 @@ describe('applyConditionsUpload', () => {
   it('replace mode keeps only the selected columns of the file', () => {
     expect(apply('time.s,CONC.O3.mol m-3\n0,5e-6\n60,6e-6', { mode: 'replace' })).toEqual({
       times: [0, 60],
-      columns: { 'CONC.O3.mol m-3': [5e-6, 6e-6] },
+      columns: { 'CONC#s-o3': [5e-6, 6e-6] },
     })
   })
 
@@ -179,8 +182,8 @@ describe('applyConditionsUpload', () => {
       columns: {
         'ENV.temperature.K': [290, 270, 280],
         'ENV.pressure.Pa': [100000, null, null],
-        'CONC.O3': [1e-6, null, null],
-        'CONC.NO2.mol m-3': [9e-7, null, null],
+        'CONC#s-o3': [1e-6, null, null],
+        'CONC#s-no2': [9e-7, null, null],
         'PHOTO#r-photo': [1e-4, null, 5e-5],
       },
     })
@@ -200,9 +203,9 @@ describe('applyConditionsUpload', () => {
     const result = applyConditionsUpload(
       table,
       upload('time.s,CONC.O3.mol m-3,CONC.NO2.mol m-3\n0,1,2', table),
-      { keys: new Set(['CONC.NO2']), mode: 'replace' }
+      { keys: new Set(['CONC#s-no2']), mode: 'replace' }
     )
-    expect(result).toEqual({ times: [0], columns: { 'CONC.NO2.mol m-3': [2] } })
+    expect(result).toEqual({ times: [0], columns: { 'CONC#s-no2': [2] } })
   })
 
   it('round-trips a download through an upload', () => {
@@ -213,9 +216,7 @@ describe('applyConditionsUpload', () => {
       mode: 'replace',
     })
     expect(result.times).toEqual(table.times)
-    Object.entries(table.columns).forEach(([header, values]) => {
-      const uploaded = Object.keys(result.columns).find((h) => headerKey(h) === headerKey(header))
-      expect(result.columns[uploaded]).toEqual(values)
-    })
+    // Every column comes back under the same key, with the same values.
+    expect(result.columns).toEqual(table.columns)
   })
 })

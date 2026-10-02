@@ -25,6 +25,7 @@ import { EMPTY_ARRAY } from '../../utils/emptyArray'
 import { selectRunDuration } from '../../redux/slices/simulationSlice'
 import { useResultsConcentrationUnit } from '../../hooks/useConcentrationUnit'
 import { buildIntervalDivisors } from '../../utils/concentrationUnits'
+import { selectNamedReactions } from '../../redux/slices/mechanismSlice'
 
 // Species rows shown before the list collapses into a "+N others" popover.
 const SPECIES_VISIBLE = 10
@@ -182,7 +183,7 @@ function FluxReactionRow({ reaction, flux, checked, onToggleCheck }) {
  */
 export function Flux() {
   const simulation = useSelector((state) => state.simulation)
-  const reactions = useSelector((state) => state.mechanism.config.mechanism?.reactions || EMPTY_ARRAY)
+  const reactions = useSelector(selectNamedReactions)
   const duration = useSelector(selectRunDuration)
 
   const [reactionsOpen, setReactionsOpen] = useState(true)

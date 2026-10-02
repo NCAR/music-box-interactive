@@ -16,7 +16,11 @@ import {
 const toast = vi.fn()
 vi.mock('@/hooks/use-toast', () => ({ useToast: () => ({ toast }) }))
 
-const species = [{ name: 'M', 'is third body': true }, { name: 'O3' }, { name: 'O2' }]
+const species = [
+  { id: 's-m', name: 'M', 'is third body': true },
+  { id: 's-o3', name: 'O3' },
+  { id: 's-o2', name: 'O2' },
+]
 
 const renderTab = () => {
   const store = configureStore({ reducer: { conditions: conditionsReducer, mechanism: mechanismReducer } })
@@ -55,8 +59,9 @@ describe('third-body species in the Species tab', () => {
 describe('third-body species in the conditions download and upload', () => {
   it('has no concentration column for a third-body species', () => {
     const keys = listConditionItems({ species }).map((item) => item.key)
-    expect(keys).toContain('CONC.O3')
-    expect(keys).not.toContain('CONC.M')
+    // Concentration columns are keyed by species id in the app.
+    expect(keys).toContain('CONC#s-o3')
+    expect(keys).not.toContain('CONC#s-m')
   })
 
   it('skips an uploaded third-body concentration with a clear reason', () => {
@@ -65,7 +70,7 @@ describe('third-body species in the conditions download and upload', () => {
       listConditionItems({ species }),
       { thirdBodyNames: new Set(['M']) }
     )
-    expect(upload.columns.map((column) => column.key)).toEqual(['CONC.O3'])
+    expect(upload.columns.map((column) => column.key)).toEqual(['CONC#s-o3'])
     expect(upload.skipped).toEqual([
       {
         header: 'CONC.M.mol m-3',
@@ -73,5 +78,20 @@ describe('third-body species in the conditions download and upload', () => {
         reason: 'third-body species; its concentration cannot be set',
       },
     ])
+  })
+})
+
+describe('selecting species in the Species tab', () => {
+  it('shows and hides one species at a time', () => {
+    renderTab()
+    const headers = () => screen.queryAllByRole('columnheader').map((th) => th.textContent)
+    // The default selection is the first species that can be selected (M is a third body).
+    expect(headers()).toEqual(['', 'Time (s)', 'O3', 'O2'])
+
+    fireEvent.click(screen.getByRole('button', { name: 'O3' }))
+    expect(headers()).toEqual(['', 'Time (s)', 'O2'])
+
+    fireEvent.click(screen.getByRole('button', { name: 'O3' }))
+    expect(headers()).toEqual(['', 'Time (s)', 'O3', 'O2'])
   })
 })

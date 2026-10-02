@@ -8,6 +8,8 @@ import {
   emptyTable,
 } from '../../conditions/table'
 import { headerForRateColumn, parseRateColumnKey } from '../../conditions/rateColumns'
+import { parseConcentrationColumnKey } from '../../conditions/speciesColumns'
+import { speciesNamesById } from '../../mechanism/speciesIds'
 import { rateReactionNames } from './reactionNames'
 
 // Mirrors @ncar/music-box's ConditionsManager rate-parameter prefixes -- this is the wire
@@ -21,14 +23,17 @@ const isFiniteNumber = (value) => typeof value === 'number' && Number.isFinite(v
 // sets nothing, so the solver holds the earlier value. Time 0 always gets a temperature and a
 // pressure: the table value, or the default.
 //
-// A rate-parameter column is stored under its reaction id (see rateColumns). `reactions` gives
-// the header for it; a column whose reaction is not in `reactions` is left out.
+// A rate-parameter column is stored under its reaction id (see rateColumns), and a
+// concentration column under its species id (see speciesColumns). `reactions` (with species
+// names, see withSpeciesNames) and `species` give the names for them; a column whose reaction
+// or species is not there is left out.
 //
 // Anything that needs the conditions in effect at a time (e.g. the air density) should ask
 // this manager via getConditionsAtTime(t).
-export const buildConditionsManager = (conditions, reactions = []) => {
+export const buildConditionsManager = (conditions, reactions = [], species = []) => {
   const table = conditions?.table || emptyTable()
   const names = rateReactionNames(reactions)
+  const speciesNames = speciesNamesById(species)
   const mgr = new ConditionsManager([])
   const zeroIndex = table.times.indexOf(0)
 
@@ -43,6 +48,12 @@ export const buildConditionsManager = (conditions, reactions = []) => {
     Object.entries(table.columns).forEach(([key, values]) => {
       const value = Array.isArray(values) ? values[index] : null
       if (!isFiniteNumber(value)) return
+      const speciesId = parseConcentrationColumnKey(key)
+      if (speciesId !== null) {
+        const name = speciesNames.get(speciesId)
+        if (name !== undefined) moment.concentrations[name] = value
+        return
+      }
       const header = parseRateColumnKey(key) ? headerForRateColumn(key, names) : key
       if (!header) return
 
@@ -66,5 +77,5 @@ export const buildConditionsManager = (conditions, reactions = []) => {
 }
 
 // Builds the solver's conditions block from the same manager (see buildConditionsManager).
-export const buildSolverConditions = (conditions, reactions = []) =>
-  buildConditionsManager(conditions, reactions).toDataBlocks()
+export const buildSolverConditions = (conditions, reactions = [], species = []) =>
+  buildConditionsManager(conditions, reactions, species).toDataBlocks()

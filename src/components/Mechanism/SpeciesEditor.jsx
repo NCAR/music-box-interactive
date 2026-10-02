@@ -6,7 +6,15 @@ import { useNotify } from '@/hooks/use-notify'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card'
 import { Button } from '../ui/button'
 import { Toggle } from '../ui/toggle'
-import { addSpecies, updateSpecies, removeSpecies } from '../../redux/slices/mechanismSlice'
+import {
+  addSpecies,
+  updateSpecies,
+  removeSpecies,
+  removeReaction,
+  selectNamedReactions,
+} from '../../redux/slices/mechanismSlice'
+import { reactionsUsingSpecies } from '../../services/mechanism/speciesIds'
+import { RemoveSpeciesDialog } from './RemoveSpeciesDialog'
 import { addSpeciesIfValid } from './speciesUtils'
 import {
   FIELD_LABEL,
@@ -223,16 +231,15 @@ function PropertySelector({ properties, onChange }) {
   )
 }
 
+// Every property, also the unset ones, so that a property can be set after the species is added.
 function getSpeciesFields(species) {
-  return SPECIES_PROPERTIES.filter(
-    (field) => species[field.key] !== undefined && species[field.key] !== null
-  ).map((field) => ({ ...field, value: species[field.key] }))
+  return SPECIES_PROPERTIES.map((field) => ({ ...field, value: species[field.key] }))
 }
 
 // A species renders as a collapsed chip showing only its name. Clicking it unfolds the phase
 // and property values in place; an expanded chip claims a full row of the wrapping list so its
 // controls have room. Expansion is local state -- opening one leaves the others alone.
-function SpeciesChip({ species, phaseNames, onPhaseChange, onFieldSave, onRemove }) {
+function SpeciesChip({ species, phaseNames, onNameSave, onPhaseChange, onFieldSave, onRemove }) {
   const [expanded, setExpanded] = useState(false)
 
   if (!expanded) {
@@ -264,7 +271,7 @@ function SpeciesChip({ species, phaseNames, onPhaseChange, onFieldSave, onRemove
         <Button
           variant="destructive"
           size="sm"
-          onClick={() => onRemove(species.name)}
+          onClick={() => onRemove(species)}
           className="h-auto px-2.5 py-1 text-[11px]"
         >
           Remove
@@ -272,6 +279,27 @@ function SpeciesChip({ species, phaseNames, onPhaseChange, onFieldSave, onRemove
       </div>
 
       <div className="mt-3 flex flex-col gap-3">
+        <div className="flex flex-col gap-1">
+          <label className="text-[11px] uppercase tracking-wide text-muted">Name</label>
+          {/* The key resets the input when the name changes elsewhere. */}
+          <input
+            key={species.name}
+            type="text"
+            defaultValue={species.name}
+            onBlur={(e) => {
+              if (e.target.value === species.name) return
+              if (!onNameSave(species, e.target.value)) e.target.value = species.name
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.currentTarget.blur()
+              }
+            }}
+            aria-label={`Name of ${species.name}`}
+            className={`w-full max-w-xs ${TEXT_INPUT_SM.replace('text-center', 'text-left')}`}
+          />
+        </div>
+
         <div>
           <label className="mb-1 block text-[11px] uppercase tracking-wide text-muted">
             Phase
@@ -280,7 +308,7 @@ function SpeciesChip({ species, phaseNames, onPhaseChange, onFieldSave, onRemove
               defining new ones. New phases are created in the Add species form. */}
           <PhaseSelector
             value={species.phase}
-            onChange={(phase) => onPhaseChange(species.name, phase)}
+            onChange={(phase) => onPhaseChange(species.id, phase)}
             phaseNames={phaseNames}
             size="compact"
             allowCustom={false}
@@ -296,7 +324,7 @@ function SpeciesChip({ species, phaseNames, onPhaseChange, onFieldSave, onRemove
               <Toggle
                 label={field.value ? 'Yes' : 'No'}
                 checked={field.value === true}
-                onChange={(checked) => onFieldSave(species.name, field, checked)}
+                onChange={(checked) => onFieldSave(species.id, field, checked)}
               />
             </div>
           ) : (
@@ -307,7 +335,7 @@ function SpeciesChip({ species, phaseNames, onPhaseChange, onFieldSave, onRemove
               <input
                 type="text"
                 defaultValue={field.value ?? ''}
-                onBlur={(e) => onFieldSave(species.name, field, e.target.value)}
+                onBlur={(e) => onFieldSave(species.id, field, e.target.value)}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') {
                     e.currentTarget.blur()
@@ -375,15 +403,39 @@ export function SpeciesEditor() {
     }
   }
 
-  const handleRemoveSpecies = (speciesName) => {
-    dispatch(removeSpecies(speciesName))
-    notify.removed('Species Removed', `"${speciesName}" was removed from the mechanism.`)
+  // Remove asks first (see RemoveSpeciesDialog). The reactions that use the species go too,
+  // and their conditions go with them (see conditionsSlice).
+  const [pendingRemoval, setPendingRemoval] = useState(null)
+  const storedReactions = useSelector((state) => state.mechanism.config.mechanism?.reactions)
+  const namedReactions = useSelector(selectNamedReactions)
+
+  const handleRemoveSpecies = (removed) => {
+    const usingIds = new Set(reactionsUsingSpecies(storedReactions ?? [], removed.id).map((r) => r.id))
+    setPendingRemoval({
+      species: removed,
+      reactions: namedReactions.filter((reaction) => usingIds.has(reaction.id)),
+    })
+  }
+
+  const confirmRemoveSpecies = () => {
+    const { species: removed, reactions: removedReactions } = pendingRemoval
+    removedReactions.forEach((reaction) => dispatch(removeReaction(reaction.id)))
+    dispatch(removeSpecies(removed.id))
+    setPendingRemoval(null)
+    notify.removed(
+      'Species Removed',
+      `"${removed.name}" was removed from the mechanism` +
+        (removedReactions.length === 0
+          ? '.'
+          : `, with the ${removedReactions.length} ${removedReactions.length === 1 ? 'reaction' : 'reactions'} that used it.`)
+    )
   }
 
   // Saves any numeric field on a species -- a top-level key like molecular weight, or a named
   // entry under `properties`. Clearing the input removes the field rather than storing NaN.
-  const handleFieldSave = (speciesName, field, rawValue) => {
-    const existingSpecies = species.find((sp) => sp.name === speciesName)
+  // Species are found by their UI-only id (see services/mechanism/speciesIds).
+  const handleFieldSave = (speciesId, field, rawValue) => {
+    const existingSpecies = species.find((sp) => sp.id === speciesId)
 
     if (!existingSpecies) {
       return
@@ -421,8 +473,8 @@ export function SpeciesEditor() {
     dispatch(updateSpecies(updatedSpecies))
   }
 
-  const handlePhaseSave = (speciesName, phaseValue) => {
-    const existingSpecies = species.find((sp) => sp.name === speciesName)
+  const handlePhaseSave = (speciesId, phaseValue) => {
+    const existingSpecies = species.find((sp) => sp.id === speciesId)
 
     if (!existingSpecies) {
       return
@@ -436,6 +488,22 @@ export function SpeciesEditor() {
     )
   }
 
+  // A rename is safe: everything refers to the species by its id (see speciesIds).
+  // Returns whether the rename was saved.
+  const handleNameSave = (renamed, rawValue) => {
+    const name = rawValue.trim()
+    if (!name) {
+      notify.invalidInput('Species name cannot be empty.')
+      return false
+    }
+    if (species.some((sp) => sp.id !== renamed.id && sp.name === name)) {
+      notify.invalidInput(`A species named "${name}" already exists.`)
+      return false
+    }
+    dispatch(updateSpecies({ ...renamed, name }))
+    return true
+  }
+
   const speciesChips = (
     <div className={ITEM_LIST}>
       {filteredSpecies.length === 0 ? (
@@ -443,9 +511,10 @@ export function SpeciesEditor() {
       ) : (
         filteredSpecies.map((sp) => (
           <SpeciesChip
-            key={sp.name}
+            key={sp.id ?? sp.name}
             species={sp}
             phaseNames={phaseNames}
+            onNameSave={handleNameSave}
             onPhaseChange={handlePhaseSave}
             onFieldSave={handleFieldSave}
             onRemove={handleRemoveSpecies}
@@ -547,6 +616,14 @@ export function SpeciesEditor() {
           </CardContent>
         </Card>
       </div>
+      {pendingRemoval && (
+        <RemoveSpeciesDialog
+          species={pendingRemoval.species}
+          reactions={pendingRemoval.reactions}
+          onCancel={() => setPendingRemoval(null)}
+          onConfirm={confirmRemoveSpecies}
+        />
+      )}
     </div>
   )
 }

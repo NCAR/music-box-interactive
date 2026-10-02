@@ -1,7 +1,12 @@
 import { describe, it, expect, vi } from 'vitest'
 import { configureStore } from '@reduxjs/toolkit'
 
-import mechanismReducer, { addSpecies, addReaction } from '../../../src/redux/slices/mechanismSlice'
+import mechanismReducer, {
+  addSpecies,
+  addReaction,
+  selectNamedMechanism,
+} from '../../../src/redux/slices/mechanismSlice'
+import { withSpeciesNames } from '../../../src/services/mechanism/speciesIds'
 import conditionsReducer from '../../../src/redux/slices/conditionsSlice'
 import simulationReducer, { setStatus } from '../../../src/redux/slices/simulationSlice'
 import {
@@ -90,7 +95,8 @@ describe('loadMusicBoxConfig', () => {
     const { store } = await load(baseConfig())
     const { species, phases } = store.getState().mechanism.config.mechanism
     const b = species.find((s) => s.name === 'B')
-    const bEntry = phases[0].species.find((e) => e.name === 'B')
+    // Phase entries refer to their species by the species id.
+    const bEntry = phases[0].species.find((e) => e.speciesId === b.id)
 
     expect(bEntry['diffusion coefficient [m2 s-1]']).toBe(1e-5)
     expect(bEntry['density [kg m-3]']).toBe(1000)
@@ -110,7 +116,7 @@ describe('loadMusicBoxConfig', () => {
       },
     })
     const { store } = await load(config)
-    const { phases } = store.getState().mechanism.config.mechanism
+    const { phases } = selectNamedMechanism(store.getState())
 
     expect(phases.map((p) => [p.name, p.species.map((e) => e.name)])).toEqual([
       ['aqueous', ['A']],
@@ -150,16 +156,18 @@ describe('loadMusicBoxConfig', () => {
     const storedConfig = store.getState().mechanism.config
 
     // PHOTO.p1 names no reaction of the mechanism, so it is not loaded.
+    // The concentration is stored under the species id.
+    const a = storedConfig.mechanism.species.find((s) => s.name === 'A')
     expect(store.getState().conditions.table).toEqual({
       times: [0, 60],
       columns: {
         'ENV.temperature.K': [250, null],
-        'CONC.A.mol m-3': [1e-6, null],
+        [`CONC#${a.id}`]: [1e-6, null],
       },
     })
     expect(storedConfig['box model options']).toEqual(config['box model options'])
     expect(storedConfig.mechanism.name).toBe(config.mechanism.name)
-    expect(storedConfig.mechanism.phases).toEqual(config.mechanism.phases)
+    expect(selectNamedMechanism(store.getState()).phases).toEqual(config.mechanism.phases)
     // Species/reactions are the same objects, decorated (phase default, id) -- not byte-identical.
     expect(storedConfig.mechanism.species.map((s) => s.name)).toEqual(
       config.mechanism.species.map((s) => s.name)
@@ -197,10 +205,15 @@ describe('loadMusicBoxConfig', () => {
     })
 
     // B is the third body in baseConfig.
-    expect(result).toEqual({ ignoredThirdBodySpecies: ['B'], unmatchedRateParameters: [] })
+    expect(result).toEqual({
+      ignoredThirdBodySpecies: ['B'],
+      unmatchedRateParameters: [],
+      unmatchedConcentrations: [],
+    })
+    const a = store.getState().mechanism.config.mechanism.species.find((s) => s.name === 'A')
     expect(store.getState().conditions.table).toEqual({
       times: [0],
-      columns: { 'CONC.A.mol m-3': [1] },
+      columns: { [`CONC#${a.id}`]: [1] },
     })
   })
 
@@ -253,7 +266,21 @@ describe('loadMusicBoxConfig', () => {
       navigate: vi.fn(),
       meta: {},
     })
-    expect(result).toEqual({ ignoredThirdBodySpecies: [], unmatchedRateParameters: [] })
+    expect(result).toEqual({
+      ignoredThirdBodySpecies: [],
+      unmatchedRateParameters: [],
+      unmatchedConcentrations: [],
+    })
+  })
+
+  it('reports a concentration that names no species, and does not load it', async () => {
+    const config = baseConfig({
+      conditions: { data: [{ headers: ['time.s', 'CONC.A.mol m-3', 'CONC.XYZ.mol m-3'], rows: [[0, 1, 2]] }] },
+    })
+    const store = makeStore()
+    const result = await loadMusicBoxConfig(config, { dispatch: store.dispatch, navigate: vi.fn(), meta: {} })
+    expect(result.unmatchedConcentrations).toEqual(['CONC.XYZ.mol m-3'])
+    expect(Object.keys(store.getState().conditions.table.columns)).toHaveLength(1)
   })
 
   it('falls back to the example id, then "custom", when no mechanism_name is given', async () => {
@@ -337,10 +364,16 @@ describe('toReduxConfig', () => {
       },
     }
 
-    const [reaction] = (await toReduxConfig(config)).mechanism.reactions
+    const { mechanism } = await toReduxConfig(config)
+    const [reaction] = mechanism.reactions
+    const idOf = (name) => mechanism.species.find((s) => s.name === name).id
 
-    expect(reaction.reactants).toEqual([{ name: 'A', coefficient: 2, __note: 'kept' }])
-    expect(reaction.products).toEqual([{ name: 'C', coefficient: 1 }])
+    // Redux refers to the species by id; the name-based view gives the canonical name key.
+    expect(reaction.reactants).toEqual([{ speciesId: idOf('A'), coefficient: 2, __note: 'kept' }])
+    expect(reaction.products).toEqual([{ speciesId: idOf('C'), coefficient: 1 }])
+    const [named] = withSpeciesNames(mechanism).reactions
+    expect(named.reactants).toEqual([{ name: 'A', coefficient: 2, __note: 'kept' }])
+    expect(named.products).toEqual([{ name: 'C', coefficient: 1 }])
   })
 })
 

@@ -59,9 +59,11 @@ describe('Upload Conditions dialog', () => {
     fireEvent.click(screen.getByRole('checkbox', { name: /O3/ }))
     fireEvent.click(screen.getByRole('button', { name: 'Apply' }))
 
+    // The file's CONC.NO2.mol m-3 column is stored under the species id of NO2.
+    const no2 = store.getState().mechanism.config.mechanism.species.find((s) => s.name === 'NO2')
     expect(store.getState().conditions.table).toEqual({
       times: [0, 60],
-      columns: { 'CONC.NO2.mol m-3': [2e-7, 3e-7] },
+      columns: { [`CONC#${no2.id}`]: [2e-7, 3e-7] },
     })
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
     expect(toast).toHaveBeenCalledWith(expect.objectContaining({ title: 'Columns Skipped' }))

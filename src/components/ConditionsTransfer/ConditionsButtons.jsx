@@ -14,6 +14,7 @@ import {
 } from '../../services/conditions/importConditions'
 import { DownloadConditionsDialog } from './DownloadConditionsDialog'
 import { UploadConditionsDialog } from './UploadConditionsDialog'
+import { selectNamedReactions } from '../../redux/slices/mechanismSlice'
 
 // Sits at the right end of the Conditions tab bar. Upload reads the file first, then opens a
 // preview dialog; nothing changes until the user applies it.
@@ -21,9 +22,7 @@ export function ConditionsButtons({ className = '' }) {
   const notify = useNotify()
   const fileInputRef = useRef(null)
   const species = useSelector((state) => state.mechanism.config.mechanism?.species || EMPTY_ARRAY)
-  const reactions = useSelector(
-    (state) => state.mechanism.config.mechanism?.reactions || EMPTY_ARRAY
-  )
+  const reactions = useSelector(selectNamedReactions)
   const table = useSelector((state) => state.conditions.table)
   const [downloadOpen, setDownloadOpen] = useState(false)
   const [pendingUpload, setPendingUpload] = useState(null)

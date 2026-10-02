@@ -3,7 +3,8 @@
 import { createSlice } from '@reduxjs/toolkit'
 import { emptyTable } from '../../services/conditions/table'
 import { dropReactionColumns } from '../../services/conditions/rateColumns'
-import { removeReaction } from './mechanismSlice'
+import { dropSpeciesColumn } from '../../services/conditions/speciesColumns'
+import { removeReaction, removeSpecies } from './mechanismSlice'
 
 const initialState = {
   // Basic Configuration
@@ -79,6 +80,10 @@ export const conditionsSlice = createSlice({
     // A deleted reaction takes its rate-parameter columns with it.
     builder.addCase(removeReaction, (state, action) => {
       state.table = dropReactionColumns(state.table, action.payload)
+    })
+    // A deleted species takes its concentration column with it.
+    builder.addCase(removeSpecies, (state, action) => {
+      state.table = dropSpeciesColumn(state.table, action.payload)
     })
   },
 })

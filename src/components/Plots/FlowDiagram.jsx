@@ -16,6 +16,7 @@ import { EMPTY_ARRAY } from '../../utils/emptyArray'
 import { selectRunDuration } from '../../redux/slices/simulationSlice'
 import { useResultsConcentrationUnit } from '../../hooks/useConcentrationUnit'
 import { CONCENTRATION_UNITS, buildIntervalDivisors } from '../../utils/concentrationUnits'
+import { selectNamedReactions } from '../../redux/slices/mechanismSlice'
 
 /*
  * FlowDiagram Component
@@ -51,7 +52,7 @@ export function FlowDiagram() {
 
   // If no simulation results, show placeholder
   const simulation = useSelector((state) => state.simulation)
-  const reactions = useSelector((state) => state.mechanism.config.mechanism?.reactions || EMPTY_ARRAY)
+  const reactions = useSelector(selectNamedReactions)
   const species = useSelector((state) => state.mechanism.config.mechanism?.species || EMPTY_ARRAY)
 
   // The integrated reaction rate depends on the selected time window, so its magnitude

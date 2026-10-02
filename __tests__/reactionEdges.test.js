@@ -1,4 +1,8 @@
 import { toReduxConfig } from '../src/services/config/loadMusicBoxConfig';
+import { withSpeciesNames } from '../src/services/mechanism/speciesIds';
+
+// Redux refers to species by id; the flow helpers take the name-based view, as the plots do.
+const named = (config) => ({ ...config, mechanism: withSpeciesNames(config.mechanism) });
 import {
   getReactionEdges,
   getThirdBodyNames,
@@ -6,9 +10,9 @@ import {
 } from '../src/components/Plots/flowUtils';
 
 import chapmanConfigRaw from '@ncar/music-box/examples/chapman/my_config.json' with { type: 'json' };
-const chapmanConfig = await toReduxConfig(chapmanConfigRaw);
+const chapmanConfig = named(await toReduxConfig(chapmanConfigRaw));
 import carbonBond5ConfigRaw from '@ncar/music-box/examples/carbon_bond_5/my_config.json' with { type: 'json' };
-const carbonBond5Config = await toReduxConfig(carbonBond5ConfigRaw);
+const carbonBond5Config = named(await toReduxConfig(carbonBond5ConfigRaw));
 
 const NO_THIRD_BODIES = new Set();
 const RATE = 10;

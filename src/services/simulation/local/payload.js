@@ -2,9 +2,12 @@ import { MusicBox } from '@ncar/music-box'
 import { buildSolverConditions } from './conditions'
 import { getMechanismLabel, serializeReaction } from './mechanism'
 import { rateReactionNames } from './reactionNames'
+import { toConfigMechanism } from '../../mechanism/speciesIds'
 
 export const buildLocalSimulationPayload = ({ mechanismData, conditions }) => {
-  const sourceMechanism = mechanismData.config?.mechanism || {}
+  const reduxMechanism = mechanismData.config?.mechanism || {}
+  // The configuration uses species names, never the UI-only species ids.
+  const sourceMechanism = toConfigMechanism(reduxMechanism)
   const mechanismLabel = getMechanismLabel(mechanismData)
   const species = sourceMechanism.species ?? []
   const phases = sourceMechanism.phases ?? []
@@ -37,7 +40,7 @@ export const buildLocalSimulationPayload = ({ mechanismData, conditions }) => {
   box.outputTimeStep = conditions.basic.outputFrequency
   box.simulationLength = conditions.basic.duration
   box.loadMechanism(mechanism)
-  box.loadConditions(buildSolverConditions(conditions, sourceReactions))
+  box.loadConditions(buildSolverConditions(conditions, sourceReactions, reduxMechanism.species ?? []))
 
   const payload = box.toJson()
 

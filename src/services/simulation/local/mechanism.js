@@ -1,15 +1,18 @@
 import { PHASE_PROPERTY_KEYS, pickDeclared } from './speciesProperties'
 
+// A phase entry refers to its species by the species id (see services/mechanism/speciesIds).
+const isEntryOf = (entry, speciesId) => entry?.speciesId === speciesId
+
 // The first phase that lists a species. The editor shows and edits this phase.
-export const findSpeciesPhase = (phases, name) =>
-  (phases ?? []).find((phase) => phase.species.some((entry) => entry.name === name))
+export const findSpeciesPhase = (phases, speciesId) =>
+  (phases ?? []).find((phase) => (phase.species ?? []).some((entry) => isEntryOf(entry, speciesId)))
 
 // The mechanism stores phase membership and the phase-only species properties on
 // phases[].species[]. The editor shows each species together with its phase and those properties.
 export const withPhaseInfo = (species, phases) =>
   species.map((sp) => {
-    const phase = findSpeciesPhase(phases, sp.name)
-    const entry = phase?.species.find((e) => e.name === sp.name) ?? {}
+    const phase = findSpeciesPhase(phases, sp.id)
+    const entry = phase?.species.find((e) => isEntryOf(e, sp.id)) ?? {}
     return { ...sp, ...pickDeclared(entry, PHASE_PROPERTY_KEYS), phase: phase?.name }
   })
 

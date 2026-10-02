@@ -10,6 +10,7 @@ import { TEXT_INPUT_SM } from '../Mechanism/fieldStyles'
 import { getReactionTypeLabel } from '../Mechanism/reactions/reactionRegistry'
 import { EMPTY_ARRAY } from '../../utils/emptyArray'
 import { selectRunDuration } from '../../redux/slices/simulationSlice'
+import { selectNamedReactions } from '../../redux/slices/mechanismSlice'
 
 // Show at most this many species as chips before collapsing the rest into a "+N others" menu
 const SPECIES_CHIP_VISIBLE = 25
@@ -74,7 +75,7 @@ export function FlowPanel({
   fluxUnitLabel = 'mol m-3',
 }) {
   const results = useSelector((state) => state.simulation.results)
-  const reactions = useSelector((state) => state.mechanism.config.mechanism?.reactions || EMPTY_ARRAY)
+  const reactions = useSelector(selectNamedReactions)
 
   const reactionTypeOptions = useMemo(() => {
     const counts = new Map()

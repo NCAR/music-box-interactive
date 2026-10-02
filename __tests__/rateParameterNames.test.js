@@ -9,6 +9,7 @@ import { loadMusicBoxConfig, toReduxConfig } from '../src/services/config/loadMu
 import { rateReactionNames } from '../src/services/simulation/local/reactionNames'
 import { buildLocalSimulationPayload } from '../src/services/simulation/local/payload'
 import { buildSolverConditions } from '../src/services/simulation/local/conditions'
+import { withSpeciesNames } from '../src/services/mechanism/speciesIds'
 
 import analyticalConfig from '@ncar/music-box/examples/analytical/my_config.json' with { type: 'json' }
 import chapmanConfig from '@ncar/music-box/examples/chapman/my_config.json' with { type: 'json' }
@@ -84,7 +85,10 @@ describe('an unnamed photolysis reaction in the solver', () => {
     }
 
     expect(reaction.name).toBe('')
-    expect(buildSolverConditions(conditions, mechanism.reactions).data[0].headers).toContain('PHOTO.A -> B.s-1')
+    // buildSolverConditions takes the reactions with species names, as the payload gives them.
+    expect(
+      buildSolverConditions(conditions, withSpeciesNames(mechanism).reactions).data[0].headers
+    ).toContain('PHOTO.A -> B.s-1')
 
     const { payload } = buildLocalSimulationPayload({ mechanismData: { config: { mechanism } }, conditions })
     expect(payload.mechanism.reactions[0].name).toBe('A -> B')
