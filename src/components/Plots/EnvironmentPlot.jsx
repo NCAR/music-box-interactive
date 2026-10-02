@@ -1,25 +1,20 @@
 import { useMemo, useState } from 'react'
 import { useSelector } from 'react-redux'
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-} from 'recharts'
 import { Card, CardContent } from '../ui/card'
 import { Toggle } from '../ui/toggle'
 import { Thermometer } from 'lucide-react'
 import { ChartTooltipContent } from '../SimulationChart'
 import { UnitDropdown } from './UnitDropdown'
+import { LineChart } from './LineChart'
 import { TEMPERATURE_UNITS, fromKelvin } from './temperatureUnits'
 import { PRESSURE_UNITS } from './pressureUnits'
 import { TIME_RANGE_UNITS } from './timeRangeUnits'
 import { buildEnvironmentSeries } from '../../utils/environmentSeries'
 import { FIELD_LABEL, DROPDOWN_WRAPPER, DROPDOWN_BUTTON } from '../Mechanism/fieldStyles'
 import { useChartTheme } from '../../theme/chartTheme'
+
+const TEMPERATURE_COLOR = '#FAA119'
+const AXIS_PADDING = { top: 20, bottom: 20 }
 
 /**
  * EnvironmentPlot Component
@@ -61,6 +56,73 @@ export function EnvironmentPlot() {
         pressure: point.pressure / pressureUnit.divisor,
       })),
     [simulation.results, temperatureUnitId, pressureUnit, timeUnit]
+  )
+
+  const times = useMemo(() => envData.map((point) => point.time), [envData])
+  const temperatureLabel = `Temperature (${temperatureUnitLabel})`
+  const pressureLabel = `Pressure (${pressureUnit.label})`
+
+  const series = useMemo(
+    () => [
+      ...(showTemperature
+        ? [
+            {
+              key: 'temperature',
+              name: temperatureLabel,
+              color: TEMPERATURE_COLOR,
+              values: envData.map((point) => point.temperature),
+              axis: 'temperature',
+            },
+          ]
+        : []),
+      ...(showPressure
+        ? [
+            {
+              key: 'pressure',
+              name: pressureLabel,
+              color: chart.primary,
+              values: envData.map((point) => point.pressure),
+              axis: 'pressure',
+            },
+          ]
+        : []),
+    ],
+    [envData, showTemperature, showPressure, temperatureLabel, pressureLabel, chart.primary]
+  )
+
+  // Pressure moves to the left side when it is the only axis.
+  const yAxes = useMemo(
+    () => [
+      ...(showTemperature
+        ? [
+            {
+              id: 'temperature',
+              side: 'left',
+              label: temperatureLabel,
+              color: TEMPERATURE_COLOR,
+              labelColor: TEMPERATURE_COLOR,
+              tickFontSize: 11,
+              labelFontSize: 13,
+              padding: AXIS_PADDING,
+            },
+          ]
+        : []),
+      ...(showPressure
+        ? [
+            {
+              id: 'pressure',
+              side: showTemperature ? 'right' : 'left',
+              label: pressureLabel,
+              color: chart.primary,
+              labelColor: chart.primary,
+              tickFontSize: 11,
+              labelFontSize: 13,
+              padding: AXIS_PADDING,
+            },
+          ]
+        : []),
+    ],
+    [showTemperature, showPressure, temperatureLabel, pressureLabel, chart.primary]
   )
 
   if (!simulation.results || simulation.status !== 'succeeded') {
@@ -146,85 +208,29 @@ export function EnvironmentPlot() {
 
             {/* Chart */}
             <div className="flex-1 min-w-0">
-              <ResponsiveContainer width="100%" height={600}>
-                <LineChart data={envData} margin={{ top: 30, right: 40, left: 20, bottom: 10 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke={chart.grid} />
-                  <XAxis
-                    dataKey="time"
-                    label={{
-                      value: `Time (${timeAxisUnitLabel})`,
-                      position: 'insideBottom',
-                      offset: -5,
-                      style: { fill: chart.label, fontWeight: 600, fontSize: 14 },
-                    }}
-                    stroke={chart.axis}
-                    tick={{ fontSize: 12, fill: chart.axis }}
-                  />
-                  {showTemperature && (
-                    <YAxis
-                      yAxisId="temperature"
-                      orientation="left"
-                      label={{
-                        value: `Temperature (${temperatureUnitLabel})`,
-                        angle: -90,
-                        position: 'insideLeft',
-                        style: { fill: '#FAA119', fontWeight: 600, fontSize: 13 },
-                      }}
-                      stroke="#FAA119"
-                      tick={{ fontSize: 11, fill: '#FAA119' }}
-                      padding={{ top: 20, bottom: 20 }}
+              <div style={{ height: 600 }}>
+                <LineChart
+                  x={times}
+                  series={series}
+                  margin={{ top: 30, right: 40, left: 20, bottom: 10 }}
+                  xAxis={{
+                    type: 'category',
+                    label: `Time (${timeAxisUnitLabel})`,
+                    tickFontSize: 12,
+                    labelFontSize: 14,
+                  }}
+                  yAxes={yAxes}
+                  strokeWidth={2}
+                  renderTooltip={({ label, payload }) => (
+                    <ChartTooltipContent
+                      active
+                      payload={payload}
+                      timeLabel={`${label?.toFixed(2)} ${timeAxisUnitLabel}`}
+                      maxVisible={2}
                     />
                   )}
-                  {showPressure && (
-                    <YAxis
-                      yAxisId="pressure"
-                      orientation={showTemperature ? 'right' : 'left'}
-                      label={{
-                        value: `Pressure (${pressureUnit.label})`,
-                        angle: showTemperature ? 90 : -90,
-                        position: showTemperature ? 'insideRight' : 'insideLeft',
-                        style: { fill: chart.primary, fontWeight: 600, fontSize: 13 },
-                      }}
-                      stroke={chart.primary}
-                      tick={{ fontSize: 11, fill: chart.primary }}
-                      padding={{ top: 20, bottom: 20 }}
-                    />
-                  )}
-                  <Tooltip
-                    wrapperStyle={{ zIndex: 10 }}
-                    content={({ active, payload, label }) => (
-                      <ChartTooltipContent
-                        active={active}
-                        payload={payload}
-                        timeLabel={`${label?.toFixed(2)} ${timeAxisUnitLabel}`}
-                        maxVisible={2}
-                      />
-                    )}
-                  />
-                  {showTemperature && (
-                    <Line
-                      yAxisId="temperature"
-                      type="monotone"
-                      dataKey="temperature"
-                      stroke="#FAA119"
-                      strokeWidth={2}
-                      dot={false}
-                      name={`Temperature (${temperatureUnitLabel})`}
-                    />
-                  )}
-                  {showPressure && (
-                    <Line
-                      yAxisId="pressure"
-                      type="monotone"
-                      dataKey="pressure"
-                      stroke={chart.primary}
-                      strokeWidth={2}
-                      dot={false}
-                      name={`Pressure (${pressureUnit.label})`}
-                    />
-                  )}
-                </LineChart>
-              </ResponsiveContainer>
+                />
+              </div>
             </div>
           </div>
         </CardContent>
