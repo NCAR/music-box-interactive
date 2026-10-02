@@ -12,7 +12,7 @@ import { Alert, AlertDescription, AlertTitle } from '../ui/alert'
 import { Rocket, PenLine, FolderOpen, Library } from 'lucide-react'
 import {
   loadMusicBoxConfig,
-  notifyIgnoredThirdBodySpecies,
+  notifyLoadedConditionsIssues,
 } from '../../services/config/loadMusicBoxConfig'
 import { parseUploadedMusicBoxConfig } from '../../services/config/parseUploadedMusicBoxConfig'
 
@@ -49,7 +49,7 @@ export function DashboardPage() {
 
     parseUploadedMusicBoxConfig(file)
       .then(async (config) => {
-        const { ignoredThirdBodySpecies } = await loadMusicBoxConfig(config, {
+        const loadResult = await loadMusicBoxConfig(config, {
           dispatch,
           navigate,
           meta: {
@@ -64,7 +64,7 @@ export function DashboardPage() {
           'Configuration Loaded',
           `Loaded ${config.mechanism.species?.length || 0} species and ${config.mechanism.reactions?.length || 0} reactions from ${file.name}.`
         )
-        notifyIgnoredThirdBodySpecies(notify, ignoredThirdBodySpecies)
+        notifyLoadedConditionsIssues(notify, loadResult)
       })
       .catch((err) => {
         notify.error(

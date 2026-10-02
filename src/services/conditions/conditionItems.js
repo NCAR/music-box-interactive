@@ -1,4 +1,13 @@
 import { isThirdBody } from '../simulation/local/speciesProperties'
+import { rateReactionNames } from '../simulation/local/reactionNames'
+import {
+  RATE_TYPES,
+  SURFACE_PROPERTIES,
+  parseRateColumnKey,
+  rateColumnKey,
+  rateHeader,
+  rateParameterUnit,
+} from './rateColumns'
 import {
   DENSITY_HEADER,
   PRESSURE_HEADER,
@@ -8,49 +17,17 @@ import {
 } from './table'
 
 // The catalog of condition columns that the conditions download and upload offer. Each item
-// is { key, header, label, category, group }. `key` is the header without its unit (see
-// headerKey), so a stored "CONC.O3" and an uploaded "CONC.O3.mol m-3" are the same item.
+// is { key, header, matchKey, label, category, group }:
+//   key      - the table column key: the header without its unit (see headerKey), or the
+//              reaction-id key of a rate parameter (see rateColumns)
+//   header   - the header that a download writes
+//   matchKey - headerKey(header); an uploaded header with the same headerKey is this item
 
 export const CATEGORIES = [
   { id: 'environment', label: 'Environment', fileName: 'environment.csv' },
   { id: 'species', label: 'Species concentrations', fileName: 'species_concentrations.csv' },
   { id: 'rate', label: 'Rate parameters', fileName: 'rate_parameters.csv' },
 ]
-
-// The mechanism reaction types that take a rate parameter from the conditions, with the unit
-// of the value. A surface reaction has one value for each of SURFACE_PROPERTIES instead.
-export const RATE_TYPES = [
-  { reactionType: 'PHOTOLYSIS', prefix: 'PHOTO', label: 'Photolysis', unit: 's-1' },
-  { reactionType: 'EMISSION', prefix: 'EMIS', label: 'Emission', unit: 'mol m-3 s-1' },
-  { reactionType: 'FIRST_ORDER_LOSS', prefix: 'LOSS', label: 'Loss', unit: 's-1' },
-  { reactionType: 'USER_DEFINED', prefix: 'USER', label: 'User defined', unit: 's-1' },
-  { reactionType: 'SURFACE', prefix: 'SURF', label: 'Surface', unit: null },
-]
-
-// `unit` is the header unit that music-box uses. `displayUnit` is the unit that the app shows.
-export const SURFACE_PROPERTIES = [
-  { property: 'effective radius', unit: 'm', displayUnit: 'm' },
-  { property: 'particle number concentration', unit: '# m-3', displayUnit: 'particles m-3' },
-]
-
-// The header for a new rate-parameter column: PREFIX.name.unit, or
-// SURF.name.property.unit for a surface reaction.
-export function defaultRateHeader(prefix, name, property = null) {
-  if (prefix === 'SURF') {
-    const known = SURFACE_PROPERTIES.find((p) => p.property === property)
-    return known ? `SURF.${name}.${property}.${known.unit}` : `SURF.${name}.${property}`
-  }
-  const unit = RATE_TYPES.find((type) => type.prefix === prefix)?.unit
-  return unit ? `${prefix}.${name}.${unit}` : `${prefix}.${name}`
-}
-
-// The unit to show for a rate-parameter value. `property` is only for a surface reaction.
-export function rateParameterUnit(prefix, property = null) {
-  if (prefix === 'SURF') {
-    return SURFACE_PROPERTIES.find((p) => p.property === property)?.displayUnit ?? null
-  }
-  return RATE_TYPES.find((type) => type.prefix === prefix)?.unit ?? null
-}
 
 const ENVIRONMENT_ITEMS = [
   { header: TEMPERATURE_HEADER, label: 'Temperature', group: 'Temperature' },
@@ -72,15 +49,60 @@ export function isAcceptedUnit(key, unit) {
   return accepted ? accepted.includes(unit) : true
 }
 
+// Every rate parameter of the mechanism, in RATE_TYPES order, then mechanism order: one for
+// each photolysis, emission, loss and user-defined reaction, and one for each property of a
+// surface reaction (the known ones, plus any other that the table holds). Each is
+// { key, prefix, reactionId, property, name, label, unit, header, typeLabel }.
+export function listRateParameters(reactions = [], table = null) {
+  const names = rateReactionNames(reactions)
+  const storedSurfaceProperties = new Map()
+  Object.keys(table?.columns || {}).forEach((key) => {
+    const parsed = parseRateColumnKey(key)
+    if (parsed?.prefix !== 'SURF') return
+    if (!storedSurfaceProperties.has(parsed.reactionId))
+      storedSurfaceProperties.set(parsed.reactionId, [])
+    storedSurfaceProperties.get(parsed.reactionId).push(parsed.property)
+  })
+
+  return RATE_TYPES.flatMap((type) =>
+    reactions
+      .filter((reaction) => reaction?.type === type.reactionType && names.has(reaction.id))
+      .flatMap((reaction) => {
+        const name = names.get(reaction.id)
+        const base = { prefix: type.prefix, reactionId: reaction.id, name, typeLabel: type.label }
+        if (type.prefix !== 'SURF') {
+          return [
+            {
+              ...base,
+              key: rateColumnKey(type.prefix, reaction.id),
+              property: null,
+              label: name,
+              unit: type.unit,
+              header: rateHeader(type.prefix, name),
+            },
+          ]
+        }
+        const known = SURFACE_PROPERTIES.map((p) => p.property)
+        const others = (storedSurfaceProperties.get(reaction.id) || []).filter(
+          (p) => !known.includes(p)
+        )
+        return [...known, ...others].map((property) => ({
+          ...base,
+          key: rateColumnKey('SURF', reaction.id, property),
+          property,
+          label: `${name} ${property}`,
+          unit: rateParameterUnit('SURF', property),
+          header: rateHeader('SURF', name, property),
+        }))
+      })
+  )
+}
+
 const hasName = (entry) => typeof entry?.name === 'string' && entry.name.trim() !== ''
 
-// Every condition column that the mechanism can use, in display order. A rate parameter
-// that the table already holds keeps its own header (and unit).
+// Every condition column that the mechanism can use, in display order.
 export function listConditionItems({ species = [], reactions = [], table } = {}) {
-  const stored = new Map(
-    Object.keys(table?.columns || {}).map((header) => [headerKey(header), header])
-  )
-  const items = [...ENVIRONMENT_ITEMS]
+  const items = ENVIRONMENT_ITEMS.map((item) => ({ ...item, matchKey: item.key }))
 
   // A third-body species gets its concentration from the air density, so it has no column.
   species
@@ -88,6 +110,7 @@ export function listConditionItems({ species = [], reactions = [], table } = {})
     .forEach((entry) => {
       items.push({
         key: `CONC.${entry.name}`,
+        matchKey: `CONC.${entry.name}`,
         header: `CONC.${entry.name}.mol m-3`,
         label: entry.name,
         category: 'species',
@@ -95,48 +118,15 @@ export function listConditionItems({ species = [], reactions = [], table } = {})
       })
     })
 
-  const seen = new Set(items.map((item) => item.key))
-  const addRateItem = (item) => {
-    if (seen.has(item.key)) return
-    seen.add(item.key)
-    items.push({ ...item, category: 'rate' })
-  }
-
-  RATE_TYPES.forEach((type) => {
-    reactions
-      .filter((reaction) => reaction?.type === type.reactionType && hasName(reaction))
-      .forEach((reaction) => {
-        if (type.prefix === 'SURF') {
-          const prefix = `SURF.${reaction.name}.`
-          const properties = SURFACE_PROPERTIES.map(({ property }) => ({
-            key: `${prefix}${property}`,
-            header: defaultRateHeader('SURF', reaction.name, property),
-          }))
-          // A stored property that is not one of the two known ones still gets a column.
-          stored.forEach((header, key) => {
-            if (key.startsWith(prefix) && !properties.some((p) => p.key === key)) {
-              properties.push({ key, header })
-            }
-          })
-          properties.forEach(({ key, header }) =>
-            addRateItem({
-              key,
-              header: stored.get(key) ?? header,
-              label: `${reaction.name} (${key.slice(prefix.length)})`,
-              group: type.label,
-            })
-          )
-          return
-        }
-
-        const key = `${type.prefix}.${reaction.name}`
-        addRateItem({
-          key,
-          header: stored.get(key) ?? defaultRateHeader(type.prefix, reaction.name),
-          label: reaction.name,
-          group: type.label,
-        })
-      })
+  listRateParameters(reactions, table).forEach((parameter) => {
+    items.push({
+      key: parameter.key,
+      matchKey: headerKey(parameter.header),
+      header: parameter.header,
+      label: parameter.label,
+      category: 'rate',
+      group: parameter.typeLabel,
+    })
   })
 
   return items

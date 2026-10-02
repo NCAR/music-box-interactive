@@ -2,13 +2,15 @@
 // Manages the simulation time settings and the conditions table (see services/conditions/table)
 import { createSlice } from '@reduxjs/toolkit'
 import { emptyTable } from '../../services/conditions/table'
+import { dropReactionColumns } from '../../services/conditions/rateColumns'
+import { removeReaction } from './mechanismSlice'
 
 const initialState = {
   // Basic Configuration
   basic: {
-    duration: 250000, // seconds (~69 hours) - matches Python simulation
-    timeStep: 200, // seconds
-    outputFrequency: 10, // Store every 10 steps to reduce data points
+    duration: 600, // seconds (10 minutes)
+    timeStep: 30, // seconds: the chemistry time step
+    outputFrequency: 60, // seconds: the output time step (1 minute)
   },
 
   // All conditions, from t=0 on: { times, columns: { [header]: (number | null)[] } }
@@ -72,6 +74,12 @@ export const conditionsSlice = createSlice({
     },
 
     resetConditions: () => initialState,
+  },
+  extraReducers: (builder) => {
+    // A deleted reaction takes its rate-parameter columns with it.
+    builder.addCase(removeReaction, (state, action) => {
+      state.table = dropReactionColumns(state.table, action.payload)
+    })
   },
 })
 

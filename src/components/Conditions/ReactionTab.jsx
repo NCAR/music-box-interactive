@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 import { ChevronDown, ChevronUp, Check } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card'
@@ -23,9 +23,11 @@ import {
 } from '../../services/conditions/table'
 import {
   SURFACE_PROPERTIES,
-  defaultRateHeader,
+  parseRateColumnKey,
+  rateColumnKey,
   rateParameterUnit,
-} from '../../services/conditions/conditionItems'
+} from '../../services/conditions/rateColumns'
+import { rateReactionNames } from '../../services/simulation/local/reactionNames'
 import { HideUnsetRowsCheckbox } from './HideUnsetRowsCheckbox'
 
 const filterButtonClass = (selected) =>
@@ -45,13 +47,6 @@ const formatValue = (value) => {
   return magnitude < 1e-3 || magnitude >= 1e6 ? value.toExponential(2) : String(value)
 }
 
-// Surface properties
-const stripPropertyUnit = (prop) => {
-  const lastDot = prop.lastIndexOf('.')
-  return lastDot === -1 ? prop : prop.slice(0, lastDot)
-}
-
-const hasName = (reaction) => typeof reaction.name === 'string' && reaction.name.trim() !== ''
 
 // A stable fallback for the rowReactionType selector, matching EMPTY_ARRAY's reasoning: a fresh
 // {} on every call would make useSyncExternalStore treat every render as a real change.
@@ -78,22 +73,16 @@ const REACTION_TYPES = [
   { id: 'USER_DEFINED', label: 'User defined', prefix: 'USER' },
 ]
 
-// The surface properties to offer: the two that music-box knows, plus any other property
-// that the table holds for a surface reaction of the mechanism.
-const surfacePropertiesFor = (reactions, tableColumns) => {
-  const stored = reactions
-    .filter((reaction) => reaction.type === 'SURFACE' && hasName(reaction))
-    .flatMap((reaction) => {
-      const prefix = `SURF.${reaction.name}.`
-      return Object.keys(tableColumns || {})
-        .filter((key) => key.startsWith(prefix))
-        .map((key) => stripPropertyUnit(key.slice(prefix.length)))
-    })
+// The properties of a surface reaction: the two that music-box knows, plus any other property
+// that the table holds for that reaction.
+const surfacePropertiesOf = (reactionId, tableColumns) => {
+  const stored = Object.keys(tableColumns || {})
+    .map(parseRateColumnKey)
+    .filter((parsed) => parsed?.prefix === 'SURF' && parsed.reactionId === reactionId)
+    .map((parsed) => parsed.property)
   const known = SURFACE_PROPERTIES.map((p) => p.property)
   return [...known, ...[...new Set(stored)].filter((property) => !known.includes(property)).sort()]
 }
-
-const withUnit = (label, unit) => (unit ? `${label} (${unit})` : label)
 
 /**
  * ReactionTab Component
@@ -114,8 +103,9 @@ export function ReactionTab() {
   )
 
   const [reactionTypeId, setReactionTypeId] = useState(REACTION_TYPES[0].id)
-  const [selectedReactionNames, setSelectedReactionNames] = useState(new Set())
-  const [selectedSurfaceProperty, setSelectedSurfaceProperty] = useState(null)
+  // The selected reactions, by id. A reaction without a configured name is listed under its
+  // generated name (see rateReactionNames); its column is stored under its id either way.
+  const [selectedReactionIds, setSelectedReactionIds] = useState(new Set())
   const [reactionSearch, setReactionSearch] = useState('')
   const [hideUnsetRows, setHideUnsetRows] = useState(false)
   const [rowDrafts, setRowDrafts] = useState({})
@@ -131,66 +121,61 @@ export function ReactionTab() {
   const addTimeRef = useRef(null)
   useClickOutside(addTimeRef, () => setAddTimeOpen(false), addTimeOpen)
 
+  const rateNames = useMemo(() => rateReactionNames(mechanismReactions), [mechanismReactions])
+  const nameOf = (reaction) => rateNames.get(reaction.id) ?? ''
+
   const reactionType = REACTION_TYPES.find((t) => t.id === reactionTypeId)
   const isSurface = reactionTypeId === 'SURFACE'
 
   const reactionTypeCounts = REACTION_TYPES.map((type) => ({
     ...type,
-    count: mechanismReactions.filter(
-      (reaction) => reaction.type === type.id && hasName(reaction)
-    ).length,
+    count: mechanismReactions.filter((reaction) => reaction.type === type.id).length,
   }))
 
   // Only offer reaction types that are present in the loaded mechanism.
   const presentReactionTypes = reactionTypeCounts.filter((type) => type.count > 0)
 
-  const reactionsOfType = mechanismReactions.filter(
-    (reaction) => reaction.type === reactionTypeId && hasName(reaction)
-  )
+  const reactionsOfType = mechanismReactions.filter((reaction) => reaction.type === reactionTypeId)
 
   const reactionQuery = reactionSearch.trim().toLowerCase()
   const filteredReactionsOfType = reactionQuery
-    ? reactionsOfType.filter((reaction) => reaction.name.toLowerCase().includes(reactionQuery))
+    ? reactionsOfType.filter((reaction) => nameOf(reaction).toLowerCase().includes(reactionQuery))
     : reactionsOfType
 
-  // When a surface reaction is present, the nested surface dropdown lists its properties:
-  // effective radius and particle number concentration.
-  const surfacePropertyOptions = surfacePropertiesFor(mechanismReactions, tableColumns)
-
-  // All the values in the table have the same unit, from the reaction type (and, for a
-  // surface reaction, the selected property).
-  const valueUnit = rateParameterUnit(reactionType.prefix, isSurface ? selectedSurfaceProperty : null)
+  // All the values of a non-surface type have the same unit. The surface properties have
+  // different units, so each surface column shows its own.
+  const valueUnit = isSurface ? null : rateParameterUnit(reactionType.prefix)
 
   // Selected reactions beyond the visible cap stay visible until deselected.
   const baseVisibleReactions = filteredReactionsOfType.slice(0, REACTIONS_VISIBLE)
   const overflowCandidateReactions = filteredReactionsOfType.slice(REACTIONS_VISIBLE)
   const pinnedOverflowReactions = overflowCandidateReactions.filter((reaction) =>
-    selectedReactionNames.has(reaction.name)
+    selectedReactionIds.has(reaction.id)
   )
   const visibleReactionsOfType = [...baseVisibleReactions, ...pinnedOverflowReactions]
   const overflowReactionsOfType = overflowCandidateReactions.filter(
-    (reaction) => !selectedReactionNames.has(reaction.name)
+    (reaction) => !selectedReactionIds.has(reaction.id)
   )
 
-  const toggleReactionName = (name) => {
-    setSelectedReactionNames((prev) => {
+  const toggleReaction = (id) => {
+    setSelectedReactionIds((prev) => {
       const next = new Set(prev)
-      if (next.has(name)) next.delete(name)
-      else next.add(name)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
       return next
     })
   }
 
   const handleSelectAllReactions = () => {
-    const names = reactionsOfType.map((reaction) => reaction.name)
-    setSelectedReactionNames(new Set(names.slice(0, REACTIONS_VISIBLE)))
-    if (names.length > MAX_SELECTED_REACTION) {
-      notify.warning('Selection Limited', `Selected the first ${MAX_SELECTED_REACTION} of ${names.length} reactions. Use search to select others.`)
+    const ids = reactionsOfType.map((reaction) => reaction.id)
+    setSelectedReactionIds(new Set(ids.slice(0, REACTIONS_VISIBLE)))
+    if (ids.length > MAX_SELECTED_REACTION) {
+      notify.warning('Selection Limited', `Selected the first ${MAX_SELECTED_REACTION} of ${ids.length} reactions. Use search to select others.`)
     }
   }
 
   const handleDeselectAllReactions = () => {
-    setSelectedReactionNames(new Set())
+    setSelectedReactionIds(new Set())
   }
 
   // Keep the selected type pointed at one that's present, falling back to the first
@@ -204,74 +189,55 @@ export function ReactionTab() {
   // reactionsOfType array. Selections are scoped to the active type.
   useEffect(() => {
     const currentReactionsOfType = mechanismReactions.filter(
-      (reaction) => reaction.type === reactionTypeId && hasName(reaction)
+      (reaction) => reaction.type === reactionTypeId
     )
-    setSelectedReactionNames((prev) => {
-      const stillValid = [...prev].filter((name) =>
-        currentReactionsOfType.some((reaction) => reaction.name === name)
+    setSelectedReactionIds((prev) => {
+      const stillValid = [...prev].filter((id) =>
+        currentReactionsOfType.some((reaction) => reaction.id === id)
       )
       if (stillValid.length > 0) return new Set(stillValid)
-      return new Set(currentReactionsOfType.slice(0, DEFAULT_SELECTED_REACTIONS).map((r) => r.name))
+      return new Set(currentReactionsOfType.slice(0, DEFAULT_SELECTED_REACTIONS).map((r) => r.id))
     })
   }, [reactionTypeId, mechanismReactions])
 
-  // Keep the selected surface property pointed at one that's present, falling back to the
-  // first available option. Recomputes from mechanismReactions/tableColumns -- both stable
-  // selector outputs -- rather than depending on surfacePropertyOptions, which is a fresh array
-  // every render.
-  useEffect(() => {
-    const options = surfacePropertiesFor(mechanismReactions, tableColumns)
-    setSelectedSurfaceProperty((prev) => (options.includes(prev) ? prev : (options[0] ?? null)))
-  }, [mechanismReactions, tableColumns])
-
   const selectedReactions = reactionsOfType.filter((reaction) =>
-    selectedReactionNames.has(reaction.name)
+    selectedReactionIds.has(reaction.id)
   )
 
-  // Each selected reaction contributes its own column. For surface reactions, only the one
-  // property picked in the nested "Surface" dropdown is shown, same as every other type.
+  // Each selected reaction contributes its own column. A surface reaction contributes one
+  // column for each of its properties (effective radius, particle number concentration).
+  // The column is stored under the reaction id (see rateColumns), so a rename keeps it.
   const columns = selectedReactions.flatMap((reaction) => {
     if (isSurface) {
-      if (!selectedSurfaceProperty) return []
-      const surfacePrefix = `SURF.${reaction.name}.`
-      const key = Object.keys(tableColumns || {}).find(
-        (candidate) =>
-          candidate.startsWith(surfacePrefix) &&
-          stripPropertyUnit(candidate.slice(surfacePrefix.length)) === selectedSurfaceProperty
-      )
-      return [
-        {
-          key: key ?? defaultRateHeader('SURF', reaction.name, selectedSurfaceProperty),
-          label: reaction.name,
-        },
-      ]
+      return surfacePropertiesOf(reaction.id, tableColumns).map((property) => ({
+        key: rateColumnKey('SURF', reaction.id, property),
+        label: `${nameOf(reaction)} ${property}`,
+        unit: rateParameterUnit('SURF', property),
+        // The header shows the reaction name once, over one sub-column for each property.
+        groupId: reaction.id,
+        groupLabel: nameOf(reaction),
+        subLabel: property,
+      }))
     }
-
-    const bareKey = `${reactionType.prefix}.${reaction.name}`
-    const existingKey = Object.keys(tableColumns || {}).find(
-      (key) => key === bareKey || key.startsWith(`${bareKey}.`)
-    )
-    return [
-      { key: existingKey ?? defaultRateHeader(reactionType.prefix, reaction.name), label: reaction.name },
-    ]
+    return [{ key: rateColumnKey(reactionType.prefix, reaction.id), label: nameOf(reaction), unit: valueUnit }]
   })
+
+  // Consecutive columns of the same surface reaction share one header cell.
+  const headerGroups = columns.reduce((groups, column) => {
+    const last = groups[groups.length - 1]
+    if (last && last.id === column.groupId) last.size += 1
+    else groups.push({ id: column.groupId ?? column.key, label: column.groupLabel ?? column.label, size: 1 })
+    return groups
+  }, [])
 
   // Row indices where the active type already has a value, checked across every reaction of
   // that type (not just the ones currently selected), so toggling a sidebar checkbox never
   // makes a row flicker in/out.
   const typeDataIndices = new Set(
     reactionsOfType.flatMap((reaction) => {
-      const keys = isSurface
-        ? Object.keys(tableColumns || {}).filter((key) =>
-            key.startsWith(`SURF.${reaction.name}.`)
-          )
-        : (() => {
-            const bareKey = `${reactionType.prefix}.${reaction.name}`
-            const existingKey = Object.keys(tableColumns || {}).find(
-              (key) => key === bareKey || key.startsWith(`${bareKey}.`)
-            )
-            return existingKey ? [existingKey] : []
-          })()
+      const keys = Object.keys(tableColumns || {}).filter(
+        (key) => parseRateColumnKey(key)?.reactionId === reaction.id
+      )
 
       return keys.flatMap((key) => {
         const series = tableColumns?.[key]
@@ -302,7 +268,7 @@ export function ReactionTab() {
     setRowDrafts({})
     setJustUpdatedCell(null)
     setSelectedIndices(new Set())
-  }, [selectedReactionNames, reactionTypeId, rowTimes, hideUnsetRows])
+  }, [selectedReactionIds, reactionTypeId, rowTimes, hideUnsetRows])
 
   const cellDraftKey = (key, index) => `${key}::${index}`
 
@@ -544,30 +510,7 @@ export function ReactionTab() {
                         <span>
                           {type.label} ({type.count})
                         </span>
-                        {type.id === 'SURFACE' && surfacePropertyOptions.length > 0 && (
-                          <ChevronDown className="w-3.5 h-3.5 flex-shrink-0" />
-                        )}
                       </button>
-
-                      {/* Nested picker: a surface reaction can carry more than one property
-                          (e.g. effective radius, particle number concentration) -- this keeps
-                          only one shown in the table at a time, same as every other type. */}
-                      {type.id === 'SURFACE' &&
-                        reactionTypeId === 'SURFACE' &&
-                        surfacePropertyOptions.length > 0 && (
-                          <div className="flex flex-col gap-0.5 pl-4 mt-0.5">
-                            {surfacePropertyOptions.map((property) => (
-                              <button
-                                key={property}
-                                type="button"
-                                onClick={() => setSelectedSurfaceProperty(property)}
-                                className={filterButtonClass(selectedSurfaceProperty === property)}
-                              >
-                                {withUnit(property, rateParameterUnit('SURF', property))}
-                              </button>
-                            ))}
-                          </div>
-                        )}
                     </div>
                   ))}
                 </div>
@@ -619,12 +562,12 @@ export function ReactionTab() {
                   <div className="flex flex-col gap-0.5">
                     {visibleReactionsOfType.map((reaction) => (
                       <button
-                        key={reaction.id ?? reaction.name}
+                        key={reaction.id}
                         type="button"
-                        onClick={() => toggleReactionName(reaction.name)}
-                        className={filterButtonClass(selectedReactionNames.has(reaction.name))}
+                        onClick={() => toggleReaction(reaction.id)}
+                        className={filterButtonClass(selectedReactionIds.has(reaction.id))}
                       >
-                        {reaction.name}
+                        {nameOf(reaction)}
                       </button>
                     ))}
 
@@ -642,19 +585,19 @@ export function ReactionTab() {
                           <div className="absolute z-20 mt-1 w-48 max-h-56 overflow-y-auto bg-white border border-border rounded-lg shadow-lg py-1">
                             {overflowReactionsOfType.map((reaction) => (
                               <button
-                                key={reaction.id ?? reaction.name}
+                                key={reaction.id}
                                 type="button"
-                                onClick={() => toggleReactionName(reaction.name)}
+                                onClick={() => toggleReaction(reaction.id)}
                                 className="w-full flex items-center gap-2 text-left text-sm px-3 py-1.5 text-ink hover:bg-surface-hover"
                               >
                                 <Check
                                   className={`w-3.5 h-3.5 flex-shrink-0 ${
-                                    selectedReactionNames.has(reaction.name)
+                                    selectedReactionIds.has(reaction.id)
                                       ? 'opacity-100'
                                       : 'opacity-0'
                                   }`}
                                 />
-                                <span className="flex-1 truncate">{reaction.name}</span>
+                                <span className="flex-1 truncate">{nameOf(reaction)}</span>
                               </button>
                             ))}
                           </div>
@@ -680,9 +623,7 @@ export function ReactionTab() {
                 </p>
               ) : columns.length === 0 ? (
                 <p className="text-center text-gray-500 py-8">
-                  {isSurface && selectedReactionNames.size > 0
-                    ? `No data for "${selectedSurfaceProperty ?? 'this property'}" yet for the selected reaction(s).`
-                    : 'Choose one or more reactions on the left to see their time-varying rate constant parameters.'}
+                  Choose one or more reactions on the left to see their time-varying rate constant parameters.
                 </p>
               ) : (
                 <table
@@ -693,7 +634,7 @@ export function ReactionTab() {
                 >
                   <thead className="bg-assist-secondary text-assist-secondary-foreground">
                     <tr>
-                      <th className="w-10 text-left px-4 py-2">
+                      <th rowSpan={isSurface ? 2 : 1} className="w-10 text-left px-4 py-2">
                         <input
                           type="checkbox"
                           checked={allSelected}
@@ -702,20 +643,44 @@ export function ReactionTab() {
                           className="accent-assist-secondary-ring"
                         />
                       </th>
-                      <th className="w-32 text-left px-4 py-2 font-semibold">Time (s)</th>
+                      <th rowSpan={isSurface ? 2 : 1} className="w-32 text-left px-4 py-2 font-semibold">
+                        Time (s)
+                      </th>
                       {/* No explicit width: table-layout: fixed divides the table's own width
                           equally across these columns. Below the table's min-width (set above),
                           that width is the full container, so they stretch to fill it; above it,
-                          the table grows wider than the container and the wrapper scrolls. */}
-                      {columns.map((column) => (
-                        <th key={column.key} className="text-left px-4 py-2 font-semibold">
-                          {column.label}
-                          {valueUnit && (
-                            <span className="ml-1 font-normal whitespace-nowrap">({valueUnit})</span>
-                          )}
-                        </th>
-                      ))}
+                          the table grows wider than the container and the wrapper scrolls.
+                          A long name with no spaces wraps instead of running into the next
+                          column. */}
+                      {isSurface
+                        ? headerGroups.map((group) => (
+                            <th
+                              key={group.id}
+                              colSpan={group.size}
+                              className="text-left px-4 py-2 font-semibold break-words"
+                            >
+                              {group.label}
+                            </th>
+                          ))
+                        : columns.map((column) => (
+                            <th key={column.key} className="text-left px-4 py-2 font-semibold break-words">
+                              {column.label}
+                              {column.unit && (
+                                <span className="ml-1 font-normal whitespace-nowrap">({column.unit})</span>
+                              )}
+                            </th>
+                          ))}
                     </tr>
+                    {isSurface && (
+                      <tr>
+                        {columns.map((column) => (
+                          <th key={column.key} className="text-left px-4 py-2 font-normal break-words">
+                            {column.subLabel}
+                            {column.unit && <span className="ml-1 whitespace-nowrap">({column.unit})</span>}
+                          </th>
+                        ))}
+                      </tr>
+                    )}
                   </thead>
                   <tbody>
                     {visibleTimeEntries.length === 0 && (

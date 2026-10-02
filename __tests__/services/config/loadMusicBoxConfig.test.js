@@ -7,6 +7,7 @@ import simulationReducer, { setStatus } from '../../../src/redux/slices/simulati
 import {
   loadMusicBoxConfig,
   notifyIgnoredThirdBodySpecies,
+  notifyLoadedConditionsIssues,
   toReduxConfig,
 } from '../../../src/services/config/loadMusicBoxConfig'
 
@@ -148,12 +149,12 @@ describe('loadMusicBoxConfig', () => {
     const { store } = await load(config)
     const storedConfig = store.getState().mechanism.config
 
+    // PHOTO.p1 names no reaction of the mechanism, so it is not loaded.
     expect(store.getState().conditions.table).toEqual({
       times: [0, 60],
       columns: {
         'ENV.temperature.K': [250, null],
         'CONC.A.mol m-3': [1e-6, null],
-        'PHOTO.p1.s-1': [1e-4, 2e-4],
       },
     })
     expect(storedConfig['box model options']).toEqual(config['box model options'])
@@ -196,11 +197,53 @@ describe('loadMusicBoxConfig', () => {
     })
 
     // B is the third body in baseConfig.
-    expect(result).toEqual({ ignoredThirdBodySpecies: ['B'] })
+    expect(result).toEqual({ ignoredThirdBodySpecies: ['B'], unmatchedRateParameters: [] })
     expect(store.getState().conditions.table).toEqual({
       times: [0],
       columns: { 'CONC.A.mol m-3': [1] },
     })
+  })
+
+  it('stores a rate parameter under its reaction id, and reports one that names no reaction', async () => {
+    const config = baseConfig({
+      conditions: {
+        data: [{ headers: ['time.s', 'PHOTO.jA.s-1', 'PHOTO.missing.s-1'], rows: [[0, 1e-4, 2e-4]] }],
+      },
+      mechanism: {
+        ...baseConfig().mechanism,
+        reactions: [
+          { type: 'PHOTOLYSIS', name: 'jA', 'gas phase': 'gas', reactants: [{ name: 'A' }], products: [{ name: 'B' }] },
+        ],
+      },
+    })
+    const store = makeStore()
+    const result = await loadMusicBoxConfig(config, { dispatch: store.dispatch, navigate: vi.fn(), meta: {} })
+
+    const [reaction] = store.getState().mechanism.config.mechanism.reactions
+    expect(store.getState().conditions.table.columns).toEqual({ [`PHOTO#${reaction.id}`]: [1e-4] })
+    expect(result.unmatchedRateParameters).toEqual(['PHOTO.missing.s-1'])
+  })
+
+  it('matches a rate parameter to an unnamed reaction by its generated name', async () => {
+    const config = baseConfig({
+      conditions: {
+        data: [{ headers: ['time.s', 'PHOTO.A -> B.s-1'], rows: [[0, 3e-4]] }],
+      },
+      mechanism: {
+        ...baseConfig().mechanism,
+        reactions: [
+          { type: 'PHOTOLYSIS', 'gas phase': 'gas', reactants: [{ name: 'A' }], products: [{ name: 'B' }] },
+        ],
+      },
+    })
+    const store = makeStore()
+    const result = await loadMusicBoxConfig(config, { dispatch: store.dispatch, navigate: vi.fn(), meta: {} })
+
+    const [reaction] = store.getState().mechanism.config.mechanism.reactions
+    // The stored name stays empty; only the column links to the reaction.
+    expect(reaction.name).toBe('')
+    expect(store.getState().conditions.table.columns).toEqual({ [`PHOTO#${reaction.id}`]: [3e-4] })
+    expect(result.unmatchedRateParameters).toEqual([])
   })
 
   it('reports nothing when no third-body concentration is set', async () => {
@@ -210,7 +253,7 @@ describe('loadMusicBoxConfig', () => {
       navigate: vi.fn(),
       meta: {},
     })
-    expect(result).toEqual({ ignoredThirdBodySpecies: [] })
+    expect(result).toEqual({ ignoredThirdBodySpecies: [], unmatchedRateParameters: [] })
   })
 
   it('falls back to the example id, then "custom", when no mechanism_name is given', async () => {
@@ -301,6 +344,21 @@ describe('toReduxConfig', () => {
   })
 })
 
+describe('notifyLoadedConditionsIssues', () => {
+  it('warns about the rate parameters that name no reaction', () => {
+    const notify = { warning: vi.fn() }
+    notifyLoadedConditionsIssues(notify, {
+      ignoredThirdBodySpecies: [],
+      unmatchedRateParameters: ['PHOTO.x.s-1'],
+    })
+    expect(notify.warning).toHaveBeenCalledTimes(1)
+    expect(notify.warning).toHaveBeenCalledWith(
+      'Rate Parameters Ignored',
+      'PHOTO.x.s-1 names no reaction of the mechanism, so the values were not loaded.'
+    )
+  })
+})
+
 describe('notifyIgnoredThirdBodySpecies', () => {
   it('warns with the species and the reason', () => {
     const notify = { warning: vi.fn() }
@@ -315,5 +373,12 @@ describe('notifyIgnoredThirdBodySpecies', () => {
     const notify = { warning: vi.fn() }
     notifyIgnoredThirdBodySpecies(notify, [])
     expect(notify.warning).not.toHaveBeenCalled()
+  })
+})
+
+describe('the default time settings', () => {
+  it('are a 10 minute simulation, a 30 second chemistry step and a 1 minute output step', () => {
+    const { basic } = makeStore().getState().conditions
+    expect(basic).toEqual({ duration: 600, timeStep: 30, outputFrequency: 60 })
   })
 })

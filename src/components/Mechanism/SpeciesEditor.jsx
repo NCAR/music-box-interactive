@@ -487,6 +487,12 @@ export function SpeciesEditor() {
                   type="text"
                   value={newSpeciesName}
                   onChange={(e) => setNewSpeciesName(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault()
+                      handleAddSpecies()
+                    }
+                  }}
                   placeholder="species name"
                   className={TEXT_INPUT.replace('text-center', 'text-left')}
                 />

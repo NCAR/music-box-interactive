@@ -83,11 +83,12 @@ export function parseConditionsCsv({ name, text }) {
 
 // All the uploaded files, merged by time. `thirdBodyNames` gives a clearer skip reason for the
 // concentration columns of third-body species, which `items` leaves out. Returns
-// { columns: [{ header, key, item, file }], skipped: [{ header, file, reason }], cells, times },
+// { columns: [{ header, key, column, item, file }], skipped: [{ header, file, reason }], cells, times },
 // where cells is a Map of time -> Map of key -> number | null. A null is an empty cell in the
 // file. A key without an entry at a time is not in the file at that time.
 export function buildConditionsUpload(parsedFiles, items, { thirdBodyNames = new Set() } = {}) {
-  const itemsByKey = new Map(items.map((item) => [item.key, item]))
+  // An uploaded header is an item when its headerKey is the item's matchKey.
+  const itemsByMatchKey = new Map(items.map((item) => [item.matchKey ?? item.key, item]))
   const columns = []
   const skipped = []
   const cells = new Map()
@@ -96,9 +97,13 @@ export function buildConditionsUpload(parsedFiles, items, { thirdBodyNames = new
   parsedFiles.forEach(({ name, headers, rows }) => {
     const fileColumns = headers.map((header, index) => {
       if (index === 0) return null
-      const key = headerKey(header)
-      const item = itemsByKey.get(key)
-      if (!item && key.startsWith('CONC.') && thirdBodyNames.has(key.slice('CONC.'.length))) {
+      const matchKey = headerKey(header)
+      const item = itemsByMatchKey.get(matchKey)
+      if (
+        !item &&
+        matchKey.startsWith('CONC.') &&
+        thirdBodyNames.has(matchKey.slice('CONC.'.length))
+      ) {
         skipped.push({
           header,
           file: name,
@@ -113,7 +118,7 @@ export function buildConditionsUpload(parsedFiles, items, { thirdBodyNames = new
         skipped.push({ header, file: name, reason })
         return null
       }
-      if (!isAcceptedUnit(key, headerUnit(header))) {
+      if (!isAcceptedUnit(matchKey, headerUnit(header))) {
         skipped.push({
           header,
           file: name,
@@ -121,12 +126,15 @@ export function buildConditionsUpload(parsedFiles, items, { thirdBodyNames = new
         })
         return null
       }
+      const { key } = item
       if (columnKeys.has(key)) {
         skipped.push({ header, file: name, reason: 'another column already sets this value' })
         return null
       }
       columnKeys.add(key)
-      columns.push({ header, key, item, file: name })
+      // `column` is the table column the values go to. A rate parameter goes to its
+      // reaction-id key; the other columns keep the header of the file.
+      columns.push({ header, key, column: key === matchKey ? header : key, item, file: name })
       return key
     })
 
@@ -163,10 +171,10 @@ export function applyConditionsUpload(table, upload, { keys, mode, emptyOverwrit
       headerFor.set(headerKey(header), header)
     })
   }
-  upload.columns.forEach(({ key, header }) => {
+  upload.columns.forEach(({ key, column }) => {
     if (!keys.has(key) || headerFor.has(key)) return
-    headerFor.set(key, header)
-    columns.set(header, new Map())
+    headerFor.set(key, column)
+    columns.set(column, new Map())
   })
 
   const times = new Set(replace ? [] : table.times)

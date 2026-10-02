@@ -51,7 +51,7 @@ const makeStore = () => {
 
   const concentrations = {}
   REACTIONS.forEach((reaction, index) => {
-    concentrations[buildTracerConcentrationKeys(index, reaction.name)[0]] = 10
+    concentrations[buildTracerConcentrationKeys(reaction, index)[0]] = 10
   })
   store.dispatch(
     setExcludedResults([

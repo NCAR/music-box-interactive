@@ -1,5 +1,6 @@
 import { Fragment, useState } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
+import { parseRateColumnKey } from '../../services/conditions/rateColumns'
 import { ChevronDown, ChevronUp, Lightbulb } from 'lucide-react'
 import { useNotify } from '@/hooks/use-notify'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card'
@@ -263,6 +264,7 @@ export function ReactionEditor() {
   const notify = useNotify()
   const reactions = useSelector((state) => state.mechanism.config.mechanism?.reactions || EMPTY_ARRAY)
   const species = useSelector((state) => state.mechanism.config.mechanism?.species || EMPTY_ARRAY)
+  const conditionColumns = useSelector((state) => state.conditions?.table?.columns)
 
   const [reactionType, setReactionType] = useState(reactionRegistry[0].type)
   const [reactionSearch, setReactionSearch] = useState('')
@@ -383,8 +385,16 @@ export function ReactionEditor() {
 
   const handleRemoveReaction = (reactionId) => {
     const reaction = reactions.find((r) => r.id === reactionId)
+    // The conditions slice removes the reaction's rate-parameter columns with it.
+    const hadConditions = Object.keys(conditionColumns || {}).some(
+      (key) => parseRateColumnKey(key)?.reactionId === reactionId
+    )
     dispatch(removeReaction(reactionId))
-    notify.removed('Reaction Removed', `Removed reaction: ${reaction?.name || (reaction && buildGeneratedReactionName(reaction)) || 'Unknown'}.`)
+    notify.removed(
+      'Reaction Removed',
+      `Removed reaction: ${reaction?.name || (reaction && buildGeneratedReactionName(reaction)) || 'Unknown'}.` +
+        (hadConditions ? ' Its rate parameter conditions were removed too.' : '')
+    )
   }
 
   const reactionChips = (
