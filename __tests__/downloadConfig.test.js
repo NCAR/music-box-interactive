@@ -49,7 +49,7 @@ describe('downloadConfig', () => {
       config: {},
     }
     const blankConditions = {
-      basic: { duration: 250000, timeStep: 200, outputFrequency: 10 },
+      basic: { duration: 600, timeStep: 30, outputFrequency: 60 },
       table: { times: [], columns: {} },
     }
 

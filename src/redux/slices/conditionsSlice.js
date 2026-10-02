@@ -8,9 +8,9 @@ import { removeReaction } from './mechanismSlice'
 const initialState = {
   // Basic Configuration
   basic: {
-    duration: 250000, // seconds (~69 hours) - matches Python simulation
-    timeStep: 200, // seconds
-    outputFrequency: 10, // Store every 10 steps to reduce data points
+    duration: 600, // seconds (10 minutes)
+    timeStep: 30, // seconds: the chemistry time step
+    outputFrequency: 60, // seconds: the output time step (1 minute)
   },
 
   // All conditions, from t=0 on: { times, columns: { [header]: (number | null)[] } }

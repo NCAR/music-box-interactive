@@ -375,3 +375,10 @@ describe('notifyIgnoredThirdBodySpecies', () => {
     expect(notify.warning).not.toHaveBeenCalled()
   })
 })
+
+describe('the default time settings', () => {
+  it('are a 10 minute simulation, a 30 second chemistry step and a 1 minute output step', () => {
+    const { basic } = makeStore().getState().conditions
+    expect(basic).toEqual({ duration: 600, timeStep: 30, outputFrequency: 60 })
+  })
+})
