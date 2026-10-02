@@ -738,6 +738,8 @@ export function Flux() {
                   dotRadius={4}
                   showDots={chartData.length <= 10}
                   legendPaddingTop={20}
+                  legendMaxVisible={chartSeries.length}
+                  exportName="reaction-flux"
                   renderTooltip={({ label, payload }) => (
                     <ChartTooltipContent
                       active
