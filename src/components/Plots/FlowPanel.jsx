@@ -21,10 +21,10 @@ const SPECIES_AUTO_SELECT_THRESHOLD = 15
 const SECTION_LABEL = 'text-sm font-semibold text-ink mb-2'
 const UNIT_DROPDOWN_WRAPPER = 'relative flex-shrink-0 mr-3'
 const UNIT_DROPDOWN_BUTTON =
-  'flex items-center gap-1 w-full h-8 px-2 border border-gray-300 rounded-lg text-sm text-gray-800 hover:bg-gray-50 bg-white'
-const RANGE_ROW = 'flex items-center mr-3 border border-border rounded-lg bg-white'
+  'flex items-center gap-1 w-full h-8 px-2 border border-gray-300 dark:border-border rounded-lg text-sm text-gray-800 dark:text-ink hover:bg-gray-50 dark:hover:bg-surface-hover bg-white dark:bg-surface'
+const RANGE_ROW = 'flex items-center mr-3 border border-border rounded-lg bg-white dark:bg-surface'
 const RANGE_INPUT =
-  'flex-1 min-w-0 h-8 px-2 bg-white text-ink rounded-lg text-sm text-center focus:outline-none focus:relative focus:z-10 focus:ring-2 focus:ring-action'
+  'flex-1 min-w-0 h-8 px-2 bg-white dark:bg-surface text-ink rounded-lg text-sm text-center focus:outline-none focus:relative focus:z-10 focus:ring-2 focus:ring-action'
 
 const filterButtonClass = (selected) =>
   `w-full text-left text-sm px-1.5 py-1 rounded ${
@@ -339,7 +339,7 @@ export function FlowPanel({
               </button>
 
               {speciesOverflowOpen && (
-                <div className="absolute z-20 mt-1 w-48 max-h-56 overflow-y-auto bg-white border border-border rounded-lg shadow-lg py-1">
+                <div className="absolute z-20 mt-1 w-48 max-h-56 overflow-y-auto bg-white dark:bg-surface border border-border rounded-lg shadow-lg py-1">
                   {overflowFilteredSpecies.map((name) => (
                     <button
                       key={name}

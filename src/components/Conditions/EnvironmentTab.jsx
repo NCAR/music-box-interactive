@@ -32,15 +32,15 @@ import { HideUnsetRowsCheckbox } from './HideUnsetRowsCheckbox'
 const EDITOR_GRID = 'grid grid-cols-1 gap-4 lg:grid-cols-[auto_1fr] lg:items-start'
 
 const NUMBER_INPUT =
-  'w-72 h-9 px-2 border border-gray-400 bg-white/10 text-gray-900 placeholder:text-gray-500 rounded-lg text-sm text-center font-mono focus:outline-none focus:ring-2 focus:ring-action focus:border-transparent [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none'
+  'w-72 h-9 px-2 border border-gray-400 dark:border-border bg-white/10 text-gray-900 dark:text-ink placeholder:text-gray-500 dark:placeholder:text-muted rounded-lg text-sm text-center font-mono focus:outline-none focus:ring-2 focus:ring-action focus:border-transparent [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none'
 
 const DROPDOWN_WRAPPER = 'relative w-72 flex-shrink-0'
 const DROPDOWN_BUTTON =
-  'flex items-center gap-1 w-full h-9 px-2 border border-gray-300 rounded-lg text-sm text-gray-800 hover:bg-gray-50'
+  'flex items-center gap-1 w-full h-9 px-2 border border-gray-300 dark:border-border rounded-lg text-sm text-gray-800 dark:text-ink hover:bg-gray-50 dark:hover:bg-surface-hover'
 
 // An editable table cell
 const CELL_INPUT =
-  'w-full px-2 py-1 border rounded text-sm font-mono border-gray-300 bg-white focus:outline-none focus:ring-2 focus:ring-action transition-colors duration-300'
+  'w-full px-2 py-1 border rounded text-sm font-mono border-gray-300 dark:border-border bg-white dark:bg-surface focus:outline-none focus:ring-2 focus:ring-action transition-colors duration-300'
 
 // Matches each field's placeholder when the field is left blank.
 const DEFAULT_TIME = 0
@@ -348,7 +348,7 @@ export function EnvironmentTab() {
                 placeholder="0"
                 className={NUMBER_INPUT}
               />
-              {timeConversion && <p className="text-xs text-gray-500 text-center">{timeConversion}</p>}
+              {timeConversion && <p className="text-xs text-gray-500 dark:text-muted text-center">{timeConversion}</p>}
             </div>
           </div>
 
@@ -372,7 +372,7 @@ export function EnvironmentTab() {
                 className={NUMBER_INPUT}
               />
               {temperatureConversion && (
-                <p className="text-xs text-gray-500 text-center">{temperatureConversion}</p>
+                <p className="text-xs text-gray-500 dark:text-muted text-center">{temperatureConversion}</p>
               )}
             </div>
           </div>
@@ -397,7 +397,7 @@ export function EnvironmentTab() {
                 className={NUMBER_INPUT}
               />
               {pressureConversion && (
-                <p className="text-xs text-gray-500 text-center">{pressureConversion}</p>
+                <p className="text-xs text-gray-500 dark:text-muted text-center">{pressureConversion}</p>
               )}
             </div>
           </div>
@@ -427,7 +427,7 @@ export function EnvironmentTab() {
                   placeholder={idealGasDensityPlaceholder}
                   className={NUMBER_INPUT}
                 />
-                <p className="text-xs text-gray-500 text-center">
+                <p className="text-xs text-gray-500 dark:text-muted text-center">
                   If left blank, the ideal gas law is used
                 </p>
               </div>
@@ -460,7 +460,7 @@ export function EnvironmentTab() {
                   variant="glass"
                   size="sm"
                   onClick={handleRemoveSelected}
-                  className="rounded-lg bg-white text-red-600 hover:bg-red-50 flex-shrink-0"
+                  className="rounded-lg bg-white dark:bg-surface text-red-600 dark:text-danger hover:bg-red-50 dark:hover:bg-caution flex-shrink-0"
                 >
                   Remove selected ({selectedIndices.size})
                 </Button>
@@ -470,7 +470,7 @@ export function EnvironmentTab() {
         </CardHeader>
         <CardContent className={LIST_CARD_CONTENT}>
           {times.length === 0 ? (
-            <p className="text-center text-gray-500 py-8">
+            <p className="text-center text-gray-500 dark:text-muted py-8">
               No conditions added. Add your first condition on the left.
             </p>
           ) : (
@@ -480,7 +480,7 @@ export function EnvironmentTab() {
                 removableIndices.length > 0 && removableIndices.every((i) => selectedIndices.has(i))
 
               return (
-                <div className="border border-gray-200 rounded-lg overflow-auto">
+                <div className="border border-gray-200 dark:border-border rounded-lg overflow-auto">
                   <table className="w-full table-fixed text-sm">
                     <thead className="bg-assist-secondary text-assist-secondary-foreground">
                       <tr>
@@ -504,7 +504,7 @@ export function EnvironmentTab() {
                     <tbody>
                       {timeEntries.length === 0 && (
                         <tr>
-                          <td colSpan={hasDensityColumn ? 5 : 4} className="px-4 py-8 text-center text-gray-500">
+                          <td colSpan={hasDensityColumn ? 5 : 4} className="px-4 py-8 text-center text-gray-500 dark:text-muted">
                             No rows have values for the columns shown.
                           </td>
                         </tr>
@@ -513,7 +513,7 @@ export function EnvironmentTab() {
                         const density = densitySeries?.[index]
 
                         return (
-                          <tr key={index} className="border-b border-gray-200 hover:bg-gray-50">
+                          <tr key={index} className="border-b border-gray-200 dark:border-border hover:bg-gray-50 dark:hover:bg-surface-hover">
                             <td className="px-4 py-2">
                               <input
                                 type="checkbox"

@@ -31,7 +31,7 @@ export function UnitDropdown({
       </button>
 
       {open && (
-        <div className="absolute z-10 mt-1 w-full bg-white border border-border rounded-lg shadow-lg py-1">
+        <div className="absolute z-10 mt-1 w-full bg-white dark:bg-surface border border-border rounded-lg shadow-lg py-1">
           {units.map((u) => (
             <button
               key={u.id}

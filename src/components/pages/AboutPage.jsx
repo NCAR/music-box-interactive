@@ -102,7 +102,7 @@ function AboutPage() {
             and uses the Model-Independent Chemistry Module (MICM) as its ODE solver.
           </p>
           <div className="flex flex-wrap gap-2">
-            <div className="flex items-center gap-1.5 text-xs font-mono bg-black/5 border border-border rounded px-2 py-1">
+            <div className="flex items-center gap-1.5 text-xs font-mono bg-black/5 dark:bg-white/5 border border-border rounded px-2 py-1">
               <code>pip install acom_music_box</code>
               <button
                 type="button"
@@ -113,7 +113,7 @@ function AboutPage() {
                 <Copy className="w-3 h-3" />
               </button>
             </div>
-            <div className="flex items-center gap-1.5 text-xs font-mono bg-black/5 border border-border rounded px-2 py-1">
+            <div className="flex items-center gap-1.5 text-xs font-mono bg-black/5 dark:bg-white/5 border border-border rounded px-2 py-1">
               <code>npm install @ncar/music-box</code>
               <button
                 type="button"
@@ -182,7 +182,7 @@ function AboutPage() {
               across box models, column models, and global models.
             </p>
             <div className="flex flex-wrap gap-2">
-              <div className="flex items-center gap-1.5 text-xs font-mono bg-black/5 border border-border rounded px-2 py-1">
+              <div className="flex items-center gap-1.5 text-xs font-mono bg-black/5 dark:bg-white/5 border border-border rounded px-2 py-1">
                 <code>pip install musica</code>
                 <button
                   type="button"

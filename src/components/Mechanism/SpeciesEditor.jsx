@@ -40,7 +40,7 @@ function pillClassName(active, compact) {
   if (active) {
     return `${base} bg-assist-secondary border-assist-secondary-border text-assist-secondary-foreground`
   }
-  return `${base} bg-white border-border text-ink hover:bg-surface-hover`
+  return `${base} bg-white dark:bg-surface border-border text-ink hover:bg-surface-hover`
 }
 
 function AddPillDialog({ label, onCancel, onAdd }) {
@@ -67,7 +67,7 @@ function AddPillDialog({ label, onCancel, onAdd }) {
       onClick={onCancel}
     >
       <div
-        className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl"
+        className="w-full max-w-sm rounded-2xl bg-white dark:bg-surface p-6 shadow-xl"
         onClick={(e) => e.stopPropagation()}
       >
         <label className="block text-sm font-medium text-ink mb-1">{label}</label>

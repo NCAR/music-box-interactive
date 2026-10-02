@@ -14,12 +14,14 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card'
 import { Button } from '../ui/button'
 import { FlaskConical, AlertCircle, Lightbulb } from 'lucide-react'
+import { chartThemeFor, useChartTheme } from '../../theme/chartTheme'
 
 /**
  * ReactionRatesPlot Component
  * Displays photolysis and user-defined reaction rate parameters over time
  */
 export function ReactionRatesPlot() {
+  const chart = useChartTheme()
   const simulation = useSelector((state) => state.simulation)
   const [selectedRates, setSelectedRates] = useState([])
   const [showAll, setShowAll] = useState(true)
@@ -40,6 +42,20 @@ export function ReactionRatesPlot() {
     '#7A5C00', // Yellow (deep)
     '#1E90D8', // Blue (mid)
   ]
+  // On a dark plot the darkest brand colors vanish, so those swap for lighter ones.
+  const DARK_SWAPS = {
+    '#0057C2': '#42C0FF',
+    '#00357A': '#8AD7FF',
+    '#42C0FF': '#B3E5FF',
+    '#007483': '#5FE3F0',
+    '#011837': '#E5E7EB',
+    '#7A5C00': '#FFDD31',
+  }
+  if (chart === chartThemeFor('dark')) {
+    colors.forEach((color, index) => {
+      colors[index] = DARK_SWAPS[color] ?? color
+    })
+  }
 
   // Extract rate constants from initial concentrations (they're set via setUserDefinedRateParameters)
   // In MICM, photolysis rates are prefixed with "PHOTO." and user-defined with "USER."
@@ -204,7 +220,7 @@ export function ReactionRatesPlot() {
             <p className="text-sm max-w-md mx-auto mb-3">
               This mechanism does not have photolysis or user-defined reactions.
             </p>
-            <div className="text-xs bg-[#FFFBEB] border border-location/30 rounded-lg p-3 max-w-md mx-auto">
+            <div className="text-xs bg-[#FFFBEB] dark:bg-[#3a2f0b] border border-location/30 rounded-lg p-3 max-w-md mx-auto">
               <p className="font-semibold mb-1">Troubleshooting:</p>
               <ul className="text-left space-y-1">
                 <li>
@@ -290,7 +306,7 @@ export function ReactionRatesPlot() {
         </div>
 
         {/* Chart */}
-        <div className="border rounded-lg p-4 bg-white">
+        <div className="border rounded-lg p-4 bg-white dark:bg-surface">
           {chartData.length === 0 ? (
             <div className="text-center py-12 text-muted">
               <AlertCircle className="w-12 h-12 mx-auto mb-3 text-location" />
@@ -300,19 +316,19 @@ export function ReactionRatesPlot() {
           ) : (
             <ResponsiveContainer width="100%" height={500}>
               <LineChart data={chartData} margin={{ top: 5, right: 30, left: 100, bottom: 5 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#D8D6D2" />
+                <CartesianGrid strokeDasharray="3 3" stroke={chart.grid} />
 
                 <XAxis
                   dataKey="timeSeconds"
-                  stroke="#5f6368"
-                  tick={{ fontSize: 12, fill: '#5f6368' }}
+                  stroke={chart.axis}
+                  tick={{ fontSize: 12, fill: chart.axis }}
                   type="number"
                 >
                   <Label
                     value="Time (seconds)"
                     position="insideBottom"
                     offset={-5}
-                    style={{ fill: '#1f2937', fontWeight: 600, fontSize: 14 }}
+                    style={{ fill: chart.label, fontWeight: 600, fontSize: 14 }}
                   />
                 </XAxis>
 
@@ -320,8 +336,8 @@ export function ReactionRatesPlot() {
                   scale={scaleType}
                   domain={yDomain}
                   allowDataOverflow={false}
-                  stroke="#5f6368"
-                  tick={{ fontSize: 11, fill: '#5f6368' }}
+                  stroke={chart.axis}
+                  tick={{ fontSize: 11, fill: chart.axis }}
                   tickFormatter={(value) => {
                     if (value === 0 || !isFinite(value)) return '0'
                     if (scaleType === 'log' || Math.abs(value) >= 1000 || Math.abs(value) < 0.01) {
@@ -336,7 +352,7 @@ export function ReactionRatesPlot() {
                     angle={-90}
                     position="insideLeft"
                     offset={15}
-                    style={{ fill: '#1f2937', fontWeight: 600, fontSize: 13, textAnchor: 'middle' }}
+                    style={{ fill: chart.label, fontWeight: 600, fontSize: 13, textAnchor: 'middle' }}
                   />
                 </YAxis>
 
@@ -346,12 +362,12 @@ export function ReactionRatesPlot() {
 
                     return (
                       <div
-                        className="bg-white border-2 border-ink rounded-lg shadow-xl p-3"
+                        className="bg-white dark:bg-surface border-2 border-ink rounded-lg shadow-xl p-3"
                         style={{ backgroundColor: 'white' }}
                       >
                         <p
                           className="font-semibold mb-2 text-sm text-ink"
-                          style={{ color: '#1f2937' }}
+                          style={{ color: chart.text }}
                         >
                           Time: {label?.toLocaleString()} seconds
                         </p>
@@ -360,7 +376,7 @@ export function ReactionRatesPlot() {
                             <div
                               key={idx}
                               className="flex items-center gap-2 text-xs"
-                              style={{ color: '#1f2937' }}
+                              style={{ color: chart.text }}
                             >
                               <div
                                 className="w-3 h-3 rounded-full flex-shrink-0"
@@ -368,13 +384,13 @@ export function ReactionRatesPlot() {
                               />
                               <span
                                 className="font-medium text-ink"
-                                style={{ color: '#1f2937' }}
+                                style={{ color: chart.text }}
                               >
                                 {entry.name}:
                               </span>
                               <span
                                 className="font-mono text-ink"
-                                style={{ color: '#1f2937' }}
+                                style={{ color: chart.text }}
                               >
                                 {entry.value?.toExponential(4) || 'N/A'}
                               </span>
@@ -401,7 +417,7 @@ export function ReactionRatesPlot() {
                         {payload.map((entry, index) => (
                           <div
                             key={`legend-${index}`}
-                            className="flex items-center gap-2 px-3 py-1.5 bg-white border-2 rounded-lg shadow-sm"
+                            className="flex items-center gap-2 px-3 py-1.5 bg-white dark:bg-surface border-2 rounded-lg shadow-sm"
                             style={{ borderColor: entry.color }}
                           >
                             <div
@@ -445,7 +461,7 @@ export function ReactionRatesPlot() {
         </div>
 
         {/* Info Box */}
-        <div className="text-xs text-muted bg-[#E6F0FA] border border-[#B8D4EF] rounded-lg p-3">
+        <div className="text-xs text-muted bg-[#E6F0FA] dark:bg-[#0f2a44] border border-[#B8D4EF] dark:border-[#1f4a73] rounded-lg p-3">
           <p className="font-semibold mb-1 flex items-center gap-2">
             <Lightbulb className="w-4 h-4" />
             About Reaction Rates:

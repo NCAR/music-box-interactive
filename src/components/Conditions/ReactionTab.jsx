@@ -435,7 +435,7 @@ export function ReactionTab() {
               variant="glass"
               size="sm"
               onClick={handleRemoveSelected}
-              className={`rounded-lg border-2 border-red-600 bg-white text-red-600 hover:bg-red-50 flex-shrink-0 ${
+              className={`rounded-lg border-2 border-red-600 bg-white dark:bg-surface text-red-600 dark:text-danger hover:bg-red-50 dark:hover:bg-caution flex-shrink-0 ${
                 selectedIndices.size === 0 ? 'invisible' : ''
               }`}
             >
@@ -447,13 +447,13 @@ export function ReactionTab() {
                 variant="glass"
                 size="sm"
                 onClick={() => setAddTimeOpen((open) => !open)}
-                className="rounded-lg border-2 border-assist-secondary-ring bg-white text-assist-secondary-ring hover:bg-assist-secondary"
+                className="rounded-lg border-2 border-assist-secondary-ring bg-white dark:bg-surface text-assist-secondary-ring hover:bg-assist-secondary"
               >
                 Add
               </Button>
 
               {addTimeOpen && (
-                <div className="absolute right-0 z-20 mt-1 w-40 bg-white border border-border rounded-lg shadow-lg p-3">
+                <div className="absolute right-0 z-20 mt-1 w-40 bg-white dark:bg-surface border border-border rounded-lg shadow-lg p-3">
                   <label className="block px-1 text-xs font-semibold text-ink mb-1">
                     New time point
                   </label>
@@ -582,7 +582,7 @@ export function ReactionTab() {
                         </button>
 
                         {reactionOverflowOpen && (
-                          <div className="absolute z-20 mt-1 w-48 max-h-56 overflow-y-auto bg-white border border-border rounded-lg shadow-lg py-1">
+                          <div className="absolute z-20 mt-1 w-48 max-h-56 overflow-y-auto bg-white dark:bg-surface border border-border rounded-lg shadow-lg py-1">
                             {overflowReactionsOfType.map((reaction) => (
                               <button
                                 key={reaction.id}
@@ -612,17 +612,17 @@ export function ReactionTab() {
 
           {/* Main content: time table */}
           <div className="flex-1 min-h-0 lg:relative">
-            <div className="border border-gray-200 rounded-lg overflow-auto lg:absolute lg:inset-0">
+            <div className="border border-gray-200 dark:border-border rounded-lg overflow-auto lg:absolute lg:inset-0">
               {rowTimes.length === 0 ? (
-                <p className="text-center text-gray-500 py-8">
+                <p className="text-center text-gray-500 dark:text-muted py-8">
                   No rate constant parameters configured
                 </p>
               ) : typeTimeEntries.length === 0 ? (
-                <p className="text-center text-gray-500 py-8">
+                <p className="text-center text-gray-500 dark:text-muted py-8">
                   No time points for {reactionType.label} yet. Click "Add" above to create one.
                 </p>
               ) : columns.length === 0 ? (
-                <p className="text-center text-gray-500 py-8">
+                <p className="text-center text-gray-500 dark:text-muted py-8">
                   Choose one or more reactions on the left to see their time-varying rate constant parameters.
                 </p>
               ) : (
@@ -685,13 +685,13 @@ export function ReactionTab() {
                   <tbody>
                     {visibleTimeEntries.length === 0 && (
                       <tr>
-                        <td colSpan={columns.length + 2} className="px-4 py-8 text-center text-gray-500">
+                        <td colSpan={columns.length + 2} className="px-4 py-8 text-center text-gray-500 dark:text-muted">
                           No rows have values for the columns shown.
                         </td>
                       </tr>
                     )}
                     {visibleTimeEntries.map(({ time, index }) => (
-                      <tr key={index} className="border-b border-gray-200 hover:bg-gray-50">
+                      <tr key={index} className="border-b border-gray-200 dark:border-border hover:bg-gray-50 dark:hover:bg-surface-hover">
                         <td className="px-4 py-2">
                           <input
                             type="checkbox"
@@ -715,7 +715,7 @@ export function ReactionTab() {
                               }
                             }}
                             onBlur={(e) => commitTime(index, e.target.value)}
-                            className={`${NUMBER_INPUT} focus:border-assist-secondary-ring border-gray-300 bg-white`}
+                            className={`${NUMBER_INPUT} focus:border-assist-secondary-ring border-gray-300 dark:border-border bg-white dark:bg-surface`}
                           />
                         </td>
                         {columns.map((column) => {
@@ -745,7 +745,7 @@ export function ReactionTab() {
                                 className={`${NUMBER_INPUT} focus:border-assist-secondary-ring ${
                                   justUpdatedCell === draftKey
                                     ? 'border-action bg-assist-secondary'
-                                    : 'border-gray-300 bg-white'
+                                    : 'border-gray-300 dark:border-border bg-white dark:bg-surface'
                                 }`}
                               />
                             </td>

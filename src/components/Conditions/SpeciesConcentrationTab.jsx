@@ -35,7 +35,7 @@ const NUMBER_INPUT =
 
 const UNIT_DROPDOWN_WRAPPER = 'relative flex-shrink-0 mr-3'
 const UNIT_DROPDOWN_BUTTON =
-  'flex items-center gap-1 w-full h-8 px-2 border border-gray-300 rounded-lg text-sm text-gray-800 hover:bg-gray-50 bg-white'
+  'flex items-center gap-1 w-full h-8 px-2 border border-gray-300 dark:border-border rounded-lg text-sm text-gray-800 dark:text-ink hover:bg-gray-50 dark:hover:bg-surface-hover bg-white dark:bg-surface'
 
 // Use scientific notation to keep the column readable
 const formatValue = (value) => {
@@ -333,7 +333,7 @@ export function SpeciesConcentrationTab() {
               variant="glass"
               size="sm"
               onClick={handleRemoveSelected}
-              className={`rounded-lg border-2 border-red-600 bg-white text-red-600 hover:bg-red-50 flex-shrink-0 ${
+              className={`rounded-lg border-2 border-red-600 bg-white dark:bg-surface text-red-600 dark:text-danger hover:bg-red-50 dark:hover:bg-caution flex-shrink-0 ${
                 selectedIndices.size === 0 ? 'invisible' : ''
               }`}
             >
@@ -345,13 +345,13 @@ export function SpeciesConcentrationTab() {
                 variant="glass"
                 size="sm"
                 onClick={() => setAddTimeOpen((open) => !open)}
-                className="rounded-lg border-2 border-assist-secondary-ring bg-white text-assist-secondary-ring hover:bg-assist-secondary"
+                className="rounded-lg border-2 border-assist-secondary-ring bg-white dark:bg-surface text-assist-secondary-ring hover:bg-assist-secondary"
               >
                 Add
               </Button>
 
               {addTimeOpen && (
-                <div className="absolute right-0 z-20 mt-1 w-40 bg-white border border-border rounded-lg shadow-lg p-3">
+                <div className="absolute right-0 z-20 mt-1 w-40 bg-white dark:bg-surface border border-border rounded-lg shadow-lg p-3">
                   <label className="block px-1 text-xs font-semibold text-ink mb-1">
                     New time point
                   </label>
@@ -442,7 +442,7 @@ export function SpeciesConcentrationTab() {
                           type="button"
                           disabled
                           title={THIRD_BODY_TOOLTIP}
-                          className="w-full text-left text-sm px-1.5 py-1 rounded text-gray-400 cursor-not-allowed"
+                          className="w-full text-left text-sm px-1.5 py-1 rounded text-gray-400 dark:text-muted cursor-not-allowed"
                         >
                           {species.name}
                         </button>
@@ -469,7 +469,7 @@ export function SpeciesConcentrationTab() {
                         </button>
 
                         {speciesOverflowOpen && (
-                          <div className="absolute z-20 mt-1 w-48 max-h-56 overflow-y-auto bg-white border border-border rounded-lg shadow-lg py-1">
+                          <div className="absolute z-20 mt-1 w-48 max-h-56 overflow-y-auto bg-white dark:bg-surface border border-border rounded-lg shadow-lg py-1">
                             {overflowSpecies.map((species) => (
                               <button
                                 key={species.id ?? species.name}
@@ -479,7 +479,7 @@ export function SpeciesConcentrationTab() {
                                 onClick={() => toggleSpeciesName(species.name)}
                                 className={`w-full flex items-center gap-2 text-left text-sm px-3 py-1.5 ${
                                   isThirdBody(species)
-                                    ? 'text-gray-400 cursor-not-allowed'
+                                    ? 'text-gray-400 dark:text-muted cursor-not-allowed'
                                     : 'text-ink hover:bg-surface-hover'
                                 }`}
                               >
@@ -503,13 +503,13 @@ export function SpeciesConcentrationTab() {
 
           {/* Main content: time table */}
           <div className="flex-1 min-h-0 lg:relative">
-            <div className="border border-gray-200 rounded-lg overflow-auto lg:absolute lg:inset-0">
+            <div className="border border-gray-200 dark:border-border rounded-lg overflow-auto lg:absolute lg:inset-0">
               {rowTimes.length === 0 ? (
-                <p className="text-center text-gray-500 py-8">
+                <p className="text-center text-gray-500 dark:text-muted py-8">
                   No time points configured. Click "Add" above to create one.
                 </p>
               ) : columns.length === 0 ? (
-                <p className="text-center text-gray-500 py-8">
+                <p className="text-center text-gray-500 dark:text-muted py-8">
                   Choose one or more species on the left to see their time-varying concentrations.
                 </p>
               ) : (
@@ -541,7 +541,7 @@ export function SpeciesConcentrationTab() {
                   <tbody>
                     {timeEntries.length === 0 && (
                       <tr>
-                        <td colSpan={columns.length + 2} className="px-4 py-8 text-center text-gray-500">
+                        <td colSpan={columns.length + 2} className="px-4 py-8 text-center text-gray-500 dark:text-muted">
                           No rows have values for the columns shown.
                         </td>
                       </tr>
@@ -550,7 +550,7 @@ export function SpeciesConcentrationTab() {
                       const airDensity = airDensityAtTime(conditionsManager, time)
 
                       return (
-                        <tr key={index} className="border-b border-gray-200 hover:bg-gray-50">
+                        <tr key={index} className="border-b border-gray-200 dark:border-border hover:bg-gray-50 dark:hover:bg-surface-hover">
                           <td className="px-4 py-2">
                             <input
                               type="checkbox"
@@ -574,7 +574,7 @@ export function SpeciesConcentrationTab() {
                                 }
                               }}
                               onBlur={(e) => commitTime(index, e.target.value)}
-                              className={`${NUMBER_INPUT} focus:border-assist-secondary-ring border-gray-300 bg-white`}
+                              className={`${NUMBER_INPUT} focus:border-assist-secondary-ring border-gray-300 dark:border-border bg-white dark:bg-surface`}
                             />
                           </td>
                           {columns.map((column) => {
@@ -606,7 +606,7 @@ export function SpeciesConcentrationTab() {
                                   className={`${NUMBER_INPUT} focus:border-assist-secondary-ring ${
                                     justUpdatedCell === draftKey
                                       ? 'border-action bg-assist-secondary'
-                                      : 'border-gray-300 bg-white'
+                                      : 'border-gray-300 dark:border-border bg-white dark:bg-surface'
                                   }`}
                                 />
                               </td>

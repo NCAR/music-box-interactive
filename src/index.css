@@ -30,9 +30,53 @@
     --color-danger: #d93025;
     --color-danger-hover: #b3261e;
     --color-caution: #fce8e6;
+    /* Flow diagram text that sits on the page background, not on a node */
+    --color-flow-rate: #046b5b;
+    --color-flow-muted: #6b7280;
   }
+
+  /*
+  * Dark theme (see src/theme). The NCAR brand accents stay; Light Blue replaces NCAR Blue for
+  * actions, because NCAR Blue is too dark on a dark surface. Same values as Chemistry Cafe.
+  */
+  :root.dark {
+    --color-action: #42c0ff; /* NCAR Light Blue */
+    --color-action-hover: #8ad7ff;
+    --color-location: #ffdd31;
+    /* The selected menu item's text sits on the dark sidebar, where Dark Blue would vanish. */
+    --color-location-foreground: #ffdd31;
+    --color-assist: #faa119;
+    --color-assist-hover: #e0930f;
+    --color-assist-foreground: #00357a;
+    --color-assist-secondary: #0e3a40; /* deep tint of UCAR Aqua */
+    --color-assist-secondary-hover: #134d55;
+    --color-assist-secondary-foreground: #e6f7f9;
+    --color-assist-secondary-border: #34e1f4;
+    --color-assist-secondary-ring: #34e1f4;
+    --color-surface: #1e1e1e;
+    --color-surface-alt: #121212;
+    --color-surface-hover: #2c2c2c;
+    --color-border: #3d3d3d;
+    --color-heading: #ffffff;
+    --color-ink: #e5e7eb;
+    --color-muted: #b3b3b3;
+    --color-danger: #f28b82;
+    --color-danger-hover: #ee675c;
+    --color-caution: #3c1f1d;
+    --color-flow-rate: #5eead4;
+    --color-flow-muted: #9ca3af;
+  }
+
   * {
     border-color: #e5e7eb;
+  }
+  /* :where() keeps the specificity at 0, so every border-* class still wins. */
+  :where(:root.dark) * {
+    border-color: #3d3d3d;
+  }
+  :root.dark body {
+    background-color: var(--color-surface-alt);
+    color: var(--color-ink);
   }
   html {
     scrollbar-gutter: stable;

@@ -35,6 +35,7 @@ import { EMPTY_ARRAY } from '../../utils/emptyArray'
 import { selectRunDuration } from '../../redux/slices/simulationSlice'
 import { useResultsConcentrationUnit } from '../../hooks/useConcentrationUnit'
 import { buildIntervalDivisors } from '../../utils/concentrationUnits'
+import { useChartTheme } from '../../theme/chartTheme'
 
 // Species rows shown before the list collapses into a "+N others" popover.
 const SPECIES_VISIBLE = 10
@@ -127,7 +128,7 @@ function FluxReactionRow({ reaction, flux, checked, onToggleCheck }) {
 
   return (
     <>
-      <tr className="border-b border-gray-200 hover:bg-gray-50">
+      <tr className="border-b border-gray-200 dark:border-border hover:bg-gray-50 dark:hover:bg-surface-hover">
         <td className="pl-6 pr-4 py-2">
           <input
             type="checkbox"
@@ -159,7 +160,7 @@ function FluxReactionRow({ reaction, flux, checked, onToggleCheck }) {
         <td className="px-4 py-2 font-mono text-sm">{formatFlux(flux)}</td>
       </tr>
       {expanded && (
-        <tr className="border-b border-gray-200">
+        <tr className="border-b border-gray-200 dark:border-border">
           <td />
           <td colSpan={3} className="px-4 py-3">
             <div className="flex flex-col gap-2 max-w-[35%] pl-5">
@@ -191,6 +192,7 @@ function FluxReactionRow({ reaction, flux, checked, onToggleCheck }) {
  * table listing each reaction's formula, type, and integrated flux.
  */
 export function Flux() {
+  const chart = useChartTheme()
   const simulation = useSelector((state) => state.simulation)
   const reactions = useSelector((state) => state.mechanism.config.mechanism?.reactions || EMPTY_ARRAY)
   const duration = useSelector(selectRunDuration)
@@ -457,7 +459,7 @@ export function Flux() {
               </button>
 
               {sortMenuOpen && (
-                <div className="absolute right-0 z-20 mt-1 w-44 bg-white border border-border rounded-lg shadow-lg py-1">
+                <div className="absolute right-0 z-20 mt-1 w-44 bg-white dark:bg-surface border border-border rounded-lg shadow-lg py-1">
                   {SORT_OPTIONS.map((option) => (
                     <button
                       key={option.id}
@@ -503,7 +505,7 @@ export function Flux() {
                 <div className="flex flex-col gap-2">
                   <UnitDropdown unitId={timeRangeUnitId} onChange={setTimeRangeUnitId} />
 
-                  <div className="flex items-center border border-border rounded-lg bg-white">
+                  <div className="flex items-center border border-border rounded-lg bg-white dark:bg-surface">
                     <RangeBoundInput
                       value={timeRange.start}
                       divisor={timeRangeUnit.divisor}
@@ -511,9 +513,9 @@ export function Flux() {
                       min={0}
                       max={timeRange.end}
                       onCommit={(start) => setTimeRange({ start, end: timeRange.end })}
-                      className="w-1/2 h-8 px-2 bg-white text-ink rounded-l-lg text-sm text-center focus:outline-none focus:relative focus:z-10 focus:ring-2 focus:ring-action"
+                      className="w-1/2 h-8 px-2 bg-white dark:bg-surface text-ink rounded-l-lg text-sm text-center focus:outline-none focus:relative focus:z-10 focus:ring-2 focus:ring-action"
                     />
-                    <span className="flex items-center justify-center h-8 px-1 text-muted font-normal bg-white">
+                    <span className="flex items-center justify-center h-8 px-1 text-muted font-normal bg-white dark:bg-surface">
                       –
                     </span>
                     <RangeBoundInput
@@ -523,7 +525,7 @@ export function Flux() {
                       min={timeRange.start}
                       max={duration}
                       onCommit={(end) => setTimeRange({ start: timeRange.start, end })}
-                      className="w-1/2 h-8 px-2 bg-white text-ink rounded-r-lg text-sm text-center focus:outline-none focus:relative focus:z-10 focus:ring-2 focus:ring-action"
+                      className="w-1/2 h-8 px-2 bg-white dark:bg-surface text-ink rounded-r-lg text-sm text-center focus:outline-none focus:relative focus:z-10 focus:ring-2 focus:ring-action"
                     />
                   </div>
                 </div>
@@ -629,7 +631,7 @@ export function Flux() {
                         </button>
 
                         {speciesOverflowOpen && (
-                          <div className="absolute z-20 mt-1 w-48 max-h-56 overflow-y-auto bg-white border border-border rounded-lg shadow-lg py-1">
+                          <div className="absolute z-20 mt-1 w-48 max-h-56 overflow-y-auto bg-white dark:bg-surface border border-border rounded-lg shadow-lg py-1">
                             {overflowSpeciesNames.map((name) => {
                               const selected = selectedSpeciesNames.includes(name)
                               return (
@@ -659,7 +661,7 @@ export function Flux() {
           </div>
 
           <div className="flex-1 lg:relative">
-            <div className="border border-gray-200 rounded-lg overflow-auto lg:absolute lg:inset-0">
+            <div className="border border-gray-200 dark:border-border rounded-lg overflow-auto lg:absolute lg:inset-0">
               {visibleReactions.length === 0 ? (
                 <p className="text-sm text-muted p-4">No reactions match the current filters.</p>
               ) : (
@@ -710,27 +712,27 @@ export function Flux() {
             <div className="max-w-[80%] mx-auto">
               <ResponsiveContainer width="100%" height={512}>
                 <LineChart data={chartData} margin={{ top: 5, right: 30, left: 30, bottom: 5 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#D8D6D2" />
+                  <CartesianGrid strokeDasharray="3 3" stroke={chart.grid} />
 
                   <XAxis
                     dataKey="time"
                     type="number"
                     domain={['dataMin', 'dataMax']}
-                    stroke="#5f6368"
-                    tick={{ fontSize: 12, fill: '#5f6368' }}
+                    stroke={chart.axis}
+                    tick={{ fontSize: 12, fill: chart.axis }}
                     tickFormatter={(t) => formatValue(t / timeRangeUnit.divisor)}
                   >
                     <Label
                       value={`Time (${timeAxisUnitLabel})`}
                       position="insideBottom"
                       offset={-5}
-                      style={{ fill: '#1f2937', fontWeight: 600, fontSize: 14 }}
+                      style={{ fill: chart.label, fontWeight: 600, fontSize: 14 }}
                     />
                   </XAxis>
 
                   <YAxis
-                    stroke="#5f6368"
-                    tick={{ fontSize: 11, fill: '#5f6368' }}
+                    stroke={chart.axis}
+                    tick={{ fontSize: 11, fill: chart.axis }}
                     tickFormatter={(v) => {
                       if (v === 0 || !isFinite(v)) return '0'
                       return v.toExponential(0)
@@ -743,7 +745,7 @@ export function Flux() {
                       angle={-90}
                       position="insideLeft"
                       offset={10}
-                      style={{ fill: '#1f2937', fontWeight: 600, fontSize: 13, textAnchor: 'middle' }}
+                      style={{ fill: chart.label, fontWeight: 600, fontSize: 13, textAnchor: 'middle' }}
                     />
                   </YAxis>
 

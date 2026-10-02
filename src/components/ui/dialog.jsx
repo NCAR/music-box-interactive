@@ -24,7 +24,7 @@ export function Dialog({ title, description, onClose, footer, children, classNam
         aria-modal="true"
         aria-label={title}
         className={cn(
-          'flex max-h-[90vh] w-full max-w-2xl flex-col rounded-2xl bg-white shadow-xl',
+          'flex max-h-[90vh] w-full max-w-2xl flex-col rounded-2xl bg-white dark:bg-surface shadow-xl',
           className
         )}
         onClick={(e) => e.stopPropagation()}
