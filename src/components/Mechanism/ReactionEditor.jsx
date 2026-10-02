@@ -9,7 +9,6 @@ import { Dropdown } from '../ui/dropdown'
 import { addReaction, removeReaction, updateReaction, selectNamedReactions } from '../../redux/slices/mechanismSlice'
 import {
   buildGeneratedReactionName,
-  hasDeclaredName,
   parseReactionString,
 } from './reactions/reactionUtils'
 import {
@@ -155,7 +154,7 @@ const formatParameterValue = (value) => {
 }
 
 // A reaction renders as a collapsed chip. Clicking it unfolds its type, rate parameter, and name.
-function ReactionChip({ reaction, onRemove, onComponentsSave, onParameterSave }) {
+function ReactionChip({ reaction, onRemove, onNameSave, onComponentsSave, onParameterSave }) {
   const [expanded, setExpanded] = useState(false)
   const formula = formatReactionDisplay(reaction)
   const parameters = rateParameters(reaction)
@@ -248,12 +247,26 @@ function ReactionChip({ reaction, onRemove, onComponentsSave, onParameterSave })
           </div>
         )}
 
-        {hasDeclaredName(reaction) && (
-          <div className="flex flex-col gap-1">
-            <label className="text-[11px] uppercase tracking-wide text-muted">Name</label>
-            <p className="text-sm text-ink">{reaction.name}</p>
-          </div>
-        )}
+        <div className="flex flex-col gap-1">
+          <label className="text-[11px] uppercase tracking-wide text-muted">Name</label>
+          {/* An empty name removes it. */}
+          <input
+            type="text"
+            key={reaction.name ?? ''}
+            defaultValue={reaction.name ?? ''}
+            onBlur={(e) => {
+              if (e.target.value !== (reaction.name ?? '')) onNameSave(reaction, e.target.value)
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.currentTarget.blur()
+              }
+            }}
+            placeholder="no name"
+            aria-label={`Name of ${formula}`}
+            className={`w-full ${TEXT_INPUT_SM.replace('text-center', 'text-left')}`}
+          />
+        </div>
       </div>
     </div>
   )
@@ -361,6 +374,14 @@ export function ReactionEditor() {
     saveReaction({ ...reaction, [field.key]: parsed })
   }
 
+  const handleNameSave = (reaction, rawValue) => {
+    const name = rawValue.trim()
+    const updated = { ...reaction }
+    if (name) updated.name = name
+    else delete updated.name
+    saveReaction(updated)
+  }
+
   const handleParameterSave = (reaction, key, rawValue) => {
     const trimmedValue = rawValue.trim()
     const updated = { ...reaction }
@@ -407,6 +428,7 @@ export function ReactionEditor() {
             key={reaction.id}
             reaction={reaction}
             onRemove={handleRemoveReaction}
+            onNameSave={handleNameSave}
             onComponentsSave={handleComponentsSave}
             onParameterSave={handleParameterSave}
           />

@@ -231,16 +231,15 @@ function PropertySelector({ properties, onChange }) {
   )
 }
 
+// Every property, also the unset ones, so that a property can be set after the species is added.
 function getSpeciesFields(species) {
-  return SPECIES_PROPERTIES.filter(
-    (field) => species[field.key] !== undefined && species[field.key] !== null
-  ).map((field) => ({ ...field, value: species[field.key] }))
+  return SPECIES_PROPERTIES.map((field) => ({ ...field, value: species[field.key] }))
 }
 
 // A species renders as a collapsed chip showing only its name. Clicking it unfolds the phase
 // and property values in place; an expanded chip claims a full row of the wrapping list so its
 // controls have room. Expansion is local state -- opening one leaves the others alone.
-function SpeciesChip({ species, phaseNames, onPhaseChange, onFieldSave, onRemove }) {
+function SpeciesChip({ species, phaseNames, onNameSave, onPhaseChange, onFieldSave, onRemove }) {
   const [expanded, setExpanded] = useState(false)
 
   if (!expanded) {
@@ -280,6 +279,27 @@ function SpeciesChip({ species, phaseNames, onPhaseChange, onFieldSave, onRemove
       </div>
 
       <div className="mt-3 flex flex-col gap-3">
+        <div className="flex flex-col gap-1">
+          <label className="text-[11px] uppercase tracking-wide text-muted">Name</label>
+          {/* The key resets the input when the name changes elsewhere. */}
+          <input
+            key={species.name}
+            type="text"
+            defaultValue={species.name}
+            onBlur={(e) => {
+              if (e.target.value === species.name) return
+              if (!onNameSave(species, e.target.value)) e.target.value = species.name
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.currentTarget.blur()
+              }
+            }}
+            aria-label={`Name of ${species.name}`}
+            className={`w-full max-w-xs ${TEXT_INPUT_SM.replace('text-center', 'text-left')}`}
+          />
+        </div>
+
         <div>
           <label className="mb-1 block text-[11px] uppercase tracking-wide text-muted">
             Phase
@@ -468,6 +488,22 @@ export function SpeciesEditor() {
     )
   }
 
+  // A rename is safe: everything refers to the species by its id (see speciesIds).
+  // Returns whether the rename was saved.
+  const handleNameSave = (renamed, rawValue) => {
+    const name = rawValue.trim()
+    if (!name) {
+      notify.invalidInput('Species name cannot be empty.')
+      return false
+    }
+    if (species.some((sp) => sp.id !== renamed.id && sp.name === name)) {
+      notify.invalidInput(`A species named "${name}" already exists.`)
+      return false
+    }
+    dispatch(updateSpecies({ ...renamed, name }))
+    return true
+  }
+
   const speciesChips = (
     <div className={ITEM_LIST}>
       {filteredSpecies.length === 0 ? (
@@ -478,6 +514,7 @@ export function SpeciesEditor() {
             key={sp.id ?? sp.name}
             species={sp}
             phaseNames={phaseNames}
+            onNameSave={handleNameSave}
             onPhaseChange={handlePhaseSave}
             onFieldSave={handleFieldSave}
             onRemove={handleRemoveSpecies}
