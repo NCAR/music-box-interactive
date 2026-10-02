@@ -1,18 +1,9 @@
 import { useState, useMemo, useEffect, useRef, useCallback } from 'react'
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-  Label,
-} from 'recharts'
 import { BarChart3, Atom, AlertCircle, Check } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card'
 import { UnitDropdown } from './Plots/UnitDropdown'
+import { RangeBoundInput } from './Plots/RangeBoundInput'
+import { LineChart } from './Plots/LineChart'
 import { LIST_CARD, LIST_CARD_CONTENT, TEXT_INPUT_SM } from './Mechanism/fieldStyles'
 import { getSpeciesDisplayName } from './Plots/speciesFormat'
 import { useClickOutside } from '../hooks/useClickOutside'
@@ -43,6 +34,41 @@ function niceNumber(x) {
   const niceFraction = fraction <= 1 ? 1 : fraction <= 2 ? 2 : fraction <= 5 ? 5 : 10
   return niceFraction * 10 ** exponent
 }
+
+const SCALES = [
+  { id: 'log', label: 'Logarithmic' },
+  { id: 'linear', label: 'Linear' },
+]
+
+// Three significant digits, in exponential notation for very large or very small values.
+const formatLinearTick = (value) => {
+  if (value === 0 || !isFinite(value)) return '0'
+  const magnitude = Math.abs(value)
+  if (magnitude >= 1e4 || magnitude < 1e-2) {
+    const [mantissa, exponent] = value.toExponential(2).split('e')
+    return `${Number(mantissa)}e${exponent}`
+  }
+  return String(Number(value.toPrecision(3)))
+}
+
+// The log axis spans one decade beyond the data on each side. The linear axis starts at zero.
+const CONCENTRATION_AXES = {
+  log: {
+    id: 'concentration',
+    scale: 'log',
+    domain: (min, max) => [min / 10, max * 10],
+    tickFormat: (value) => (value === 0 || !isFinite(value) ? '0' : value.toExponential(0)),
+  },
+  linear: {
+    id: 'concentration',
+    scale: 'linear',
+    domain: 'auto',
+    tickFormat: formatLinearTick,
+  },
+}
+
+const TIME_RANGE_INPUT =
+  'w-1/2 h-8 px-2 bg-white dark:bg-surface text-ink text-sm text-center focus:outline-none focus:relative focus:z-10 focus:ring-2 focus:ring-action'
 
 // Number of items to show before collapsing the rest into "+N others"
 const SPECIES_CHIP_VISIBLE = 25
@@ -184,11 +210,13 @@ export function ChartTooltipContent({
  * @param {Object} props.metadata - Simulation metadata (mechanism, duration, etc.)
  */
 export function SimulationChart({ results, metadata }) {
-  const chart = useChartTheme()
   const [speciesSearch, setSpeciesSearch] = useState('')
   const [selectedSpecies, setSelectedSpecies] = useState([])
   const [initialized, setInitialized] = useState(false)
   const [timeUnitId, setTimeUnitId] = useState('seconds')
+  // The time range is in seconds. A null end is the end of the results.
+  const [timeRange, setTimeRange] = useState({ start: 0, end: null })
+  const [scaleId, setScaleId] = useState('log')
   const {
     unitId: plotUnitId,
     unit: plotUnit,
@@ -224,6 +252,7 @@ export function SimulationChart({ results, metadata }) {
   useEffect(() => {
     setInitialized(false)
     setSelectedSpecies([])
+    setTimeRange({ start: 0, end: null })
   }, [results])
 
   // Select all species by default
@@ -234,6 +263,10 @@ export function SimulationChart({ results, metadata }) {
     }
   }, [allSpecies, results, selectedSpecies.length, initialized])
 
+  const resultTime = (result) => result.time ?? result.timestamp ?? result.date ?? 0
+  const lastTime = Array.isArray(results) && results.length > 0 ? resultTime(results.at(-1)) : 0
+  const timeRangeEnd = timeRange.end ?? lastTime
+
   // Format data for chart
   const chartData = useMemo(() => {
     if (!Array.isArray(results) || results.length === 0) return []
@@ -241,8 +274,9 @@ export function SimulationChart({ results, metadata }) {
     // Mixing ratios scale with the air density at each point's time; mol m-3 needs none.
     const densities = isMixingRatioUnit(plotUnitId) ? airDensities : null
 
-    return results.map((result, index) => {
-      const time = result.time ?? result.timestamp ?? result.date ?? 0
+    return results.flatMap((result, index) => {
+      const time = resultTime(result)
+      if (time < timeRange.start || time > timeRangeEnd) return []
       const point = {
         timeSeconds: time / timeUnit.divisor,
       }
@@ -270,9 +304,40 @@ export function SimulationChart({ results, metadata }) {
         point[species] = densities ? fromMolM3(value, plotUnitId, densities[index]) : value
       })
 
-      return point
+      return [point]
     })
-  }, [results, allSpecies, timeUnit.divisor, plotUnitId, airDensities])
+  }, [
+    results,
+    allSpecies,
+    timeUnit.divisor,
+    plotUnitId,
+    airDensities,
+    timeRange.start,
+    timeRangeEnd,
+  ])
+
+  const times = useMemo(() => chartData.map((point) => point.timeSeconds), [chartData])
+
+  // One value array for each species, in the order of allSpecies so that colors stay fixed.
+  const valuesBySpecies = useMemo(
+    () =>
+      new Map(allSpecies.map((species) => [species, chartData.map((point) => point[species])])),
+    [chartData, allSpecies]
+  )
+
+  const series = useMemo(
+    () =>
+      selectedSpecies.map((species) => ({
+        key: species,
+        name: getSpeciesDisplayName(species),
+        color: CHART_COLORS[allSpecies.indexOf(species) % CHART_COLORS.length],
+        values: valuesBySpecies.get(species) ?? [],
+      })),
+    [selectedSpecies, allSpecies, valuesBySpecies]
+  )
+
+  const timeLabel = (time) =>
+    `${timeUnit.divisor === 1 ? time?.toLocaleString() : time?.toFixed(2)} ${timeUnit.shortLabel}`
 
   // Tooltip shows "0" for points sitting on the floor, whatever unit the floor converts to.
   const zeroBelow = useMemo(() => {
@@ -282,7 +347,7 @@ export function SimulationChart({ results, metadata }) {
   }, [plotUnitId, airDensities])
 
   // Keep axis bounds visually consistent across time units.
-  // Recharts' "auto" domain varies padding based on magnitude.
+  // An automatic domain would vary the padding with the magnitude of the times.
 
   const timeDomain = useMemo(() => {
     const times = chartData.map((point) => point.timeSeconds).filter((t) => isFinite(t))
@@ -309,7 +374,7 @@ export function SimulationChart({ results, metadata }) {
     const step = Math.ceil(niceNumber(rawStep) / HOUR_TICK_STEP) * HOUR_TICK_STEP
 
     const ticks = []
-    for (let t = 0; t <= maxDomain + 1e-9; t += step) {
+    for (let t = Math.ceil(timeDomain[0] / step - 1e-9) * step; t <= maxDomain + 1e-9; t += step) {
       ticks.push(Math.round(t * 1000) / 1000)
     }
     return ticks
@@ -379,7 +444,8 @@ export function SimulationChart({ results, metadata }) {
     )
   }
 
-  if (chartData.length === 0) {
+  // A time range without points still shows the sidebar, so that the range can change.
+  if (chartData.length === 0 && timeRange.start === 0 && timeRange.end === null) {
     return (
       <Card>
         <CardContent className="flex items-center justify-center h-96">
@@ -419,11 +485,46 @@ export function SimulationChart({ results, metadata }) {
           {/* Sidebar controls */}
           <div className="w-full lg:w-60 flex-shrink-0 space-y-5 lg:overflow-y-auto">
             <div>
-              <p className="text-sm font-semibold text-ink mb-2">Time unit</p>
+              <p className="text-sm font-semibold text-ink mb-2">Time range</p>
               <UnitDropdown
                 unitId={timeUnitId}
                 onChange={setTimeUnitId}
                 units={TIME_UNITS}
+                wrapperClassName={`${UNIT_DROPDOWN_WRAPPER} mb-2`}
+                buttonClassName={UNIT_DROPDOWN_BUTTON}
+                centerLabel
+              />
+              <div className="flex items-center mr-3 border border-gray-300 dark:border-border rounded-lg bg-white dark:bg-surface">
+                <RangeBoundInput
+                  value={timeRange.start}
+                  divisor={timeUnit.divisor}
+                  decimals={4}
+                  min={0}
+                  max={timeRangeEnd}
+                  onCommit={(start) => setTimeRange((range) => ({ ...range, start }))}
+                  className={`${TIME_RANGE_INPUT} rounded-l-lg`}
+                />
+                <span className="flex items-center justify-center h-8 px-1 text-muted font-normal bg-white dark:bg-surface">
+                  –
+                </span>
+                <RangeBoundInput
+                  value={timeRangeEnd}
+                  divisor={timeUnit.divisor}
+                  decimals={4}
+                  min={timeRange.start}
+                  max={lastTime}
+                  onCommit={(end) => setTimeRange((range) => ({ ...range, end }))}
+                  className={`${TIME_RANGE_INPUT} rounded-r-lg`}
+                />
+              </div>
+            </div>
+
+            <div>
+              <p className="text-sm font-semibold text-ink mb-2">Scale</p>
+              <UnitDropdown
+                unitId={scaleId}
+                onChange={setScaleId}
+                units={SCALES}
                 wrapperClassName={UNIT_DROPDOWN_WRAPPER}
                 buttonClassName={UNIT_DROPDOWN_BUTTON}
                 centerLabel
@@ -535,159 +636,81 @@ export function SimulationChart({ results, metadata }) {
 
             <div className="relative flex-1 min-h-[28rem] lg:min-h-0 bg-white dark:bg-surface">
               <div className="absolute inset-0 p-2 xs:p-3 sm:p-4 !pl-0">
-          <ResponsiveContainer width="100%" height="100%" className="xs:hidden">
-            <LineChart data={chartData} margin={{ top: 5, right: 5, left: 5, bottom: 5 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke={chart.grid} />
-
-              <XAxis
-                dataKey="timeSeconds"
-                domain={timeDomain}
-                ticks={xAxisTicks}
-                stroke={chart.axis}
-                tick={{ fontSize: 10, fill: chart.axis }}
-                type="number"
-              >
-                <Label
-                  value={`Time (${timeUnit.shortLabel})`}
-                  position="insideBottom"
-                  offset={-5}
-                  style={{ fill: chart.label, fontWeight: 600, fontSize: 11 }}
+          <div className="h-full xs:hidden">
+            <LineChart
+              x={times}
+              series={series}
+              margin={{ top: 5, right: 5, left: 5, bottom: 5 }}
+              xAxis={{
+                domain: timeDomain,
+                ticks: xAxisTicks,
+                label: `Time (${timeUnit.shortLabel})`,
+                tickFontSize: 10,
+                labelFontSize: 11,
+              }}
+              yAxes={[{ ...CONCENTRATION_AXES[scaleId], width: 38, tickFontSize: 8 }]}
+              strokeWidth={2}
+              dotRadius={3}
+              showDots={results.length <= 10}
+              legendPaddingTop={16}
+              renderTooltip={({ label, payload }) => (
+                <ChartTooltipContent
+                  active
+                  payload={payload}
+                  timeLabel={timeLabel(label)}
+                  maxVisible={TOOLTIP_VISIBLE_COMPACT}
+                  zeroBelow={zeroBelow}
+                  compact
                 />
-              </XAxis>
-
-              <YAxis
-                scale="log"
-                domain={[
-                  (dataMin) => (dataMin > 0 ? dataMin / 10 : 1e-20),
-                  (dataMax) => dataMax * 10,
-                ]}
-                stroke={chart.axis}
-                tick={{ fontSize: 8, fill: chart.axis }}
-                tickFormatter={(value) => {
-                  if (value === 0 || !isFinite(value)) return '0'
-                  return value.toExponential(0)
-                }}
-                allowDataOverflow={false}
-                width={38}
-              />
-
-              <Tooltip
-                wrapperStyle={{ zIndex: 10 }}
-                content={({ active, payload, label }) => (
-                  <ChartTooltipContent
-                    active={active}
-                    payload={payload}
-                    timeLabel={`${
-                      timeUnit.divisor === 1 ? label?.toLocaleString() : label?.toFixed(2)
-                    } ${timeUnit.shortLabel}`}
-                    maxVisible={TOOLTIP_VISIBLE_COMPACT}
-                    zeroBelow={zeroBelow}
-                    compact
-                  />
-                )}
-              />
-
-              <Legend
-                wrapperStyle={{ paddingTop: '16px' }}
-                content={<ChartLegendContent maxVisible={LEGEND_VISIBLE_COMPACT} compact />}
-              />
-
-              {displaySpecies.map((species) => (
-                <Line
-                  key={species}
-                  type="monotone"
-                  dataKey={species}
-                  stroke={CHART_COLORS[allSpecies.indexOf(species) % CHART_COLORS.length]}
-                  strokeWidth={2}
-                  dot={results.length <= 10 ? { r: 3 } : false}
-                  name={getSpeciesDisplayName(species)}
-                  connectNulls
-                  isAnimationActive={false}
-                />
-              ))}
-            </LineChart>
-          </ResponsiveContainer>
+              )}
+              renderLegend={(payload) => (
+                <ChartLegendContent payload={payload} maxVisible={LEGEND_VISIBLE_COMPACT} compact />
+              )}
+            />
+          </div>
 
           {/* Larger chart for bigger screens */}
-          <ResponsiveContainer width="100%" height="100%" className="hidden xs:block">
-            <LineChart data={chartData} margin={{ top: 5, right: 0, left: 10, bottom: 3 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke={chart.grid} />
-
-              <XAxis
-                dataKey="timeSeconds"
-                domain={timeDomain}
-                ticks={xAxisTicks}
-                stroke={chart.axis}
-                tick={{ fontSize: 12, fill: chart.axis }}
-                type="number"
-              >
-                <Label
-                  value={`Time (${timeUnit.shortLabel})`}
-                  position="insideBottom"
-                  offset={-5}
-                  style={{ fill: chart.label, fontWeight: 600, fontSize: 14 }}
+          <div className="h-full hidden xs:block">
+            <LineChart
+              x={times}
+              series={series}
+              margin={{ top: 5, right: 0, left: 10, bottom: 3 }}
+              xAxis={{
+                domain: timeDomain,
+                ticks: xAxisTicks,
+                label: `Time (${timeUnit.shortLabel})`,
+                tickFontSize: 12,
+                labelFontSize: 14,
+              }}
+              yAxes={[
+                {
+                  ...CONCENTRATION_AXES[scaleId],
+                  width: 70,
+                  tickFontSize: 11,
+                  label: plotUnitAxisLabel,
+                  labelOffset: 10,
+                  labelAnchor: 'middle',
+                  labelFontSize: 13,
+                },
+              ]}
+              strokeWidth={3}
+              dotRadius={4}
+              showDots={results.length <= 10}
+              legendPaddingTop={20}
+              renderTooltip={({ label, payload }) => (
+                <ChartTooltipContent
+                  active
+                  payload={payload}
+                  timeLabel={timeLabel(label)}
+                  maxVisible={TOOLTIP_VISIBLE}
+                  zeroBelow={zeroBelow}
                 />
-              </XAxis>
-
-              <YAxis
-                scale="log"
-                domain={[
-                  (dataMin) => (dataMin > 0 ? dataMin / 10 : 1e-20),
-                  (dataMax) => dataMax * 10,
-                ]}
-                stroke={chart.axis}
-                tick={{ fontSize: 11, fill: chart.axis }}
-                tickFormatter={(value) => {
-                  if (value === 0 || !isFinite(value)) return '0'
-                  return value.toExponential(0)
-                }}
-                allowDataOverflow={false}
-                width={70}
-              >
-                <Label
-                  value={plotUnitAxisLabel}
-                  angle={-90}
-                  position="insideLeft"
-                  offset={10}
-                  style={{ fill: chart.label, fontWeight: 600, fontSize: 13, textAnchor: 'middle' }}
-                />
-              </YAxis>
-
-              <Tooltip
-                wrapperStyle={{ zIndex: 10 }}
-                content={({ active, payload, label }) => (
-                  <ChartTooltipContent
-                    active={active}
-                    payload={payload}
-                    timeLabel={`${
-                      timeUnit.divisor === 1 ? label?.toLocaleString() : label?.toFixed(2)
-                    } ${timeUnit.shortLabel}`}
-                    maxVisible={TOOLTIP_VISIBLE}
-                    zeroBelow={zeroBelow}
-                  />
-                )}
-              />
-
-              <Legend
-                wrapperStyle={{ paddingTop: '20px' }}
-                content={<ChartLegendContent maxVisible={LEGEND_VISIBLE} />}
-              />
-
-              {displaySpecies.map((species) => (
-                <Line
-                  key={species}
-                  type="monotone"
-                  dataKey={species}
-                  stroke={CHART_COLORS[allSpecies.indexOf(species) % CHART_COLORS.length]}
-                  strokeWidth={3}
-                  dot={results.length <= 10 ? { r: 4 } : false}
-                  name={getSpeciesDisplayName(species)}
-                  connectNulls
-                  isAnimationActive={false}
-                />
-              ))}
-            </LineChart>
-          </ResponsiveContainer>
+              )}
+              renderLegend={(payload) => (
+                <ChartLegendContent payload={payload} maxVisible={LEGEND_VISIBLE} />
+              )}
+            />
+          </div>
               </div>
             </div>
           </div>

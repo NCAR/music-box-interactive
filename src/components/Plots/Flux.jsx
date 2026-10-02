@@ -1,17 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useSelector } from 'react-redux'
 import { ChevronDown, ChevronUp, Check, Waypoints } from 'lucide-react'
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-  Label,
-} from 'recharts'
 import { useClickOutside } from '../../hooks/useClickOutside'
 import { getResultSpeciesNames } from './speciesFormat'
 import {
@@ -28,6 +17,7 @@ import { REACTION_COMPONENT_KEYS } from '../../services/simulation/local/mechani
 import { RangeBoundInput } from './RangeBoundInput'
 import { TIME_RANGE_UNITS } from './timeRangeUnits'
 import { UnitDropdown } from './UnitDropdown'
+import { LineChart } from './LineChart'
 import { Card, CardContent } from '../ui/card'
 import { CHART_COLORS } from '../chartColors'
 import { ChartLegendContent, ChartTooltipContent } from '../SimulationChart'
@@ -35,7 +25,6 @@ import { EMPTY_ARRAY } from '../../utils/emptyArray'
 import { selectRunDuration } from '../../redux/slices/simulationSlice'
 import { useResultsConcentrationUnit } from '../../hooks/useConcentrationUnit'
 import { buildIntervalDivisors } from '../../utils/concentrationUnits'
-import { useChartTheme } from '../../theme/chartTheme'
 
 // Species rows shown before the list collapses into a "+N others" popover.
 const SPECIES_VISIBLE = 10
@@ -192,7 +181,6 @@ function FluxReactionRow({ reaction, flux, checked, onToggleCheck }) {
  * table listing each reaction's formula, type, and integrated flux.
  */
 export function Flux() {
-  const chart = useChartTheme()
   const simulation = useSelector((state) => state.simulation)
   const reactions = useSelector((state) => state.mechanism.config.mechanism?.reactions || EMPTY_ARRAY)
   const duration = useSelector(selectRunDuration)
@@ -414,6 +402,18 @@ export function Flux() {
     duration,
     intervalDivisors,
   ])
+
+  const chartTimes = useMemo(() => chartData.map((point) => point.time), [chartData])
+  const plotSeries = useMemo(
+    () =>
+      chartSeries.map((series) => ({
+        key: series.key,
+        name: series.label,
+        color: series.color,
+        values: chartData.map((point) => point[series.key]),
+      })),
+    [chartSeries, chartData]
+  )
 
   if (!simulation.results || simulation.status !== 'succeeded') {
     return (
@@ -710,81 +710,51 @@ export function Flux() {
             </div>
 
             <div className="max-w-[80%] mx-auto">
-              <ResponsiveContainer width="100%" height={512}>
-                <LineChart data={chartData} margin={{ top: 5, right: 30, left: 30, bottom: 5 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke={chart.grid} />
-
-                  <XAxis
-                    dataKey="time"
-                    type="number"
-                    domain={['dataMin', 'dataMax']}
-                    stroke={chart.axis}
-                    tick={{ fontSize: 12, fill: chart.axis }}
-                    tickFormatter={(t) => formatValue(t / timeRangeUnit.divisor)}
-                  >
-                    <Label
-                      value={`Time (${timeAxisUnitLabel})`}
-                      position="insideBottom"
-                      offset={-5}
-                      style={{ fill: chart.label, fontWeight: 600, fontSize: 14 }}
+              <div style={{ height: 512 }}>
+                <LineChart
+                  x={chartTimes}
+                  series={plotSeries}
+                  margin={{ top: 5, right: 30, left: 30, bottom: 5 }}
+                  xAxis={{
+                    domain: [chartTimes[0], chartTimes.at(-1)],
+                    tickFormat: (t) => formatValue(t / timeRangeUnit.divisor),
+                    label: `Time (${timeAxisUnitLabel})`,
+                    tickFontSize: 12,
+                    labelFontSize: 14,
+                  }}
+                  yAxes={[
+                    {
+                      id: 'flux',
+                      tickFormat: (v) => (v === 0 || !isFinite(v) ? '0' : v.toExponential(0)),
+                      width: 70,
+                      tickFontSize: 11,
+                      label: `Flux (${concentrationUnit.label})`,
+                      labelOffset: 10,
+                      labelAnchor: 'middle',
+                      labelFontSize: 13,
+                    },
+                  ]}
+                  strokeWidth={3}
+                  dotRadius={4}
+                  showDots={chartData.length <= 10}
+                  legendPaddingTop={20}
+                  renderTooltip={({ label, payload }) => (
+                    <ChartTooltipContent
+                      active
+                      payload={payload}
+                      timeLabel={`${
+                        timeRangeUnit.divisor === 1
+                          ? label?.toLocaleString()
+                          : (label / timeRangeUnit.divisor)?.toFixed(2)
+                      } ${timeAxisUnitLabel}`}
+                      maxVisible={chartSeries.length}
                     />
-                  </XAxis>
-
-                  <YAxis
-                    stroke={chart.axis}
-                    tick={{ fontSize: 11, fill: chart.axis }}
-                    tickFormatter={(v) => {
-                      if (v === 0 || !isFinite(v)) return '0'
-                      return v.toExponential(0)
-                    }}
-                    allowDataOverflow={false}
-                    width={70}
-                  >
-                    <Label
-                      value={`Flux (${concentrationUnit.label})`}
-                      angle={-90}
-                      position="insideLeft"
-                      offset={10}
-                      style={{ fill: chart.label, fontWeight: 600, fontSize: 13, textAnchor: 'middle' }}
-                    />
-                  </YAxis>
-
-                  <Tooltip
-                    wrapperStyle={{ zIndex: 10 }}
-                    content={({ active, payload, label }) => (
-                      <ChartTooltipContent
-                        active={active}
-                        payload={payload}
-                        timeLabel={`${
-                          timeRangeUnit.divisor === 1
-                            ? label?.toLocaleString()
-                            : (label / timeRangeUnit.divisor)?.toFixed(2)
-                        } ${timeAxisUnitLabel}`}
-                        maxVisible={chartSeries.length}
-                      />
-                    )}
-                  />
-
-                  <Legend
-                    wrapperStyle={{ paddingTop: '20px' }}
-                    content={<ChartLegendContent maxVisible={chartSeries.length} />}
-                  />
-
-                  {chartSeries.map((series) => (
-                    <Line
-                      key={series.key}
-                      type="monotone"
-                      dataKey={series.key}
-                      name={series.label}
-                      stroke={series.color}
-                      strokeWidth={3}
-                      dot={chartData.length <= 10 ? { r: 4 } : false}
-                      connectNulls
-                      isAnimationActive={false}
-                    />
-                  ))}
-                </LineChart>
-              </ResponsiveContainer>
+                  )}
+                  renderLegend={(payload) => (
+                    <ChartLegendContent payload={payload} maxVisible={chartSeries.length} />
+                  )}
+                />
+              </div>
             </div>
           </CardContent>
         </Card>

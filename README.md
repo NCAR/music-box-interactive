@@ -213,7 +213,7 @@ for reference, here's what we're using:
 - react 19 with vite
 - redux toolkit for state management
 - tailwindcss + shadcn/ui components
-- recharts for plotting
+- d3 for plotting
 - axios for api calls
 
 **backend:**

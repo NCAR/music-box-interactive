@@ -1,7 +1,7 @@
 import { useTheme } from './themeContext'
 
-// Colors for the Recharts plots. Recharts writes them as SVG attributes, which cannot use the
-// CSS variables, so the plots read them here. The light values are the colors that the plots
+// Colors for the SVG plots. The plots write them as SVG attributes, which cannot use the CSS
+// variables, so the plots read them here. The light values are the colors that the plots
 // always used.
 const LIGHT = {
   grid: '#D8D6D2',
