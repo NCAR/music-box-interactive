@@ -4,6 +4,7 @@ import { getReactionReactants } from '../simulation/local/mechanism'
 import { buildDownloadableConfig } from '../config/downloadConfig'
 import { toCsv } from '../../utils/csv'
 import { downloadBlob } from '../../utils/downloadJson'
+import { withSpeciesNames } from '../mechanism/speciesIds'
 
 function formatComponents(components) {
   if (!Array.isArray(components) || components.length === 0) {
@@ -40,9 +41,8 @@ function formatReactionFormula(reaction) {
 // at the same index is the same reaction (run.js's tracer injection only appends to product
 // arrays, it never changes reaction order or count).
 export function buildResultsExport({ mechanism, conditions, results, excludedResults, metadata }) {
-  const reactions = Array.isArray(mechanism?.config?.mechanism?.reactions)
-    ? mechanism.config.mechanism.reactions
-    : []
+  // With species names for the formulas; the reactions keep their ids.
+  const reactions = withSpeciesNames(mechanism?.config?.mechanism ?? {})?.reactions ?? []
   const points = Array.isArray(results) ? results : []
   const tracerPoints = Array.isArray(excludedResults) ? excludedResults : []
 

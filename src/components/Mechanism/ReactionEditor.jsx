@@ -6,7 +6,7 @@ import { useNotify } from '@/hooks/use-notify'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card'
 import { Button } from '../ui/button'
 import { Dropdown } from '../ui/dropdown'
-import { addReaction, removeReaction, updateReaction } from '../../redux/slices/mechanismSlice'
+import { addReaction, removeReaction, updateReaction, selectNamedReactions } from '../../redux/slices/mechanismSlice'
 import {
   buildGeneratedReactionName,
   hasDeclaredName,
@@ -262,7 +262,7 @@ function ReactionChip({ reaction, onRemove, onComponentsSave, onParameterSave })
 export function ReactionEditor() {
   const dispatch = useDispatch()
   const notify = useNotify()
-  const reactions = useSelector((state) => state.mechanism.config.mechanism?.reactions || EMPTY_ARRAY)
+  const reactions = useSelector(selectNamedReactions)
   const species = useSelector((state) => state.mechanism.config.mechanism?.species || EMPTY_ARRAY)
   const conditionColumns = useSelector((state) => state.conditions?.table?.columns)
 

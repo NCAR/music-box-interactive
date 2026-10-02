@@ -8,6 +8,7 @@ import { EMPTY_ARRAY } from '../../utils/emptyArray'
 import { TEXT_INPUT_SM } from '../Mechanism/fieldStyles'
 import { countDataPoints, listConditionItems } from '../../services/conditions/conditionItems'
 import { downloadConditions } from '../../services/conditions/exportConditions'
+import { selectNamedReactions } from '../../redux/slices/mechanismSlice'
 
 const LAYOUTS = [
   { id: 'single', label: 'One CSV file', detail: 'conditions.csv, with all the selected columns' },
@@ -24,9 +25,7 @@ const parseTime = (text) => (text.trim() === '' ? null : Number(text))
 export function DownloadConditionsDialog({ onClose }) {
   const notify = useNotify()
   const species = useSelector((state) => state.mechanism.config.mechanism?.species || EMPTY_ARRAY)
-  const reactions = useSelector(
-    (state) => state.mechanism.config.mechanism?.reactions || EMPTY_ARRAY
-  )
+  const reactions = useSelector(selectNamedReactions)
   const table = useSelector((state) => state.conditions.table)
 
   const items = useMemo(

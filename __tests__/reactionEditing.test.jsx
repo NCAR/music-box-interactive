@@ -5,7 +5,11 @@ import { configureStore } from '@reduxjs/toolkit'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 
-import mechanismReducer, { addReaction, addSpecies } from '../src/redux/slices/mechanismSlice'
+import mechanismReducer, {
+  addReaction,
+  addSpecies,
+  selectNamedReactions,
+} from '../src/redux/slices/mechanismSlice'
 import conditionsReducer from '../src/redux/slices/conditionsSlice'
 import simulationReducer from '../src/redux/slices/simulationSlice'
 import { ReactionEditor } from '../src/components/Mechanism/ReactionEditor'
@@ -74,7 +78,8 @@ const parameterField = (name) => {
   return row.querySelector('input')
 }
 
-const reactionFrom = (store) => store.getState().mechanism.config.mechanism.reactions[0]
+// Redux stores species ids; the name-based view gives the species names.
+const reactionFrom = (store) => selectNamedReactions(store.getState())[0]
 
 // SURFACE names its reactant in `gas-phase species` as a bare string rather than a component
 // array, so it needs its own handling; without it the reactant has no field at all.
@@ -127,7 +132,7 @@ describe('editing a surface reaction', () => {
     fireEvent.change(field, { target: { value: 'N2O5' } })
     fireEvent.blur(field)
 
-    const saved = store.getState().mechanism.config.mechanism.reactions[0]
+    const saved = selectNamedReactions(store.getState())[0]
     expect(saved['gas-phase species']).toBe('N2O5')
   })
 
@@ -139,7 +144,7 @@ describe('editing a surface reaction', () => {
     fireEvent.blur(field)
 
     await waitFor(() => expect(screen.getByText(/must be a single species/i)).toBeInTheDocument())
-    expect(store.getState().mechanism.config.mechanism.reactions[0]['gas-phase species']).toBe('NO2')
+    expect(selectNamedReactions(store.getState())[0]['gas-phase species']).toBe('NO2')
   })
 
   it('validates the reactant against the defined species', async () => {
@@ -152,7 +157,7 @@ describe('editing a surface reaction', () => {
     await waitFor(() =>
       expect(screen.getByText(/not defined in this mechanism/i)).toBeInTheDocument()
     )
-    expect(store.getState().mechanism.config.mechanism.reactions[0]['gas-phase species']).toBe('NO2')
+    expect(selectNamedReactions(store.getState())[0]['gas-phase species']).toBe('NO2')
   })
 })
 

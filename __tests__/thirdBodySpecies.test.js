@@ -1,8 +1,11 @@
 import { toReduxConfig } from '../src/services/config/loadMusicBoxConfig';
+import { withSpeciesNames } from '../src/services/mechanism/speciesIds';
 import { getThirdBodyNames, isReactionVisible, isRealSpecies } from '../src/components/Plots/flowUtils';
 
 import chapmanConfigRaw from '@ncar/music-box/examples/chapman/my_config.json' with { type: 'json' };
-const chapmanConfig = await toReduxConfig(chapmanConfigRaw);
+// Redux refers to species by id; the flow helpers take the name-based view, as the plots do.
+const reduxChapman = await toReduxConfig(chapmanConfigRaw);
+const chapmanConfig = { ...reduxChapman, mechanism: withSpeciesNames(reduxChapman.mechanism) };
 
 // A third body ("M" = any molecule present in the system) catalyses a reaction without being
 // consumed, so the solver reports no concentration for it. The species list in the panel is

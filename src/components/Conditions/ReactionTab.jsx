@@ -29,6 +29,7 @@ import {
 } from '../../services/conditions/rateColumns'
 import { rateReactionNames } from '../../services/simulation/local/reactionNames'
 import { HideUnsetRowsCheckbox } from './HideUnsetRowsCheckbox'
+import { selectNamedReactions } from '../../redux/slices/mechanismSlice'
 
 const filterButtonClass = (selected) =>
   `w-full text-left text-sm px-1.5 py-1 rounded ${
@@ -92,9 +93,7 @@ const surfacePropertiesOf = (reactionId, tableColumns) => {
 export function ReactionTab() {
   const dispatch = useDispatch()
   const notify = useNotify()
-  const mechanismReactions = useSelector(
-    (state) => state.mechanism.config.mechanism?.reactions || EMPTY_ARRAY
-  )
+  const mechanismReactions = useSelector(selectNamedReactions)
   const table = useSelector((state) => state.conditions.table)
   const rowTimes = table.times
   const tableColumns = table.columns

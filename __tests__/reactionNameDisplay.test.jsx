@@ -5,7 +5,7 @@ import { configureStore } from '@reduxjs/toolkit'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 
-import mechanismReducer from '../src/redux/slices/mechanismSlice'
+import mechanismReducer, { selectNamedReactions } from '../src/redux/slices/mechanismSlice'
 import conditionsReducer from '../src/redux/slices/conditionsSlice'
 import simulationReducer from '../src/redux/slices/simulationSlice'
 import ExampleLoader from '../src/components/ExampleLoader'
@@ -67,7 +67,7 @@ describe('reaction name display', () => {
 
   it('a reaction the mechanism did not name shows no Name row', async () => {
     const store = await loadChapman()
-    const reactions = store.getState().mechanism.config.mechanism.reactions
+    const reactions = selectNamedReactions(store.getState())
     const unnamed = reactions.find((r) => r.type === 'ARRHENIUS' && !r.name)
 
     expect(unnamed).toBeDefined()

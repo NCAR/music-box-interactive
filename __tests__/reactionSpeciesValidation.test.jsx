@@ -5,7 +5,7 @@ import { configureStore } from '@reduxjs/toolkit'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 
-import mechanismReducer, { addSpecies } from '../src/redux/slices/mechanismSlice'
+import mechanismReducer, { addSpecies, selectNamedReactions } from '../src/redux/slices/mechanismSlice'
 import conditionsReducer from '../src/redux/slices/conditionsSlice'
 import simulationReducer from '../src/redux/slices/simulationSlice'
 import { ReactionEditor } from '../src/components/Mechanism/ReactionEditor'
@@ -92,9 +92,10 @@ describe('species name capitalization', () => {
 
     await waitFor(() => expect((store.getState().mechanism.config.mechanism.reactions || [])).toHaveLength(1))
 
-    const stored = store
-      .getState()
-      .mechanism.config.mechanism.reactions[0].reactants.map((component) => component.name)
+    // Redux stores species ids; the name-based view gives the names as typed.
+    const stored = selectNamedReactions(store.getState())[0].reactants.map(
+      (component) => component.name
+    )
     expect(stored).toEqual(['a-pinene', 'O3'])
   })
 

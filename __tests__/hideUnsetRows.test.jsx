@@ -18,14 +18,15 @@ const table = {
   columns: {
     'ENV.temperature.K': [300, null, null],
     'ENV.pressure.Pa': [100000, null, null],
-    'CONC.O3.mol m-3': [1e-6, null, 2e-6],
+    // The concentration column is stored under the species id.
+    'CONC#s-o3': [1e-6, null, 2e-6],
     'PHOTO.j.s-1': [1, 2, null],
   },
 }
 
 const renderTab = (tab) => {
   const store = configureStore({ reducer: { conditions: conditionsReducer, mechanism: mechanismReducer } })
-  store.dispatch(setConfig({ mechanism: { species: [{ name: 'O3' }], reactions: [] } }))
+  store.dispatch(setConfig({ mechanism: { species: [{ id: 's-o3', name: 'O3' }], reactions: [] } }))
   store.dispatch(setConditionsTable(table))
   const utils = render(
     <Provider store={store}>

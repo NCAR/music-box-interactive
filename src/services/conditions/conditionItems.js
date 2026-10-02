@@ -1,5 +1,6 @@
 import { isThirdBody } from '../simulation/local/speciesProperties'
 import { rateReactionNames } from '../simulation/local/reactionNames'
+import { concentrationColumnKey, concentrationHeader } from './speciesColumns'
 import {
   RATE_TYPES,
   SURFACE_PROPERTIES,
@@ -108,10 +109,11 @@ export function listConditionItems({ species = [], reactions = [], table } = {})
   species
     .filter((entry) => hasName(entry) && !isThirdBody(entry))
     .forEach((entry) => {
+      // The column is stored under the species id (see speciesColumns).
       items.push({
-        key: `CONC.${entry.name}`,
+        key: concentrationColumnKey(entry.id),
         matchKey: `CONC.${entry.name}`,
-        header: `CONC.${entry.name}.mol m-3`,
+        header: concentrationHeader(entry.name),
         label: entry.name,
         category: 'species',
         group: 'Species',
