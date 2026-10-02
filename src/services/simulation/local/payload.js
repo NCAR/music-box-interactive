@@ -1,13 +1,24 @@
 import { MusicBox } from '@ncar/music-box'
 import { buildSolverConditions } from './conditions'
 import { getMechanismLabel, serializeReaction } from './mechanism'
+import { rateReactionNames } from './reactionNames'
 
 export const buildLocalSimulationPayload = ({ mechanismData, conditions }) => {
   const sourceMechanism = mechanismData.config?.mechanism || {}
   const mechanismLabel = getMechanismLabel(mechanismData)
   const species = sourceMechanism.species ?? []
   const phases = sourceMechanism.phases ?? []
-  const reactions = (sourceMechanism.reactions ?? []).map(serializeReaction)
+  // An unnamed rate-parameter reaction gets the same generated name as its conditions header,
+  // so the solver can match the two. The name in Redux stays empty.
+  const sourceReactions = sourceMechanism.reactions ?? []
+  const rateNames = rateReactionNames(sourceReactions)
+  const reactions = sourceReactions.map((reaction) =>
+    serializeReaction(
+      rateNames.has(reaction.id) && !String(reaction.name || '').trim()
+        ? { ...reaction, name: rateNames.get(reaction.id) }
+        : reaction
+    )
+  )
 
   const mechanism = {
     name:
@@ -26,7 +37,7 @@ export const buildLocalSimulationPayload = ({ mechanismData, conditions }) => {
   box.outputTimeStep = conditions.basic.outputFrequency
   box.simulationLength = conditions.basic.duration
   box.loadMechanism(mechanism)
-  box.loadConditions(buildSolverConditions(conditions))
+  box.loadConditions(buildSolverConditions(conditions, sourceReactions))
 
   const payload = box.toJson()
 

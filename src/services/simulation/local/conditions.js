@@ -7,6 +7,8 @@ import {
   TEMPERATURE_HEADER,
   emptyTable,
 } from '../../conditions/table'
+import { headerForRateColumn, parseRateColumnKey } from '../../conditions/rateColumns'
+import { rateReactionNames } from './reactionNames'
 
 // Mirrors @ncar/music-box's ConditionsManager rate-parameter prefixes -- this is the wire
 // format's documented column convention, not solver logic, so it's safe to know here too.
@@ -19,10 +21,14 @@ const isFiniteNumber = (value) => typeof value === 'number' && Number.isFinite(v
 // sets nothing, so the solver holds the earlier value. Time 0 always gets a temperature and a
 // pressure: the table value, or the default.
 //
+// A rate-parameter column is stored under its reaction id (see rateColumns). `reactions` gives
+// the header for it; a column whose reaction is not in `reactions` is left out.
+//
 // Anything that needs the conditions in effect at a time (e.g. the air density) should ask
 // this manager via getConditionsAtTime(t).
-export const buildConditionsManager = (conditions) => {
+export const buildConditionsManager = (conditions, reactions = []) => {
   const table = conditions?.table || emptyTable()
+  const names = rateReactionNames(reactions)
   const mgr = new ConditionsManager([])
   const zeroIndex = table.times.indexOf(0)
 
@@ -34,9 +40,11 @@ export const buildConditionsManager = (conditions) => {
     if (!isFiniteNumber(time)) return
     const moment = { concentrations: {}, rateParameters: {} }
 
-    Object.entries(table.columns).forEach(([header, values]) => {
+    Object.entries(table.columns).forEach(([key, values]) => {
       const value = Array.isArray(values) ? values[index] : null
       if (!isFiniteNumber(value)) return
+      const header = parseRateColumnKey(key) ? headerForRateColumn(key, names) : key
+      if (!header) return
 
       if (header === TEMPERATURE_HEADER) moment.temperature = value
       else if (header === PRESSURE_HEADER) moment.pressure = value
@@ -58,5 +66,5 @@ export const buildConditionsManager = (conditions) => {
 }
 
 // Builds the solver's conditions block from the same manager (see buildConditionsManager).
-export const buildSolverConditions = (conditions) =>
-  buildConditionsManager(conditions).toDataBlocks()
+export const buildSolverConditions = (conditions, reactions = []) =>
+  buildConditionsManager(conditions, reactions).toDataBlocks()

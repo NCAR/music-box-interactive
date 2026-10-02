@@ -2,6 +2,8 @@
 // Manages the simulation time settings and the conditions table (see services/conditions/table)
 import { createSlice } from '@reduxjs/toolkit'
 import { emptyTable } from '../../services/conditions/table'
+import { dropReactionColumns } from '../../services/conditions/rateColumns'
+import { removeReaction } from './mechanismSlice'
 
 const initialState = {
   // Basic Configuration
@@ -72,6 +74,12 @@ export const conditionsSlice = createSlice({
     },
 
     resetConditions: () => initialState,
+  },
+  extraReducers: (builder) => {
+    // A deleted reaction takes its rate-parameter columns with it.
+    builder.addCase(removeReaction, (state, action) => {
+      state.table = dropReactionColumns(state.table, action.payload)
+    })
   },
 })
 

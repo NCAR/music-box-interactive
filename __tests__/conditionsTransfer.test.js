@@ -14,10 +14,10 @@ import { headerKey } from '../src/services/conditions/table'
 
 const species = [{ name: 'O3' }, { name: 'NO2' }]
 const reactions = [
-  { type: 'PHOTOLYSIS', name: 'O3_1' },
-  { type: 'EMISSION', name: 'NO2_emis' },
-  { type: 'SURFACE', name: 'aer' },
-  { type: 'ARRHENIUS', name: 'not_a_rate_parameter' },
+  { id: 'r-photo', type: 'PHOTOLYSIS', name: 'O3_1' },
+  { id: 'r-emis', type: 'EMISSION', name: 'NO2_emis' },
+  { id: 'r-surf', type: 'SURFACE', name: 'aer' },
+  { id: 'r-arr', type: 'ARRHENIUS', name: 'not_a_rate_parameter' },
 ]
 
 const baseTable = () => ({
@@ -27,7 +27,8 @@ const baseTable = () => ({
     'ENV.pressure.Pa': [100000, null],
     'CONC.O3': [1e-6, null],
     'CONC.NO2.mol m-3': [2e-7, null],
-    'PHOTO.O3_1.s-1': [1e-4, 5e-5],
+    // Rate parameters are stored under the reaction id.
+    'PHOTO#r-photo': [1e-4, 5e-5],
   },
 })
 
@@ -79,7 +80,7 @@ describe('countDataPoints', () => {
       'ENV.pressure': 1,
       'CONC.O3': 1,
       'CONC.NO2': 1,
-      'PHOTO.O3_1': 2,
+      'PHOTO#r-photo': 2,
     })
   })
 })
@@ -98,7 +99,7 @@ describe('buildConditionsFiles', () => {
   })
 
   it('writes one file for each category with a selected item, and applies the time range', () => {
-    const selected = items().filter((item) => ['ENV.pressure', 'PHOTO.O3_1'].includes(item.key))
+    const selected = items().filter((item) => ['ENV.pressure', 'PHOTO#r-photo'].includes(item.key))
     const files = buildConditionsFiles({
       table: baseTable(),
       items: selected,
@@ -180,14 +181,14 @@ describe('applyConditionsUpload', () => {
         'ENV.pressure.Pa': [100000, null, null],
         'CONC.O3': [1e-6, null, null],
         'CONC.NO2.mol m-3': [9e-7, null, null],
-        'PHOTO.O3_1.s-1': [1e-4, null, 5e-5],
+        'PHOTO#r-photo': [1e-4, null, 5e-5],
       },
     })
   })
 
   it('merge mode clears existing values under empty cells when emptyOverwrites is on', () => {
     const result = apply('time.s,PHOTO.O3_1.s-1\n3600,', { mode: 'merge', emptyOverwrites: true })
-    expect(result.columns['PHOTO.O3_1.s-1']).toEqual([1e-4, null])
+    expect(result.columns['PHOTO#r-photo']).toEqual([1e-4, null])
   })
 
   it('merge mode does not add a row for a time with only empty cells', () => {

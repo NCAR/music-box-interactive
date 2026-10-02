@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/
 import { writeConfigFiles, resolveConditionsFilepathsFromFile } from '@ncar/music-box'
 import {
   loadMusicBoxConfig,
-  notifyIgnoredThirdBodySpecies,
+  notifyLoadedConditionsIssues,
 } from '../services/config/loadMusicBoxConfig'
 import { useNotify } from '@/hooks/use-notify'
 
@@ -98,7 +98,7 @@ export function ExampleLoader() {
     await writeConfigFiles(dir, csvFilesForExample(example.dir))
     const config = await resolveConditionsFilepathsFromFile(example.config, dir)
 
-    const { ignoredThirdBodySpecies } = await loadMusicBoxConfig(config, {
+    const loadResult = await loadMusicBoxConfig(config, {
       dispatch,
       navigate,
       meta: {
@@ -108,7 +108,7 @@ export function ExampleLoader() {
         mechanism_name: example.mechanism_name,
       },
     })
-    notifyIgnoredThirdBodySpecies(notify, ignoredThirdBodySpecies)
+    notifyLoadedConditionsIssues(notify, loadResult)
   }
 
   return (

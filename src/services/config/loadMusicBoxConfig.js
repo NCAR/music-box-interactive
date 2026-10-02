@@ -15,6 +15,7 @@ import {
 } from '../../redux/slices/conditionsSlice'
 import { dropConcentrations, tableFromConditionsConfig } from '../conditions/table'
 import { isThirdBody } from '../simulation/local/speciesProperties'
+import { bindRateColumns } from '../conditions/rateColumns'
 import { resetSimulation } from '../../redux/slices/simulationSlice'
 
 // MUSICA's parser validates the mechanism, fills in default values, and gives back the canonical
@@ -44,9 +45,12 @@ export async function toReduxConfig(config) {
 // CSV-derived block inline; callers resolve filepaths before calling this. Rejects when the
 // mechanism is not valid, before any Redux state changes.
 //
-// Resolves to { ignoredThirdBodySpecies }: the third-body species whose concentration the
-// config sets. The solver gets a third-body concentration from the air density, so those
-// values are not loaded. The caller tells the user (see notifyIgnoredThirdBodySpecies).
+// Resolves to { ignoredThirdBodySpecies, unmatchedRateParameters }. Neither is loaded:
+//   ignoredThirdBodySpecies - the third-body species whose concentration the config sets. The
+//                             solver gets a third-body concentration from the air density.
+//   unmatchedRateParameters - the rate-parameter headers that name no reaction of the
+//                             mechanism. The solver would ignore them.
+// The caller tells the user (see notifyLoadedConditionsIssues).
 export async function loadMusicBoxConfig(config, { dispatch, navigate, meta = {} } = {}) {
   const reduxConfig = await toReduxConfig(config)
 
@@ -66,9 +70,14 @@ export async function loadMusicBoxConfig(config, { dispatch, navigate, meta = {}
   const thirdBodyNames = (reduxConfig.mechanism?.species || [])
     .filter(isThirdBody)
     .map((s) => s.name)
-  const { table, dropped } = dropConcentrations(
+  const { table: withoutThirdBodies, dropped } = dropConcentrations(
     tableFromConditionsConfig(config?.conditions),
     thirdBodyNames
+  )
+  // Rate parameters are stored under their reaction id (see rateColumns).
+  const { table, unmatched } = bindRateColumns(
+    withoutThirdBodies,
+    reduxConfig.mechanism?.reactions || []
   )
   dispatch(setConditionsTable(table))
   dispatch(
@@ -82,7 +91,24 @@ export async function loadMusicBoxConfig(config, { dispatch, navigate, meta = {}
   dispatch(setSelectedMechanism(meta.mechanism_name || meta.id || 'custom'))
 
   navigate('/mechanism')
-  return { ignoredThirdBodySpecies: dropped }
+  return { ignoredThirdBodySpecies: dropped, unmatchedRateParameters: unmatched }
+}
+
+const MAX_LISTED = 5
+
+// Shows a warning for each kind of condition that loadMusicBoxConfig did not load.
+export function notifyLoadedConditionsIssues(notify, { ignoredThirdBodySpecies, unmatchedRateParameters } = {}) {
+  notifyIgnoredThirdBodySpecies(notify, ignoredThirdBodySpecies)
+  if (unmatchedRateParameters?.length) {
+    const listed = unmatchedRateParameters.slice(0, MAX_LISTED)
+    const more = unmatchedRateParameters.length - listed.length
+    notify.warning(
+      'Rate Parameters Ignored',
+      `${listed.join(', ')}${more > 0 ? ` and ${more} more` : ''} ` +
+        `${unmatchedRateParameters.length === 1 ? 'names no reaction' : 'name no reactions'} ` +
+        'of the mechanism, so the values were not loaded.'
+    )
+  }
 }
 
 // Shows the warning for the third-body concentrations that loadMusicBoxConfig ignored.
