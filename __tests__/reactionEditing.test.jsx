@@ -240,3 +240,32 @@ describe('editing a reaction from its chip', () => {
     expect(store.getState().mechanism.config.mechanism.reactions.map((r) => r.id)).toEqual(['r1', 'r2'])
   })
 })
+
+describe('editing the equation in the chip', () => {
+  const equationField = () => screen.getByRole('textbox', { name: /^Equation of / })
+
+  it('replaces the reactants and the products', () => {
+    const store = setup()
+    expect(equationField().value).toBe('O1D → O3')
+
+    fireEvent.change(equationField(), { target: { value: '2NO2 -> O3 + 0.5O1D' } })
+    fireEvent.blur(equationField())
+
+    expect(reactionFrom(store).reactants).toEqual([{ name: 'NO2', coefficient: 2 }])
+    expect(reactionFrom(store).products).toEqual([
+      { name: 'O3', coefficient: 1 },
+      { name: 'O1D', coefficient: 0.5 },
+    ])
+    // The field shows the coefficient below 1, so a later edit keeps it.
+    expect(equationField().value).toBe('2NO2 → O3 + 0.5O1D')
+  })
+
+  it('rejects an equation without an arrow and keeps the reaction', async () => {
+    const store = setup()
+    fireEvent.change(equationField(), { target: { value: 'NO2 + O3' } })
+    fireEvent.blur(equationField())
+
+    await waitFor(() => expect(screen.getByText(/must have one arrow/i)).toBeInTheDocument())
+    expect(reactionFrom(store).reactants).toEqual([{ name: 'O1D', coefficient: 1 }])
+  })
+})
