@@ -48,6 +48,7 @@ const expandReaction = (reaction) => {
 // Columns that are not rate parameters.
 const NOT_PARAMETERS = new Set([
   'Name',
+  'Equation',
   'Reactants',
   'Products',
   'Gas-phase reactant',

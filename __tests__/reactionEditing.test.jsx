@@ -251,3 +251,76 @@ describe('editing a reaction in the table', () => {
     expect(store.getState().mechanism.config.mechanism.reactions.map((r) => r.id)).toEqual(['r1', 'r2'])
   })
 })
+
+describe('editing the equation', () => {
+  it('replaces the reactants and the products from the equation cell', () => {
+    const store = setup()
+    const field = cellInput('Equation')
+    expect(field.value).toBe('O1D → O3')
+
+    fireEvent.change(field, { target: { value: '2NO2 -> O3 + O1D' } })
+    fireEvent.blur(field)
+
+    expect(reactionFrom(store).reactants).toEqual([{ name: 'NO2', coefficient: 2 }])
+    expect(reactionFrom(store).products).toEqual([
+      { name: 'O3', coefficient: 1 },
+      { name: 'O1D', coefficient: 1 },
+    ])
+  })
+
+  it('rejects an equation without an arrow and keeps the reaction', async () => {
+    const store = setup()
+    const field = cellInput('Equation')
+
+    fireEvent.change(field, { target: { value: 'NO2 + O3' } })
+    fireEvent.blur(field)
+
+    await waitFor(() => expect(screen.getByText(/must have one arrow/i)).toBeInTheDocument())
+    expect(reactionFrom(store).reactants).toEqual([{ name: 'O1D', coefficient: 1 }])
+  })
+
+  it('edits both product lists of a branched reaction in a dialog', () => {
+    const store = configureStore({
+      reducer: {
+        mechanism: mechanismReducer,
+        conditions: conditionsReducer,
+        simulation: simulationReducer,
+      },
+    })
+    ;['RO2', 'NO', 'RO', 'NO2', 'RONO2'].forEach((name) => store.dispatch(addSpecies({ name })))
+    store.dispatch(
+      addReaction({
+        id: 'b1',
+        type: 'BRANCHED_NO_RO2',
+        reactants: [{ name: 'RO2', coefficient: 1 }],
+        'alkoxy products': [{ name: 'RO', coefficient: 1 }],
+        'nitrate products': [{ name: 'RONO2', coefficient: 1 }],
+      })
+    )
+    render(
+      <MemoryRouter>
+        <Provider store={store}>
+          <ReactionEditor />
+          <Toaster />
+        </Provider>
+      </MemoryRouter>
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: /^Edit equation of / }))
+    fireEvent.change(screen.getByLabelText('Reactants'), { target: { value: 'RO2 + NO' } })
+    fireEvent.change(screen.getByLabelText('Alkoxy products'), { target: { value: 'RO + NO2' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }))
+
+    const saved = selectNamedReactions(store.getState())[0]
+    expect(saved.reactants).toEqual([
+      { name: 'RO2', coefficient: 1 },
+      { name: 'NO', coefficient: 1 },
+    ])
+    expect(saved['alkoxy products']).toEqual([
+      { name: 'RO', coefficient: 1 },
+      { name: 'NO2', coefficient: 1 },
+    ])
+    expect(saved['nitrate products']).toEqual([{ name: 'RONO2', coefficient: 1 }])
+    expect(screen.queryByRole('button', { name: 'Save' })).not.toBeInTheDocument()
+  })
+})

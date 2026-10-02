@@ -7,7 +7,13 @@ import { Card, CardContent } from '../ui/card'
 import { Button } from '../ui/button'
 import { Dropdown } from '../ui/dropdown'
 import { addReaction, removeReaction, updateReaction, selectNamedReactions } from '../../redux/slices/mechanismSlice'
-import { buildGeneratedReactionName, parseReactionString } from './reactions/reactionUtils'
+import {
+  applyReactionComponents,
+  applyReactionEquation,
+  buildGeneratedReactionName,
+  isEquationEditable,
+  parseReactionString,
+} from './reactions/reactionUtils'
 import {
   RATE_UNIT_NOTE,
   getReactionComponents,
@@ -37,6 +43,7 @@ import { AddRowDialog } from './table/AddRowDialog'
 import { RemoveRowButton } from './table/RemoveRowButton'
 import { DataTable } from './table/DataTable'
 import { EditableCell } from './table/EditableCell'
+import { EditComponentsDialog } from './EditComponentsDialog'
 import { EMPTY_ARRAY } from '../../utils/emptyArray'
 
 // Structural fields. All other fields are rate parameters that vary by reaction type.
@@ -149,6 +156,8 @@ export function ReactionEditor() {
   const [addType, setAddType] = useState(reactionRegistry[0].type)
   const [addOpen, setAddOpen] = useState(false)
   const [draft, setDraft] = useState({})
+  // The id of the reaction whose species fields are open in a dialog (a branched reaction).
+  const [componentsDialogId, setComponentsDialogId] = useState(null)
 
   // Group reactions by canonical type so registry and solver spellings map to the same option.
   // Preserve mechanism order within a type.
@@ -308,6 +317,32 @@ export function ReactionEditor() {
     saveReaction(updated)
   }
 
+  // The species fields of a reaction type, with the labels that the table uses.
+  const labeledComponents = (type) =>
+    getReactionComponents(type).map((field) => ({
+      ...field,
+      label: COMPONENT_LABELS[field.key] ?? field.key,
+    }))
+
+  const handleEquationSave = (reaction, rawValue) => {
+    const result = applyReactionEquation(reaction, rawValue, getReactionComponents(reaction.type))
+    if (result.error) {
+      notify.invalidInput(result.error)
+      return
+    }
+    saveReaction(result.reaction)
+  }
+
+  // Returns whether the save worked, so that the dialog stays open after an error.
+  const handleComponentsDialogSave = (reaction, values) => {
+    const result = applyReactionComponents(reaction, values, labeledComponents(reaction.type))
+    if (result.error) {
+      notify.invalidInput(result.error)
+      return false
+    }
+    return saveReaction(result.reaction)
+  }
+
   // An empty name removes it: a reaction without a configured name shows its equation.
   const handleNameSave = (reaction, rawValue) => {
     const name = rawValue.trim()
@@ -347,6 +382,7 @@ export function ReactionEditor() {
   })
 
   const reactionLabel = (reaction) => reaction.name || formatReactionEquation(reaction)
+  const componentsReaction = reactions.find((reaction) => reaction.id === componentsDialogId)
 
   const columns = [
     {
@@ -366,7 +402,31 @@ export function ReactionEditor() {
       id: 'equation',
       label: 'Equation',
       sortValue: formatReactionEquation,
-      render: (reaction) => <span className="font-mono">{formatReactionEquation(reaction)}</span>,
+      render: (reaction) => {
+        const equation = formatReactionEquation(reaction)
+        if (isEquationEditable(getReactionComponents(reaction.type))) {
+          return (
+            <EditableCell
+              value={equation}
+              placeholder="O1D + N2 → O + N2"
+              label={`Equation of ${reactionLabel(reaction)}`}
+              onCommit={(raw) => handleEquationSave(reaction, raw)}
+            />
+          )
+        }
+        // Two product lists do not fit in one equation, so they are edited in a dialog.
+        return (
+          <button
+            type="button"
+            onClick={() => setComponentsDialogId(reaction.id)}
+            aria-label={`Edit equation of ${reactionLabel(reaction)}`}
+            title="Click to edit"
+            className="w-full min-h-[1.5rem] rounded px-1 text-left font-mono hover:bg-surface-hover focus:outline-none focus-visible:ring-2 focus-visible:ring-assist-secondary-ring"
+          >
+            {equation}
+          </button>
+        )
+      },
     },
     {
       id: 'type',
@@ -541,7 +601,7 @@ export function ReactionEditor() {
               </Button>
             }
             footerNote={
-              !activeType && 'Choose one reaction type to see and edit its species and parameters.'
+              !activeType && 'Choose one reaction type to see and edit its rate parameters.'
             }
           />
         </CardContent>
@@ -554,6 +614,17 @@ export function ReactionEditor() {
           onAdd={handleAddFromRow}
           onClose={() => setAddOpen(false)}
           extra={addTypePicker}
+        />
+      )}
+      {componentsReaction && (
+        <EditComponentsDialog
+          title={`Edit ${reactionLabel(componentsReaction)}`}
+          fields={labeledComponents(componentsReaction.type).map((field) => ({
+            ...field,
+            value: componentsToInput(componentsReaction[field.key]),
+          }))}
+          onSave={(values) => handleComponentsDialogSave(componentsReaction, values)}
+          onClose={() => setComponentsDialogId(null)}
         />
       )}
     </div>
