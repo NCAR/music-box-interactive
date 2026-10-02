@@ -80,3 +80,18 @@ describe('third-body species in the conditions download and upload', () => {
     ])
   })
 })
+
+describe('selecting species in the Species tab', () => {
+  it('shows and hides one species at a time', () => {
+    renderTab()
+    const headers = () => screen.queryAllByRole('columnheader').map((th) => th.textContent)
+    // The default selection is the first species that can be selected (M is a third body).
+    expect(headers()).toEqual(['', 'Time (s)', 'O3', 'O2'])
+
+    fireEvent.click(screen.getByRole('button', { name: 'O3' }))
+    expect(headers()).toEqual(['', 'Time (s)', 'O2'])
+
+    fireEvent.click(screen.getByRole('button', { name: 'O3' }))
+    expect(headers()).toEqual(['', 'Time (s)', 'O3', 'O2'])
+  })
+})
