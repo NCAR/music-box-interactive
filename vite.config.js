@@ -79,4 +79,9 @@ export default defineConfig({
   optimizeDeps: {
     exclude: ['@ncar/musica', '@ncar/music-box']
   },
+  // The solver runs in a module worker (src/services/simulation/local/solver.worker.js). MUSICA
+  // loads its WASM with a dynamic import, which needs the ES worker format.
+  worker: {
+    format: 'es',
+  },
 })

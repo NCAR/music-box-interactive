@@ -1,4 +1,4 @@
-import { MusicBox } from '@ncar/music-box'
+import { solvePayload } from './solvePayload'
 import { buildLocalSimulationPayload } from './payload'
 import { normalizeSimulationResults } from './results'
 import { BRANCH_TRACER_SUFFIXES, buildTracerSpeciesName } from './tracer'
@@ -135,7 +135,8 @@ export const runLocalSimulation = async ({ mechanismData, conditions }) => {
     payload.mechanism.phases = phases
   }
 
-  const rawResults = await MusicBox.fromJson(payload).solve()
+  // The solver runs in a Web Worker, so the UI stays responsive while it works.
+  const rawResults = await solvePayload(payload)
   const normalizedPoints = normalizeSimulationResults(rawResults)
 
   if (normalizedPoints.length === 0) {
