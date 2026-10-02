@@ -346,6 +346,8 @@ export function LineChart({
     return ticks.map((tick, index) => ({ ...tick, labelX: positions[index] }))
   }, [xResolved, xScale, xTickFormat, xAxis.tickFontSize, width])
 
+  const labeledXTicks = xTicks.filter((tick) => tick.labelX !== null)
+
   const legendPayload = useMemo(
     () =>
       series
@@ -375,7 +377,8 @@ export function LineChart({
                       y2={yScales[gridAxisId](tick)}
                     />
                   ))}
-                {xTicks.map((tick) => (
+                {/* Grid lines only at the labeled ticks, as Recharts drew them. */}
+                {labeledXTicks.map((tick) => (
                   <line
                     key={`v${tick.value}`}
                     x1={tick.coordinate}
