@@ -1,4 +1,5 @@
 import * as d3 from 'd3'
+import { PlotExportButtons } from './PlotExportButtons'
 import { React, useEffect, useRef, useState } from 'react'
 import { useSelector } from 'react-redux'
 import {
@@ -629,6 +630,11 @@ export function FlowGraph({
       <svg ref={ref} className="w-full h-full">
         <g className="graph" />
       </svg>
+      <PlotExportButtons
+        getSvg={() => ref.current}
+        fileName="flow-diagram"
+        className="absolute top-2 right-2 z-20"
+      />
       {/* Edge hover tooltip */}
       <div
         ref={tooltipRef}

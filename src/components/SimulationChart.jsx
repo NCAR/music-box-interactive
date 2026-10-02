@@ -653,6 +653,8 @@ export function SimulationChart({ results, metadata }) {
               dotRadius={3}
               showDots={results.length <= 10}
               legendPaddingTop={16}
+              legendMaxVisible={LEGEND_VISIBLE_COMPACT}
+              exportName="species-concentration"
               renderTooltip={({ label, payload }) => (
                 <ChartTooltipContent
                   active
@@ -697,6 +699,8 @@ export function SimulationChart({ results, metadata }) {
               dotRadius={4}
               showDots={results.length <= 10}
               legendPaddingTop={20}
+              legendMaxVisible={LEGEND_VISIBLE}
+              exportName="species-concentration"
               renderTooltip={({ label, payload }) => (
                 <ChartTooltipContent
                   active

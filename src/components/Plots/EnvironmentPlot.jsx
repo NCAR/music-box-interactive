@@ -221,6 +221,7 @@ export function EnvironmentPlot() {
                   }}
                   yAxes={yAxes}
                   strokeWidth={2}
+                  exportName="environment"
                   renderTooltip={({ label, payload }) => (
                     <ChartTooltipContent
                       active

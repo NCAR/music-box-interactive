@@ -2,6 +2,7 @@ import { memo, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'rea
 import { scaleLinear, scaleLog, line, curveMonotoneX, bisectCenter } from 'd3'
 import { useChartTheme } from '../../theme/chartTheme'
 import { TICK_COUNT, fixedDomainTicks, niceTicks, preserveEndLabels } from './chartTicks'
+import { PlotExportButtons } from './PlotExportButtons'
 
 // A line chart drawn as plain SVG with d3 scales. It replaces Recharts, which copies each data
 // row into every line point: a plot with hundreds of species took seconds to redraw. Here each
@@ -64,6 +65,13 @@ function resolveAxis({ scale = 'linear', domain = 'auto', ticks }, dataExtent) {
     return { domain: resolved, ticks: ticks ?? scaleLog().domain(resolved).ticks(TICK_COUNT) }
   }
   return { domain: resolved, ticks: ticks ?? fixedDomainTicks(resolved) }
+}
+
+// The saved plot shows the legend as the page does: the first entries, then "+N others".
+function exportLegend(entries, maxVisible) {
+  if (entries.length <= maxVisible) return entries
+  const others = entries.length - maxVisible
+  return [...entries.slice(0, maxVisible), { value: `+${others} others`, color: null }]
 }
 
 function useElementSize(ref) {
@@ -234,6 +242,8 @@ function YAxis({ axis, scale, ticks, plot, chart, height }) {
  * @param {Object[]} yAxes - [{id, side, scale: 'linear' | 'log', domain, tickFormat, label, ...}]
  * @param {Function} [renderTooltip] - ({ label, payload }) => node, payload as {name, value, color}
  * @param {Function} [renderLegend] - (payload) => node, payload as {value, color}, sorted by name
+ * @param {number} [legendMaxVisible] - Legend entries before "+N others", in the saved plot too
+ * @param {string} [exportName] - Shows the Copy and Save buttons, and names the saved file
  */
 export function LineChart({
   x,
@@ -247,9 +257,12 @@ export function LineChart({
   legendPaddingTop,
   renderTooltip,
   renderLegend,
+  legendMaxVisible = Infinity,
+  exportName,
 }) {
   const chart = useChartTheme()
   const svgBoxRef = useRef(null)
+  const svgRef = useRef(null)
   const { width, height } = useElementSize(svgBoxRef)
 
   const axes = useMemo(
@@ -364,7 +377,12 @@ export function LineChart({
       <div ref={svgBoxRef} className="relative min-h-0 flex-1">
         {ready && (
           <>
-            <svg width={width} height={height} className="absolute inset-0 overflow-visible">
+            <svg
+              ref={svgRef}
+              width={width}
+              height={height}
+              className="absolute inset-0 overflow-visible"
+            >
               <g stroke={chart.grid} strokeDasharray="3 3">
                 <line x1={plot.left} x2={plot.right} y1={plot.top} y2={plot.top} />
                 {gridAxisId !== undefined &&
@@ -471,6 +489,17 @@ export function LineChart({
               height={height}
               renderTooltip={renderTooltip}
             />
+            {exportName && (
+              <PlotExportButtons
+                getSvg={() => svgRef.current}
+                getLegend={
+                  hasLegend ? () => exportLegend(legendPayload, legendMaxVisible) : undefined
+                }
+                fileName={exportName}
+                className="absolute z-20"
+                style={{ top: plot.top + 4, right: width - plot.right + 4 }}
+              />
+            )}
           </>
         )}
       </div>
