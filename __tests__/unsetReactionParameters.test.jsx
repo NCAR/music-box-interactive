@@ -20,6 +20,20 @@ vi.mock('react-router-dom', async () => {
   return { ...actual, useNavigate: () => vi.fn() }
 })
 
+// The type filter is the second dropdown; the first chooses the type in the Add card.
+const showType = (label) => {
+  fireEvent.click(document.querySelectorAll('[aria-haspopup="listbox"]')[1])
+  fireEvent.click(screen.getByRole('option', { name: label }))
+}
+
+// Clicks a parameter cell, which turns it into an input, and returns that input.
+const editCell = (key) => {
+  fireEvent.click(
+    screen.getAllByRole('button').find((b) => b.getAttribute('aria-label')?.startsWith(`Edit ${key} of `))
+  )
+  return screen.getByRole('textbox', { name: new RegExp(`^${key} of `) })
+}
+
 describe('unset rate parameters', () => {
   it('the exact flow reported: add photolysis with a blank scaling factor, then edit it', async () => {
     const store = configureStore({
@@ -28,27 +42,24 @@ describe('unset rate parameters', () => {
     ;['O2', 'O'].forEach((n) => store.dispatch(addSpecies({ name: n })))
     render(<MemoryRouter><Provider store={store}><ReactionEditor /><Toaster /></Provider></MemoryRouter>)
   
-    // choose Photolysis in the add form
+    // choose Photolysis in the Add card (its type dropdown is the first one) and fill it in
     fireEvent.click(document.querySelectorAll('[aria-haspopup="listbox"]')[0])
-    fireEvent.click([...document.querySelectorAll('[role="option"]')].find((o) => /photolysis/i.test(o.textContent)))
-  
-    const inputs = [...document.querySelectorAll('input[type="text"]')].filter((i) => !/search/i.test(i.placeholder || ''))
-    fireEvent.change(inputs[0], { target: { value: 'O2' } })
-    fireEvent.change(inputs[1], { target: { value: '2O' } })
+    fireEvent.click(screen.getByRole('option', { name: 'Photolysis' }))
+    fireEvent.change(screen.getByRole('textbox', { name: 'New reaction Reactants' }), {
+      target: { value: 'O2' },
+    })
+    fireEvent.change(screen.getByRole('textbox', { name: 'New reaction Products' }), {
+      target: { value: '2O' },
+    })
     // leave scaling factor blank
-    fireEvent.click(screen.getByRole('button', { name: /add reaction/i }))
-  
+    fireEvent.click(screen.getByRole('button', { name: 'Add' }))
+
     await waitFor(() => expect(store.getState().mechanism.config.mechanism.reactions).toHaveLength(1))
     expect(store.getState().mechanism.config.mechanism.reactions[0]).not.toHaveProperty('scaling factor')
   
-    // expand the chip: the field is offered, blank
-    fireEvent.click(screen.getAllByRole('button').find((b) => /→/.test(b.textContent)))
-    const panel = screen.getByRole('button', { name: 'Remove' }).parentElement.parentElement
-    const row = [...panel.querySelectorAll('div')].find(
-      (d) => [...d.children].some((c) => c.tagName === 'SPAN' && c.textContent === 'scaling factor')
-    )
-    expect(row).toBeDefined()
-    const field = row.querySelector('input')
+    // show the Photolysis columns: the field is offered, blank
+    showType(/^Photolysis \(/)
+    const field = editCell('scaling factor')
     expect(field.value).toBe('')
   
     // and filling it in saves
@@ -81,21 +92,14 @@ describe('unset rate parameters', () => {
         </Provider>
       </MemoryRouter>
     )
-    fireEvent.click(screen.getAllByRole('button').find((b) => /\u2192/.test(b.textContent)))
-
-    const panel = screen.getByRole('button', { name: 'Remove' }).parentElement.parentElement
-    const rows = [...panel.querySelectorAll('div')].filter(
-      (d) =>
-        [...d.children].some((c) => c.tagName === 'SPAN') &&
-        [...d.children].some((c) => c.tagName === 'INPUT')
-    )
-
-    const byName = Object.fromEntries(
-      rows.map((row) => [
-        row.querySelector('span').textContent,
-        { value: row.querySelector('input').value, placeholder: row.querySelector('input').placeholder },
-      ])
-    )
+    showType(/^Arrhenius \(/)
+    const field = (key) => {
+      const input = editCell(key)
+      const shown = { value: input.value, placeholder: input.placeholder }
+      fireEvent.blur(input)
+      return shown
+    }
+    const byName = { A: field('A'), B: field('B'), D: field('D') }
 
     // A is set, so it shows a value; the rest are blank and advertise the default that applies.
     expect(byName.A).toEqual({ value: '1.20e-11', placeholder: '1.0' })

@@ -67,4 +67,24 @@ describe('Dropdown', () => {
     render(<Dropdown value="zzz" options={OPTIONS} onChange={() => {}} placeholder="Pick one" />)
     expect(screen.getByRole('button')).toHaveTextContent('Pick one')
   })
+
+  it('draws the open menu outside a scroll box, so the box cannot clip it', () => {
+    const onChange = vi.fn()
+    render(
+      <div data-testid="scroll-box" style={{ overflow: 'auto', height: 40 }}>
+        <Dropdown value="b" options={OPTIONS} onChange={onChange} />
+      </div>
+    )
+    fireEvent.click(screen.getByRole('button'))
+
+    const menu = screen.getByRole('listbox')
+    expect(screen.getByTestId('scroll-box')).not.toContainElement(menu)
+    expect(menu.parentElement).toBe(document.body)
+    expect(menu.style.position).toBe('fixed')
+
+    // A click on an option in the menu still chooses it, and is not an outside click.
+    fireEvent.mouseDown(openOptions()[0])
+    fireEvent.click(openOptions()[0])
+    expect(onChange).toHaveBeenCalledWith('a')
+  })
 })

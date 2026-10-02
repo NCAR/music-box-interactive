@@ -2,7 +2,7 @@ import React from 'react'
 import { describe, it, expect, vi } from 'vitest'
 import { Provider } from 'react-redux'
 import { configureStore } from '@reduxjs/toolkit'
-import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import { render, screen, within, fireEvent, waitFor } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 
 import mechanismReducer, { selectNamedReactions } from '../src/redux/slices/mechanismSlice'
@@ -55,8 +55,11 @@ const loadChapman = async () => {
   return store
 }
 
-const expandChip = (matcher) =>
-  fireEvent.click(screen.getAllByRole('button').find((button) => matcher.test(button.textContent)))
+// The Name cell of the table row whose equation matches.
+const nameCellOf = (equation) => {
+  const row = screen.getAllByRole('row').find((r) => equation.test(r.textContent))
+  return within(row).getByRole('button', { name: /^Edit Name of / })
+}
 
 describe('reaction name display', () => {
   it('every loaded reaction has a stable id, which FlowGraph identifies nodes by', async () => {
@@ -65,15 +68,15 @@ describe('reaction name display', () => {
     expect(reactions.every((r) => typeof r.id === 'string' && r.id.length > 0)).toBe(true)
   })
 
-  it('a reaction the mechanism did not name shows no Name row', async () => {
+  it('a reaction the mechanism did not name shows an empty Name cell', async () => {
     const store = await loadChapman()
     const reactions = selectNamedReactions(store.getState())
     const unnamed = reactions.find((r) => r.type === 'ARRHENIUS' && !r.name)
 
     expect(unnamed).toBeDefined()
-    const firstReactant = unnamed.reactants[0].name
-    expandChip(new RegExp(`^${firstReactant}`))
-    expect(screen.queryByText('Name')).toBeNull()
+    const cell = nameCellOf(new RegExp(`${unnamed.reactants[0].name}.*→`))
+    // The cell is empty; no generated name is stored or shown.
+    expect(cell).toHaveTextContent(/^$/)
   })
 
   it('a reaction the mechanism named still shows it', async () => {
@@ -82,8 +85,6 @@ describe('reaction name display', () => {
     expect(reactions.find((r) => r.name === 'O2_1')).toBeDefined()
 
     // exact formula, so a different O2-containing reaction is not picked
-    expandChip(/^O2 → 2O/)
-    expect(screen.getByText('Name')).toBeInTheDocument()
-    expect(screen.getByText('O2_1')).toBeInTheDocument()
+    expect(nameCellOf(/O2 → 2O/)).toHaveTextContent('O2_1')
   })
 })

@@ -1,116 +1,140 @@
-import { ArrheniusReactionForm } from './ArrheniusReaction'
-import { EmissionReactionForm } from './EmissionReaction'
-import { FirstOrderLossReactionForm } from './FirstOrderLossReaction'
-import { PhotolysisReactionForm } from './PhotolysisReaction'
-import { TernaryChemicalActivationReactionForm } from './TernaryChemicalActivationReaction'
-import { TroeReactionForm } from './TroeReaction'
-import { BranchedReactionForm } from './BranchedReaction'
-import { TunnelingReactionForm } from './TunnelingReaction'
-import { SurfaceReactionForm } from './SurfaceReaction'
-import { UserDefinedReactionForm } from './UserDefinedReaction'
-import { LambdaRateReactionForm } from './LambdaRateReaction'
+// The species fields of each reaction type, in column order. `single` holds one species name
+// as a plain string (SURFACE); `required` fields cannot be left empty when a reaction is added.
+const BOTH = [
+  { key: 'reactants', required: true },
+  { key: 'products', required: true },
+]
+// Photolysis and user-defined reactions may leave the products empty.
+const SCALED = [{ key: 'reactants', required: true }, { key: 'products' }]
+const EMISSION = [{ key: 'products', required: true }]
+const LOSS = [{ key: 'reactants', required: true }]
+const BRANCHED = [
+  { key: 'reactants', required: true },
+  { key: 'alkoxy products', required: true },
+  { key: 'nitrate products', required: true },
+]
+const SURFACE_SHAPE = [
+  { key: 'gas-phase species', single: true, required: true },
+  { key: 'gas-phase products', required: true },
+]
+
+// Units of the rate parameters, from the rate expression of each type (e.g. Arrhenius
+// k = A exp(C/T) (T/D)^B (1 + E P)). A rate-constant factor depends on the reaction order, so it
+// is written with n, the number of reactants; a low-pressure limit k0 has one more order for the
+// third body.
+const RATE = '(mol m-3)^(1-n) s-1'
+const LOW_PRESSURE_RATE = '(mol m-3)^(-n) s-1'
+const UNITLESS = 'unitless'
+
+// What the n in a rate unit means, for a tooltip.
+export const RATE_UNIT_NOTE = 'n is the number of reactants of the reaction.'
+export const isOrderDependentUnit = (unit) => unit === RATE || unit === LOW_PRESSURE_RATE
 
 export const reactionRegistry = [
   {
     type: 'ARRHENIUS',
     parameters: [
-      { key: 'A', placeholder: '1.0' },
-      { key: 'B', placeholder: '0.0' },
-      { key: 'C', placeholder: '0.0' },
-      { key: 'D', placeholder: '300.0' },
-      { key: 'E', placeholder: '0.0' },
+      { key: 'A', placeholder: '1.0', unit: RATE },
+      { key: 'B', placeholder: '0.0', unit: UNITLESS },
+      { key: 'C', placeholder: '0.0', unit: 'K' },
+      { key: 'D', placeholder: '300.0', unit: 'K' },
+      { key: 'E', placeholder: '0.0', unit: 'Pa-1' },
     ],
     label: 'Arrhenius',
-    component: ArrheniusReactionForm,
+    components: BOTH,
   },
   {
     type: 'EMISSION',
-    parameters: [{ key: 'scaling factor', placeholder: '1.0' }],
+    parameters: [{ key: 'scaling factor', placeholder: '1.0', unit: UNITLESS }],
     label: 'Emission',
-    component: EmissionReactionForm,
+    components: EMISSION,
   },
   {
     type: 'FIRST_ORDER_LOSS',
-    parameters: [{ key: 'scaling factor', placeholder: '1.0' }],
+    parameters: [{ key: 'scaling factor', placeholder: '1.0', unit: UNITLESS }],
     label: 'First-order loss',
-    component: FirstOrderLossReactionForm,
+    components: LOSS,
   },
   {
     type: 'PHOTOLYSIS',
-    parameters: [{ key: 'scaling factor', placeholder: '1.0' }],
+    parameters: [{ key: 'scaling factor', placeholder: '1.0', unit: UNITLESS }],
     label: 'Photolysis',
-    component: PhotolysisReactionForm,
+    components: SCALED,
   },
   {
     type: 'TERNARY_CHEMICAL_ACTIVATION',
     parameters: [
-      { key: 'k0_A', placeholder: '1.0' },
-      { key: 'k0_B', placeholder: '0.0' },
-      { key: 'k0_C', placeholder: '0.0' },
-      { key: 'kinf_A', placeholder: '1.0' },
-      { key: 'kinf_B', placeholder: '0.0' },
-      { key: 'kinf_C', placeholder: '0.0' },
-      { key: 'Fc', placeholder: '0.6' },
-      { key: 'N', placeholder: '1.0' },
+      { key: 'k0_A', placeholder: '1.0', unit: LOW_PRESSURE_RATE },
+      { key: 'k0_B', placeholder: '0.0', unit: UNITLESS },
+      { key: 'k0_C', placeholder: '0.0', unit: 'K' },
+      { key: 'kinf_A', placeholder: '1.0', unit: RATE },
+      { key: 'kinf_B', placeholder: '0.0', unit: UNITLESS },
+      { key: 'kinf_C', placeholder: '0.0', unit: 'K' },
+      { key: 'Fc', placeholder: '0.6', unit: UNITLESS },
+      { key: 'N', placeholder: '1.0', unit: UNITLESS },
     ],
     label: 'Ternary chemical activation',
-    component: TernaryChemicalActivationReactionForm,
+    components: BOTH,
   },
   {
     type: 'TROE',
     parameters: [
-      { key: 'k0_A', placeholder: '1.0' },
-      { key: 'k0_B', placeholder: '0.0' },
-      { key: 'k0_C', placeholder: '0.0' },
-      { key: 'kinf_A', placeholder: '1.0' },
-      { key: 'kinf_B', placeholder: '0.0' },
-      { key: 'kinf_C', placeholder: '0.0' },
-      { key: 'Fc', placeholder: '0.6' },
-      { key: 'N', placeholder: '1.0' },
+      { key: 'k0_A', placeholder: '1.0', unit: LOW_PRESSURE_RATE },
+      { key: 'k0_B', placeholder: '0.0', unit: UNITLESS },
+      { key: 'k0_C', placeholder: '0.0', unit: 'K' },
+      { key: 'kinf_A', placeholder: '1.0', unit: RATE },
+      { key: 'kinf_B', placeholder: '0.0', unit: UNITLESS },
+      { key: 'kinf_C', placeholder: '0.0', unit: 'K' },
+      { key: 'Fc', placeholder: '0.6', unit: UNITLESS },
+      { key: 'N', placeholder: '1.0', unit: UNITLESS },
     ],
     label: 'Troe (Fall-off)',
-    component: TroeReactionForm,
+    components: BOTH,
   },
   {
     type: 'BRANCHED_NO_RO2',
     parameters: [
-      { key: 'X', placeholder: '1.0' },
-      { key: 'Y', placeholder: '0.0' },
-      { key: 'a0', placeholder: '1.0' },
-      { key: 'n', placeholder: '0' },
+      { key: 'X', placeholder: '1.0', unit: RATE },
+      { key: 'Y', placeholder: '0.0', unit: 'K' },
+      { key: 'a0', placeholder: '1.0', unit: UNITLESS },
+      { key: 'n', placeholder: '0', unit: UNITLESS },
     ],
     label: 'Branched',
-    component: BranchedReactionForm,
+    components: BRANCHED,
   },
   {
     type: 'TUNNELING',
     parameters: [
-      { key: 'A', placeholder: '1.0' },
-      { key: 'B', placeholder: '0.0' },
-      { key: 'C', placeholder: '0.0' },
+      { key: 'A', placeholder: '1.0', unit: RATE },
+      { key: 'B', placeholder: '0.0', unit: 'K' },
+      { key: 'C', placeholder: '0.0', unit: 'K3' },
     ],
     label: 'Tunneling',
-    component: TunnelingReactionForm,
+    components: BOTH,
   },
   {
     type: 'SURFACE',
-    parameters: [{ key: 'reaction probability', placeholder: '1.0' }],
+    parameters: [{ key: 'reaction probability', placeholder: '1.0', unit: UNITLESS }],
     label: 'Surface',
-    component: SurfaceReactionForm,
+    components: SURFACE_SHAPE,
   },
   {
     type: 'USER_DEFINED',
-    parameters: [{ key: 'scaling factor', placeholder: '1.0' }],
+    parameters: [{ key: 'scaling factor', placeholder: '1.0', unit: UNITLESS }],
     label: 'User-defined rate',
-    component: UserDefinedReactionForm,
+    components: SCALED,
   },
   {
     type: 'LAMBDA_RATE_CONSTANT',
     parameters: [{ key: 'lambda function' }],
     label: 'Lambda rate',
-    component: LambdaRateReactionForm,
+    components: BOTH,
   },
 ]
+
+// The species fields of a type (see the shapes above); an unknown type has reactants and products.
+export const getReactionComponents = (reactionType) =>
+  reactionRegistry.find((entry) => entry.type === reactionType)?.components ?? BOTH
 
 export const getReactionDefinition = (reactionType) => {
   return (

@@ -46,9 +46,9 @@ const renderEditor = () => {
   return { store, idOf }
 }
 
+// Each species row has its own Remove button.
 const startRemoving = (name) => {
-  fireEvent.click(screen.getByRole('button', { name }))
-  fireEvent.click(screen.getByRole('button', { name: 'Remove' }))
+  fireEvent.click(screen.getByRole('button', { name: `Remove ${name}` }))
   return screen.getByRole('dialog', { name: `Remove ${name}?` })
 }
 

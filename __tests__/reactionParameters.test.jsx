@@ -9,8 +9,9 @@ import mechanismReducer, { addReaction } from '../src/redux/slices/mechanismSlic
 import conditionsReducer from '../src/redux/slices/conditionsSlice'
 import simulationReducer from '../src/redux/slices/simulationSlice'
 import { ReactionEditor } from '../src/components/Mechanism/ReactionEditor'
+import { getReactionTypeLabel } from '../src/components/Mechanism/reactions/reactionRegistry'
 
-// An expanded reaction lists whichever rate parameters it actually carries. Which ones exist
+// The reaction table lists whichever rate parameters the reactions of a type carry. Which ones exist
 // depends on the type, so the editor derives them from the reaction rather than holding a
 // per-type list that would fall behind whenever a reaction type is added or changed.
 
@@ -37,26 +38,33 @@ const expandReaction = (reaction) => {
     </MemoryRouter>
   )
 
-  fireEvent.click(screen.getAllByRole('button').find((button) => /\u2192/.test(button.textContent)))
+  // The parameter columns show when the type filter (the first dropdown) selects the type.
+  fireEvent.click(document.querySelectorAll('[aria-haspopup="listbox"]')[1])
+  fireEvent.click(
+    screen.getByRole('option', { name: `${getReactionTypeLabel(reaction.type)} (1)` })
+  )
 }
 
-// The rendered parameter list, as { name: displayedValue }. Each parameter is a label/input
-// pair now that the values are editable.
-const parameterList = () => {
-  const heading = [...document.querySelectorAll('label')].find(
-    (label) => label.textContent === 'Parameters'
-  )
-  if (!heading) {
-    return {}
-  }
+// Columns that are not rate parameters.
+const NOT_PARAMETERS = new Set([
+  'Name',
+  'Reactants',
+  'Products',
+  'Gas-phase reactant',
+  'Gas-phase products',
+  'Alkoxy products',
+  'Nitrate products',
+])
 
+// The rendered parameter list, as { name: displayedValue }. Each parameter cell is a button
+// labelled "Edit <name> of <reaction>"; an unset one shows its greyed default, which counts as
+// blank here.
+const parameterList = () => {
   const pairs = {}
-  for (const row of heading.parentElement.querySelectorAll('div')) {
-    const name = row.querySelector('span')
-    const field = row.querySelector('input')
-    if (name && field) {
-      pairs[name.textContent] = field.value
-    }
+  for (const cell of screen.queryAllByRole('button')) {
+    const name = /^Edit (.+) of /.exec(cell.getAttribute('aria-label') ?? '')?.[1]
+    if (!name || NOT_PARAMETERS.has(name)) continue
+    pairs[name] = cell.querySelector('.text-muted') ? '' : cell.textContent
   }
   return pairs
 }

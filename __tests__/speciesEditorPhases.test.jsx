@@ -1,13 +1,16 @@
 import React from 'react'
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import { Provider } from 'react-redux'
 import { configureStore } from '@reduxjs/toolkit'
-import { render, screen } from '@testing-library/react'
+import { render, screen, fireEvent, within } from '@testing-library/react'
 
 import mechanismReducer, { setConfig } from '../src/redux/slices/mechanismSlice'
 import conditionsReducer from '../src/redux/slices/conditionsSlice'
 import simulationReducer from '../src/redux/slices/simulationSlice'
 import { SpeciesEditor } from '../src/components/Mechanism/SpeciesEditor'
+
+const toast = vi.fn()
+vi.mock('@/hooks/use-toast', () => ({ useToast: () => ({ toast }) }))
 
 const renderEditor = (phases) => {
   const store = configureStore({
@@ -19,25 +22,43 @@ const renderEditor = (phases) => {
       <SpeciesEditor />
     </Provider>
   )
+  return store
 }
 
-const phasePills = () =>
-  Array.from(
-    screen.getByText('Choose a phase').parentElement.querySelectorAll('button'),
-    (button) => button.textContent.trim()
-  )
+// The phase choices of the Add species card.
+const addRowPhases = () => {
+  const addRow = screen.getByRole('table', { name: 'Add species' })
+  fireEvent.click(within(addRow).getByRole('button', { expanded: false }))
+  return screen.getAllByRole('option').map((option) => option.textContent.trim())
+}
 
-describe('species editor phase pills', () => {
+describe('species editor phase choices', () => {
   it("offers the mechanism's own phases, spelled as the mechanism spells them", () => {
     renderEditor([
       { name: 'gas', species: [] },
       { name: 'Organic_Aerosol', species: [] },
     ])
-    expect(phasePills()).toEqual(['gas', 'Organic_Aerosol', 'Others'])
+    expect(addRowPhases()).toEqual(['gas', 'Organic_Aerosol', 'New phase…'])
   })
 
   it('offers gas when the mechanism has no phase yet', () => {
     renderEditor([])
-    expect(phasePills()).toEqual(['gas', 'Others'])
+    expect(addRowPhases()).toEqual(['gas', 'New phase…'])
+  })
+
+  it('adds a species in a new phase', () => {
+    const store = renderEditor([{ name: 'gas', species: [] }])
+    addRowPhases()
+    fireEvent.click(screen.getByRole('option', { name: 'New phase…' }))
+    const phaseInput = screen.getByLabelText('Add phase')
+    fireEvent.change(phaseInput, { target: { value: 'aqueous' } })
+    fireEvent.keyDown(phaseInput, { key: 'Enter' })
+
+    fireEvent.change(screen.getByPlaceholderText('species name'), { target: { value: 'SO4' } })
+    fireEvent.keyDown(screen.getByPlaceholderText('species name'), { key: 'Enter' })
+
+    const { phases } = store.getState().mechanism.config.mechanism
+    expect(phases.map((p) => p.name)).toEqual(['gas', 'aqueous'])
+    expect(phases[1].species).toHaveLength(1)
   })
 })

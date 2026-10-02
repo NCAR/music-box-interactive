@@ -1,9 +1,8 @@
 import { useState, useCallback, useEffect, useMemo } from 'react'
 import { createPortal } from 'react-dom'
 import { useSelector, useDispatch } from 'react-redux'
-import { ChevronDown, ChevronUp } from 'lucide-react'
 import { useNotify } from '@/hooks/use-notify'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '../ui/card'
 import { Button } from '../ui/button'
 import { Toggle } from '../ui/toggle'
 import {
@@ -15,41 +14,19 @@ import {
 } from '../../redux/slices/mechanismSlice'
 import { reactionsUsingSpecies } from '../../services/mechanism/speciesIds'
 import { RemoveSpeciesDialog } from './RemoveSpeciesDialog'
+import { Dropdown } from '../ui/dropdown'
+import { AddRowCard } from './table/AddRowCard'
+import { DataTable } from './table/DataTable'
+import { EditableCell } from './table/EditableCell'
 import { addSpeciesIfValid } from './speciesUtils'
-import {
-  FIELD_LABEL,
-  ITEM_CHIP,
-  ITEM_LIST,
-  ITEM_PANEL,
-  LIST_CARD,
-  LIST_CARD_CONTENT,
-  TEXT_INPUT,
-  TEXT_INPUT_SM,
-} from './fieldStyles'
+import { ADD_BUTTON, ADD_INPUT, EDITOR_COLUMN, LIST_CARD_CONTENT, TABLE_CARD, TEXT_INPUT_SM } from './fieldStyles'
 import { SPECIES_PROPERTIES } from '../../services/simulation/local/speciesProperties'
 import { withPhaseInfo } from '../../services/simulation/local/mechanism'
 
 const CONCENTRATION_PILL = 'Constant concentration'
 const CUSTOM_PILL_MAX_LENGTH = 512
-
-// The add form width is determined by the widest property row.
-const SPECIES_EDITOR_GRID =
-  'grid grid-cols-1 gap-4 lg:grid-cols-[auto_minmax(0,1fr)] lg:items-start'
-
-// Use a two-column layout to size the add card based on the two widest pills.
-const PROPERTY_PILL_GRID = 'grid grid-cols-1 sm:grid-cols-2 justify-items-start gap-2'
-
-// Shared pill styling for the phase and property selectors.
-function pillClassName(active, compact) {
-  const base = `${
-    compact ? 'px-2.5 py-1 text-[11px]' : 'h-9 px-4 py-2 text-[15px]'
-  } rounded-full border whitespace-nowrap transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-assist-secondary-ring flex items-center gap-1.5`
-
-  if (active) {
-    return `${base} bg-assist-secondary border-assist-secondary-border text-assist-secondary-foreground`
-  }
-  return `${base} bg-white dark:bg-surface border-border text-ink hover:bg-surface-hover`
-}
+// The "New phase…" item of the add row's phase dropdown.
+const NEW_PHASE = '__new_phase__'
 
 function AddPillDialog({ label, onCancel, onAdd }) {
   const [draft, setDraft] = useState('')
@@ -78,8 +55,11 @@ function AddPillDialog({ label, onCancel, onAdd }) {
         className="w-full max-w-sm rounded-2xl bg-white dark:bg-surface p-6 shadow-xl"
         onClick={(e) => e.stopPropagation()}
       >
-        <label className="block text-sm font-medium text-ink mb-1">{label}</label>
+        <label htmlFor="add-pill-input" className="block text-sm font-medium text-ink mb-1">
+          {label}
+        </label>
         <input
+          id="add-pill-input"
           type="text"
           autoFocus
           value={draft}
@@ -119,217 +99,13 @@ function AddPillDialog({ label, onCancel, onAdd }) {
   )
 }
 
-// Offers the mechanism's own phases, spelled exactly as the mechanism configuration spells them.
-// A new phase is entered through the "Others" pill.
-function PhaseSelector({ value, onChange, phaseNames, size = 'default', allowCustom = true }) {
-  const [dialogOpen, setDialogOpen] = useState(false)
-  // A phase typed in the Add form is not in the mechanism until the species is added.
-  const options = value && !phaseNames.includes(value) ? [...phaseNames, value] : phaseNames
-
-  const handleAddCustom = (phase) => {
-    onChange(phase)
-    setDialogOpen(false)
-  }
-
-  const compact = size === 'compact'
-
-  return (
-    <div className="flex flex-wrap items-center gap-2">
-      {options.map((phase) => (
-        <button
-          key={phase}
-          type="button"
-          onClick={() => onChange(phase)}
-          className={pillClassName(value === phase, compact)}
-        >
-          {phase}
-        </button>
-      ))}
-
-      {allowCustom && (
-        <button
-          type="button"
-          onClick={() => setDialogOpen(true)}
-          className={pillClassName(false, compact)}
-        >
-          Others
-          <ChevronDown className="w-3.5 h-3.5 flex-shrink-0" />
-        </button>
-      )}
-
-      {allowCustom && dialogOpen && (
-        <AddPillDialog
-          label="Add phase"
-          onCancel={() => setDialogOpen(false)}
-          onAdd={handleAddCustom}
-        />
-      )}
-    </div>
-  )
-}
-
-function PropertySelector({ properties, onChange }) {
-  const togglePill = (field) => {
-    const next = { ...properties }
-    if (field.pill in next) {
-      delete next[field.pill]
-    } else {
-      next[field.pill] = field.type === 'boolean' ? false : ''
-    }
-    onChange(next)
-  }
-
-  const setPropertyValue = (pill, value) => {
-    onChange({ ...properties, [pill]: value })
-  }
-
-  const selectedFields = SPECIES_PROPERTIES.filter((field) => field.pill in properties)
-
-  return (
-    <div>
-      <div className={PROPERTY_PILL_GRID}>
-        {SPECIES_PROPERTIES.map((field) => (
-          <button
-            key={field.pill}
-            type="button"
-            onClick={() => togglePill(field)}
-            className={pillClassName(field.pill in properties, false)}
-          >
-            {field.pill}
-          </button>
-        ))}
-      </div>
-
-      {selectedFields.length > 0 && (
-        <div className="mt-3 flex flex-col gap-3">
-          {selectedFields.map((field) =>
-            field.type === 'boolean' ? (
-              <Toggle
-                key={field.pill}
-                label={field.label}
-                checked={properties[field.pill] === true}
-                onChange={(checked) => setPropertyValue(field.pill, checked)}
-              />
-            ) : (
-              <div key={field.pill}>
-                <label className={FIELD_LABEL}>
-                  {field.label}
-                </label>
-                <input
-                  type="text"
-                  value={properties[field.pill]}
-                  onChange={(e) => setPropertyValue(field.pill, e.target.value)}
-                  placeholder={field.placeholder}
-                  className={TEXT_INPUT.replace('text-center', 'text-left')}
-                />
-              </div>
-            )
-          )}
-        </div>
-      )}
-    </div>
-  )
-}
-
-function getSpeciesFields(species) {
-  return SPECIES_PROPERTIES.filter(
-    (field) => species[field.key] !== undefined && species[field.key] !== null
-  ).map((field) => ({ ...field, value: species[field.key] }))
-}
-
-// A species renders as a collapsed chip showing only its name. Clicking it unfolds the phase
-// and property values in place; an expanded chip claims a full row of the wrapping list so its
-// controls have room. Expansion is local state -- opening one leaves the others alone.
-function SpeciesChip({ species, phaseNames, onPhaseChange, onFieldSave, onRemove }) {
-  const [expanded, setExpanded] = useState(false)
-
-  if (!expanded) {
-    return (
-      <button
-        type="button"
-        onClick={() => setExpanded(true)}
-        className={`${ITEM_CHIP} whitespace-nowrap`}
-      >
-        {species.name}
-        <ChevronDown className="w-3.5 h-3.5 flex-shrink-0" />
-      </button>
-    )
-  }
-
-  return (
-    // Width is capped by the property fields’ max-w-xs
-    <div className={`${ITEM_PANEL} max-w-xs`}>
-      <div className="flex items-start justify-between gap-3">
-        <button
-          type="button"
-          onClick={() => setExpanded(false)}
-          className="flex items-center gap-1.5 rounded text-base text-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-assist-secondary-ring"
-        >
-          {species.name}
-          <ChevronUp className="w-4 h-4 flex-shrink-0" />
-        </button>
-
-        <Button
-          variant="destructive"
-          size="sm"
-          onClick={() => onRemove(species)}
-          className="h-auto px-2.5 py-1 text-[11px]"
-        >
-          Remove
-        </Button>
-      </div>
-
-      <div className="mt-3 flex flex-col gap-3">
-        <div>
-          <label className="mb-1 block text-[11px] uppercase tracking-wide text-muted">
-            Phase
-          </label>
-          {/* No "Others" pill here: editing a species picks among existing phases rather than
-              defining new ones. New phases are created in the Add species form. */}
-          <PhaseSelector
-            value={species.phase}
-            onChange={(phase) => onPhaseChange(species.id, phase)}
-            phaseNames={phaseNames}
-            size="compact"
-            allowCustom={false}
-          />
-        </div>
-
-        {getSpeciesFields(species).map((field) =>
-          field.type === 'boolean' ? (
-            <div key={field.key} className="flex flex-col gap-1">
-              <label className="text-[11px] uppercase tracking-wide text-muted">
-                {field.label}
-              </label>
-              <Toggle
-                label={field.value ? 'Yes' : 'No'}
-                checked={field.value === true}
-                onChange={(checked) => onFieldSave(species.id, field, checked)}
-              />
-            </div>
-          ) : (
-            <div key={field.key} className="flex flex-col gap-1">
-              <label className="text-[11px] uppercase tracking-wide text-muted">
-                {field.label}
-              </label>
-              <input
-                type="text"
-                defaultValue={field.value ?? ''}
-                onBlur={(e) => onFieldSave(species.id, field, e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.currentTarget.blur()
-                  }
-                }}
-                placeholder={field.placeholder}
-                className={`w-full max-w-xs ${TEXT_INPUT_SM.replace('text-center', 'text-left')}`}
-              />
-            </div>
-          )
-        )}
-      </div>
-    </div>
-  )
+// Numbers in exponential notation only where it helps, as in the reactions table.
+const formatPropertyValue = (value) => {
+  if (value === undefined || value === null) return ''
+  if (typeof value !== 'number') return String(value)
+  if (value === 0) return '0'
+  const magnitude = Math.abs(value)
+  return magnitude < 1e-3 || magnitude >= 1e6 ? value.toExponential(2) : String(value)
 }
 
 export function SpeciesEditor() {
@@ -341,9 +117,11 @@ export function SpeciesEditor() {
   const phaseNames = useMemo(() => (phases?.length ? phases.map((p) => p.name) : ['gas']), [phases])
   const notify = useNotify()
 
+  // The add row at the top of the table. Properties are keyed by pill name (see addSpeciesIfValid).
   const [newSpeciesName, setNewSpeciesName] = useState('')
   const [newSpeciesPhase, setNewSpeciesPhase] = useState('')
   const [newSpeciesProperties, setNewSpeciesProperties] = useState({})
+  const [newPhaseDialogOpen, setNewPhaseDialogOpen] = useState(false)
   const [speciesSearch, setSpeciesSearch] = useState('')
   const speciesQuery = speciesSearch.trim().toLowerCase()
   // Sorted case-insensitively with natural numeric ordering (e.g., C2H6 before C10H22).
@@ -376,10 +154,7 @@ export function SpeciesEditor() {
 
     if (added) {
       setNewSpeciesName('')
-      // Keep the selected property pills, but clear their values for the next species
-      setNewSpeciesProperties((prev) =>
-        Object.fromEntries(Object.keys(prev).map((name) => [name, '']))
-      )
+      setNewSpeciesProperties({})
     }
   }
 
@@ -468,117 +243,203 @@ export function SpeciesEditor() {
     )
   }
 
-  const speciesChips = (
-    <div className={ITEM_LIST}>
-      {filteredSpecies.length === 0 ? (
-        <p className="w-full text-center text-muted py-8">No matching species found.</p>
-      ) : (
-        filteredSpecies.map((sp) => (
-          <SpeciesChip
-            key={sp.id ?? sp.name}
-            species={sp}
-            phaseNames={phaseNames}
-            onPhaseChange={handlePhaseSave}
-            onFieldSave={handleFieldSave}
-            onRemove={handleRemoveSpecies}
+  // A rename is safe: everything refers to the species by its id (see speciesIds).
+  const handleNameSave = (renamed, rawValue) => {
+    const name = rawValue.trim()
+    if (!name) {
+      notify.invalidInput('Species name cannot be empty.')
+      return
+    }
+    if (species.some((sp) => sp.id !== renamed.id && sp.name === name)) {
+      notify.invalidInput(`A species named "${name}" already exists.`)
+      return
+    }
+    dispatch(updateSpecies({ ...renamed, name }))
+  }
+
+  const columns = [
+    {
+      id: 'name',
+      label: 'Name',
+      hideable: false,
+      sortValue: (sp) => sp.name,
+      render: (sp) => (
+        <EditableCell
+          value={sp.name}
+          label={`Name of ${sp.name}`}
+          onCommit={(raw) => handleNameSave(sp, raw)}
+        />
+      ),
+    },
+    {
+      id: 'phase',
+      label: 'Phase',
+      sortValue: (sp) => sp.phase ?? '',
+      render: (sp) => (
+        <div className="min-w-[7rem]">
+          <Dropdown
+            value={sp.phase ?? ''}
+            onChange={(phase) => handlePhaseSave(sp.id, phase)}
+            className="h-8"
+            options={phaseNames.map((name) => ({ value: name, label: name }))}
           />
-        ))
-      )}
-    </div>
-  )
+        </div>
+      ),
+    },
+    ...SPECIES_PROPERTIES.map((field) => ({
+      id: field.key,
+      label: field.label,
+      sortValue: (sp) => (field.type === 'boolean' ? (sp[field.key] ? 1 : 0) : sp[field.key]),
+      render: (sp) =>
+        field.type === 'boolean' ? (
+          <Toggle
+            label={sp[field.key] ? 'Yes' : 'No'}
+            checked={sp[field.key] === true}
+            size="sm"
+            onChange={(checked) => handleFieldSave(sp.id, field, checked)}
+          />
+        ) : (
+          <EditableCell
+            value={formatPropertyValue(sp[field.key])}
+            placeholder={field.placeholder ?? ''}
+            label={`${field.label} of ${sp.name}`}
+            onCommit={(raw) => handleFieldSave(sp.id, field, raw)}
+          />
+        ),
+    })),
+    {
+      id: 'actions',
+      label: '',
+      hideable: false,
+      className: 'w-0',
+      render: (sp) => (
+        <Button
+          variant="destructive"
+          size="sm"
+          aria-label={`Remove ${sp.name}`}
+          onClick={() => handleRemoveSpecies(sp)}
+        >
+          Remove
+        </Button>
+      ),
+    },
+  ]
+
+  // A phase that the user has typed but that no species uses yet still shows in the add row.
+  const addPhase = newSpeciesPhase || phaseNames[0]
+  const addPhaseOptions = [
+    ...phaseNames.map((name) => ({ value: name, label: name })),
+    ...(phaseNames.includes(addPhase) ? [] : [{ value: addPhase, label: addPhase }]),
+    { value: NEW_PHASE, label: 'New phase…' },
+  ]
+
+  const addOnEnter = (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault()
+      handleAddSpecies()
+    }
+  }
+
+  const renderAddCell = (column) => {
+    if (column.id === 'name') {
+      return (
+        <input
+          type="text"
+          value={newSpeciesName}
+          onChange={(e) => setNewSpeciesName(e.target.value)}
+          onKeyDown={addOnEnter}
+          placeholder="species name"
+          aria-label="New species name"
+          className={ADD_INPUT}
+        />
+      )
+    }
+    if (column.id === 'phase') {
+      return (
+        <div className="min-w-[7rem]">
+          <Dropdown
+            value={addPhase}
+            onChange={(phase) =>
+              phase === NEW_PHASE ? setNewPhaseDialogOpen(true) : setNewSpeciesPhase(phase)
+            }
+            className="h-8"
+            options={addPhaseOptions}
+          />
+        </div>
+      )
+    }
+    const field = SPECIES_PROPERTIES.find((f) => f.key === column.id)
+    if (!field) return null
+    const value = newSpeciesProperties[field.pill]
+    const setValue = (next) => setNewSpeciesProperties((prev) => ({ ...prev, [field.pill]: next }))
+    return field.type === 'boolean' ? (
+      <Toggle label={value ? 'Yes' : 'No'} checked={value === true} size="sm" onChange={setValue} />
+    ) : (
+      <input
+        type="text"
+        value={value ?? ''}
+        onChange={(e) => setValue(e.target.value)}
+        onKeyDown={addOnEnter}
+        placeholder={field.placeholder}
+        aria-label={`New species ${field.label}`}
+        className={ADD_INPUT}
+      />
+    )
+  }
+
+  const addColumns = [
+    { id: 'name', label: 'Name' },
+    { id: 'phase', label: 'Phase' },
+    ...SPECIES_PROPERTIES.map((field) => ({ id: field.key, label: field.label })),
+  ]
 
   return (
-    <div className="space-y-4">
-      {/* Add form and species list are separate cards, side by side on wide screens. They
-          stack below lg, where two columns would leave neither enough room. */}
-      <div className={SPECIES_EDITOR_GRID}>
-        <Card>
-          <CardHeader>
-            <CardTitle>Add species</CardTitle>
-            <CardDescription>Define a new species for the mechanism</CardDescription>
-          </CardHeader>
+    <div className={EDITOR_COLUMN}>
+      <AddRowCard
+        title="Add species"
+        columns={addColumns}
+        render={renderAddCell}
+        action={
+          <Button size="sm" className={ADD_BUTTON} onClick={handleAddSpecies}>
+            Add
+          </Button>
+        }
+      />
 
-          <CardContent>
-            <div className="grid grid-cols-1 gap-7">
-              <div>
-                <label className="block text-base font-semibold text-ink mb-2">
-                  Choose a phase
-                </label>
-                <PhaseSelector
-                  value={newSpeciesPhase}
-                  onChange={setNewSpeciesPhase}
-                  phaseNames={phaseNames}
-                />
-              </div>
+      <Card className={TABLE_CARD}>
+        <CardHeader>
+          <CardTitle>{`${species.length} species`}</CardTitle>
+        </CardHeader>
 
-              <div>
-                <label className="block text-base font-semibold text-ink mb-2">
-                  Type species
-                </label>
-                <input
-                  type="text"
-                  value={newSpeciesName}
-                  onChange={(e) => setNewSpeciesName(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      e.preventDefault()
-                      handleAddSpecies()
-                    }
-                  }}
-                  placeholder="species name"
-                  className={TEXT_INPUT.replace('text-center', 'text-left')}
-                />
-              </div>
+        <CardContent className={LIST_CARD_CONTENT}>
+          {/* Search Bar */}
+          <input
+            type="text"
+            value={speciesSearch}
+            onChange={(e) => setSpeciesSearch(e.target.value)}
+            placeholder="Search species by name"
+            className={`w-[95%] mb-5 ${TEXT_INPUT_SM.replace('text-center', 'text-left')}`}
+          />
 
-              <div>
-                <label className="block text-base font-semibold text-ink mb-2">
-                  Add properties
-                </label>
-                <PropertySelector
-                  properties={newSpeciesProperties}
-                  onChange={setNewSpeciesProperties}
-                />
-              </div>
-            </div>
-
-            <div className="mt-8 flex justify-center">
-              <Button
-                onClick={handleAddSpecies}
-                variant="primary"
-                size="lg"
-                className="text-base font-normal border-0 bg-assist-secondary text-assist-secondary-foreground hover:bg-assist-secondary-hover hover:text-assist-secondary-foreground"
-              >
-                Add species
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className={LIST_CARD}>
-          <CardHeader>
-            <CardTitle>{`${species.length} species`}</CardTitle>
-          </CardHeader>
-
-          <CardContent className={LIST_CARD_CONTENT}>
-            {/* Search Bar */}
-            <input
-              type="text"
-              value={speciesSearch}
-              onChange={(e) => setSpeciesSearch(e.target.value)}
-              placeholder="Search species by name"
-              className={`w-[95%] mb-5 ${TEXT_INPUT_SM.replace('text-center', 'text-left')}`}
-            />
-
-            {species.length === 0 ? (
-              <p className="text-center text-muted py-8">
-                No species defined. Add your first species above.
-              </p>
-            ) : (
-              speciesChips
-            )}
-          </CardContent>
-        </Card>
-      </div>
+          <DataTable
+            tableId="species"
+            columns={columns}
+            rows={filteredSpecies}
+            rowKey={(sp) => sp.id ?? sp.name}
+            emptyMessage={species.length === 0 ? 'No species defined yet.' : 'No matching species found.'}
+          />
+        </CardContent>
+      </Card>
+      {newPhaseDialogOpen && (
+        <AddPillDialog
+          label="Add phase"
+          onCancel={() => setNewPhaseDialogOpen(false)}
+          onAdd={(phase) => {
+            setNewSpeciesPhase(phase)
+            setNewPhaseDialogOpen(false)
+          }}
+        />
+      )}
       {pendingRemoval && (
         <RemoveSpeciesDialog
           species={pendingRemoval.species}

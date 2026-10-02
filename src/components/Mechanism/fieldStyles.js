@@ -12,24 +12,20 @@ export const FIELD_LABEL = 'block text-sm font-semibold text-ink mb-2'
 export const TEXT_INPUT_CODE =
   'px-4 py-3 border-2 border-border bg-white dark:bg-surface text-ink placeholder:text-muted rounded-xl text-sm font-mono focus:outline-none focus:border-action'
 
-// The two editors sit side by side above lg and stack below it, where two columns would leave
-// neither enough room.
-export const EDITOR_GRID = 'grid grid-cols-1 gap-4 lg:grid-cols-[0.7fr_1.3fr] lg:items-start'
+// The add row at the top of the species and reaction tables.
+export const ADD_INPUT = `w-full min-w-[6rem] ${TEXT_INPUT_SM.replace('text-center', 'text-left')}`
+export const ADD_BUTTON =
+  'border-0 bg-assist-secondary text-assist-secondary-foreground hover:bg-assist-secondary-hover hover:text-assist-secondary-foreground'
 
 // Keep the list column fixed so only the list itself scrolls.
 export const LIST_CARD = 'flex flex-col lg:h-[calc(100vh-10rem)] lg:min-h-[24rem]'
+
+// A Mechanism editor: the Add card, then the table card. Above lg it takes the height that
+// MechanismPage leaves below its tabs, so the page does not scroll and only the table scrolls
+// inside its card.
+export const EDITOR_COLUMN = 'flex flex-col gap-4 lg:min-h-0 lg:flex-1'
+export const TABLE_CARD = 'flex min-h-0 flex-1 flex-col'
 export const LIST_CARD_CONTENT = 'flex min-h-0 flex-1 flex-col'
-
-// Collapsed items wrap naturally; expanded items take a full row with w-full
-export const ITEM_LIST =
-  'flex min-h-0 flex-1 flex-wrap items-start content-start gap-2 overflow-y-auto'
-
-// A collapsed item: the same pill language the property selectors use.
-export const ITEM_CHIP =
-  'flex items-center gap-1.5 rounded-full border border-border bg-white dark:bg-surface px-4 py-2 text-[15px] text-ink transition-colors hover:bg-surface-hover focus:outline-none focus-visible:ring-2 focus-visible:ring-assist-secondary-ring'
-
-// An expanded item, occupying its own row.
-export const ITEM_PANEL = 'w-full rounded-2xl border border-border bg-white dark:bg-surface p-4'
 
 // A UnitDropdown paired with a value input below it, e.g. mol m-3 / ppb concentration fields.
 export const DROPDOWN_WRAPPER = 'relative w-full flex-shrink-0'

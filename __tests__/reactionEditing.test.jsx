@@ -15,7 +15,7 @@ import simulationReducer from '../src/redux/slices/simulationSlice'
 import { ReactionEditor } from '../src/components/Mechanism/ReactionEditor'
 import { Toaster } from '../src/components/ui/toaster'
 
-// Expanded reaction chips edit in place using the same species resolution and validation as adding.
+// Reaction table cells edit in place using the same species resolution and validation as adding.
 // updateReaction replaces by id, preserving list order since flow-diagram tracers reference reactions by index.
 
 vi.mock('react-router-dom', async () => {
@@ -53,30 +53,28 @@ const setup = (speciesNames = ['O1D', 'O3', 'NO2']) => {
     </MemoryRouter>
   )
 
-  fireEvent.click(screen.getAllByRole('button').find((b) => /→/.test(b.textContent)))
+  showType('Arrhenius')
   return store
 }
 
-// The add form carries "Reactants"/"Products" labels of its own, so every lookup is scoped to
-// the expanded chip. Remove only exists inside the panel, which makes it a reliable anchor.
-const chipPanel = () => screen.getByRole('button', { name: 'Remove' }).parentElement.parentElement
-
-const fieldUnder = (labelText) => {
-  const label = [...chipPanel().querySelectorAll('label')].find(
-    (candidate) => candidate.textContent === labelText
-  )
-  return label.parentElement.querySelector('input')
+// The species and parameter columns show when the type filter selects one type. The type filter
+// is the second dropdown; the first chooses the reaction type in the add form.
+const showType = (label) => {
+  fireEvent.click(document.querySelectorAll('[aria-haspopup="listbox"]')[1])
+  fireEvent.click(screen.getByRole('option', { name: new RegExp(`^${label} \\(`) }))
 }
 
-const parameterField = (name) => {
-  const heading = [...chipPanel().querySelectorAll('label')].find(
-    (label) => label.textContent === 'Parameters'
-  )
-  const row = [...heading.parentElement.querySelectorAll('div')].find(
-    (candidate) => candidate.querySelector('span')?.textContent === name
-  )
-  return row.querySelector('input')
+// Clicks the table cell of a column, which turns it into an input, and returns that input.
+const cellInput = (columnLabel) => {
+  const cell = screen
+    .getAllByRole('button')
+    .find((button) => button.getAttribute('aria-label')?.startsWith(`Edit ${columnLabel} of `))
+  fireEvent.click(cell)
+  return screen.getByRole('textbox', { name: new RegExp(`^${columnLabel} of `) })
 }
+
+const fieldUnder = cellInput
+const parameterField = cellInput
 
 // Redux stores species ids; the name-based view gives the species names.
 const reactionFrom = (store) => selectNamedReactions(store.getState())[0]
@@ -113,15 +111,15 @@ describe('editing a surface reaction', () => {
         </Provider>
       </MemoryRouter>
     )
-    fireEvent.click(screen.getAllByRole('button').find((b) => /→/.test(b.textContent)))
+    showType('Surface')
     return store
   }
 
   it('exposes the gas-phase reactant, not only the products', () => {
     setupSurface()
-    const labels = [...chipPanel().querySelectorAll('label')].map((l) => l.textContent)
-    expect(labels).toContain('Gas-phase reactant')
-    expect(labels).toContain('Gas-phase products')
+    const headers = screen.getAllByRole('columnheader').map((th) => th.textContent)
+    expect(headers).toContain('Gas-phase reactant')
+    expect(headers).toContain('Gas-phase products')
     expect(fieldUnder('Gas-phase reactant').value).toBe('NO2')
   })
 
@@ -161,7 +159,7 @@ describe('editing a surface reaction', () => {
   })
 })
 
-describe('editing a reaction from its chip', () => {
+describe('editing a reaction in the table', () => {
   it('edits reactants, keeping coefficients', () => {
     const store = setup()
     const field = fieldUnder('Reactants')
@@ -227,6 +225,19 @@ describe('editing a reaction from its chip', () => {
 
     await waitFor(() => expect(screen.getByText(/cannot be empty/i)).toBeInTheDocument())
     expect(reactionFrom(store).reactants).toHaveLength(1)
+  })
+
+  it('sets and clears the reaction name', () => {
+    const store = setup()
+    const name = cellInput('Name')
+    fireEvent.change(name, { target: { value: 'r_o1d' } })
+    fireEvent.blur(name)
+    expect(reactionFrom(store).name).toBe('r_o1d')
+
+    const again = cellInput('Name')
+    fireEvent.change(again, { target: { value: '  ' } })
+    fireEvent.blur(again)
+    expect(reactionFrom(store)).not.toHaveProperty('name')
   })
 
   it('an edit keeps the reaction in place, which the tracer indices rely on', () => {

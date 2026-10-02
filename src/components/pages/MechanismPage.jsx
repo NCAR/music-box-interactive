@@ -17,10 +17,12 @@ export function MechanismPage() {
 
   const ActiveComponent = tabs.find((t) => t.id === activeTab)?.component
 
+  // Above lg the page fills the viewport, less the page padding (lg:pt-6 + lg:pb-8 in
+  // MusicBoxAppNew), so the editor below the tabs can take the rest and only its table scrolls.
   return (
-    <div className="space-y-4">
+    <div className="flex flex-col gap-4 lg:h-[calc(100vh-3.5rem)]">
       {/* Tab Navigation */}
-      <Card>
+      <Card className="flex-shrink-0">
         <CardContent className="pt-3 pb-3 xs:pt-4 xs:pb-4 sm:pt-4 sm:pb-4">
           <div className="flex flex-col xs:flex-row items-stretch xs:items-center justify-between gap-2 xs:gap-3">
             <div className="flex gap-1.5 xs:gap-2 flex-1 overflow-x-auto">

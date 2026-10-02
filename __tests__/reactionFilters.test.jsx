@@ -13,8 +13,8 @@ import {
   getReactionTypeLabel,
 } from '../src/components/Mechanism/reactions/reactionRegistry'
 
-// The reaction list has two filters that combine: a type selector, and a species search that
-// applies within the chosen type.
+// The reaction table has two filters that combine: a type selector, and a search by name or
+// species that applies within the chosen type.
 
 vi.mock('react-router-dom', async () => {
   const actual = await vi.importActual('react-router-dom')
@@ -80,16 +80,18 @@ const chooseType = (label) => {
 }
 
 const searchBox = () => screen.getByPlaceholderText(/search reactions/i)
+// The text of each listed reaction row (the header row is left out).
 const listedFormulas = () =>
   screen
-    .getAllByRole('button')
-    .map((button) => button.textContent)
+    .queryAllByRole('row')
+    .slice(1)
+    .map((row) => row.textContent)
     .filter((text) => text.includes('→'))
 
 describe('reaction list filters', () => {
   it('offers the types actually present, with counts, and an all-types option', () => {
     renderEditor()
-    // Labelled the same way the add form labels them.
+    // Labelled the same way the Add card labels them.
     expect(typeOptionLabels()).toEqual([
       'All reaction types (4)',
       `${getReactionTypeLabel('ARRHENIUS')} (2)`,
@@ -105,16 +107,15 @@ describe('reaction list filters', () => {
     expect(typeOptionLabels()).toContain('Something new (1)')
   })
 
-  it('the type filter and the search box are the same size', () => {
+  it('puts the type filter on the line of the search box, with the same height', () => {
     renderEditor()
     const select = typeFilterTrigger()
     const input = searchBox()
-    const sizing = (el) =>
-      el.className
-        .split(' ')
-        .filter((c) => /^w-|^h-|^px-|^py-|^text-(xs|sm|base)$/.test(c))
-        .sort()
-    expect(sizing(select)).toEqual(sizing(input))
+    const heights = (el) => el.className.split(' ').filter((c) => /^h-/.test(c))
+    expect(heights(select)).toEqual(heights(input))
+    // The search takes 80% of the line.
+    expect(input).toHaveClass('w-4/5')
+    expect(select.closest('div.w-1\\/5').parentElement).toBe(input.parentElement)
   })
 
   it('filters to the reactions of the chosen type', () => {
