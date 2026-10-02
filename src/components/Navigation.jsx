@@ -88,7 +88,7 @@ export function Navigation() {
       {/* Sidebar Navigation */}
       <nav
         className={`
-        fixed left-0 top-0 h-screen bg-surface text-ink border-r border-border shadow-sm flex flex-col z-40
+        fixed left-0 top-0 h-screen bg-surface dark:bg-surface-alt text-ink border-r border-border shadow-sm flex flex-col z-40
         w-[240px] xs:w-[256px] sm:w-[272px] md:w-[280px] lg:w-64
         transition-transform duration-300 ease-in-out
         ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}

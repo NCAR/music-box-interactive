@@ -32,8 +32,10 @@ function AppContent() {
     window.scrollTo(0, 0)
   }, [location.pathname])
 
+  // In dark mode the page is darker than the cards, so the cards stand out (shadows do not show
+  // on a dark background).
   return (
-    <div className="min-h-screen bg-surface relative">
+    <div className="min-h-screen bg-surface dark:bg-surface-alt relative">
       {/* Responsive sidebar navigation */}
       <Navigation />
 

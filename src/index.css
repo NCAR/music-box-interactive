@@ -48,9 +48,11 @@
     --color-assist: #faa119;
     --color-assist-hover: #e0930f;
     --color-assist-foreground: #00357a;
-    --color-assist-secondary: #0e3a40; /* deep tint of UCAR Aqua */
-    --color-assist-secondary-hover: #134d55;
-    --color-assist-secondary-foreground: #e6f7f9;
+    /* Table headers and selected items: a neutral dark gray, a step above the cards, with the
+       aqua kept for the text. A dark teal block was too heavy across many tables. */
+    --color-assist-secondary: #2b2f33;
+    --color-assist-secondary-hover: #353a3f;
+    --color-assist-secondary-foreground: #8eeaf5; /* light UCAR Aqua */
     --color-assist-secondary-border: #34e1f4;
     --color-assist-secondary-ring: #34e1f4;
     --color-surface: #1e1e1e;
