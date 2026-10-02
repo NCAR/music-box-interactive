@@ -444,7 +444,8 @@ export function FlowGraph({
       .attr('dominant-baseline', 'middle')
       .style('font-size', `${FONT_SIZE}px`)
       .style('font-weight', 'bold')
-      .style('fill', '#1f2937')
+      // The species label sits on the page background, so it follows the theme.
+      .style('fill', 'var(--color-ink)')
       .style('pointer-events', 'none')
       .text((d) => d.label)
 
@@ -507,7 +508,7 @@ export function FlowGraph({
       .attr('text-anchor', 'middle')
       .attr('y', (d) => d.hh + 14)
       .style('font-size', `${FONT_SIZE}px`)
-      .style('fill', '#046b5b')
+      .style('fill', 'var(--color-flow-rate)')
       .style('opacity', 0)
       .style('pointer-events', 'none')
 
@@ -635,7 +636,7 @@ export function FlowGraph({
           display: 'none',
           position: 'absolute',
           pointerEvents: 'none',
-          color: '#6b7280',
+          color: 'var(--color-flow-muted)',
           fontSize: '15px',
           fontWeight: 'bold',
           whiteSpace: 'nowrap',

@@ -4,15 +4,15 @@ import { cn } from '../../lib/utils'
 const Badge = React.forwardRef(({ className, variant = 'default', ...props }, ref) => {
   const variants = {
     default: 'bg-[#0057C2]/20 backdrop-blur-lg border border-[#0057C2]/40 text-action',
-    success: 'bg-green-500/20 backdrop-blur-lg border border-green-400/40 text-green-700',
-    warning: 'bg-orange-500/20 backdrop-blur-lg border border-orange-400/40 text-orange-700',
-    error: 'bg-red-500/20 backdrop-blur-lg border border-red-400/40 text-red-700',
+    success: 'bg-green-500/20 backdrop-blur-lg border border-green-400/40 text-green-700 dark:text-green-400',
+    warning: 'bg-orange-500/20 backdrop-blur-lg border border-orange-400/40 text-orange-700 dark:text-orange-300',
+    error: 'bg-red-500/20 backdrop-blur-lg border border-red-400/40 text-red-700 dark:text-danger',
     outline: 'backdrop-blur-lg border border-border text-ink',
     secondary: 'bg-surface-alt backdrop-blur-lg border border-border text-ink',
-    idle: 'bg-black/5 backdrop-blur-lg border border-border text-muted',
+    idle: 'bg-black/5 dark:bg-white/5 backdrop-blur-lg border border-border text-muted',
     running: 'bg-[#0057C2]/20 backdrop-blur-lg border border-[#0057C2]/40 text-action',
-    succeeded: 'bg-green-500/20 backdrop-blur-lg border border-green-400/40 text-green-700',
-    failed: 'bg-red-500/20 backdrop-blur-lg border border-red-400/40 text-red-700',
+    succeeded: 'bg-green-500/20 backdrop-blur-lg border border-green-400/40 text-green-700 dark:text-green-400',
+    failed: 'bg-red-500/20 backdrop-blur-lg border border-red-400/40 text-red-700 dark:text-danger',
   }
 
   return (

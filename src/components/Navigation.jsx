@@ -1,7 +1,8 @@
 /* global __APP_VERSION__ */
 import { useState } from 'react'
-import { NavLink } from 'react-router-dom'
-import { Home, Atom, Settings, BarChart3, Info, Bug, MessagesSquare } from 'lucide-react'
+import { Link, NavLink } from 'react-router-dom'
+import { Home, Atom, Settings, Settings2, BarChart3, Info, Bug, MessagesSquare } from 'lucide-react'
+import { SettingsDialog } from './Settings/SettingsDialog'
 import RunSimulationButton from './RunSimulationButton'
 import DownloadButtons from './DownloadButtons'
 
@@ -11,11 +12,12 @@ import DownloadButtons from './DownloadButtons'
  */
 export function Navigation() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const [settingsOpen, setSettingsOpen] = useState(false)
 
   const navLinks = [
     { to: '/', label: 'Dashboard', Icon: Home },
     { to: '/mechanism', label: 'Mechanism', Icon: Atom },
-    { to: '/conditions', label: 'Conditions', Icon: Settings },
+    { to: '/conditions', label: 'Conditions', Icon: Settings2 },
     { to: '/plots', label: 'Results', Icon: BarChart3 },
   ]
 
@@ -86,7 +88,7 @@ export function Navigation() {
       {/* Sidebar Navigation */}
       <nav
         className={`
-        fixed left-0 top-0 h-screen bg-surface text-ink border-r border-border shadow-sm flex flex-col z-40
+        fixed left-0 top-0 h-screen bg-surface dark:bg-surface-alt text-ink border-r border-border shadow-sm flex flex-col z-40
         w-[240px] xs:w-[256px] sm:w-[272px] md:w-[280px] lg:w-64
         transition-transform duration-300 ease-in-out
         ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
@@ -95,7 +97,14 @@ export function Navigation() {
         {/* Logo Section */}
         <div className="p-4 sm:p-5 md:p-6 border-b border-border">
           <h1 className="text-base sm:text-lg md:text-xl font-bold text-heading text-right [font-variant:small-caps]">
-            Music Box Interactive
+            {/* The title goes back to the Dashboard (the home page). */}
+            <Link
+              to="/"
+              onClick={closeMobileMenu}
+              className="rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-action"
+            >
+              Music Box Interactive
+            </Link>
           </h1>
           <p className="text-xs text-muted text-right mt-0.5">v{__APP_VERSION__}</p>
         </div>
@@ -179,15 +188,32 @@ export function Navigation() {
               </a>
             )
           })}
+          <button
+            type="button"
+            onClick={() => {
+              closeMobileMenu()
+              setSettingsOpen(true)
+            }}
+            className={`w-full text-left ${navLinkClassName({ isActive: false })}`}
+          >
+            <Settings className="w-5 h-5 sm:w-6 sm:h-6 flex-shrink-0" />
+            <span className="truncate">Settings</span>
+          </button>
         </div>
 
         {/* ACOM Logo */}
         <div className="border-t border-border">
           <div className="p-3 sm:p-4">
+            {/* The official white logo (white text, color NSF seal) for the dark theme. */}
             <img
               src="/logos/ACOM-color-vertical.png"
               alt="ACOM Laboratory"
-              className="h-16 sm:h-20 w-auto mx-auto"
+              className="h-16 sm:h-20 w-auto mx-auto dark:hidden"
+            />
+            <img
+              src="/logos/ACOM-white-vertical.png"
+              alt="ACOM Laboratory"
+              className="hidden h-16 sm:h-20 w-auto mx-auto dark:block"
             />
           </div>
           <img
@@ -198,6 +224,7 @@ export function Navigation() {
           />
         </div>
       </nav>
+      {settingsOpen && <SettingsDialog onClose={() => setSettingsOpen(false)} />}
     </>
   )
 }

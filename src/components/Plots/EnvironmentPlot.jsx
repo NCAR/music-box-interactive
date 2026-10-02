@@ -19,12 +19,14 @@ import { PRESSURE_UNITS } from './pressureUnits'
 import { TIME_RANGE_UNITS } from './timeRangeUnits'
 import { buildEnvironmentSeries } from '../../utils/environmentSeries'
 import { FIELD_LABEL, DROPDOWN_WRAPPER, DROPDOWN_BUTTON } from '../Mechanism/fieldStyles'
+import { useChartTheme } from '../../theme/chartTheme'
 
 /**
  * EnvironmentPlot Component
  * Displays environmental conditions (temperature, pressure) over time
  */
 export function EnvironmentPlot() {
+  const chart = useChartTheme()
   const simulation = useSelector((state) => state.simulation)
 
   const [temperatureUnitId, setTemperatureUnitId] = useState('K')
@@ -98,7 +100,7 @@ export function EnvironmentPlot() {
                     label={<span className="inline-block w-24 text-left">Pressure</span>}
                     onChange={() => toggleMetric('pressure')}
                     size="sm"
-                    activeTrackClassName="bg-[#0057C2]"
+                    activeTrackClassName="bg-[#0057C2] dark:bg-[#42C0FF]"
                   />
                 </div>
               </div>
@@ -146,17 +148,17 @@ export function EnvironmentPlot() {
             <div className="flex-1 min-w-0">
               <ResponsiveContainer width="100%" height={600}>
                 <LineChart data={envData} margin={{ top: 30, right: 40, left: 20, bottom: 10 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#D8D6D2" />
+                  <CartesianGrid strokeDasharray="3 3" stroke={chart.grid} />
                   <XAxis
                     dataKey="time"
                     label={{
                       value: `Time (${timeAxisUnitLabel})`,
                       position: 'insideBottom',
                       offset: -5,
-                      style: { fill: '#1f2937', fontWeight: 600, fontSize: 14 },
+                      style: { fill: chart.label, fontWeight: 600, fontSize: 14 },
                     }}
-                    stroke="#5f6368"
-                    tick={{ fontSize: 12, fill: '#5f6368' }}
+                    stroke={chart.axis}
+                    tick={{ fontSize: 12, fill: chart.axis }}
                   />
                   {showTemperature && (
                     <YAxis
@@ -181,10 +183,10 @@ export function EnvironmentPlot() {
                         value: `Pressure (${pressureUnit.label})`,
                         angle: showTemperature ? 90 : -90,
                         position: showTemperature ? 'insideRight' : 'insideLeft',
-                        style: { fill: '#0057C2', fontWeight: 600, fontSize: 13 },
+                        style: { fill: chart.primary, fontWeight: 600, fontSize: 13 },
                       }}
-                      stroke="#0057C2"
-                      tick={{ fontSize: 11, fill: '#0057C2' }}
+                      stroke={chart.primary}
+                      tick={{ fontSize: 11, fill: chart.primary }}
                       padding={{ top: 20, bottom: 20 }}
                     />
                   )}
@@ -215,7 +217,7 @@ export function EnvironmentPlot() {
                       yAxisId="pressure"
                       type="monotone"
                       dataKey="pressure"
-                      stroke="#0057C2"
+                      stroke={chart.primary}
                       strokeWidth={2}
                       dot={false}
                       name={`Pressure (${pressureUnit.label})`}

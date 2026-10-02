@@ -20,6 +20,7 @@ import { useResultsConcentrationUnit } from '../hooks/useConcentrationUnit'
 import { fromMolM3, isMixingRatioUnit } from '../utils/concentrationUnits'
 import { CHART_COLORS } from './chartColors'
 import { TIME_RANGE_UNITS as TIME_UNITS } from './Plots/timeRangeUnits'
+import { useChartTheme } from '../theme/chartTheme'
 
 // Concentrations at or below this (mol m-3) are plotted at the floor, since the y-axis is log.
 const MIN_VALUE = 1e-20
@@ -33,7 +34,7 @@ const filterButtonClass = (selected) =>
 
 const UNIT_DROPDOWN_WRAPPER = 'relative flex-shrink-0 mr-3'
 const UNIT_DROPDOWN_BUTTON =
-  'flex items-center gap-1 w-full h-8 px-2 border border-gray-300 rounded-lg text-sm text-gray-800 hover:bg-gray-50 bg-white'
+  'flex items-center gap-1 w-full h-8 px-2 border border-gray-300 dark:border-border rounded-lg text-sm text-gray-800 dark:text-ink hover:bg-gray-50 dark:hover:bg-surface-hover bg-white dark:bg-surface'
 
 // Round a value up to a human-friendly scale (1, 2, 5, or 10 times a power of 10)
 function niceNumber(x) {
@@ -52,6 +53,7 @@ const TOOLTIP_VISIBLE = 25
 
 // Legend entries, with overflow shown in a "+N others" overlay.
 export function ChartLegendContent({ payload, maxVisible, compact }) {
+  const chart = useChartTheme()
   const [open, setOpen] = useState(false)
   const overflowRef = useRef(null)
   const closeOverflow = useCallback(() => setOpen(false), [])
@@ -61,7 +63,7 @@ export function ChartLegendContent({ payload, maxVisible, compact }) {
 
   const visible = payload.slice(0, maxVisible)
   const overflow = payload.slice(maxVisible)
-  const itemClass = `flex items-center gap-1.5 px-2 py-0.5 bg-white border rounded-lg shadow-sm ${
+  const itemClass = `flex items-center gap-1.5 px-2 py-0.5 bg-white dark:bg-surface border rounded-lg shadow-sm ${
     compact ? 'text-[10px]' : 'text-xs'
   }`
 
@@ -79,12 +81,12 @@ export function ChartLegendContent({ payload, maxVisible, compact }) {
             type="button"
             onClick={() => setOpen((o) => !o)}
             className={`${itemClass} font-semibold text-muted hover:bg-surface-hover`}
-            style={{ borderColor: '#D8D6D2' }}
+            style={{ borderColor: chart.grid }}
           >
             +{overflow.length} others
           </button>
           {open && (
-            <div className="absolute z-20 bottom-full mb-1 left-1/2 -translate-x-1/2 w-56 max-h-64 overflow-y-auto bg-white border border-border rounded-lg shadow-lg py-1">
+            <div className="absolute z-20 bottom-full mb-1 left-1/2 -translate-x-1/2 w-56 max-h-64 overflow-y-auto bg-white dark:bg-surface border border-border rounded-lg shadow-lg py-1">
               {overflow.map((entry, index) => (
                 <div
                   key={`legend-overflow-${index}`}
@@ -115,6 +117,7 @@ export function ChartTooltipContent({
   compact,
   zeroBelow = 1e-19,
 }) {
+  const chart = useChartTheme()
   if (!active || !payload?.length) return null
 
   const sorted = [...payload].sort((a, b) => {
@@ -127,7 +130,7 @@ export function ChartTooltipContent({
 
   return (
     <div
-      className={`bg-white border-2 border-ink rounded-lg shadow-xl ${compact ? 'p-2' : 'p-3'}`}
+      className={`bg-white dark:bg-surface border-2 border-ink rounded-lg shadow-xl ${compact ? 'p-2' : 'p-3'}`}
       style={{ backgroundColor: 'white' }}
     >
       <p
@@ -145,16 +148,16 @@ export function ChartTooltipContent({
             <div
               key={idx}
               className={`flex items-center text-xs ${compact ? 'gap-1.5' : 'gap-2'}`}
-              style={{ color: '#1f2937' }}
+              style={{ color: chart.text }}
             >
               <div
                 className={`${compact ? 'w-2 h-2' : 'w-3 h-3'} rounded-full flex-shrink-0`}
                 style={{ backgroundColor: entry.color }}
               />
-              <span className="font-medium text-ink" style={{ color: '#1f2937' }}>
+              <span className="font-medium text-ink" style={{ color: chart.text }}>
                 {entry.name}:
               </span>
-              <span className="font-mono text-ink" style={{ color: '#1f2937' }}>
+              <span className="font-mono text-ink" style={{ color: chart.text }}>
                 {isValidNumber
                   ? numValue < zeroBelow
                     ? '0.0000e+00'
@@ -181,6 +184,7 @@ export function ChartTooltipContent({
  * @param {Object} props.metadata - Simulation metadata (mechanism, duration, etc.)
  */
 export function SimulationChart({ results, metadata }) {
+  const chart = useChartTheme()
   const [speciesSearch, setSpeciesSearch] = useState('')
   const [selectedSpecies, setSelectedSpecies] = useState([])
   const [initialized, setInitialized] = useState(false)
@@ -489,7 +493,7 @@ export function SimulationChart({ results, metadata }) {
                     </button>
 
                     {speciesOverflowOpen && (
-                      <div className="absolute z-20 mt-1 w-48 max-h-56 overflow-y-auto bg-white border border-border rounded-lg shadow-lg py-1">
+                      <div className="absolute z-20 mt-1 w-48 max-h-56 overflow-y-auto bg-white dark:bg-surface border border-border rounded-lg shadow-lg py-1">
                         {overflowSpeciesList.map((species) => (
                           <button
                             key={species}
@@ -516,7 +520,7 @@ export function SimulationChart({ results, metadata }) {
           {/* Main content: chart */}
           <div className="flex-1 min-h-0 flex flex-col gap-3">
             {results.length < 3 && (
-              <div className="bg-[#FFFBEB] border-2 border-location/60 rounded-lg p-3 text-sm">
+              <div className="bg-[#FFFBEB] dark:bg-[#3a2f0b] border-2 border-location/60 rounded-lg p-3 text-sm">
                 <p className="font-semibold text-heading mb-1 flex items-center gap-2">
                   <AlertCircle className="w-4 h-4" />
                   Limited Data Points
@@ -529,25 +533,25 @@ export function SimulationChart({ results, metadata }) {
               </div>
             )}
 
-            <div className="relative flex-1 min-h-[28rem] lg:min-h-0 bg-white">
+            <div className="relative flex-1 min-h-[28rem] lg:min-h-0 bg-white dark:bg-surface">
               <div className="absolute inset-0 p-2 xs:p-3 sm:p-4 !pl-0">
           <ResponsiveContainer width="100%" height="100%" className="xs:hidden">
             <LineChart data={chartData} margin={{ top: 5, right: 5, left: 5, bottom: 5 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#D8D6D2" />
+              <CartesianGrid strokeDasharray="3 3" stroke={chart.grid} />
 
               <XAxis
                 dataKey="timeSeconds"
                 domain={timeDomain}
                 ticks={xAxisTicks}
-                stroke="#5f6368"
-                tick={{ fontSize: 10, fill: '#5f6368' }}
+                stroke={chart.axis}
+                tick={{ fontSize: 10, fill: chart.axis }}
                 type="number"
               >
                 <Label
                   value={`Time (${timeUnit.shortLabel})`}
                   position="insideBottom"
                   offset={-5}
-                  style={{ fill: '#1f2937', fontWeight: 600, fontSize: 11 }}
+                  style={{ fill: chart.label, fontWeight: 600, fontSize: 11 }}
                 />
               </XAxis>
 
@@ -557,8 +561,8 @@ export function SimulationChart({ results, metadata }) {
                   (dataMin) => (dataMin > 0 ? dataMin / 10 : 1e-20),
                   (dataMax) => dataMax * 10,
                 ]}
-                stroke="#5f6368"
-                tick={{ fontSize: 8, fill: '#5f6368' }}
+                stroke={chart.axis}
+                tick={{ fontSize: 8, fill: chart.axis }}
                 tickFormatter={(value) => {
                   if (value === 0 || !isFinite(value)) return '0'
                   return value.toExponential(0)
@@ -607,21 +611,21 @@ export function SimulationChart({ results, metadata }) {
           {/* Larger chart for bigger screens */}
           <ResponsiveContainer width="100%" height="100%" className="hidden xs:block">
             <LineChart data={chartData} margin={{ top: 5, right: 0, left: 10, bottom: 3 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#D8D6D2" />
+              <CartesianGrid strokeDasharray="3 3" stroke={chart.grid} />
 
               <XAxis
                 dataKey="timeSeconds"
                 domain={timeDomain}
                 ticks={xAxisTicks}
-                stroke="#5f6368"
-                tick={{ fontSize: 12, fill: '#5f6368' }}
+                stroke={chart.axis}
+                tick={{ fontSize: 12, fill: chart.axis }}
                 type="number"
               >
                 <Label
                   value={`Time (${timeUnit.shortLabel})`}
                   position="insideBottom"
                   offset={-5}
-                  style={{ fill: '#1f2937', fontWeight: 600, fontSize: 14 }}
+                  style={{ fill: chart.label, fontWeight: 600, fontSize: 14 }}
                 />
               </XAxis>
 
@@ -631,8 +635,8 @@ export function SimulationChart({ results, metadata }) {
                   (dataMin) => (dataMin > 0 ? dataMin / 10 : 1e-20),
                   (dataMax) => dataMax * 10,
                 ]}
-                stroke="#5f6368"
-                tick={{ fontSize: 11, fill: '#5f6368' }}
+                stroke={chart.axis}
+                tick={{ fontSize: 11, fill: chart.axis }}
                 tickFormatter={(value) => {
                   if (value === 0 || !isFinite(value)) return '0'
                   return value.toExponential(0)
@@ -645,7 +649,7 @@ export function SimulationChart({ results, metadata }) {
                   angle={-90}
                   position="insideLeft"
                   offset={10}
-                  style={{ fill: '#1f2937', fontWeight: 600, fontSize: 13, textAnchor: 'middle' }}
+                  style={{ fill: chart.label, fontWeight: 600, fontSize: 13, textAnchor: 'middle' }}
                 />
               </YAxis>
 

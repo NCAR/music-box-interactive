@@ -122,7 +122,7 @@ export function ExampleLoader() {
 
       <CardContent>
         {error && (
-          <div className="bg-red-900/20 backdrop-blur-lg border border-red-400/30 text-red-700 px-4 py-3 rounded mb-4">
+          <div className="bg-red-900/20 backdrop-blur-lg border border-red-400/30 text-red-700 dark:text-danger px-4 py-3 rounded mb-4">
             {error}
           </div>
         )}
@@ -137,8 +137,8 @@ export function ExampleLoader() {
               className="flex flex-col h-full text-left p-3 xs:p-4 border border-border rounded-lg hover:bg-surface-hover transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-action disabled:pointer-events-none disabled:opacity-50"
             >
               <h4 className="font-semibold text-sm">{example.name}</h4>
-              <p className="text-xs text-gray-700 mt-1">{example.description}</p>
-              <span className="mt-2 text-xs font-bold text-gray-900">
+              <p className="text-xs text-gray-700 dark:text-ink mt-1">{example.description}</p>
+              <span className="mt-2 text-xs font-bold text-gray-900 dark:text-ink">
                 {loading ? 'Loading...' : example.mechanism_name}
               </span>
             </button>
@@ -146,7 +146,7 @@ export function ExampleLoader() {
         </div>
 
         {examples.length === 0 && !error && (
-          <p className="text-center text-gray-500 py-4">No examples available</p>
+          <p className="text-center text-gray-500 dark:text-muted py-4">No examples available</p>
         )}
       </CardContent>
     </Card>

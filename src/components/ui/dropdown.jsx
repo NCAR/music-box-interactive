@@ -22,7 +22,7 @@ export function Dropdown({ value, options, onChange, className, menuClassName, p
         aria-expanded={open}
         onClick={() => setOpen((isOpen) => !isOpen)}
         className={cn(
-          'flex w-full items-center justify-between gap-2 rounded-lg border-2 border-border bg-white px-2 text-left text-sm text-ink transition-colors focus:outline-none focus:border-action',
+          'flex w-full items-center justify-between gap-2 rounded-lg border-2 border-border bg-white dark:bg-surface px-2 text-left text-sm text-ink transition-colors focus:outline-none focus:border-action',
           className
         )}
       >
@@ -34,7 +34,7 @@ export function Dropdown({ value, options, onChange, className, menuClassName, p
         <div
           role="listbox"
           className={cn(
-            'absolute z-20 mt-1 max-h-72 w-full overflow-y-auto rounded-lg border border-border bg-white py-1 shadow-lg',
+            'absolute z-20 mt-1 max-h-72 w-full overflow-y-auto rounded-lg border border-border bg-white dark:bg-surface py-1 shadow-lg',
             menuClassName
           )}
         >

@@ -6,6 +6,24 @@
     <link rel="apple-touch-icon" href="/icons/icon-192.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#0057c2" />
+    <meta name="color-scheme" content="light dark" />
+    <script>
+      // Applies the saved color theme before the first paint, so a dark page never flashes
+      // white. Keep in sync with src/theme/theme.js.
+      ;(function () {
+        var preference = 'system'
+        try {
+          preference = localStorage.getItem('musicbox.themePreference') || 'system'
+        } catch (e) {}
+        var dark =
+          preference === 'dark' ||
+          (preference !== 'light' &&
+            window.matchMedia &&
+            window.matchMedia('(prefers-color-scheme: dark)').matches)
+        document.documentElement.classList.toggle('dark', dark)
+        document.documentElement.style.colorScheme = dark ? 'dark' : 'light'
+      })()
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
