@@ -135,8 +135,8 @@ export function SpeciesConcentrationTab() {
     if (thirdBodyIds.has(id)) return
     setSelectedSpeciesIds((prev) => {
       const next = new Set(prev)
-      if (next.has(name)) next.delete(name)
-      else next.add(name)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
       return next
     })
   }
