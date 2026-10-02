@@ -25,8 +25,11 @@ const renderEditor = (phases) => {
   return store
 }
 
-// The phase choices of the Add species card.
+// The phase choices of the Add species dialog.
 const addRowPhases = () => {
+  if (!screen.queryByRole('dialog', { name: 'Add species' })) {
+    fireEvent.click(screen.getByRole('button', { name: 'Add species' }))
+  }
   const addRow = screen.getByRole('table', { name: 'Add species' })
   fireEvent.click(within(addRow).getByRole('button', { expanded: false }))
   return screen.getAllByRole('option').map((option) => option.textContent.trim())
@@ -60,5 +63,23 @@ describe('species editor phase choices', () => {
     const { phases } = store.getState().mechanism.config.mechanism
     expect(phases.map((p) => p.name)).toEqual(['gas', 'aqueous'])
     expect(phases[1].species).toHaveLength(1)
+  })
+
+  it('closes only the Add phase dialog on Escape, and keeps the Add species dialog open after an add', () => {
+    renderEditor([{ name: 'gas', species: [] }])
+    addRowPhases()
+    fireEvent.click(screen.getByRole('option', { name: 'New phase…' }))
+    const phaseInput = screen.getByLabelText('Add phase')
+    phaseInput.focus()
+    fireEvent.keyDown(phaseInput, { key: 'Escape' })
+    expect(screen.queryByLabelText('Add phase')).toBeNull()
+    expect(screen.getByRole('dialog', { name: 'Add species' })).toBeInTheDocument()
+
+    const name = screen.getByPlaceholderText('species name')
+    fireEvent.change(name, { target: { value: 'O3' } })
+    fireEvent.keyDown(name, { key: 'Enter' })
+    // Still open, and cleared for the next species.
+    expect(screen.getByRole('dialog', { name: 'Add species' })).toBeInTheDocument()
+    expect(screen.getByPlaceholderText('species name')).toHaveValue('')
   })
 })

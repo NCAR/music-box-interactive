@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { X } from 'lucide-react'
 import { cn } from '../../lib/utils'
@@ -6,9 +6,15 @@ import { cn } from '../../lib/utils'
 // A modal dialog: a backdrop, a card with a title, a scrolling body and a footer. Escape and a
 // click on the backdrop close it.
 export function Dialog({ title, description, onClose, footer, children, className }) {
+  const panelRef = useRef(null)
+
+  // Escape closes the dialog that has the focus, so Escape in a dialog on top of this one (e.g.
+  // "Add phase" over "Add species") closes only that one.
   useEffect(() => {
     const handleKeyDown = (e) => {
-      if (e.key === 'Escape') onClose()
+      if (e.key !== 'Escape') return
+      const focus = document.activeElement
+      if (!focus || focus === document.body || panelRef.current?.contains(focus)) onClose()
     }
     document.addEventListener('keydown', handleKeyDown)
     return () => document.removeEventListener('keydown', handleKeyDown)
@@ -20,6 +26,7 @@ export function Dialog({ title, description, onClose, footer, children, classNam
       onClick={onClose}
     >
       <div
+        ref={panelRef}
         role="dialog"
         aria-modal="true"
         aria-label={title}

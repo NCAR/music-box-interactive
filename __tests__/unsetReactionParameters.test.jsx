@@ -2,7 +2,7 @@ import React from 'react'
 import { describe, it, expect, vi } from 'vitest'
 import { Provider } from 'react-redux'
 import { configureStore } from '@reduxjs/toolkit'
-import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import { render, screen, fireEvent, waitFor, within } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 
 import mechanismReducer, { addReaction, addSpecies } from '../src/redux/slices/mechanismSlice'
@@ -20,9 +20,9 @@ vi.mock('react-router-dom', async () => {
   return { ...actual, useNavigate: () => vi.fn() }
 })
 
-// The type filter is the second dropdown; the first chooses the type in the Add card.
+// The type filter is the first dropdown on the page; the Add dialog has its own.
 const showType = (label) => {
-  fireEvent.click(document.querySelectorAll('[aria-haspopup="listbox"]')[1])
+  fireEvent.click(document.querySelectorAll('[aria-haspopup="listbox"]')[0])
   fireEvent.click(screen.getByRole('option', { name: label }))
 }
 
@@ -42,8 +42,10 @@ describe('unset rate parameters', () => {
     ;['O2', 'O'].forEach((n) => store.dispatch(addSpecies({ name: n })))
     render(<MemoryRouter><Provider store={store}><ReactionEditor /><Toaster /></Provider></MemoryRouter>)
   
-    // choose Photolysis in the Add card (its type dropdown is the first one) and fill it in
-    fireEvent.click(document.querySelectorAll('[aria-haspopup="listbox"]')[0])
+    // open the Add dialog, choose Photolysis in it, and fill it in
+    fireEvent.click(screen.getByRole('button', { name: 'Add reaction' }))
+    const dialog = screen.getByRole('dialog', { name: 'Add reaction' })
+    fireEvent.click(within(dialog).getAllByRole('button', { expanded: false })[0])
     fireEvent.click(screen.getByRole('option', { name: 'Photolysis' }))
     fireEvent.change(screen.getByRole('textbox', { name: 'New reaction Reactants' }), {
       target: { value: 'O2' },
@@ -52,7 +54,8 @@ describe('unset rate parameters', () => {
       target: { value: '2O' },
     })
     // leave scaling factor blank
-    fireEvent.click(screen.getByRole('button', { name: 'Add' }))
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Add' }))
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Done' }))
 
     await waitFor(() => expect(store.getState().mechanism.config.mechanism.reactions).toHaveLength(1))
     expect(store.getState().mechanism.config.mechanism.reactions[0]).not.toHaveProperty('scaling factor')

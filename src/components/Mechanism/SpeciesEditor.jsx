@@ -2,7 +2,7 @@ import { useState, useCallback, useEffect, useMemo } from 'react'
 import { createPortal } from 'react-dom'
 import { useSelector, useDispatch } from 'react-redux'
 import { useNotify } from '@/hooks/use-notify'
-import { Card, CardContent, CardHeader, CardTitle } from '../ui/card'
+import { Card, CardContent } from '../ui/card'
 import { Button } from '../ui/button'
 import { Toggle } from '../ui/toggle'
 import {
@@ -15,7 +15,8 @@ import {
 import { reactionsUsingSpecies } from '../../services/mechanism/speciesIds'
 import { RemoveSpeciesDialog } from './RemoveSpeciesDialog'
 import { Dropdown } from '../ui/dropdown'
-import { AddRowCard } from './table/AddRowCard'
+import { AddRowDialog } from './table/AddRowDialog'
+import { RemoveRowButton } from './table/RemoveRowButton'
 import { DataTable } from './table/DataTable'
 import { EditableCell } from './table/EditableCell'
 import { addSpeciesIfValid } from './speciesUtils'
@@ -122,6 +123,7 @@ export function SpeciesEditor() {
   const [newSpeciesPhase, setNewSpeciesPhase] = useState('')
   const [newSpeciesProperties, setNewSpeciesProperties] = useState({})
   const [newPhaseDialogOpen, setNewPhaseDialogOpen] = useState(false)
+  const [addOpen, setAddOpen] = useState(false)
   const [speciesSearch, setSpeciesSearch] = useState('')
   const speciesQuery = speciesSearch.trim().toLowerCase()
   // Sorted case-insensitively with natural numeric ordering (e.g., C2H6 before C10H22).
@@ -313,14 +315,7 @@ export function SpeciesEditor() {
       hideable: false,
       className: 'w-0',
       render: (sp) => (
-        <Button
-          variant="destructive"
-          size="sm"
-          aria-label={`Remove ${sp.name}`}
-          onClick={() => handleRemoveSpecies(sp)}
-        >
-          Remove
-        </Button>
+        <RemoveRowButton label={`Remove ${sp.name}`} onClick={() => handleRemoveSpecies(sp)} />
       ),
     },
   ]
@@ -395,41 +390,46 @@ export function SpeciesEditor() {
 
   return (
     <div className={EDITOR_COLUMN}>
-      <AddRowCard
-        title="Add species"
-        columns={addColumns}
-        render={renderAddCell}
-        action={
-          <Button size="sm" className={ADD_BUTTON} onClick={handleAddSpecies}>
-            Add
-          </Button>
-        }
-      />
-
       <Card className={TABLE_CARD}>
-        <CardHeader>
-          <CardTitle>{`${species.length} species`}</CardTitle>
-        </CardHeader>
-
-        <CardContent className={LIST_CARD_CONTENT}>
-          {/* Search Bar */}
-          <input
-            type="text"
-            value={speciesSearch}
-            onChange={(e) => setSpeciesSearch(e.target.value)}
-            placeholder="Search species by name"
-            className={`w-[95%] mb-5 ${TEXT_INPUT_SM.replace('text-center', 'text-left')}`}
-          />
-
+        <CardContent className={`${LIST_CARD_CONTENT} p-4`}>
           <DataTable
             tableId="species"
             columns={columns}
             rows={filteredSpecies}
             rowKey={(sp) => sp.id ?? sp.name}
             emptyMessage={species.length === 0 ? 'No species defined yet.' : 'No matching species found.'}
+            toolbar={
+              // One line: the count, then the search.
+              <div className="flex items-center gap-3">
+                <h2 className="whitespace-nowrap text-base font-semibold text-heading">
+                  {`${species.length} species`}
+                </h2>
+                <input
+                  type="text"
+                  value={speciesSearch}
+                  onChange={(e) => setSpeciesSearch(e.target.value)}
+                  placeholder="Search species by name"
+                  className={`w-full ${TEXT_INPUT_SM.replace('text-center', 'text-left')}`}
+                />
+              </div>
+            }
+            actions={
+              <Button size="sm" className={ADD_BUTTON} onClick={() => setAddOpen(true)}>
+                Add species
+              </Button>
+            }
           />
         </CardContent>
       </Card>
+      {addOpen && (
+        <AddRowDialog
+          title="Add species"
+          columns={addColumns}
+          render={renderAddCell}
+          onAdd={handleAddSpecies}
+          onClose={() => setAddOpen(false)}
+        />
+      )}
       {newPhaseDialogOpen && (
         <AddPillDialog
           label="Add phase"

@@ -60,7 +60,7 @@ const setup = (speciesNames = ['O1D', 'O3', 'NO2']) => {
 // The species and parameter columns show when the type filter selects one type. The type filter
 // is the second dropdown; the first chooses the reaction type in the add form.
 const showType = (label) => {
-  fireEvent.click(document.querySelectorAll('[aria-haspopup="listbox"]')[1])
+  fireEvent.click(document.querySelectorAll('[aria-haspopup="listbox"]')[0])
   fireEvent.click(screen.getByRole('option', { name: new RegExp(`^${label} \\(`) }))
 }
 

@@ -40,8 +40,9 @@ const renderEditor = (speciesNames) => {
   return store
 }
 
-// Adds an Arrhenius reaction, the Add card's default type, through the Add card.
+// Adds an Arrhenius reaction, the default type of the Add dialog, through the dialog.
 const submitReaction = (reactants, products) => {
+  fireEvent.click(screen.getByRole('button', { name: 'Add reaction' }))
   fireEvent.change(screen.getByRole('textbox', { name: 'New reaction Reactants' }), {
     target: { value: reactants },
   })

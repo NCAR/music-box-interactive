@@ -12,7 +12,7 @@ import { SpeciesEditor } from '../src/components/Mechanism/SpeciesEditor'
 const toast = vi.fn()
 vi.mock('@/hooks/use-toast', () => ({ useToast: () => ({ toast }) }))
 
-describe('the Add species form', () => {
+describe('the Add species dialog', () => {
   it('adds the species when the user presses Enter in the name field', () => {
     const store = configureStore({
       reducer: { mechanism: mechanismReducer, conditions: conditionsReducer, simulation: simulationReducer },
@@ -24,6 +24,7 @@ describe('the Add species form', () => {
       </Provider>
     )
 
+    fireEvent.click(screen.getByRole('button', { name: 'Add species' }))
     const name = screen.getByPlaceholderText('species name')
     fireEvent.change(name, { target: { value: 'O3' } })
     fireEvent.keyDown(name, { key: 'Enter' })

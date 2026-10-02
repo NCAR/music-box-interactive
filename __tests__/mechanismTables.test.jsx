@@ -180,25 +180,31 @@ describe('the table controls', () => {
   })
 })
 
-describe('the Add reaction card', () => {
+describe('the Add reaction dialog', () => {
   const mechanism = () => ({
     species: [{ name: 'A' }, { name: 'B' }, { name: 'C' }],
     phases: [{ name: 'gas', species: [{ name: 'A' }, { name: 'B' }, { name: 'C' }] }],
     reactions: [],
   })
-  // The Add card's type dropdown is the first dropdown on the page.
+  // The Add reaction dialog, opened from the toolbar when it is not open yet.
+  const addDialog = () => {
+    if (!screen.queryByRole('dialog', { name: 'Add reaction' })) {
+      fireEvent.click(screen.getByRole('button', { name: 'Add reaction' }))
+    }
+    return screen.getByRole('dialog', { name: 'Add reaction' })
+  }
+  // The type picker is the first dropdown of the dialog.
   const showType = (label) => {
-    fireEvent.click(document.querySelectorAll('[aria-haspopup="listbox"]')[0])
+    fireEvent.click(within(addDialog()).getAllByRole('button', { expanded: false })[0])
     fireEvent.click(screen.getByRole('option', { name: label }))
   }
   const type = (field, value) =>
     fireEvent.change(screen.getByRole('textbox', { name: `New reaction ${field}` }), { target: { value } })
-  const add = () => fireEvent.click(screen.getByRole('button', { name: 'Add' }))
+  const add = () => fireEvent.click(within(addDialog()).getByRole('button', { name: 'Add' }))
 
-  // The type picker is next to the Add button, at the top right of the card.
   it('starts with Arrhenius, and its fields and units follow the chosen type', () => {
     renderWith(<ReactionEditor />, mechanism())
-    const addTable = screen.getByRole('table', { name: 'Add reaction' })
+    const addTable = within(addDialog()).getByRole('table', { name: 'Add reaction' })
     const headers = () => within(addTable).getAllByRole('columnheader').map((th) => th.textContent)
     expect(headers()).toEqual([
       'Name',
@@ -229,7 +235,7 @@ describe('the Add reaction card', () => {
       ...mechanism(),
       reactions: [{ id: 't1', type: 'TROE', reactants: [{ name: 'A' }], products: [{ name: 'B' }] }],
     })
-    fireEvent.click(document.querySelectorAll('[aria-haspopup="listbox"]')[1])
+    fireEvent.click(document.querySelectorAll('[aria-haspopup="listbox"]')[0])
     fireEvent.click(screen.getByRole('option', { name: /^Troe/ }))
     const headers = within(dataTable())
       .getAllByRole('columnheader')
@@ -303,13 +309,14 @@ describe('the Add reaction card', () => {
   })
 })
 
-describe('the Add species card', () => {
+describe('the Add species dialog', () => {
   it('adds a species with a phase and a property', () => {
     const store = renderWith(<SpeciesEditor />, {
       species: [],
       phases: [{ name: 'gas', species: [] }, { name: 'aqueous', species: [] }],
       reactions: [],
     })
+    fireEvent.click(screen.getByRole('button', { name: 'Add species' }))
     const addRow = screen.getByRole('table', { name: 'Add species' })
     fireEvent.change(within(addRow).getByRole('textbox', { name: 'New species name' }), {
       target: { value: 'SO4' },
@@ -319,9 +326,11 @@ describe('the Add species card', () => {
     })
     fireEvent.click(within(addRow).getByRole('button', { expanded: false }))
     fireEvent.click(screen.getByRole('option', { name: 'aqueous' }))
-    // The Add button is at the top right of the card, not in the row.
+    // The Add button is in the dialog footer, not in the row.
     expect(within(addRow).queryByRole('button', { name: 'Add' })).toBeNull()
-    fireEvent.click(screen.getByRole('button', { name: 'Add' }))
+    fireEvent.click(
+      within(screen.getByRole('dialog', { name: 'Add species' })).getByRole('button', { name: 'Add' })
+    )
 
     const named = selectNamedMechanism(store.getState())
     expect(named.species).toEqual([

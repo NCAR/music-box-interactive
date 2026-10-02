@@ -12,9 +12,20 @@ import { PAGE_SIZES, useTableSettings } from './tableSettings'
 //   columns  - [{ id, label, unit?, unitTitle?, render(row), sortValue?(row), hideable?, className? }]
 //   rows     - the rows to show, already filtered
 //   rowKey   - (row) => a stable key
-//   toolbar  - shown at the left of the column picker
+//   toolbar  - shown at the left of the column picker, on the same line
+//   actions  - shown at the right of the column picker, e.g. an Add button
+//   footerNote - shown at the left of the page controls
 //   emptyMessage - shown when there are no rows
-export function DataTable({ tableId, columns, rows, rowKey, toolbar, emptyMessage }) {
+export function DataTable({
+  tableId,
+  columns,
+  rows,
+  rowKey,
+  toolbar,
+  actions,
+  footerNote,
+  emptyMessage,
+}) {
   const { hidden, pageSize, setColumnShown, setPageSize } = useTableSettings(tableId)
   const [sort, setSort] = useState(null) // { id, direction: 1 | -1 }
   const [page, setPage] = useState(0)
@@ -69,6 +80,7 @@ export function DataTable({ tableId, columns, rows, rowKey, toolbar, emptyMessag
       <div className="flex items-center justify-between gap-2">
         <div className="min-w-0 flex-1">{toolbar}</div>
         <ColumnPicker columns={hideableColumns} hidden={hidden} onChange={setColumnShown} />
+        {actions}
       </div>
 
       <div className="min-h-0 flex-1 overflow-auto rounded-lg border border-gray-200 dark:border-border">
@@ -84,7 +96,7 @@ export function DataTable({ tableId, columns, rows, rowKey, toolbar, emptyMessag
                     aria-sort={
                       sorted === 1 ? 'ascending' : sorted === -1 ? 'descending' : undefined
                     }
-                    className={`px-4 py-2 text-left font-semibold ${column.className ?? ''}`}
+                    className={`px-3 py-1.5 text-left font-semibold ${column.className ?? ''}`}
                   >
                     {column.sortValue ? (
                       <button
@@ -120,7 +132,7 @@ export function DataTable({ tableId, columns, rows, rowKey, toolbar, emptyMessag
                 {shownColumns.map((column) => (
                   <td
                     key={column.id}
-                    className={`px-4 py-2 align-middle ${column.className ?? ''}`}
+                    className={`px-3 py-1 align-middle ${column.className ?? ''}`}
                   >
                     {column.render(row)}
                   </td>
@@ -132,6 +144,7 @@ export function DataTable({ tableId, columns, rows, rowKey, toolbar, emptyMessag
       </div>
 
       <div className="flex flex-wrap items-center justify-end gap-3 text-sm text-muted">
+        {footerNote && <span className="mr-auto text-xs">{footerNote}</span>}
         <span>Rows per page</span>
         <div className="w-20">
           <Dropdown

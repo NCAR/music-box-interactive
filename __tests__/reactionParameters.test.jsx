@@ -39,7 +39,7 @@ const expandReaction = (reaction) => {
   )
 
   // The parameter columns show when the type filter (the first dropdown) selects the type.
-  fireEvent.click(document.querySelectorAll('[aria-haspopup="listbox"]')[1])
+  fireEvent.click(document.querySelectorAll('[aria-haspopup="listbox"]')[0])
   fireEvent.click(
     screen.getByRole('option', { name: `${getReactionTypeLabel(reaction.type)} (1)` })
   )

@@ -3,7 +3,7 @@ import { v4 as uuidv4 } from 'uuid'
 import { useSelector, useDispatch } from 'react-redux'
 import { parseRateColumnKey } from '../../services/conditions/rateColumns'
 import { useNotify } from '@/hooks/use-notify'
-import { Card, CardContent, CardHeader, CardTitle } from '../ui/card'
+import { Card, CardContent } from '../ui/card'
 import { Button } from '../ui/button'
 import { Dropdown } from '../ui/dropdown'
 import { addReaction, removeReaction, updateReaction, selectNamedReactions } from '../../redux/slices/mechanismSlice'
@@ -33,7 +33,8 @@ import {
   LIST_CARD_CONTENT,
   TEXT_INPUT_SM,
 } from './fieldStyles'
-import { AddRowCard } from './table/AddRowCard'
+import { AddRowDialog } from './table/AddRowDialog'
+import { RemoveRowButton } from './table/RemoveRowButton'
 import { DataTable } from './table/DataTable'
 import { EditableCell } from './table/EditableCell'
 import { EMPTY_ARRAY } from '../../utils/emptyArray'
@@ -146,6 +147,7 @@ export function ReactionEditor() {
   // The Add card: the type of the new reaction, and the typed text by field key ('name', a
   // species field or `param:<key>`).
   const [addType, setAddType] = useState(reactionRegistry[0].type)
+  const [addOpen, setAddOpen] = useState(false)
   const [draft, setDraft] = useState({})
 
   // Group reactions by canonical type so registry and solver spellings map to the same option.
@@ -415,14 +417,10 @@ export function ReactionEditor() {
       hideable: false,
       className: 'w-0',
       render: (reaction) => (
-        <Button
-          variant="destructive"
-          size="sm"
-          aria-label={`Remove ${reactionLabel(reaction)}`}
+        <RemoveRowButton
+          label={`Remove ${reactionLabel(reaction)}`}
           onClick={() => handleRemoveReaction(reaction.id)}
-        >
-          Remove
-        </Button>
+        />
       ),
     },
   ]
@@ -475,69 +473,33 @@ export function ReactionEditor() {
     return null
   }
 
+  // The type of the new reaction sets the fields of the Add dialog.
+  const addTypePicker = (
+    <div className="flex items-center gap-2">
+      <span className="text-sm font-semibold text-ink">Type</span>
+      <div className="w-64">
+        <Dropdown
+          value={addType}
+          onChange={(type) => {
+            setAddType(type)
+            setDraft({})
+          }}
+          className="h-9"
+          options={reactionRegistry.map((entry) => ({
+            value: entry.type,
+            label: entry.label,
+            disabled: entry.type === 'LAMBDA_RATE_CONSTANT',
+            title: entry.type === 'LAMBDA_RATE_CONSTANT' ? 'Lambda rate is unavailable' : undefined,
+          }))}
+        />
+      </div>
+    </div>
+  )
+
   return (
     <div className={EDITOR_COLUMN}>
-      <AddRowCard
-        title="Add reaction"
-        columns={addColumns}
-        render={renderAddCell}
-        action={
-          // The type of the new reaction sets the fields of the row.
-          <div className="flex items-center gap-2">
-            <div className="min-w-[11rem]">
-              <Dropdown
-                value={addType}
-                onChange={(type) => {
-                  setAddType(type)
-                  setDraft({})
-                }}
-                className="h-9"
-                options={reactionRegistry.map((entry) => ({
-                  value: entry.type,
-                  label: entry.label,
-                  disabled: entry.type === 'LAMBDA_RATE_CONSTANT',
-                  title: entry.type === 'LAMBDA_RATE_CONSTANT' ? 'Lambda rate is unavailable' : undefined,
-                }))}
-              />
-            </div>
-            <Button size="sm" className={ADD_BUTTON} onClick={handleAddFromRow}>
-              Add
-            </Button>
-          </div>
-        }
-      />
-
       <Card className={TABLE_CARD}>
-        <CardHeader>
-          <CardTitle>{`${reactions.length} reactions`}</CardTitle>
-        </CardHeader>
-
-        <CardContent className={LIST_CARD_CONTENT}>
-          {/* The search takes 80% of the line, the type filter the rest. */}
-          <div className="mb-5 flex w-[95%] items-center gap-2">
-            <input
-              type="text"
-              value={reactionSearch}
-              onChange={(e) => setReactionSearch(e.target.value)}
-              placeholder="Search reactions by name or species (e.g. NO + O3, a -> b)"
-              className={`w-4/5 ${TEXT_INPUT_SM.replace('text-center', 'text-left')}`}
-            />
-            <div className="w-1/5 min-w-0">
-              <Dropdown
-                value={activeType}
-                onChange={setTypeFilter}
-                className="h-9"
-                options={[
-                  { value: '', label: `All reaction types (${reactions.length})` },
-                  ...availableTypes.map((type) => ({
-                    value: type,
-                    label: `${getReactionTypeLabel(type)} (${typeCounts[type]})`,
-                  })),
-                ]}
-              />
-            </div>
-          </div>
-
+        <CardContent className={`${LIST_CARD_CONTENT} p-4`}>
           <DataTable
             tableId="reactions"
             columns={columns}
@@ -545,15 +507,55 @@ export function ReactionEditor() {
             rowKey={(reaction) => reaction.id}
             emptyMessage={reactions.length === 0 ? 'No reactions defined yet.' : 'No matching reactions found.'}
             toolbar={
-              !activeType && (
-                <p className="text-xs text-muted">
-                  Choose one reaction type to see and edit its species and parameters.
-                </p>
-              )
+              // One line: the count, the search (80% of the rest) and the type filter.
+              <div className="flex items-center gap-3">
+                <h2 className="whitespace-nowrap text-base font-semibold text-heading">
+                  {`${reactions.length} reactions`}
+                </h2>
+                <input
+                  type="text"
+                  value={reactionSearch}
+                  onChange={(e) => setReactionSearch(e.target.value)}
+                  placeholder="Search reactions by name or species (e.g. NO + O3, a -> b)"
+                  className={`w-4/5 ${TEXT_INPUT_SM.replace('text-center', 'text-left')}`}
+                />
+                <div className="w-1/5 min-w-0">
+                  <Dropdown
+                    value={activeType}
+                    onChange={setTypeFilter}
+                    className="h-9"
+                    options={[
+                      { value: '', label: `All reaction types (${reactions.length})` },
+                      ...availableTypes.map((type) => ({
+                        value: type,
+                        label: `${getReactionTypeLabel(type)} (${typeCounts[type]})`,
+                      })),
+                    ]}
+                  />
+                </div>
+              </div>
+            }
+            actions={
+              <Button size="sm" className={ADD_BUTTON} onClick={() => setAddOpen(true)}>
+                Add reaction
+              </Button>
+            }
+            footerNote={
+              !activeType && 'Choose one reaction type to see and edit its species and parameters.'
             }
           />
         </CardContent>
       </Card>
+      {addOpen && (
+        <AddRowDialog
+          title="Add reaction"
+          columns={addColumns}
+          render={renderAddCell}
+          onAdd={handleAddFromRow}
+          onClose={() => setAddOpen(false)}
+          extra={addTypePicker}
+        />
+      )}
     </div>
   )
 }

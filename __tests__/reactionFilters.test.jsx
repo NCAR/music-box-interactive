@@ -57,7 +57,7 @@ const renderEditor = (reactions = REACTIONS) => {
 
 // The list card's type filter is the second dropdown; the add form has one above it. These are
 // custom dropdowns rather than native selects, so the menu only exists while it is open.
-const typeFilterTrigger = () => document.querySelectorAll('[aria-haspopup="listbox"]')[1]
+const typeFilterTrigger = () => document.querySelectorAll('[aria-haspopup="listbox"]')[0]
 const toggleTypeFilter = () => fireEvent.click(typeFilterTrigger())
 
 const openOptions = () => {
