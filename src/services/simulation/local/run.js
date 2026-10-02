@@ -10,13 +10,16 @@ import {
   setStatus,
 } from '../../../redux/slices/simulationSlice'
 
-const addProductsToReactions = (reactions) => {
+// Each tracer is named after the id of its Redux reaction, which the flux diagram and the
+// reaction rate plots read it back with (see computeIntegratedReactionRate). The payload
+// reactions have no id, so `reduxReactions` gives the reaction at the same index.
+const addProductsToReactions = (reactions, reduxReactions) => {
   // Track the actual new product species names and their corresponding CONC keys
   const productSpeciesToAdd = []
   const productConcentrationKeys = []
   reactions.forEach((reaction, index) => {
-    // Index-derived so it cannot collide with a real species name -- see ./tracer.js
-    const prodName = buildTracerSpeciesName(index, reaction.name)
+    // Id-derived so it cannot collide with a real species name -- see ./tracer.js
+    const prodName = buildTracerSpeciesName(reduxReactions[index], index)
 
     // Handle products
     if (Array.isArray(reaction.products)) {
@@ -96,8 +99,10 @@ export const runLocalSimulation = async ({ mechanismData, conditions }) => {
   const { payload, mechanismLabel } = buildLocalSimulationPayload({ mechanismData, conditions })
 
   // Add tracking products to reactions and get concentration keys to exclude
+  // The payload keeps the order of the Redux reactions, so the indices match.
   const { productSpeciesToAdd, productConcentrationKeys } = addProductsToReactions(
-    payload.mechanism.reactions
+    payload.mechanism.reactions,
+    mechanismData.config?.mechanism?.reactions ?? []
   )
 
   const species = Array.isArray(payload?.mechanism?.species) ? payload.mechanism.species : []

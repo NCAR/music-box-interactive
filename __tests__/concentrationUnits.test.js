@@ -119,7 +119,7 @@ describe('interval divisors', () => {
   it('sums each interval converted with its own density', () => {
     const divisors = buildIntervalDivisors('ppb', densities)
     const reaction = { name: 'r' }
-    const [key] = buildTracerConcentrationKeys(0, reaction.name)
+    const [key] = buildTracerConcentrationKeys(reaction, 0)
     const results = [0, 1, 3, 6].map((value, i) => ({
       time: times[i],
       concentrations: { [key]: value },

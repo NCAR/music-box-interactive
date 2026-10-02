@@ -48,7 +48,7 @@ const renderGraph = (reactions = REACTIONS) => {
   // Tracer concentrations integrate to 5 for the first reaction and 50 for the second.
   // Tracer keys are derived from each reaction's own name and index, as run.js does.
   const [first, second] = reactions.map(
-    (entry, index) => buildTracerConcentrationKeys(index, entry.name)[0]
+    (entry, index) => buildTracerConcentrationKeys(entry, index)[0]
   )
   store.dispatch(
     setExcludedResults([

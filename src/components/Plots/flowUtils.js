@@ -134,7 +134,7 @@ export function computeIntegratedReactionRate(
   let total = 0
   let matched = false
 
-  for (const concKey of buildTracerConcentrationKeys(reactionIndex, reaction?.name)) {
+  for (const concKey of buildTracerConcentrationKeys(reaction, reactionIndex)) {
     let first = null
     let last = null
     let converted = 0
@@ -180,7 +180,7 @@ export function computeReactionSeries(
 
   const tracked = trackedReactions.map(({ key, reaction, index }) => ({
     key,
-    concKeys: buildTracerConcentrationKeys(index, reaction?.name),
+    concKeys: buildTracerConcentrationKeys(reaction, index),
   }))
 
   const baselines = new Map()

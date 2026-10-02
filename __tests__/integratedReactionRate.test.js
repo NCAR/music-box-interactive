@@ -5,9 +5,9 @@ import { buildTracerConcentrationKey } from '../src/services/simulation/local/tr
 // integrates it: its concentration at time t is the integral of that reaction's
 // rate from 0 to t.
 
-const REACTION = { name: 'NO2' };
+const REACTION = { id: 'r-no2', name: 'NO2' };
 const INDEX = 165;
-const KEY = buildTracerConcentrationKey(INDEX, REACTION.name);
+const KEY = buildTracerConcentrationKey(REACTION, INDEX);
 
 // Build a results array by sampling an analytic tracer function C(t) at `times`.
 const resultsFrom = (tracerFn, times) =>
@@ -137,24 +137,24 @@ describe('computeIntegratedReactionRate — defensive cases', () => {
   });
 });
 
-describe('computeIntegratedReactionRate — index-keyed lookup', () => {
+describe('computeIntegratedReactionRate — id-keyed lookup', () => {
   // Regression test for the defect: tracers were named after reactions, so a
   // reaction named "ALD2" produced the key "CONC.ALD2.mol m-3" -- the real species' key.
   it('reads the tracer key, never the same-named real species', () => {
-    const reaction = { name: 'ALD2' };
+    const reaction = { id: 'r-ald2', name: 'ALD2' };
     const results = [
       {
         time: 0,
         concentrations: {
           'CONC.ALD2.mol m-3': 1000, // real acetaldehyde, must be ignored
-          [buildTracerConcentrationKey(3, 'ALD2')]: 0,
+          [buildTracerConcentrationKey(reaction, 3)]: 0,
         },
       },
       {
         time: 1,
         concentrations: {
           'CONC.ALD2.mol m-3': 9999,
-          [buildTracerConcentrationKey(3, 'ALD2')]: 7,
+          [buildTracerConcentrationKey(reaction, 3)]: 7,
         },
       },
     ];
@@ -162,33 +162,44 @@ describe('computeIntegratedReactionRate — index-keyed lookup', () => {
   });
 
   it('does not read a neighbouring reaction’s tracer', () => {
+    const A = { id: 'a', name: 'A' };
+    const B = { id: 'b', name: 'B' };
     const results = [
       {
         time: 0,
         concentrations: {
-          [buildTracerConcentrationKey(0, 'A')]: 0,
-          [buildTracerConcentrationKey(1, 'B')]: 0,
+          [buildTracerConcentrationKey(A, 0)]: 0,
+          [buildTracerConcentrationKey(B, 1)]: 0,
         },
       },
       {
         time: 1,
         concentrations: {
-          [buildTracerConcentrationKey(0, 'A')]: 3,
-          [buildTracerConcentrationKey(1, 'B')]: 500,
+          [buildTracerConcentrationKey(A, 0)]: 3,
+          [buildTracerConcentrationKey(B, 1)]: 500,
         },
       },
     ];
-    expect(computeIntegratedReactionRate({ name: 'A' }, 0, results, 0, 10)).toBeCloseTo(3, 10);
-    expect(computeIntegratedReactionRate({ name: 'B' }, 1, results, 0, 10)).toBeCloseTo(500, 10);
+    expect(computeIntegratedReactionRate(A, 0, results, 0, 10)).toBeCloseTo(3, 10);
+    expect(computeIntegratedReactionRate(B, 1, results, 0, 10)).toBeCloseTo(500, 10);
   });
 
-  it('returns 0 when the index no longer matches the name (stale mechanism edit)', () => {
+  it('returns 0 for a reaction whose tracer is not in the results (stale mechanism edit)', () => {
     // Fails closed rather than silently attributing another reaction's numbers.
     const results = [
-      { time: 0, concentrations: { [buildTracerConcentrationKey(5, 'NO2')]: 0 } },
-      { time: 1, concentrations: { [buildTracerConcentrationKey(5, 'NO2')]: 42 } },
+      { time: 0, concentrations: { [buildTracerConcentrationKey({ id: 'old' }, 5)]: 0 } },
+      { time: 1, concentrations: { [buildTracerConcentrationKey({ id: 'old' }, 5)]: 42 } },
     ];
-    expect(computeIntegratedReactionRate({ name: 'HONO' }, 5, results, 0, 10)).toBe(0);
+    expect(computeIntegratedReactionRate({ id: 'new', name: 'NO2' }, 5, results, 0, 10)).toBe(0);
+  });
+
+  it('keeps reading a reaction after its name changes', () => {
+    const results = [
+      { time: 0, concentrations: { [buildTracerConcentrationKey({ id: 'r' }, 0)]: 0 } },
+      { time: 1, concentrations: { [buildTracerConcentrationKey({ id: 'r' }, 0)]: 9 } },
+    ];
+    expect(computeIntegratedReactionRate({ id: 'r', name: '' }, 0, results, 0, 10)).toBe(9);
+    expect(computeIntegratedReactionRate({ id: 'r', name: 'renamed' }, 0, results, 0, 10)).toBe(9);
   });
 });
 
@@ -214,8 +225,8 @@ describe('computeIntegratedReactionRate — branched reactions', () => {
       branched,
       0,
       results({
-        'CONC.__PROD__RXN_0_BR_A.mol m-3': 3,
-        'CONC.__PROD__RXN_0_BR_B.mol m-3': 7,
+        'CONC.__PROD__RXN_0_A.mol m-3': 3,
+        'CONC.__PROD__RXN_0_B.mol m-3': 7,
       }),
       0,
       10
@@ -232,7 +243,7 @@ describe('computeIntegratedReactionRate — branched reactions', () => {
     const rate = computeIntegratedReactionRate(
       plain,
       0,
-      results({ 'CONC.__PROD__RXN_0_BR.mol m-3': 4 }),
+      results({ 'CONC.__PROD__RXN_0.mol m-3': 4 }),
       0,
       10
     );

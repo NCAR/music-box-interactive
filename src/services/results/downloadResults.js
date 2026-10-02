@@ -29,14 +29,16 @@ function formatReactionFormula(reaction) {
 }
 
 // Builds the zip's three files:
-// - results.csv: concentration/env columns, plus each reaction's rate over the interval
-//   starting at that row (last row is blank -- no interval after it).
+// - results.csv: concentration/env columns, plus each reaction's integrated rate (the flux
+//   that the reaction rate graphs and the flow diagram show) over the interval starting at
+//   that row, in an IRR.<id>.mol m-3 column (last row is blank -- no interval after it).
 // - music_box_config.json: same as Download Config.
-// - mapping.json: RXN_<index> -> reaction, since names aren't unique.
+// - mapping.json: <id> -> reaction, since names aren't unique. The id is the reaction's
+//   UI-only id; it is valid only for this download, because a load gives new ids.
 // `reactions` here is mechanism.config.mechanism.reactions -- the single source list
-// buildLocalSimulationPayload also serializes from, in the same order, so RXN_<index> lines up
-// with the reaction run.js solved (run.js's tracer injection only appends to product arrays,
-// it never changes reaction order or count).
+// buildLocalSimulationPayload also serializes from, in the same order, so the config reaction
+// at the same index is the same reaction (run.js's tracer injection only appends to product
+// arrays, it never changes reaction order or count).
 export function buildResultsExport({ mechanism, conditions, results, excludedResults, metadata }) {
   const reactions = Array.isArray(mechanism?.config?.mechanism?.reactions)
     ? mechanism.config.mechanism.reactions
@@ -54,7 +56,9 @@ export function buildResultsExport({ mechanism, conditions, results, excludedRes
       }
     })
   })
-  const rateKeys = reactions.map((_, index) => `RXN_${index}`)
+  // A reaction without an id (only hand-built data) falls back to RXN_<index>.
+  const reactionIds = reactions.map((reaction, index) => reaction?.id ?? `RXN_${index}`)
+  const rateKeys = reactionIds.map((id) => `IRR.${id}.mol m-3`)
 
   const headers = ['time.s', ...concentrationKeys, ...rateKeys]
   const rows = points.map((point, index) => {
@@ -72,11 +76,14 @@ export function buildResultsExport({ mechanism, conditions, results, excludedRes
     return row
   })
 
+  // The name is the one in music_box_config.json, so the mapping and the config agree. For an
+  // unnamed rate-parameter reaction that is its generated name (see rateReactionNames).
+  const config = buildDownloadableConfig({ mechanism, conditions })
+  const configReactions = config?.mechanism?.reactions ?? []
   const mapping = {}
   reactions.forEach((reaction, index) => {
-    mapping[`RXN_${index}`] = {
-      id: reaction?.id ?? null,
-      name: reaction?.name ?? null,
+    mapping[reactionIds[index]] = {
+      name: configReactions[index]?.name || reaction?.name || null,
       type: reaction?.type ?? null,
       formula: formatReactionFormula(reaction),
     }
@@ -84,7 +91,7 @@ export function buildResultsExport({ mechanism, conditions, results, excludedRes
 
   return {
     resultsCsv: toCsv(headers, rows),
-    config: buildDownloadableConfig({ mechanism, conditions }),
+    config,
     mapping,
     mechanismName: metadata?.mechanism || mechanism?.selectedMechanism || 'custom',
   }

@@ -50,8 +50,8 @@ const renderGraph = (isLogScale) => {
   REACTIONS.forEach((reaction) => store.dispatch(addReaction(reaction)))
 
   // "dark" never proceeds, so its tracer never moves off zero.
-  const dark = buildTracerConcentrationKeys(0, 'dark')[0]
-  const lit = buildTracerConcentrationKeys(1, 'lit')[0]
+  const dark = buildTracerConcentrationKeys(REACTIONS[0], 0)[0]
+  const lit = buildTracerConcentrationKeys(REACTIONS[1], 1)[0]
   store.dispatch(
     setExcludedResults([
       { time: 0, concentrations: { [dark]: 0, [lit]: 0 } },

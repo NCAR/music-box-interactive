@@ -10,43 +10,46 @@ import ts1Config from '@ncar/music-box/examples/ts1/my_config.json' with { type:
 import chapmanConfig from '@ncar/music-box/examples/chapman/my_config.json' with { type: 'json' };
 
 describe('buildTracerSpeciesName', () => {
-  it('derives the name from the index, and prefixes it', () => {
-    expect(buildTracerSpeciesName(165, 'NO2')).toBe(`${TRACER_PREFIX}RXN_165_NO2`);
+  it('derives the name from the reaction id, and prefixes it', () => {
+    expect(buildTracerSpeciesName({ id: 'abc', name: 'NO2' }, 165)).toBe(`${TRACER_PREFIX}RXN_abc`);
   });
 
-  it('normalizes punctuation and whitespace in the appended name', () => {
-    expect(buildTracerSpeciesName(179, 'FORM->CO')).toBe(`${TRACER_PREFIX}RXN_179_FORMCO`);
-    expect(buildTracerSpeciesName(7, 'O + O3 -> 2 O2')).toBe(`${TRACER_PREFIX}RXN_7_O__O3__2_O2`);
+  it('makes a uuid safe for a species name', () => {
+    expect(buildTracerSpeciesName({ id: '1b9d6bcd-bbfd-4b2d' }, 0)).toBe(
+      `${TRACER_PREFIX}RXN_1b9d6bcd_bbfd_4b2d`
+    );
   });
 
-  it('gives distinct names to distinct indices even when names repeat', () => {
-    expect(buildTracerSpeciesName(1, 'NO2')).not.toBe(buildTracerSpeciesName(2, 'NO2'));
+  it('does not depend on the reaction name or the reaction index', () => {
+    // A rename, or the generated name of an unnamed reaction, keeps the same tracer.
+    expect(buildTracerSpeciesName({ id: 'abc', name: 'NO2' }, 1)).toBe(
+      buildTracerSpeciesName({ id: 'abc', name: '' }, 7)
+    );
   });
 
-  it('handles unnamed reactions with a stable index-only name', () => {
-    for (const name of [undefined, null, '', 42, {}]) {
-      expect(buildTracerSpeciesName(12, name)).toBe(`${TRACER_PREFIX}RXN_12`);
+  it('gives distinct names to distinct reactions even when names repeat', () => {
+    expect(buildTracerSpeciesName({ id: 'a', name: 'NO2' }, 0)).not.toBe(
+      buildTracerSpeciesName({ id: 'b', name: 'NO2' }, 0)
+    );
+  });
+
+  it('falls back to the index for a reaction without an id', () => {
+    for (const reaction of [undefined, null, {}, { name: 'NO2' }]) {
+      expect(buildTracerSpeciesName(reaction, 12)).toBe(`${TRACER_PREFIX}RXN_12`);
     }
-  });
-
-  it('is deterministic — the old implementation used Math.random()', () => {
-    // A random suffix could not be reconstructed when reading results back, so every
-    // unnamed reaction silently reported zero production.
-    expect(buildTracerSpeciesName(12, undefined)).toBe(buildTracerSpeciesName(12, undefined));
-    expect(buildTracerSpeciesName(3, 'ALD2')).toBe(buildTracerSpeciesName(3, 'ALD2'));
   });
 });
 
 describe('buildTracerConcentrationKey', () => {
   it('wraps the species name in the solver’s CONC key format', () => {
-    expect(buildTracerConcentrationKey(165, 'NO2')).toBe(
-      `CONC.${TRACER_PREFIX}RXN_165_NO2.mol m-3`
+    expect(buildTracerConcentrationKey({ id: 'abc' }, 165)).toBe(
+      `CONC.${TRACER_PREFIX}RXN_abc.mol m-3`
     );
   });
 
   it('never produces a bare real-species key', () => {
     // The original bug: reaction "ALD2" yielded exactly "CONC.ALD2.mol m-3".
-    expect(buildTracerConcentrationKey(3, 'ALD2')).not.toBe('CONC.ALD2.mol m-3');
+    expect(buildTracerConcentrationKey({ id: 'x', name: 'ALD2' }, 3)).not.toBe('CONC.ALD2.mol m-3');
   });
 });
 
@@ -58,8 +61,8 @@ describe('isRealSpeciesName', () => {
   });
 
   it('rejects tracers', () => {
-    expect(isRealSpeciesName(buildTracerSpeciesName(0, 'ALD2'))).toBe(false);
-    expect(isRealSpeciesName(buildTracerSpeciesName(99, undefined))).toBe(false);
+    expect(isRealSpeciesName(buildTracerSpeciesName({ id: 'x', name: 'ALD2' }, 0))).toBe(false);
+    expect(isRealSpeciesName(buildTracerSpeciesName(undefined, 99))).toBe(false);
   });
 
   it('rejects non-strings rather than throwing', () => {
@@ -82,8 +85,9 @@ describe('no tracer collides with a real species in any bundled mechanism', () =
     expect(declared.size).toBeGreaterThan(0);
     expect(reactions.length).toBeGreaterThan(0);
 
+    // Redux gives every reaction a uuid; the config files themselves have no ids.
     const tracerNames = reactions.map((reaction, index) =>
-      buildTracerSpeciesName(index, reaction.name)
+      buildTracerSpeciesName({ ...reaction, id: crypto.randomUUID() }, index)
     );
 
     // No tracer may shadow a declared species
