@@ -35,6 +35,7 @@ describe('useResultsConcentrationUnit', () => {
     expect(result.current.unitId).toBe('mol_m3')
     expect(result.current.airDensities).toBeNull()
     expect(result.current.units.filter((u) => u.disabled).map((u) => u.id)).toEqual([
+      'mol_mol',
       'ppth',
       'ppm',
       'ppb',
