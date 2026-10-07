@@ -3,14 +3,21 @@ import { v4 as uuidv4 } from 'uuid'
 import { Button } from '../../ui/button'
 import { parseReactionString } from './reactionUtils'
 import { FIELD_LABEL, TEXT_INPUT } from '../fieldStyles'
+import { PARAMETER_GRID, ParameterRow } from '../ParameterRow'
+import { ReactionEquation } from '../ReactionEquation'
 
-export function TunnelingReactionForm({ onAddReaction }) {
+export function TunnelingReactionForm({ onAddReaction, parameters = [] }) {
   const [reactants, setReactants] = useState('')
   const [products, setProducts] = useState('')
   const [paramA, setParamA] = useState('')
   const [paramB, setParamB] = useState('')
   const [paramC, setParamC] = useState('')
   const [error, setError] = useState(null)
+  const rateFields = {
+    A: [paramA, setParamA],
+    B: [paramB, setParamB],
+    C: [paramC, setParamC],
+  }
 
   const parseOptionalNumber = (raw) => {
     if (!raw.trim()) {
@@ -102,38 +109,18 @@ export function TunnelingReactionForm({ onAddReaction }) {
         />
       </div>
 
-      {/* One parameter per row so long labels aren't truncated by three columns. */}
-      <div className="grid grid-cols-1 gap-3">
-        <div>
-          <label className={FIELD_LABEL}>A (pre-exponential factor) </label>
-          <input
-            type="text"
-            value={paramA}
-            onChange={(e) => setParamA(e.target.value)}
-            placeholder="1.0"
-            className={TEXT_INPUT.replace('text-center', 'text-left')}
+      <ReactionEquation type="TUNNELING" />
+
+      <div className={PARAMETER_GRID}>
+        {parameters.map(({ key, ...parameter }) => (
+          <ParameterRow
+            key={key}
+            symbol={key}
+            {...parameter}
+            value={rateFields[key][0]}
+            onChange={rateFields[key][1]}
           />
-        </div>
-        <div>
-          <label className={FIELD_LABEL}>B (linear temperature dependence)</label>
-          <input
-            type="text"
-            value={paramB}
-            onChange={(e) => setParamB(e.target.value)}
-            placeholder="0.0"
-            className={TEXT_INPUT.replace('text-center', 'text-left')}
-          />
-        </div>
-        <div>
-          <label className={FIELD_LABEL}>C (cubed temperature dependence)</label>
-          <input
-            type="text"
-            value={paramC}
-            onChange={(e) => setParamC(e.target.value)}
-            placeholder="0.0"
-            className={TEXT_INPUT.replace('text-center', 'text-left')}
-          />
-        </div>
+        ))}
       </div>
 
       <div className="pt-8 flex justify-center">

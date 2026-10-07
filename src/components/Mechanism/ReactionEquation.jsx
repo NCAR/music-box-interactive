@@ -3,6 +3,37 @@
 const Sup = ({ children }) => <sup>{children}</sup>
 const Sub = ({ children }) => <sub>{children}</sub>
 
+const FALLOFF_LEGEND = (
+  <>
+    T: temperature (K); [M]: number density of air (mol m<Sup>−3</Sup>)
+  </>
+)
+
+// Troe and ternary chemical activation share k0, kinf and the broadening factor; only the
+// leading fraction of k differs, so it is passed in as the children.
+const FalloffEquation = ({ children }) => (
+  <div className="space-y-1 text-left text-base">
+    <div>
+      k<Sub>0</Sub> = k<Sub>0A</Sub> · e<Sup>k<Sub>0C</Sub>/T</Sup> · (T/300.0)
+      <Sup>
+        k<Sub>0B</Sub>
+      </Sup>
+    </div>
+    <div>
+      k<Sub>inf</Sub> = k<Sub>infA</Sub> · e<Sup>k<Sub>infC</Sub>/T</Sup> · (T/300.0)
+      <Sup>
+        k<Sub>infB</Sub>
+      </Sup>
+    </div>
+    <div>
+      k = {children} · F<Sub>c</Sub>
+      <Sup>
+        1 / (1 + (1/N) · [log<Sub>10</Sub>(k<Sub>0</Sub>[M] / k<Sub>inf</Sub>)]<Sup>2</Sup>)
+      </Sup>
+    </div>
+  </div>
+)
+
 const EQUATIONS = {
   ARRHENIUS: {
     equation: (
@@ -11,6 +42,52 @@ const EQUATIONS = {
       </>
     ),
     legend: 'T: temperature (K); P: pressure (Pa)',
+  },
+  TERNARY_CHEMICAL_ACTIVATION: {
+    equation: (
+      <FalloffEquation>
+        k<Sub>0</Sub> / (1 + k<Sub>0</Sub>[M] / k<Sub>inf</Sub>)
+      </FalloffEquation>
+    ),
+    legend: FALLOFF_LEGEND,
+  },
+  TROE: {
+    equation: (
+      <FalloffEquation>
+        k<Sub>0</Sub>[M] / (1 + k<Sub>0</Sub>[M] / k<Sub>inf</Sub>)
+      </FalloffEquation>
+    ),
+    legend: FALLOFF_LEGEND,
+  },
+  SURFACE: {
+    equation: (
+      <div className="space-y-1 text-left text-base">
+        <div>
+          k<Sub>surface</Sub> = 4N<Sub>a</Sub>πr<Sub>e</Sub>
+          <Sup>2</Sup> / (r<Sub>e</Sub> / D<Sub>g</Sub> + 4 / (v(T)γ))
+        </div>
+        <div>v = √(8RT / (π MW))</div>
+      </div>
+    ),
+    legend: (
+      <>
+        N<Sub>a</Sub>: number concentration of particles (particles m<Sup>−3</Sup>); r<Sub>e</Sub>:
+        effective particle radius (m); D<Sub>g</Sub>: gas-phase diffusion coefficient of the
+        reactant (m<Sup>2</Sup> s<Sup>−1</Sup>); v: mean free speed of the gas-phase reactant; R:
+        ideal gas constant (J K<Sup>−1</Sup> mol<Sup>−1</Sup>); T: temperature (K); MW: molecular
+        weight of the gas-phase reactant (kg mol<Sup>−1</Sup>)
+      </>
+    ),
+  },
+  TUNNELING: {
+    equation: (
+      <>
+        k = A · e<Sup>−B/T</Sup> · e<Sup>
+          C/T<Sup>3</Sup>
+        </Sup>
+      </>
+    ),
+    legend: 'T: temperature (K). More details in Wennberg et al. (2018).',
   },
   BRANCHED_NO_RO2: {
     equation: (

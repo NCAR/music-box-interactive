@@ -3,7 +3,7 @@ import { v4 as uuidv4 } from 'uuid'
 import { Button } from '../../ui/button'
 import { parseReactionString } from './reactionUtils'
 import { FIELD_LABEL, TEXT_INPUT } from '../fieldStyles'
-import { ParameterRow } from '../ParameterRow'
+import { PARAMETER_GRID, ParameterRow } from '../ParameterRow'
 import { ReactionEquation } from '../ReactionEquation'
 
 export function ArrheniusReactionForm({ onAddReaction, parameters = [] }) {
@@ -121,7 +121,7 @@ export function ArrheniusReactionForm({ onAddReaction, parameters = [] }) {
 
       <ReactionEquation type="ARRHENIUS" />
 
-      <div className="grid grid-cols-1 gap-3">
+      <div className={PARAMETER_GRID}>
         {parameters.map(({ key, ...parameter }) => (
           <ParameterRow
             key={key}

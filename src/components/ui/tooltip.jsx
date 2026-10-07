@@ -16,7 +16,9 @@ export function InfoTooltip({ title, description }) {
         role="tooltip"
         className="pointer-events-none absolute left-0 top-full z-20 mt-1 hidden w-56 whitespace-normal rounded-lg border border-border bg-white p-2 text-xs font-sans text-ink shadow-lg group-hover:block group-focus-within:block dark:bg-surface"
       >
-        <span className="block font-semibold">{title}</span>
+        <span className="block font-semibold">
+          <FormulaText text={title} />
+        </span>
         {description && (
           <span className="block text-muted">
             <FormulaText text={description} />

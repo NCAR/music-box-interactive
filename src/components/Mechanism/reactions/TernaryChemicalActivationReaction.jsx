@@ -3,8 +3,10 @@ import { v4 as uuidv4 } from 'uuid'
 import { Button } from '../../ui/button'
 import { parseReactionString } from './reactionUtils'
 import { FIELD_LABEL, TEXT_INPUT } from '../fieldStyles'
+import { PARAMETER_GRID, ParameterRow } from '../ParameterRow'
+import { ReactionEquation } from '../ReactionEquation'
 
-export function TernaryChemicalActivationReactionForm({ onAddReaction }) {
+export function TernaryChemicalActivationReactionForm({ onAddReaction, parameters = [] }) {
   const [reactants, setReactants] = useState('')
   const [products, setProducts] = useState('')
   const [k0A, setK0A] = useState('')
@@ -16,6 +18,16 @@ export function TernaryChemicalActivationReactionForm({ onAddReaction }) {
   const [fc, setFc] = useState('')
   const [nValue, setNValue] = useState('')
   const [error, setError] = useState(null)
+  const rateFields = {
+    k0_A: [k0A, setK0A],
+    k0_B: [k0B, setK0B],
+    k0_C: [k0C, setK0C],
+    kinf_A: [kinfA, setKinfA],
+    kinf_B: [kinfB, setKinfB],
+    kinf_C: [kinfC, setKinfC],
+    Fc: [fc, setFc],
+    N: [nValue, setNValue],
+  }
 
   const parseOptionalNumber = (raw) => {
     if (!raw.trim()) {
@@ -133,93 +145,18 @@ export function TernaryChemicalActivationReactionForm({ onAddReaction }) {
         />
       </div>
 
-      <div className="grid grid-cols-1 gap-3">
-        <div>
-          <label className={FIELD_LABEL}>k0_A (low-pressure pre-exponential factor)</label>
-          <input
-            type="text"
-            value={k0A}
-            onChange={(e) => setK0A(e.target.value)}
-            placeholder="1.0"
-            className={TEXT_INPUT.replace('text-center', 'text-left')}
+      <ReactionEquation type="TERNARY_CHEMICAL_ACTIVATION" />
+
+      <div className={PARAMETER_GRID}>
+        {parameters.map(({ key, ...parameter }) => (
+          <ParameterRow
+            key={key}
+            symbol={key}
+            {...parameter}
+            value={rateFields[key][0]}
+            onChange={rateFields[key][1]}
           />
-        </div>
-        <div>
-          <label className={FIELD_LABEL}>k0_B (low-pres temperature parameter)</label>
-          <input
-            type="text"
-            value={k0B}
-            onChange={(e) => setK0B(e.target.value)}
-            placeholder="0.0"
-            className={TEXT_INPUT.replace('text-center', 'text-left')}
-          />
-        </div>
-        <div>
-          <label className={FIELD_LABEL}>k0_C (low-pressure exponential factor)</label>
-          <input
-            type="text"
-            value={k0C}
-            onChange={(e) => setK0C(e.target.value)}
-            placeholder="0.0"
-            className={TEXT_INPUT.replace('text-center', 'text-left')}
-          />
-        </div>
-        <div>
-          <label className={FIELD_LABEL}>
-            kinf_A (high-pres pre-exponential factor)
-          </label>
-          <input
-            type="text"
-            value={kinfA}
-            onChange={(e) => setKinfA(e.target.value)}
-            placeholder="1.0"
-            className={TEXT_INPUT.replace('text-center', 'text-left')}
-          />
-        </div>
-        <div>
-          <label className={FIELD_LABEL}>
-            kinf_B (high-pres temperature parameter)
-          </label>
-          <input
-            type="text"
-            value={kinfB}
-            onChange={(e) => setKinfB(e.target.value)}
-            placeholder="0.0"
-            className={TEXT_INPUT.replace('text-center', 'text-left')}
-          />
-        </div>
-        <div>
-          <label className={FIELD_LABEL}>
-            kinf_C (high-pressure exponential factor)
-          </label>
-          <input
-            type="text"
-            value={kinfC}
-            onChange={(e) => setKinfC(e.target.value)}
-            placeholder="0.0"
-            className={TEXT_INPUT.replace('text-center', 'text-left')}
-          />
-        </div>
-        <div>
-          <label className={FIELD_LABEL}>Fc</label>
-          <input
-            type="text"
-            value={fc}
-            onChange={(e) => setFc(e.target.value)}
-            placeholder="0.6"
-            className={TEXT_INPUT.replace('text-center', 'text-left')}
-          />
-        </div>
-        <div>
-          <label className={FIELD_LABEL}>N</label>
-          <input
-            type="text"
-            value={nValue}
-            onChange={(e) => setNValue(e.target.value)}
-            placeholder="1.0"
-            className={TEXT_INPUT.replace('text-center', 'text-left')}
-          />
-        </div>
+        ))}
       </div>
 
       <div className="pt-8 flex justify-center">

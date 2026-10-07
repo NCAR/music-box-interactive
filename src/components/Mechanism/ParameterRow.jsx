@@ -2,11 +2,14 @@ import { InfoTooltip } from '../ui/tooltip'
 import { FormulaText } from './FormulaText'
 
 // One rate parameter of an add-reaction form: the symbol (with its explanation), the input, and
-// the unit, joined into a single row.
+// the unit, joined into one row. The three cells are direct grid items, so the parent must be a
+// grid with PARAMETER_GRID columns; the symbol and unit columns then fit their longest content.
+export const PARAMETER_GRID = 'grid grid-cols-[max-content_minmax(0,1fr)_max-content] gap-y-3'
+
 export function ParameterRow({ symbol, name, description, unit, placeholder, value, onChange }) {
   return (
-    <div className="flex h-9 items-stretch">
-      <span className="flex w-12 flex-shrink-0 items-center justify-center gap-1 rounded-l-lg border border-r-0 border-border bg-assist-secondary text-sm font-semibold text-assist-secondary-foreground">
+    <div className="contents">
+      <span className="flex h-9 items-center justify-center gap-1 rounded-l-lg border border-r-0 border-border bg-assist-secondary px-2 text-sm font-semibold text-assist-secondary-foreground">
         {symbol}
         <InfoTooltip title={name} description={description} />
       </span>
@@ -16,9 +19,9 @@ export function ParameterRow({ symbol, name, description, unit, placeholder, val
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         aria-label={`${symbol}, ${name}`}
-        className="min-w-0 flex-1 border border-border bg-white px-2 text-left font-mono text-sm text-ink placeholder:text-gray-400 focus:z-10 focus:outline-none focus:ring-2 focus:ring-action dark:bg-surface dark:placeholder:text-muted"
+        className="h-9 min-w-0 border border-border bg-white px-2 text-left font-mono text-sm text-ink placeholder:text-gray-400 focus:z-10 focus:outline-none focus:ring-2 focus:ring-action dark:bg-surface dark:placeholder:text-muted"
       />
-      <span className="flex w-36 flex-shrink-0 items-center justify-center whitespace-nowrap rounded-r-lg border border-l-0 border-border bg-assist-secondary px-1 text-sm text-assist-secondary-foreground">
+      <span className="flex h-9 items-center justify-center whitespace-nowrap rounded-r-lg border border-l-0 border-border bg-assist-secondary px-3 text-sm text-assist-secondary-foreground">
         <FormulaText text={unit} />
       </span>
     </div>

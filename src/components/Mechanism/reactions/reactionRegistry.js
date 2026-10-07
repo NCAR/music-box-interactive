@@ -10,6 +10,41 @@ import { SurfaceReactionForm } from './SurfaceReaction'
 import { UserDefinedReactionForm } from './UserDefinedReaction'
 import { LambdaRateReactionForm } from './LambdaRateReaction'
 
+// Troe and ternary chemical activation take the same parameters. Names follow those types in the
+// mechanism configuration docs. The docs give no units, so the units come from the app's earlier
+// reaction help, with the pre-exponential factors in mol m^-3 like the Arrhenius A and the
+// exponential factors in K like the Arrhenius C.
+const FALLOFF_PARAMETERS = [
+  {
+    key: 'k0_A',
+    placeholder: '1.0',
+    name: 'Low-pressure pre-exponential factor',
+    unit: '(mol m^-3)^-(n-1) s^-1',
+  },
+  {
+    key: 'k0_B',
+    placeholder: '0.0',
+    name: 'Low-pressure temperature-scaling parameter',
+    unit: 'unitless',
+  },
+  { key: 'k0_C', placeholder: '0.0', name: 'Low-pressure exponential factor', unit: 'K' },
+  {
+    key: 'kinf_A',
+    placeholder: '1.0',
+    name: 'High-pressure pre-exponential factor',
+    unit: '(mol m^-3)^-(n-1) s^-1',
+  },
+  {
+    key: 'kinf_B',
+    placeholder: '0.0',
+    name: 'High-pressure temperature-scaling parameter',
+    unit: 'unitless',
+  },
+  { key: 'kinf_C', placeholder: '0.0', name: 'High-pressure exponential factor', unit: 'K' },
+  { key: 'Fc', placeholder: '0.6', name: 'F_c parameter', unit: 'unitless' },
+  { key: 'N', placeholder: '1.0', name: 'N parameter', unit: 'unitless' },
+]
+
 export const reactionRegistry = [
   {
     type: 'ARRHENIUS',
@@ -69,31 +104,13 @@ export const reactionRegistry = [
   },
   {
     type: 'TERNARY_CHEMICAL_ACTIVATION',
-    parameters: [
-      { key: 'k0_A', placeholder: '1.0' },
-      { key: 'k0_B', placeholder: '0.0' },
-      { key: 'k0_C', placeholder: '0.0' },
-      { key: 'kinf_A', placeholder: '1.0' },
-      { key: 'kinf_B', placeholder: '0.0' },
-      { key: 'kinf_C', placeholder: '0.0' },
-      { key: 'Fc', placeholder: '0.6' },
-      { key: 'N', placeholder: '1.0' },
-    ],
+    parameters: FALLOFF_PARAMETERS,
     label: 'Ternary chemical activation',
     component: TernaryChemicalActivationReactionForm,
   },
   {
     type: 'TROE',
-    parameters: [
-      { key: 'k0_A', placeholder: '1.0' },
-      { key: 'k0_B', placeholder: '0.0' },
-      { key: 'k0_C', placeholder: '0.0' },
-      { key: 'kinf_A', placeholder: '1.0' },
-      { key: 'kinf_B', placeholder: '0.0' },
-      { key: 'kinf_C', placeholder: '0.0' },
-      { key: 'Fc', placeholder: '0.6' },
-      { key: 'N', placeholder: '1.0' },
-    ],
+    parameters: FALLOFF_PARAMETERS,
     label: 'Troe (Fall-off)',
     component: TroeReactionForm,
   },
@@ -138,17 +155,32 @@ export const reactionRegistry = [
   },
   {
     type: 'TUNNELING',
+    // Names and units follow the Tunneling type in the mechanism configuration docs.
     parameters: [
-      { key: 'A', placeholder: '1.0' },
-      { key: 'B', placeholder: '0.0' },
-      { key: 'C', placeholder: '0.0' },
+      {
+        key: 'A',
+        placeholder: '1.0',
+        name: 'Pre-exponential factor',
+        unit: '(mol m^-3)^-(n-1) s^-1',
+      },
+      { key: 'B', placeholder: '0.0', name: 'Linear temperature-dependent parameter', unit: 'K' },
+      { key: 'C', placeholder: '0.0', name: 'Cubed temperature-dependent parameter', unit: 'K^3' },
     ],
     label: 'Tunneling',
     component: TunnelingReactionForm,
   },
   {
     type: 'SURFACE',
-    parameters: [{ key: 'reaction probability', placeholder: '1.0' }],
+    // Name and unit follow the Surface type in the mechanism configuration docs.
+    parameters: [
+      {
+        key: 'reaction probability',
+        placeholder: '1.0',
+        name: 'Reaction probability',
+        description: 'The \u03b3 in the equation, between 0 and 1.',
+        unit: 'unitless',
+      },
+    ],
     label: 'Surface',
     component: SurfaceReactionForm,
   },
