@@ -13,12 +13,38 @@ import { LambdaRateReactionForm } from './LambdaRateReaction'
 export const reactionRegistry = [
   {
     type: 'ARRHENIUS',
+    // Names, units and descriptions follow the Arrhenius type in the mechanism configuration docs:
+    // https://mechanismconfiguration.readthedocs.io/en/latest/api/index.html
     parameters: [
-      { key: 'A', placeholder: '1.0' },
-      { key: 'B', placeholder: '0.0' },
-      { key: 'C', placeholder: '0.0' },
-      { key: 'D', placeholder: '300.0' },
-      { key: 'E', placeholder: '0.0' },
+      {
+        key: 'A',
+        placeholder: '1.0',
+        name: 'Pre-exponential factor',
+        unit: '(mol m^-3)^-(n-1) s^-1',
+      },
+      { key: 'B', placeholder: '0.0', name: 'Unitless exponential factor', unit: 'unitless' },
+      {
+        key: 'C',
+        placeholder: '0.0',
+        name: 'Activation threshold',
+        description:
+          'Expected to be the negative activation energy divided by the Boltzmann constant (-E_a / k_B).',
+        unit: 'K',
+      },
+      {
+        key: 'D',
+        placeholder: '300.0',
+        name: 'Temperature dependence factor',
+        description: 'A factor that determines temperature dependence.',
+        unit: 'K',
+      },
+      {
+        key: 'E',
+        placeholder: '0.0',
+        name: 'Pressure dependence factor',
+        description: 'A factor that determines pressure dependence.',
+        unit: 'Pa^-1',
+      },
     ],
     label: 'Arrhenius',
     component: ArrheniusReactionForm,

@@ -520,6 +520,7 @@ export function ReactionEditor() {
 
               <ActiveReactionForm
                 onAddReaction={handleAddReaction}
+                parameters={activeReactionDefinition.parameters}
                 {...(activeReactionDefinition.componentProps || {})}
               />
             </div>
