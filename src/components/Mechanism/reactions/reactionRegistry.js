@@ -11,9 +11,7 @@ import { UserDefinedReactionForm } from './UserDefinedReaction'
 import { LambdaRateReactionForm } from './LambdaRateReaction'
 
 // Troe and ternary chemical activation take the same parameters. Names follow those types in the
-// mechanism configuration docs. The docs give no units, so the units come from the app's earlier
-// reaction help, with the pre-exponential factors in mol m^-3 like the Arrhenius A and the
-// exponential factors in K like the Arrhenius C.
+// mechanism configuration docs.
 const FALLOFF_PARAMETERS = [
   {
     key: 'k0_A',
@@ -48,8 +46,6 @@ const FALLOFF_PARAMETERS = [
 export const reactionRegistry = [
   {
     type: 'ARRHENIUS',
-    // Names, units and descriptions follow the Arrhenius type in the mechanism configuration docs:
-    // https://mechanismconfiguration.readthedocs.io/en/latest/api/index.html
     parameters: [
       {
         key: 'A',
@@ -116,9 +112,6 @@ export const reactionRegistry = [
   },
   {
     type: 'BRANCHED_NO_RO2',
-    // Names follow the Branched type in the mechanism configuration docs. The descriptions of X and
-    // Y and the units of Y, a0 and n come from the app's earlier reaction help. The docs give no
-    // units for Branched, so X uses the unit of the Arrhenius A.
     parameters: [
       {
         key: 'X',
@@ -171,7 +164,6 @@ export const reactionRegistry = [
   },
   {
     type: 'SURFACE',
-    // Name and unit follow the Surface type in the mechanism configuration docs.
     parameters: [
       {
         key: 'reaction probability',

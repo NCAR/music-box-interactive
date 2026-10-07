@@ -2,8 +2,7 @@ import { InfoTooltip } from '../ui/tooltip'
 import { FormulaText } from './FormulaText'
 
 // One rate parameter of an add-reaction form: the symbol (with its explanation), the input, and
-// the unit, joined into one row. The three cells are direct grid items, so the parent must be a
-// grid with PARAMETER_GRID columns; the symbol and unit columns then fit their longest content.
+// the unit, joined into one row.
 export const PARAMETER_GRID = 'grid grid-cols-[max-content_minmax(0,1fr)_max-content] gap-y-3'
 
 export function ParameterRow({ symbol, name, description, unit, placeholder, value, onChange }) {
