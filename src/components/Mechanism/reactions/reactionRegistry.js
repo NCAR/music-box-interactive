@@ -99,11 +99,39 @@ export const reactionRegistry = [
   },
   {
     type: 'BRANCHED_NO_RO2',
+    // Names follow the Branched type in the mechanism configuration docs. The descriptions of X and
+    // Y and the units of Y, a0 and n come from the app's earlier reaction help. The docs give no
+    // units for Branched, so X uses the unit of the Arrhenius A.
     parameters: [
-      { key: 'X', placeholder: '1.0' },
-      { key: 'Y', placeholder: '0.0' },
-      { key: 'a0', placeholder: '1.0' },
-      { key: 'n', placeholder: '0' },
+      {
+        key: 'X',
+        placeholder: '1.0',
+        name: 'Pre-exponential factor',
+        description: 'An Arrhenius parameter for the overall reaction.',
+        unit: '(mol m^-3)^-(n-1) s^-1',
+      },
+      {
+        key: 'Y',
+        placeholder: '0.0',
+        name: 'Exponential factor',
+        description: 'An Arrhenius parameter for the overall reaction.',
+        unit: 'K',
+      },
+      {
+        key: 'a0',
+        placeholder: '1.0',
+        name: 'Branching factor',
+        description: 'The \u03b1_0 in Z(\u03b1_0, n), which sets the split between the two branches.',
+        unit: 'unitless',
+      },
+      {
+        key: 'n',
+        placeholder: '0',
+        name: 'Number of heavy atoms',
+        description:
+          'The number of heavy atoms in the RO2 reacting species (excluding the peroxy moiety).',
+        unit: 'unitless',
+      },
     ],
     label: 'Branched',
     component: BranchedReactionForm,
