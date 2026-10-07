@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { v4 as uuidv4 } from 'uuid'
 import { Button } from '../../ui/button'
 import { FIELD_LABEL, TEXT_INPUT } from '../fieldStyles'
+import { ReactionDocsLink } from '../ReactionDocsLink'
 
 export function EmissionReactionForm({ onAddReaction }) {
   const [products, setProducts] = useState('')
@@ -77,6 +78,8 @@ export function EmissionReactionForm({ onAddReaction }) {
           />
         </div>
       </div>
+
+      <ReactionDocsLink type="EMISSION" />
 
       <div className="pt-8 flex justify-center">
         <Button

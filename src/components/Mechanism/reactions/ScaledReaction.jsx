@@ -3,6 +3,7 @@ import { v4 as uuidv4 } from 'uuid'
 import { Button } from '../../ui/button'
 import { parseReactionString } from './reactionUtils'
 import { FIELD_LABEL, TEXT_INPUT } from '../fieldStyles'
+import { ReactionDocsLink } from '../ReactionDocsLink'
 
 export function ScaledReactionForm({ onAddReaction, reactionType, allowEmptyProducts = false }) {
   const [reactants, setReactants] = useState('')
@@ -93,6 +94,8 @@ export function ScaledReactionForm({ onAddReaction, reactionType, allowEmptyProd
           className={TEXT_INPUT.replace('text-center', 'text-left')}
         />
       </div>
+
+      <ReactionDocsLink type={reactionType} />
 
       <div className="pt-8 flex justify-center">
         <Button

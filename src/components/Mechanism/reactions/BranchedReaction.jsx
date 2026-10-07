@@ -5,6 +5,7 @@ import { parseReactionString } from './reactionUtils'
 import { FIELD_LABEL, TEXT_INPUT } from '../fieldStyles'
 import { PARAMETER_GRID, ParameterRow } from '../ParameterRow'
 import { ReactionEquation } from '../ReactionEquation'
+import { ReactionDocsLink } from '../ReactionDocsLink'
 
 export function BranchedReactionForm({ onAddReaction, parameters = [] }) {
   const [reactants, setReactants] = useState('')
@@ -143,6 +144,8 @@ export function BranchedReactionForm({ onAddReaction, parameters = [] }) {
           />
         ))}
       </div>
+
+      <ReactionDocsLink type="BRANCHED_NO_RO2" />
 
       <div className="pt-8 flex justify-center">
         <Button

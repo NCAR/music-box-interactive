@@ -5,6 +5,7 @@ import { parseReactionString } from './reactionUtils'
 import { FIELD_LABEL, TEXT_INPUT } from '../fieldStyles'
 import { PARAMETER_GRID, ParameterRow } from '../ParameterRow'
 import { ReactionEquation } from '../ReactionEquation'
+import { ReactionDocsLink } from '../ReactionDocsLink'
 
 export function TernaryChemicalActivationReactionForm({ onAddReaction, parameters = [] }) {
   const [reactants, setReactants] = useState('')
@@ -158,6 +159,8 @@ export function TernaryChemicalActivationReactionForm({ onAddReaction, parameter
           />
         ))}
       </div>
+
+      <ReactionDocsLink type="TERNARY_CHEMICAL_ACTIVATION" />
 
       <div className="pt-8 flex justify-center">
         <Button

@@ -3,6 +3,7 @@ import { v4 as uuidv4 } from 'uuid'
 import { Button } from '../../ui/button'
 import { parseReactionString } from './reactionUtils'
 import { FIELD_LABEL, TEXT_INPUT } from '../fieldStyles'
+import { ReactionDocsLink } from '../ReactionDocsLink'
 
 export function FirstOrderLossReactionForm({ onAddReaction }) {
   const [reactants, setReactants] = useState('')
@@ -72,6 +73,8 @@ export function FirstOrderLossReactionForm({ onAddReaction }) {
           className={TEXT_INPUT.replace('text-center', 'text-left')}
         />
       </div>
+
+      <ReactionDocsLink type="FIRST_ORDER_LOSS" />
 
       <div className="pt-8 flex justify-center">
         <Button
