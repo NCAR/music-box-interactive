@@ -3,12 +3,18 @@ import { v4 as uuidv4 } from 'uuid'
 import { Button } from '../../ui/button'
 import { parseReactionString } from './reactionUtils'
 import { FIELD_LABEL, TEXT_INPUT } from '../fieldStyles'
+import { PARAMETER_GRID, ParameterRow } from '../ParameterRow'
+import { ReactionEquation } from '../ReactionEquation'
+import { ReactionDocsLink } from '../ReactionDocsLink'
 
-export function SurfaceReactionForm({ onAddReaction }) {
+export function SurfaceReactionForm({ onAddReaction, parameters = [] }) {
   const [gasPhaseSpecies, setGasPhaseSpecies] = useState('')
   const [gasPhaseProducts, setGasPhaseProducts] = useState('')
   const [reactionProbability, setReactionProbability] = useState('')
   const [error, setError] = useState(null)
+  const rateFields = {
+    'reaction probability': [reactionProbability, setReactionProbability],
+  }
 
   const handleAdd = () => {
     if (!gasPhaseSpecies.trim()) {
@@ -84,18 +90,21 @@ export function SurfaceReactionForm({ onAddReaction }) {
         />
       </div>
 
-      <div>
-        <label className={FIELD_LABEL}>
-          Reaction probability 
-        </label>
-        <input
-          type="text"
-          value={reactionProbability}
-          onChange={(e) => setReactionProbability(e.target.value)}
-          placeholder="1.0"
-          className={TEXT_INPUT.replace('text-center', 'text-left')}
-        />
+      <ReactionEquation type="SURFACE" />
+
+      <div className={PARAMETER_GRID}>
+        {parameters.map(({ key, ...parameter }) => (
+          <ParameterRow
+            key={key}
+            symbol={key}
+            {...parameter}
+            value={rateFields[key][0]}
+            onChange={rateFields[key][1]}
+          />
+        ))}
       </div>
+
+      <ReactionDocsLink type="SURFACE" />
 
       <div className="pt-8 flex justify-center">
         <Button

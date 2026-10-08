@@ -3,6 +3,8 @@ import { v4 as uuidv4 } from 'uuid'
 import { Button } from '../../ui/button'
 import { parseReactionString } from './reactionUtils'
 import { FIELD_LABEL, TEXT_INPUT, TEXT_INPUT_CODE } from '../fieldStyles'
+import { ReactionDocsLink } from '../ReactionDocsLink'
+import { ReactionEquation } from '../ReactionEquation'
 
 export function LambdaRateReactionForm({ onAddReaction }) {
   const [reactants, setReactants] = useState('')
@@ -102,6 +104,8 @@ export function LambdaRateReactionForm({ onAddReaction }) {
         />
       </div>
 
+      <ReactionEquation type="LAMBDA_RATE_CONSTANT" />
+
       <div>
         <label className={FIELD_LABEL}>
           Lambda Function (JavaScript)
@@ -117,6 +121,8 @@ export function LambdaRateReactionForm({ onAddReaction }) {
           Allowed parameters: <strong>T</strong>, <strong>P</strong>, <strong>airDensity</strong>
         </p>
       </div>
+
+      <ReactionDocsLink type="LAMBDA_RATE_CONSTANT" />
 
       <div className="pt-8 flex justify-center">
         <Button

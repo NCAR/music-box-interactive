@@ -3,8 +3,11 @@ import { v4 as uuidv4 } from 'uuid'
 import { Button } from '../../ui/button'
 import { parseReactionString } from './reactionUtils'
 import { FIELD_LABEL, TEXT_INPUT } from '../fieldStyles'
+import { PARAMETER_GRID, ParameterRow } from '../ParameterRow'
+import { ReactionEquation } from '../ReactionEquation'
+import { ReactionDocsLink } from '../ReactionDocsLink'
 
-export function ArrheniusReactionForm({ onAddReaction }) {
+export function ArrheniusReactionForm({ onAddReaction, parameters = [] }) {
   const [reactants, setReactants] = useState('')
   const [products, setProducts] = useState('')
   const [rateA, setRateA] = useState('')
@@ -13,6 +16,13 @@ export function ArrheniusReactionForm({ onAddReaction }) {
   const [rateD, setRateD] = useState('')
   const [rateE, setRateE] = useState('')
   const [error, setError] = useState(null)
+  const rateFields = {
+    A: [rateA, setRateA],
+    B: [rateB, setRateB],
+    C: [rateC, setRateC],
+    D: [rateD, setRateD],
+    E: [rateE, setRateE],
+  }
 
   const handleAdd = () => {
     if (!reactants.trim()) {
@@ -110,60 +120,21 @@ export function ArrheniusReactionForm({ onAddReaction }) {
         />
       </div>
 
-      <div className="grid grid-cols-1 gap-3">
-        <div>
-          <label className={FIELD_LABEL}>
-            A (pre-exponential factor)
-          </label>
-          <input
-            type="text"
-            value={rateA}
-            onChange={(e) => setRateA(e.target.value)}
-            placeholder="1.0"
-            className={TEXT_INPUT.replace('text-center', 'text-left')}
+      <ReactionEquation type="ARRHENIUS" />
+
+      <div className={PARAMETER_GRID}>
+        {parameters.map(({ key, ...parameter }) => (
+          <ParameterRow
+            key={key}
+            symbol={key}
+            {...parameter}
+            value={rateFields[key][0]}
+            onChange={rateFields[key][1]}
           />
-        </div>
-        <div>
-          <label className={FIELD_LABEL}>B (unitless exponential factor)</label>
-          <input
-            type="text"
-            value={rateB}
-            onChange={(e) => setRateB(e.target.value)}
-            placeholder="0.0"
-            className={TEXT_INPUT.replace('text-center', 'text-left')}
-          />
-        </div>
-        <div>
-          <label className={FIELD_LABEL}>C (activation threshold)</label>
-          <input
-            type="text"
-            value={rateC}
-            onChange={(e) => setRateC(e.target.value)}
-            placeholder="0.0"
-            className={TEXT_INPUT.replace('text-center', 'text-left')}
-          />
-        </div>
-        <div>
-          <label className={FIELD_LABEL}>D (temperature dependence)</label>
-          <input
-            type="text"
-            value={rateD}
-            onChange={(e) => setRateD(e.target.value)}
-            placeholder="300.0"
-            className={TEXT_INPUT.replace('text-center', 'text-left')}
-          />
-        </div>
-        <div>
-          <label className={FIELD_LABEL}>E (pressure dependence)</label>
-          <input
-            type="text"
-            value={rateE}
-            onChange={(e) => setRateE(e.target.value)}
-            placeholder="0.0"
-            className={TEXT_INPUT.replace('text-center', 'text-left')}
-          />
-        </div>
+        ))}
       </div>
+
+      <ReactionDocsLink type="ARRHENIUS" />
 
       <div className="pt-8 flex justify-center">
         <Button

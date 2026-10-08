@@ -3,6 +3,7 @@ export const GAS_CONSTANT = 8.31446261815324 // J / (mol K)
 // mol m-3 is the storage unit everywhere. Mixing-ratio units scale the air number density
 // (mol m-3), so converting to or from them needs the temperature and pressure of the air.
 export const MIXING_RATIO_FACTORS = {
+  mol_mol: 1,
   ppth: 1e-3,
   ppm: 1e-6,
   ppb: 1e-9,
@@ -11,6 +12,7 @@ export const MIXING_RATIO_FACTORS = {
 
 export const CONCENTRATION_UNITS = [
   { id: 'mol_m3', label: 'mol m-3' },
+  { id: 'mol_mol', label: 'mol mol-1' },
   { id: 'ppth', label: 'ppth' },
   { id: 'ppm', label: 'ppm' },
   { id: 'ppb', label: 'ppb' },

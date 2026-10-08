@@ -63,7 +63,7 @@ const examples = [
   },
   {
     id: 'Full Gas-Phase Mechanism',
-    name: 'Full Gas-Phase Mechanism',
+    name: 'Carbon Bond V',
     description:
       'A variant of the Carbon Bond 5 chemical mechanism used in the MONARCH global/regional chemical weather prediction system. The description of the modified version of CB-05 used in MONARCH',
     mechanism_name: carbonBond5Config.mechanism.name,

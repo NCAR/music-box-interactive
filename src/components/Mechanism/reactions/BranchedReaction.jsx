@@ -3,8 +3,11 @@ import { v4 as uuidv4 } from 'uuid'
 import { Button } from '../../ui/button'
 import { parseReactionString } from './reactionUtils'
 import { FIELD_LABEL, TEXT_INPUT } from '../fieldStyles'
+import { PARAMETER_GRID, ParameterRow } from '../ParameterRow'
+import { ReactionEquation } from '../ReactionEquation'
+import { ReactionDocsLink } from '../ReactionDocsLink'
 
-export function BranchedReactionForm({ onAddReaction }) {
+export function BranchedReactionForm({ onAddReaction, parameters = [] }) {
   const [reactants, setReactants] = useState('')
   const [alkoxyProducts, setAlkoxyProducts] = useState('')
   const [nitrateProducts, setNitrateProducts] = useState('')
@@ -13,6 +16,12 @@ export function BranchedReactionForm({ onAddReaction }) {
   const [a0Value, setA0Value] = useState('')
   const [nValue, setNValue] = useState('')
   const [error, setError] = useState(null)
+  const rateFields = {
+    X: [xValue, setXValue],
+    Y: [yValue, setYValue],
+    a0: [a0Value, setA0Value],
+    n: [nValue, setNValue],
+  }
 
   const handleAdd = () => {
     if (!reactants.trim()) {
@@ -122,48 +131,21 @@ export function BranchedReactionForm({ onAddReaction }) {
         />
       </div>
 
-      <div className="grid grid-cols-1 gap-3">
-        <div>
-          <label className={FIELD_LABEL}>X (pre-exponential factor)</label>
-          <input
-            type="text"
-            value={xValue}
-            onChange={(e) => setXValue(e.target.value)}
-            placeholder="1.0"
-            className={TEXT_INPUT.replace('text-center', 'text-left')}
+      <ReactionEquation type="BRANCHED_NO_RO2" />
+
+      <div className={PARAMETER_GRID}>
+        {parameters.map(({ key, ...parameter }) => (
+          <ParameterRow
+            key={key}
+            symbol={key}
+            {...parameter}
+            value={rateFields[key][0]}
+            onChange={rateFields[key][1]}
           />
-        </div>
-        <div>
-          <label className={FIELD_LABEL}>Y (exponential factor)</label>
-          <input
-            type="text"
-            value={yValue}
-            onChange={(e) => setYValue(e.target.value)}
-            placeholder="0.0"
-            className={TEXT_INPUT.replace('text-center', 'text-left')}
-          />
-        </div>
-        <div>
-          <label className={FIELD_LABEL}>a0 (branching factor)</label>
-          <input
-            type="text"
-            value={a0Value}
-            onChange={(e) => setA0Value(e.target.value)}
-            placeholder="1.0"
-            className={TEXT_INPUT.replace('text-center', 'text-left')}
-          />
-        </div>
-        <div>
-          <label className={FIELD_LABEL}>n (N of heavy atoms in the RO2 species) </label>
-          <input
-            type="text"
-            value={nValue}
-            onChange={(e) => setNValue(e.target.value)}
-            placeholder="0"
-            className={TEXT_INPUT.replace('text-center', 'text-left')}
-          />
-        </div>
+        ))}
       </div>
+
+      <ReactionDocsLink type="BRANCHED_NO_RO2" />
 
       <div className="pt-8 flex justify-center">
         <Button
