@@ -3,8 +3,10 @@ import { v4 as uuidv4 } from 'uuid'
 import { Button } from '../../ui/button'
 import { FIELD_LABEL, TEXT_INPUT } from '../fieldStyles'
 import { ReactionDocsLink } from '../ReactionDocsLink'
+import { PARAMETER_GRID, ParameterRow } from '../ParameterRow'
+import { ReactionEquation } from '../ReactionEquation'
 
-export function EmissionReactionForm({ onAddReaction }) {
+export function EmissionReactionForm({ onAddReaction, parameters = [] }) {
   const [products, setProducts] = useState('')
   const [emissionScaling, setEmissionScaling] = useState('')
   const [error, setError] = useState(null)
@@ -64,19 +66,18 @@ export function EmissionReactionForm({ onAddReaction }) {
         />
       </div>
 
-      <div>
-        <div>
-          <label className={FIELD_LABEL}>
-            Scaling factor
-          </label>
-          <input
-            type="text"
+      <ReactionEquation type="EMISSION" />
+
+      <div className={PARAMETER_GRID}>
+        {parameters.map(({ key, ...parameter }) => (
+          <ParameterRow
+            key={key}
+            symbol={key}
+            {...parameter}
             value={emissionScaling}
-            onChange={(e) => setEmissionScaling(e.target.value)}
-            placeholder="1.0"
-            className={TEXT_INPUT.replace('text-center', 'text-left')}
+            onChange={setEmissionScaling}
           />
-        </div>
+        ))}
       </div>
 
       <ReactionDocsLink type="EMISSION" />

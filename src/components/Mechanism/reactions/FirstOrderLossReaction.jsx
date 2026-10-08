@@ -4,8 +4,10 @@ import { Button } from '../../ui/button'
 import { parseReactionString } from './reactionUtils'
 import { FIELD_LABEL, TEXT_INPUT } from '../fieldStyles'
 import { ReactionDocsLink } from '../ReactionDocsLink'
+import { PARAMETER_GRID, ParameterRow } from '../ParameterRow'
+import { ReactionEquation } from '../ReactionEquation'
 
-export function FirstOrderLossReactionForm({ onAddReaction }) {
+export function FirstOrderLossReactionForm({ onAddReaction, parameters = [] }) {
   const [reactants, setReactants] = useState('')
   const [scalingFactor, setScalingFactor] = useState('')
   const [error, setError] = useState(null)
@@ -61,17 +63,18 @@ export function FirstOrderLossReactionForm({ onAddReaction }) {
         />
       </div>
 
-      <div>
-        <label className={FIELD_LABEL}>
-          Scaling factor
-        </label>
-        <input
-          type="text"
-          value={scalingFactor}
-          onChange={(e) => setScalingFactor(e.target.value)}
-          placeholder="1.0"
-          className={TEXT_INPUT.replace('text-center', 'text-left')}
-        />
+      <ReactionEquation type="FIRST_ORDER_LOSS" />
+
+      <div className={PARAMETER_GRID}>
+        {parameters.map(({ key, ...parameter }) => (
+          <ParameterRow
+            key={key}
+            symbol={key}
+            {...parameter}
+            value={scalingFactor}
+            onChange={setScalingFactor}
+          />
+        ))}
       </div>
 
       <ReactionDocsLink type="FIRST_ORDER_LOSS" />

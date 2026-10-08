@@ -10,37 +10,76 @@ import { SurfaceReactionForm } from './SurfaceReaction'
 import { UserDefinedReactionForm } from './UserDefinedReaction'
 import { LambdaRateReactionForm } from './LambdaRateReaction'
 
+// The optional constant scaling factor of Emission, First-order loss, Photolysis and User-defined
+// reactions. `target` is what it scales, in the words of the mechanism configuration docs.
+const scalingFactor = (target) => ({
+  key: 'scaling factor',
+  placeholder: '1.0',
+  name: 'Scaling factor',
+  description: `A constant scaling factor for the ${target}.`,
+  unit: 'unitless',
+})
+
 // Troe and ternary chemical activation take the same parameters. Names follow those types in the
-// mechanism configuration docs.
+// mechanism configuration API reference; descriptions follow their pages in the reactions docs, where
+// k0_ and kinf_ are the Arrhenius parameters of k_0 and k_inf with D = 300 and E = 0.
 const FALLOFF_PARAMETERS = [
   {
     key: 'k0_A',
     placeholder: '1.0',
     name: 'Low-pressure pre-exponential factor',
+    description: 'Arrhenius parameter A of the low-pressure limiting rate constant k_0.',
     unit: '(mol m^-3)^-(n-1) s^-1',
   },
   {
     key: 'k0_B',
     placeholder: '0.0',
     name: 'Low-pressure temperature-scaling parameter',
+    description: 'Arrhenius parameter B of k_0.',
     unit: 'unitless',
   },
-  { key: 'k0_C', placeholder: '0.0', name: 'Low-pressure exponential factor', unit: 'K' },
+  {
+    key: 'k0_C',
+    placeholder: '0.0',
+    name: 'Low-pressure exponential factor',
+    description: 'Arrhenius parameter C of k_0.',
+    unit: 'K',
+  },
   {
     key: 'kinf_A',
     placeholder: '1.0',
     name: 'High-pressure pre-exponential factor',
+    description: 'Arrhenius parameter A of the high-pressure limiting rate constant k_inf.',
     unit: '(mol m^-3)^-(n-1) s^-1',
   },
   {
     key: 'kinf_B',
     placeholder: '0.0',
     name: 'High-pressure temperature-scaling parameter',
+    description: 'Arrhenius parameter B of k_inf.',
     unit: 'unitless',
   },
-  { key: 'kinf_C', placeholder: '0.0', name: 'High-pressure exponential factor', unit: 'K' },
-  { key: 'Fc', placeholder: '0.6', name: 'F_c parameter', unit: 'unitless' },
-  { key: 'N', placeholder: '1.0', name: 'N parameter', unit: 'unitless' },
+  {
+    key: 'kinf_C',
+    placeholder: '0.0',
+    name: 'High-pressure exponential factor',
+    description: 'Arrhenius parameter C of k_inf.',
+    unit: 'K',
+  },
+  {
+    key: 'Fc',
+    placeholder: '0.6',
+    name: 'F_c parameter',
+    description: 'Sets the shape of the fall-off curve. Typically 0.6.',
+    unit: 'unitless',
+  },
+  {
+    key: 'N',
+    placeholder: '1.0',
+    name: 'N parameter',
+    description: 'Sets the shape of the fall-off curve. Typically 1.0.',
+    unit: 'unitless',
+  },
 ]
 
 export const reactionRegistry = [
@@ -51,29 +90,36 @@ export const reactionRegistry = [
         key: 'A',
         placeholder: '1.0',
         name: 'Pre-exponential factor',
+        description: 'n is the number of reactants.',
         unit: '(mol m^-3)^-(n-1) s^-1',
       },
-      { key: 'B', placeholder: '0.0', name: 'Unitless exponential factor', unit: 'unitless' },
+      {
+        key: 'B',
+        placeholder: '0.0',
+        name: 'Unitless exponential factor',
+        description: 'The exponent in (T / D)^B.',
+        unit: 'unitless',
+      },
       {
         key: 'C',
         placeholder: '0.0',
         name: 'Activation threshold',
         description:
-          'Expected to be the negative activation energy divided by the Boltzmann constant (-E_a / k_B).',
+          'Equal to -E_a / k_b, where E_a is the activation energy (J) and k_b is the Boltzmann constant (J/K). Give either C or E_a, not both.',
         unit: 'K',
       },
       {
         key: 'D',
         placeholder: '300.0',
         name: 'Temperature dependence factor',
-        description: 'A factor that determines temperature dependence.',
+        description: 'The reference temperature D in (T / D)^B.',
         unit: 'K',
       },
       {
         key: 'E',
         placeholder: '0.0',
         name: 'Pressure dependence factor',
-        description: 'A factor that determines pressure dependence.',
+        description: 'The coefficient E in (1 + E * P), where P is the pressure (Pa).',
         unit: 'Pa^-1',
       },
     ],
@@ -82,19 +128,19 @@ export const reactionRegistry = [
   },
   {
     type: 'EMISSION',
-    parameters: [{ key: 'scaling factor', placeholder: '1.0' }],
+    parameters: [scalingFactor('rate')],
     label: 'Emission',
     component: EmissionReactionForm,
   },
   {
     type: 'FIRST_ORDER_LOSS',
-    parameters: [{ key: 'scaling factor', placeholder: '1.0' }],
+    parameters: [scalingFactor('rate')],
     label: 'First-order loss',
     component: FirstOrderLossReactionForm,
   },
   {
     type: 'PHOTOLYSIS',
-    parameters: [{ key: 'scaling factor', placeholder: '1.0' }],
+    parameters: [scalingFactor('rate constant')],
     label: 'Photolysis',
     component: PhotolysisReactionForm,
   },
@@ -131,7 +177,7 @@ export const reactionRegistry = [
         key: 'a0',
         placeholder: '1.0',
         name: 'Branching factor',
-        description: 'The \u03b1_0 in Z(\u03b1_0, n), which sets the split between the two branches.',
+        description: 'Z is defined as a function of \u03b1_0 and n.',
         unit: 'unitless',
       },
       {
@@ -154,10 +200,23 @@ export const reactionRegistry = [
         key: 'A',
         placeholder: '1.0',
         name: 'Pre-exponential factor',
+        description: 'n is the number of reactants.',
         unit: '(mol m^-3)^-(n-1) s^-1',
       },
-      { key: 'B', placeholder: '0.0', name: 'Linear temperature-dependent parameter', unit: 'K' },
-      { key: 'C', placeholder: '0.0', name: 'Cubed temperature-dependent parameter', unit: 'K^3' },
+      {
+        key: 'B',
+        placeholder: '0.0',
+        name: 'Linear temperature-dependent parameter',
+        description: 'Captures the temperature dependence in e^(-B/T), as in Wennberg et al. (2018).',
+        unit: 'K',
+      },
+      {
+        key: 'C',
+        placeholder: '0.0',
+        name: 'Cubed temperature-dependent parameter',
+        description: 'Captures the temperature dependence in e^(C/T\u00b3), as in Wennberg et al. (2018).',
+        unit: 'K^3',
+      },
     ],
     label: 'Tunneling',
     component: TunnelingReactionForm,
@@ -169,7 +228,7 @@ export const reactionRegistry = [
         key: 'reaction probability',
         placeholder: '1.0',
         name: 'Reaction probability',
-        description: 'The \u03b3 in the equation, between 0 and 1.',
+        description: 'The \u03b3 in the equation (0-1).',
         unit: 'unitless',
       },
     ],
@@ -178,7 +237,7 @@ export const reactionRegistry = [
   },
   {
     type: 'USER_DEFINED',
-    parameters: [{ key: 'scaling factor', placeholder: '1.0' }],
+    parameters: [scalingFactor('rate constant')],
     label: 'User-defined rate',
     component: UserDefinedReactionForm,
   },

@@ -2,10 +2,12 @@
 // entry here show nothing.
 const Sup = ({ children }) => <sup>{children}</sup>
 const Sub = ({ children }) => <sub>{children}</sub>
+// Keeps a unit on one line, so it never breaks between its words.
+const Unit = ({ children }) => <span className="whitespace-nowrap">{children}</span>
 
 const FALLOFF_LEGEND = (
   <>
-    T: temperature (K); [M]: number density of air (mol m<Sup>−3</Sup>)
+    T: temperature (K); [M]: number density of air (<Unit>mol m<Sup>−3</Sup></Unit>)
   </>
 )
 
@@ -59,6 +61,65 @@ const EQUATIONS = {
     ),
     legend: FALLOFF_LEGEND,
   },
+  EMISSION: {
+    equation: <>→ X</>,
+    legend: (
+      <>
+        X: the species being emitted. Emission rates are in <Unit>mol m<Sup>−3</Sup> s<Sup>−1</Sup></Unit> and
+        constant over the solver time step.
+      </>
+    ),
+  },
+  FIRST_ORDER_LOSS: {
+    equation: <>X →</>,
+    legend: (
+      <>
+        X: the species being lost. Rate constants are in s<Sup>−1</Sup> and constant over the solver
+        time step.
+      </>
+    ),
+  },
+  PHOTOLYSIS: {
+    equation: (
+      <>
+        X + hν → Y<Sub>1</Sub> (+ Y<Sub>2</Sub> …)
+      </>
+    ),
+    legend: (
+      <>
+        X: the species being photolyzed; Y<Sub>n</Sub>: the products. Rate constants, including the hν
+        term, are in s<Sup>−1</Sup> and constant over the solver time step.
+      </>
+    ),
+  },
+  USER_DEFINED: {
+    equation: (
+      <>
+        X<Sub>1</Sub> (+ X<Sub>2</Sub> …) → Y<Sub>1</Sub> (+ Y<Sub>2</Sub> …)
+      </>
+    ),
+    legend: (
+      <>
+        X<Sub>n</Sub>: the reactants; Y<Sub>n</Sub>: the products. For a custom rate constant
+        algorithm, in <Unit>(mol m<Sup>−3</Sup>)<Sup>−(n−1)</Sup> s<Sup>−1</Sup></Unit> with n the number of
+        reactants. Constant over the solver time step.
+      </>
+    ),
+  },
+  LAMBDA_RATE_CONSTANT: {
+    equation: (
+      <>
+        X<Sub>1</Sub> (+ X<Sub>2</Sub> …) → Y<Sub>1</Sub> (+ Y<Sub>2</Sub> …)
+      </>
+    ),
+    legend: (
+      <>
+        The rate constant is the value the lambda function returns at the temperature T (K) and,
+        optionally, the pressure P (Pa), in <Unit>(mol m<Sup>−3</Sup>)<Sup>−(n−1)</Sup> s<Sup>−1</Sup></Unit> with
+        n the number of reactants.
+      </>
+    ),
+  },
   SURFACE: {
     equation: (
       <div className="space-y-1 text-left text-base">
@@ -71,11 +132,11 @@ const EQUATIONS = {
     ),
     legend: (
       <>
-        N<Sub>a</Sub>: number concentration of particles (particles m<Sup>−3</Sup>); r<Sub>e</Sub>:
+        N<Sub>a</Sub>: number concentration of particles (<Unit>particles m<Sup>−3</Sup></Unit>); r<Sub>e</Sub>:
         effective particle radius (m); D<Sub>g</Sub>: gas-phase diffusion coefficient of the
-        reactant (m<Sup>2</Sup> s<Sup>−1</Sup>); v: mean free speed of the gas-phase reactant; R:
-        ideal gas constant (J K<Sup>−1</Sup> mol<Sup>−1</Sup>); T: temperature (K); MW: molecular
-        weight of the gas-phase reactant (kg mol<Sup>−1</Sup>)
+        reactant (<Unit>m<Sup>2</Sup> s<Sup>−1</Sup></Unit>); v: mean free speed of the gas-phase reactant; R:
+        ideal gas constant (<Unit>J K<Sup>−1</Sup> mol<Sup>−1</Sup></Unit>); T: temperature (K); MW: molecular
+        weight of the gas-phase reactant (<Unit>kg mol<Sup>−1</Sup></Unit>)
       </>
     ),
   },
@@ -93,10 +154,10 @@ const EQUATIONS = {
     equation: (
       <div className="space-y-1 text-left text-base">
         <div>
-          k<Sub>firstBranch</Sub> = (X · e<Sup>−Y/T</Sup>) · A / (A + Z)
+          k<Sub>nitrate</Sub> = (X · e<Sup>−Y/T</Sup>) · A / (A + Z)
         </div>
         <div>
-          k<Sub>secondBranch</Sub> = (X · e<Sup>−Y/T</Sup>) · Z / (Z + A)
+          k<Sub>alkoxy</Sub> = (X · e<Sup>−Y/T</Sup>) · Z / (Z + A)
         </div>
         <div>
           A(T, [M], n) = (2×10<Sup>−22</Sup> e<Sup>n</Sup> [M]) / (1 + u) · 0.41
@@ -106,7 +167,7 @@ const EQUATIONS = {
           u = (2×10<Sup>−22</Sup> e<Sup>n</Sup> [M]) / (0.43 (T/298)<Sup>−8</Sup>)
         </div>
         <div>
-          Z(α<Sub>0</Sub>, n) = A(T = 293 K, [M] = 2.45×10<Sup>19</Sup> molec cm<Sup>−3</Sup>, n) ·
+          Z(α<Sub>0</Sub>, n) = A(T = 293 K, [M] = 40.6832 <Unit>mol m<Sup>−3</Sup></Unit>, n) ·
           (1 − α<Sub>0</Sub>) / α<Sub>0</Sub>
         </div>
       </div>
@@ -114,7 +175,7 @@ const EQUATIONS = {
     legend: (
       <>
         Typically used for NO + RO2 → alkoxy radical + NO2 reactions. T: temperature (K); [M]:
-        number density of air (molecules cm<Sup>−3</Sup>). More details in Wennberg et al. (2018).
+        number density of air (<Unit>mol m<Sup>−3</Sup></Unit>). More details in Wennberg et al. (2018).
       </>
     ),
   },
