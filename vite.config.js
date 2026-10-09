@@ -14,11 +14,37 @@ const injectVersionHtml = {
   },
 }
 
+// Adds the Google tag to index.html when VITE_GA_ID is set at build time. The deploy workflow
+// sets the development or production measurement ID. Local builds leave it unset and send nothing.
+const gaId = process.env.VITE_GA_ID
+const injectGoogleAnalytics = {
+  name: 'inject-google-analytics',
+  transformIndexHtml() {
+    if (!gaId) return []
+    return [
+      {
+        tag: 'script',
+        attrs: { async: true, src: `https://www.googletagmanager.com/gtag/js?id=${gaId}` },
+        injectTo: 'head',
+      },
+      {
+        tag: 'script',
+        children: `window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', '${gaId}');`,
+        injectTo: 'head',
+      },
+    ]
+  },
+}
+
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [
     react(),
     injectVersionHtml,
+    injectGoogleAnalytics,
     VitePWA({
       registerType: 'autoUpdate',
       manifest: {

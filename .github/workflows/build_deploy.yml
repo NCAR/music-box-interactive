@@ -17,6 +17,18 @@ jobs:
     - name: Get short commit SHA
       run: echo "SHORT_SHA=$(echo $GITHUB_SHA | cut -c1-7)" >> $GITHUB_ENV
 
+    # A tag push builds the production image. A branch push builds the development image.
+    # Each build has a different Google Analytics ID, so the two builds must not share an image tag.
+    - name: Select build target
+      run: |
+        if [ "${{ github.ref_type }}" = "tag" ]; then
+          echo "GA_ID=G-J6GE4Q3QZ2" >> $GITHUB_ENV
+          echo "IMAGE_TAG=${{ github.ref_name }}" >> $GITHUB_ENV
+        else
+          echo "GA_ID=G-CFFKTT2B6Y" >> $GITHUB_ENV
+          echo "IMAGE_TAG=${SHORT_SHA}" >> $GITHUB_ENV
+        fi
+
     - name: Checkout Repo
       uses: actions/checkout@v5
       with:
@@ -43,8 +55,10 @@ jobs:
       with:
         push: true
         tags: |
-          hub.k8s.ucar.edu/musicbox/frontend:${{ env.SHORT_SHA }}
+          hub.k8s.ucar.edu/musicbox/frontend:${{ env.IMAGE_TAG }}
           hub.k8s.ucar.edu/musicbox/frontend:${{ github.ref_name }}
+        build-args: |
+          VITE_GA_ID=${{ env.GA_ID }}
         file: repo/Dockerfile
         context: repo/
 
@@ -53,9 +67,10 @@ jobs:
         cp -r repo/deploy/kustomization/. deploy/deploy/kustomization/
 
     - name: Update devel kustomization
+      if: github.ref_type == 'branch'
       run: |
         cd deploy/deploy/kustomization/overlays/devel
-        kustomize edit set image  hub.k8s.ucar.edu/musicbox/frontend=hub.k8s.ucar.edu/musicbox/frontend:${{ env.SHORT_SHA }}
+        kustomize edit set image  hub.k8s.ucar.edu/musicbox/frontend=hub.k8s.ucar.edu/musicbox/frontend:${{ env.IMAGE_TAG }}
         git config user.email "kshores@ucar.edu"
         git config user.name "Auto-ci"
         git add -A ../../
