@@ -43,6 +43,11 @@ export function useRunSimulation() {
 
     dispatch(setStatus('running'))
     dispatch(setError(null))
+    // Counts run presses in Google Analytics. gtag only exists when the build sets VITE_GA_ID.
+    // The source is the example id, 'uploaded' for a config file, or 'scratch' for a new one.
+    window.gtag?.('event', 'run_simulation', {
+      source: currentExample?.id || 'scratch',
+    })
 
     try {
       const { results, metadata } = await runLocalSimulation({
@@ -60,7 +65,7 @@ export function useRunSimulation() {
       dispatch(setStatus('failed'))
       createNotify(toast).error('Simulation Failed', message)
     }
-  }, [conditions, dispatch, isDisabled, mechanismData, navigate])
+  }, [conditions, currentExample, dispatch, isDisabled, mechanismData, navigate])
 
   return {
     runSimulation,
