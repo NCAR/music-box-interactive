@@ -4,6 +4,9 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm ci
 COPY . .
+# The Google Analytics measurement ID. Leave it empty to build without analytics.
+ARG VITE_GA_ID=""
+ENV VITE_GA_ID=$VITE_GA_ID
 RUN npm run build
 
 # Stage 2: Serve
