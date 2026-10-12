@@ -34,8 +34,9 @@ import {
   TEXT_INPUT_SM,
 } from './fieldStyles'
 import { EMPTY_ARRAY } from '../../utils/emptyArray'
+import { DISPLAY_DECIMALS } from '../../utils/displayDecimals'
 
-const formatReactionComponents = (components) => {
+const formatReactionComponents = (components, maxDecimals) => {
   if (!Array.isArray(components) || components.length === 0) {
     return '∅'
   }
@@ -45,7 +46,9 @@ const formatReactionComponents = (components) => {
       const name = component.name || ''
       const coefficient = Number(component.coefficient)
       // A coefficient below 1 shows too (0.5OH), so that an edit does not lose it.
-      const coeffPrefix = Number.isFinite(coefficient) && coefficient !== 1 ? coefficient : ''
+      const shown =
+        maxDecimals == null ? coefficient : parseFloat(coefficient.toFixed(maxDecimals))
+      const coeffPrefix = Number.isFinite(coefficient) && coefficient !== 1 ? shown : ''
 
       return `${coeffPrefix}${name}`
     })
@@ -57,10 +60,13 @@ const formatReactionDisplay = (reaction) => {
   const products =
     reaction.products || reaction['gas-phase products'] || reaction['alkoxy products'] || []
 
-  const reactantStr = formatReactionComponents(Array.isArray(reactants) ? reactants : [reactants])
-  const productStr = formatReactionComponents(Array.isArray(products) ? products : [products])
+  const toChipText = (components) =>
+    formatReactionComponents(
+      Array.isArray(components) ? components : [components],
+      DISPLAY_DECIMALS
+    )
 
-  return `${reactantStr} → ${productStr}`
+  return `${toChipText(reactants)} → ${toChipText(products)}`
 }
 
 // Structural fields. All other fields are rate parameters that vary by reaction type.

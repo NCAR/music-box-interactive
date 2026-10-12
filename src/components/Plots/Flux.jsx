@@ -25,6 +25,7 @@ import { EMPTY_ARRAY } from '../../utils/emptyArray'
 import { selectRunDuration } from '../../redux/slices/simulationSlice'
 import { useResultsConcentrationUnit } from '../../hooks/useConcentrationUnit'
 import { buildIntervalDivisors } from '../../utils/concentrationUnits'
+import { DISPLAY_DECIMALS } from '../../utils/displayDecimals'
 import { selectNamedReactions } from '../../redux/slices/mechanismSlice'
 
 // Species rows shown before the list collapses into a "+N others" popover.
@@ -510,7 +511,7 @@ export function Flux() {
                     <RangeBoundInput
                       value={timeRange.start}
                       divisor={timeRangeUnit.divisor}
-                      decimals={4}
+                      decimals={DISPLAY_DECIMALS}
                       min={0}
                       max={timeRange.end}
                       onCommit={(start) => setTimeRange({ start, end: timeRange.end })}
@@ -522,7 +523,7 @@ export function Flux() {
                     <RangeBoundInput
                       value={timeRange.end}
                       divisor={timeRangeUnit.divisor}
-                      decimals={4}
+                      decimals={DISPLAY_DECIMALS}
                       min={timeRange.start}
                       max={duration}
                       onCommit={(end) => setTimeRange({ start: timeRange.start, end })}

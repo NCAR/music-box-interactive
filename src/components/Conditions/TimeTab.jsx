@@ -7,6 +7,7 @@ import { RangeBoundInput } from '../Plots/RangeBoundInput'
 import { UnitDropdown } from '../Plots/UnitDropdown'
 import { TIME_RANGE_UNITS, formatBound } from '../Plots/timeRangeUnits'
 import { TEXT_INPUT_SM } from '../Mechanism/fieldStyles'
+import { DISPLAY_DECIMALS } from '../../utils/displayDecimals'
 import { useNotify } from '@/hooks/use-notify'
 
 const NUMBER_INPUT = `w-72 ${TEXT_INPUT_SM}`
@@ -98,7 +99,7 @@ export function TimeTab() {
                   <RangeBoundInput
                     value={value}
                     divisor={unit.divisor}
-                    decimals={4}
+                    decimals={DISPLAY_DECIMALS}
                     min={field.getMin(basic)}
                     onCommit={(next) => dispatch(field.action(next))}
                     flashOnCommit

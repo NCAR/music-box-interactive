@@ -12,6 +12,7 @@ import { PRESSURE_UNITS } from '../Plots/pressureUnits'
 import { DENSITY_UNITS } from '../Plots/densityUnits'
 import { LIST_CARD, LIST_CARD_CONTENT, FIELD_LABEL } from '../Mechanism/fieldStyles'
 import { cn } from '../../lib/utils'
+import { DISPLAY_DECIMALS } from '../../utils/displayDecimals'
 import {
   DEFAULT_TEMPERATURE,
   DEFAULT_PRESSURE,
@@ -56,7 +57,7 @@ function idealGasDensity(pressure, temperature) {
   return pressure / (GAS_CONSTANT * temperature)
 }
 
-function formatConversion(value, decimals = 4) {
+function formatConversion(value, decimals = DISPLAY_DECIMALS) {
   return String(parseFloat(value.toFixed(decimals)))
 }
 
