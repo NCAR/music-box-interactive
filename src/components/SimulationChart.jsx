@@ -9,6 +9,7 @@ import { getSpeciesDisplayName } from './Plots/speciesFormat'
 import { useClickOutside } from '../hooks/useClickOutside'
 import { useResultsConcentrationUnit } from '../hooks/useConcentrationUnit'
 import { fromMolM3, isMixingRatioUnit } from '../utils/concentrationUnits'
+import { DISPLAY_DECIMALS } from '../utils/displayDecimals'
 import { CHART_COLORS } from './chartColors'
 import { TIME_RANGE_UNITS as TIME_UNITS } from './Plots/timeRangeUnits'
 import { useChartTheme } from '../theme/chartTheme'
@@ -498,7 +499,7 @@ export function SimulationChart({ results, metadata }) {
                 <RangeBoundInput
                   value={timeRange.start}
                   divisor={timeUnit.divisor}
-                  decimals={4}
+                  decimals={DISPLAY_DECIMALS}
                   min={0}
                   max={timeRangeEnd}
                   onCommit={(start) => setTimeRange((range) => ({ ...range, start }))}
@@ -510,7 +511,7 @@ export function SimulationChart({ results, metadata }) {
                 <RangeBoundInput
                   value={timeRangeEnd}
                   divisor={timeUnit.divisor}
-                  decimals={4}
+                  decimals={DISPLAY_DECIMALS}
                   min={timeRange.start}
                   max={lastTime}
                   onCommit={(end) => setTimeRange((range) => ({ ...range, end }))}
