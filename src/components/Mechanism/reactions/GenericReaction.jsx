@@ -45,9 +45,7 @@ export function GenericReactionForm({ onAddReaction, reactionType }) {
       )}
 
       <div>
-        <label className={FIELD_LABEL}>
-          Reactants (e.g., "O2 + O" or "2NO2")
-        </label>
+        <label className={FIELD_LABEL}>Reactants (e.g., "O2 + O" or "2NO2")</label>
         <input
           type="text"
           value={reactants}
@@ -58,9 +56,7 @@ export function GenericReactionForm({ onAddReaction, reactionType }) {
       </div>
 
       <div>
-        <label className={FIELD_LABEL}>
-          Products (e.g., "O3" or "NO + O2")
-        </label>
+        <label className={FIELD_LABEL}>Products (e.g., "O3" or "NO + O2")</label>
         <input
           type="text"
           value={products}

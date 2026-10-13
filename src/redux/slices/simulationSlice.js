@@ -40,8 +40,15 @@ export const simulationSlice = createSlice({
   },
 })
 
-export const { setStatus, setResults, setExcludedResults, setMetadata, setError, clearSimulation, resetSimulation } =
-  simulationSlice.actions
+export const {
+  setStatus,
+  setResults,
+  setExcludedResults,
+  setMetadata,
+  setError,
+  clearSimulation,
+  resetSimulation,
+} = simulationSlice.actions
 
 // Length of the run the results came from. The conditions may have been edited since, so this
 // reads what the run recorded rather than the current setting.

@@ -1,8 +1,5 @@
 import { useMemo, useState } from 'react'
-import {
-  ConcentrationUnitContext,
-  DEFAULT_CONCENTRATION_UNIT_ID,
-} from './concentrationUnitContext'
+import { ConcentrationUnitContext, DEFAULT_CONCENTRATION_UNIT_ID } from './concentrationUnitContext'
 
 // Shares one concentration unit across the Results tabs (Species, Reaction Rates, Flow Diagram).
 export function ConcentrationUnitProvider({ children }) {

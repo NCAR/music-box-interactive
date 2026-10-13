@@ -291,10 +291,16 @@ export function FlowGraph({
     const productionTotalBySpecies = new Map()
     links.forEach((l) => {
       if (nodeById[l.source]?.kind === 'species') {
-        consumptionTotalBySpecies.set(l.source, (consumptionTotalBySpecies.get(l.source) ?? 0) + l.rate)
+        consumptionTotalBySpecies.set(
+          l.source,
+          (consumptionTotalBySpecies.get(l.source) ?? 0) + l.rate
+        )
       }
       if (nodeById[l.target]?.kind === 'species') {
-        productionTotalBySpecies.set(l.target, (productionTotalBySpecies.get(l.target) ?? 0) + l.rate)
+        productionTotalBySpecies.set(
+          l.target,
+          (productionTotalBySpecies.get(l.target) ?? 0) + l.rate
+        )
       }
     })
     links.forEach((l) => {
@@ -557,7 +563,18 @@ export function FlowGraph({
 
     sim.alpha(0.4).restart()
     return () => sim.stop()
-  }, [selectedSpecies, reactionTypes, rateRange, timeRange, reactions, species, results, valueDisplay, fluxUnitLabel, intervalDivisors])
+  }, [
+    selectedSpecies,
+    reactionTypes,
+    rateRange,
+    timeRange,
+    reactions,
+    species,
+    results,
+    valueDisplay,
+    fluxUnitLabel,
+    intervalDivisors,
+  ])
 
   // Sync selectedNode → D3 rate label visibility & rect highlight
   useEffect(() => {

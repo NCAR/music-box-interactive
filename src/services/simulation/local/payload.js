@@ -40,7 +40,9 @@ export const buildLocalSimulationPayload = ({ mechanismData, conditions }) => {
   box.outputTimeStep = conditions.basic.outputFrequency
   box.simulationLength = conditions.basic.duration
   box.loadMechanism(mechanism)
-  box.loadConditions(buildSolverConditions(conditions, sourceReactions, reduxMechanism.species ?? []))
+  box.loadConditions(
+    buildSolverConditions(conditions, sourceReactions, reduxMechanism.species ?? [])
+  )
 
   const payload = box.toJson()
 

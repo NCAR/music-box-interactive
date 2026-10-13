@@ -155,9 +155,7 @@ function FluxReactionRow({ reaction, flux, checked, onToggleCheck }) {
           <td />
           <td colSpan={3} className="px-4 py-3">
             <div className="flex flex-col gap-2 max-w-[35%] pl-5">
-              <span className="text-xs  text-muted uppercase tracking-wide">
-                Parameters
-              </span>
+              <span className="text-xs  text-muted uppercase tracking-wide">Parameters</span>
               {parameters.map((field) => (
                 <div key={field.key} className="flex items-center justify-between gap-3 text-sm">
                   <span className="text-muted flex-shrink-0">{field.key}</span>
@@ -317,8 +315,7 @@ export function Flux() {
       .map((reaction, index) => ({ reaction, index }))
       .filter(
         ({ reaction }) =>
-          (selectedReactionTypes.length === 0 ||
-            selectedReactionTypes.includes(reaction.type)) &&
+          (selectedReactionTypes.length === 0 || selectedReactionTypes.includes(reaction.type)) &&
           reactionInvolvesSpecies(reaction, selectedSpeciesNames)
       )
       .map(({ reaction, index }) => ({
@@ -438,264 +435,268 @@ export function Flux() {
     <div className="space-y-4">
       <Card>
         <CardContent className="space-y-4">
-        <div className="flex flex-col lg:flex-row lg:items-center gap-2 lg:gap-4 pt-3">
-          <div className="w-full lg:w-64 lg:flex-shrink-0">
-            <button
-              type="button"
-              onClick={resetFilters}
-              className="text-sm text-action hover:underline"
-            >
-              Reset
-            </button>
-          </div>
-
-          <div className="flex flex-1 items-center justify-end">
-            <div className="relative" ref={sortMenuRef}>
+          <div className="flex flex-col lg:flex-row lg:items-center gap-2 lg:gap-4 pt-3">
+            <div className="w-full lg:w-64 lg:flex-shrink-0">
               <button
                 type="button"
-                onClick={() => setSortMenuOpen((open) => !open)}
-                className="flex items-center gap-1 text-sm text-ink hover:text-heading"
+                onClick={resetFilters}
+                className="text-sm text-action hover:underline"
               >
-                {sortOption.label}
-                <ChevronDown className="w-3.5 h-3.5" />
+                Reset
               </button>
-
-              {sortMenuOpen && (
-                <div className="absolute right-0 z-20 mt-1 w-44 bg-white dark:bg-surface border border-border rounded-lg shadow-lg py-1">
-                  {SORT_OPTIONS.map((option) => (
-                    <button
-                      key={option.id}
-                      type="button"
-                      onClick={() => {
-                        setSortOrder(option.id)
-                        setSortMenuOpen(false)
-                      }}
-                      className="w-full flex items-center gap-2 text-left text-sm px-3 py-1.5 text-ink hover:bg-surface-hover"
-                    >
-                      <Check
-                        className={`w-3.5 h-3.5 flex-shrink-0 ${
-                          sortOrder === option.id ? 'opacity-100' : 'opacity-0'
-                        }`}
-                      />
-                      {option.label}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-
-        <div className="flex flex-col lg:flex-row gap-4">
-          {/* Sidebar filters */}
-          <div className="w-full lg:w-64 flex-shrink-0 space-y-5">
-            <div>
-              <button
-                type="button"
-                onClick={() => setTimeRangeOpen((open) => !open)}
-                className="w-full flex items-center justify-between text-sm font-semibold text-ink mb-2"
-              >
-                Time range
-                {timeRangeOpen ? (
-                  <ChevronUp className="w-4 h-4" />
-                ) : (
-                  <ChevronDown className="w-4 h-4" />
-                )}
-              </button>
-
-              {timeRangeOpen && (
-                <div className="flex flex-col gap-2">
-                  <UnitDropdown unitId={timeRangeUnitId} onChange={setTimeRangeUnitId} />
-
-                  <div className="flex items-center border border-border rounded-lg bg-white dark:bg-surface">
-                    <RangeBoundInput
-                      value={timeRange.start}
-                      divisor={timeRangeUnit.divisor}
-                      decimals={DISPLAY_DECIMALS}
-                      min={0}
-                      max={timeRange.end}
-                      onCommit={(start) => setTimeRange({ start, end: timeRange.end })}
-                      className="w-1/2 h-8 px-2 bg-white dark:bg-surface text-ink rounded-l-lg text-sm text-center focus:outline-none focus:relative focus:z-10 focus:ring-2 focus:ring-action"
-                    />
-                    <span className="flex items-center justify-center h-8 px-1 text-muted font-normal bg-white dark:bg-surface">
-                      –
-                    </span>
-                    <RangeBoundInput
-                      value={timeRange.end}
-                      divisor={timeRangeUnit.divisor}
-                      decimals={DISPLAY_DECIMALS}
-                      min={timeRange.start}
-                      max={duration}
-                      onCommit={(end) => setTimeRange({ start: timeRange.start, end })}
-                      className="w-1/2 h-8 px-2 bg-white dark:bg-surface text-ink rounded-r-lg text-sm text-center focus:outline-none focus:relative focus:z-10 focus:ring-2 focus:ring-action"
-                    />
-                  </div>
-                </div>
-              )}
             </div>
 
-            <div>
-              <p className="text-sm font-semibold text-ink mb-2">Flux unit</p>
-              <UnitDropdown
-                unitId={concentrationUnitId}
-                onChange={setConcentrationUnitId}
-                units={concentrationUnits}
-              />
-            </div>
+            <div className="flex flex-1 items-center justify-end">
+              <div className="relative" ref={sortMenuRef}>
+                <button
+                  type="button"
+                  onClick={() => setSortMenuOpen((open) => !open)}
+                  className="flex items-center gap-1 text-sm text-ink hover:text-heading"
+                >
+                  {sortOption.label}
+                  <ChevronDown className="w-3.5 h-3.5" />
+                </button>
 
-            <div>
-              <button
-                type="button"
-                onClick={() => setReactionsOpen((open) => !open)}
-                className="w-full flex items-center justify-between text-sm font-semibold text-ink mb-2"
-              >
-                Reactions
-                {reactionsOpen ? (
-                  <ChevronUp className="w-4 h-4" />
-                ) : (
-                  <ChevronDown className="w-4 h-4" />
-                )}
-              </button>
-
-              {reactionsOpen && (
-                <div className="max-h-64 overflow-y-auto flex flex-col gap-0.5 pr-1">
-                  {reactionTypeCounts.map(({ type, count, label }) => {
-                    const selected = selectedReactionTypes.includes(type)
-                    return (
+                {sortMenuOpen && (
+                  <div className="absolute right-0 z-20 mt-1 w-44 bg-white dark:bg-surface border border-border rounded-lg shadow-lg py-1">
+                    {SORT_OPTIONS.map((option) => (
                       <button
-                        key={type}
+                        key={option.id}
                         type="button"
-                        onClick={() => toggleReactionType(type)}
-                        className={`text-left text-sm px-1.5 py-1 rounded ${
-                          selected
-                            ? 'text-assist-secondary-foreground font-semibold bg-assist-secondary'
-                            : 'text-muted hover:bg-surface-hover'
-                        }`}
+                        onClick={() => {
+                          setSortOrder(option.id)
+                          setSortMenuOpen(false)
+                        }}
+                        className="w-full flex items-center gap-2 text-left text-sm px-3 py-1.5 text-ink hover:bg-surface-hover"
                       >
-                        {label} ({count})
+                        <Check
+                          className={`w-3.5 h-3.5 flex-shrink-0 ${
+                            sortOrder === option.id ? 'opacity-100' : 'opacity-0'
+                          }`}
+                        />
+                        {option.label}
                       </button>
-                    )
-                  })}
-                </div>
-              )}
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
+          </div>
 
-            <div>
-              <button
-                type="button"
-                onClick={() => setSpeciesOpen((open) => !open)}
-                className="w-full flex items-center justify-between text-sm font-semibold text-ink mb-2"
-              >
-                Species
-                {speciesOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-              </button>
+          <div className="flex flex-col lg:flex-row gap-4">
+            {/* Sidebar filters */}
+            <div className="w-full lg:w-64 flex-shrink-0 space-y-5">
+              <div>
+                <button
+                  type="button"
+                  onClick={() => setTimeRangeOpen((open) => !open)}
+                  className="w-full flex items-center justify-between text-sm font-semibold text-ink mb-2"
+                >
+                  Time range
+                  {timeRangeOpen ? (
+                    <ChevronUp className="w-4 h-4" />
+                  ) : (
+                    <ChevronDown className="w-4 h-4" />
+                  )}
+                </button>
 
-              {speciesOpen && (
-                <div className="flex flex-col gap-2">
-                  <input
-                    type="text"
-                    value={speciesSearch}
-                    onChange={(e) => {
-                      setSpeciesSearch(e.target.value)
-                      setSpeciesOverflowOpen(false)
-                    }}
-                    placeholder="Search species"
-                    className="w-full h-8 px-2 border border-border rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-action"
-                  />
+                {timeRangeOpen && (
+                  <div className="flex flex-col gap-2">
+                    <UnitDropdown unitId={timeRangeUnitId} onChange={setTimeRangeUnitId} />
 
-                  <div className="flex flex-col gap-0.5">
-                    {visibleSpeciesNames.map((name) => {
-                      const selected = selectedSpeciesNames.includes(name)
+                    <div className="flex items-center border border-border rounded-lg bg-white dark:bg-surface">
+                      <RangeBoundInput
+                        value={timeRange.start}
+                        divisor={timeRangeUnit.divisor}
+                        decimals={DISPLAY_DECIMALS}
+                        min={0}
+                        max={timeRange.end}
+                        onCommit={(start) => setTimeRange({ start, end: timeRange.end })}
+                        className="w-1/2 h-8 px-2 bg-white dark:bg-surface text-ink rounded-l-lg text-sm text-center focus:outline-none focus:relative focus:z-10 focus:ring-2 focus:ring-action"
+                      />
+                      <span className="flex items-center justify-center h-8 px-1 text-muted font-normal bg-white dark:bg-surface">
+                        –
+                      </span>
+                      <RangeBoundInput
+                        value={timeRange.end}
+                        divisor={timeRangeUnit.divisor}
+                        decimals={DISPLAY_DECIMALS}
+                        min={timeRange.start}
+                        max={duration}
+                        onCommit={(end) => setTimeRange({ start: timeRange.start, end })}
+                        className="w-1/2 h-8 px-2 bg-white dark:bg-surface text-ink rounded-r-lg text-sm text-center focus:outline-none focus:relative focus:z-10 focus:ring-2 focus:ring-action"
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div>
+                <p className="text-sm font-semibold text-ink mb-2">Flux unit</p>
+                <UnitDropdown
+                  unitId={concentrationUnitId}
+                  onChange={setConcentrationUnitId}
+                  units={concentrationUnits}
+                />
+              </div>
+
+              <div>
+                <button
+                  type="button"
+                  onClick={() => setReactionsOpen((open) => !open)}
+                  className="w-full flex items-center justify-between text-sm font-semibold text-ink mb-2"
+                >
+                  Reactions
+                  {reactionsOpen ? (
+                    <ChevronUp className="w-4 h-4" />
+                  ) : (
+                    <ChevronDown className="w-4 h-4" />
+                  )}
+                </button>
+
+                {reactionsOpen && (
+                  <div className="max-h-64 overflow-y-auto flex flex-col gap-0.5 pr-1">
+                    {reactionTypeCounts.map(({ type, count, label }) => {
+                      const selected = selectedReactionTypes.includes(type)
                       return (
                         <button
-                          key={name}
+                          key={type}
                           type="button"
-                          onClick={() => toggleSpecies(name)}
+                          onClick={() => toggleReactionType(type)}
                           className={`text-left text-sm px-1.5 py-1 rounded ${
                             selected
                               ? 'text-assist-secondary-foreground font-semibold bg-assist-secondary'
                               : 'text-muted hover:bg-surface-hover'
                           }`}
                         >
-                          {name}
+                          {label} ({count})
                         </button>
                       )
                     })}
-
-                    {overflowSpeciesNames.length > 0 && (
-                      <div className="relative" ref={speciesOverflowRef}>
-                        <button
-                          type="button"
-                          onClick={() => setSpeciesOverflowOpen((open) => !open)}
-                          className="text-left text-sm px-1.5 py-1 rounded text-muted hover:bg-surface-hover"
-                        >
-                          +{overflowSpeciesNames.length} others
-                        </button>
-
-                        {speciesOverflowOpen && (
-                          <div className="absolute z-20 mt-1 w-48 max-h-56 overflow-y-auto bg-white dark:bg-surface border border-border rounded-lg shadow-lg py-1">
-                            {overflowSpeciesNames.map((name) => {
-                              const selected = selectedSpeciesNames.includes(name)
-                              return (
-                                <button
-                                  key={name}
-                                  type="button"
-                                  onClick={() => toggleSpecies(name)}
-                                  className="w-full flex items-center gap-2 text-left text-sm px-3 py-1.5 text-ink hover:bg-surface-hover"
-                                >
-                                  <Check
-                                    className={`w-3.5 h-3.5 flex-shrink-0 ${
-                                      selected ? 'opacity-100' : 'opacity-0'
-                                    }`}
-                                  />
-                                  <span className="flex-1 truncate">{name}</span>
-                                </button>
-                              )
-                            })}
-                          </div>
-                        )}
-                      </div>
-                    )}
                   </div>
-                </div>
-              )}
-            </div>
-          </div>
+                )}
+              </div>
 
-          <div className="flex-1 lg:relative">
-            <div className="border border-gray-200 dark:border-border rounded-lg overflow-auto lg:absolute lg:inset-0">
-              {visibleReactions.length === 0 ? (
-                <p className="text-sm text-muted p-4">No reactions match the current filters.</p>
-              ) : (
-                <table className="w-full table-fixed text-sm">
-                  <thead className="sticky top-0 z-10 bg-assist-secondary text-assist-secondary-foreground">
-                    <tr>
-                      <th className="w-16 text-left px-4 py-2 font-semibold whitespace-nowrap">
-                        Plot
-                      </th>
-                      <th className="text-left pl-9 pr-4 py-2 font-semibold">Reaction</th>
-                      <th className="w-40 text-left px-4 py-2 font-semibold">Type</th>
-                      <th className="w-40 text-left px-4 py-2 font-semibold">
-                        Flux ({concentrationUnit.label})
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {visibleReactions.map(({ reaction, key, flux }) => (
-                      <FluxReactionRow
-                        key={key}
-                        reaction={reaction}
-                        flux={flux}
-                        checked={selectedReactionKeys.includes(key)}
-                        onToggleCheck={() => toggleReactionSelection(key)}
-                      />
-                    ))}
-                  </tbody>
-                </table>
-              )}
+              <div>
+                <button
+                  type="button"
+                  onClick={() => setSpeciesOpen((open) => !open)}
+                  className="w-full flex items-center justify-between text-sm font-semibold text-ink mb-2"
+                >
+                  Species
+                  {speciesOpen ? (
+                    <ChevronUp className="w-4 h-4" />
+                  ) : (
+                    <ChevronDown className="w-4 h-4" />
+                  )}
+                </button>
+
+                {speciesOpen && (
+                  <div className="flex flex-col gap-2">
+                    <input
+                      type="text"
+                      value={speciesSearch}
+                      onChange={(e) => {
+                        setSpeciesSearch(e.target.value)
+                        setSpeciesOverflowOpen(false)
+                      }}
+                      placeholder="Search species"
+                      className="w-full h-8 px-2 border border-border rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-action"
+                    />
+
+                    <div className="flex flex-col gap-0.5">
+                      {visibleSpeciesNames.map((name) => {
+                        const selected = selectedSpeciesNames.includes(name)
+                        return (
+                          <button
+                            key={name}
+                            type="button"
+                            onClick={() => toggleSpecies(name)}
+                            className={`text-left text-sm px-1.5 py-1 rounded ${
+                              selected
+                                ? 'text-assist-secondary-foreground font-semibold bg-assist-secondary'
+                                : 'text-muted hover:bg-surface-hover'
+                            }`}
+                          >
+                            {name}
+                          </button>
+                        )
+                      })}
+
+                      {overflowSpeciesNames.length > 0 && (
+                        <div className="relative" ref={speciesOverflowRef}>
+                          <button
+                            type="button"
+                            onClick={() => setSpeciesOverflowOpen((open) => !open)}
+                            className="text-left text-sm px-1.5 py-1 rounded text-muted hover:bg-surface-hover"
+                          >
+                            +{overflowSpeciesNames.length} others
+                          </button>
+
+                          {speciesOverflowOpen && (
+                            <div className="absolute z-20 mt-1 w-48 max-h-56 overflow-y-auto bg-white dark:bg-surface border border-border rounded-lg shadow-lg py-1">
+                              {overflowSpeciesNames.map((name) => {
+                                const selected = selectedSpeciesNames.includes(name)
+                                return (
+                                  <button
+                                    key={name}
+                                    type="button"
+                                    onClick={() => toggleSpecies(name)}
+                                    className="w-full flex items-center gap-2 text-left text-sm px-3 py-1.5 text-ink hover:bg-surface-hover"
+                                  >
+                                    <Check
+                                      className={`w-3.5 h-3.5 flex-shrink-0 ${
+                                        selected ? 'opacity-100' : 'opacity-0'
+                                      }`}
+                                    />
+                                    <span className="flex-1 truncate">{name}</span>
+                                  </button>
+                                )
+                              })}
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="flex-1 lg:relative">
+              <div className="border border-gray-200 dark:border-border rounded-lg overflow-auto lg:absolute lg:inset-0">
+                {visibleReactions.length === 0 ? (
+                  <p className="text-sm text-muted p-4">No reactions match the current filters.</p>
+                ) : (
+                  <table className="w-full table-fixed text-sm">
+                    <thead className="sticky top-0 z-10 bg-assist-secondary text-assist-secondary-foreground">
+                      <tr>
+                        <th className="w-16 text-left px-4 py-2 font-semibold whitespace-nowrap">
+                          Plot
+                        </th>
+                        <th className="text-left pl-9 pr-4 py-2 font-semibold">Reaction</th>
+                        <th className="w-40 text-left px-4 py-2 font-semibold">Type</th>
+                        <th className="w-40 text-left px-4 py-2 font-semibold">
+                          Flux ({concentrationUnit.label})
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {visibleReactions.map(({ reaction, key, flux }) => (
+                        <FluxReactionRow
+                          key={key}
+                          reaction={reaction}
+                          flux={flux}
+                          checked={selectedReactionKeys.includes(key)}
+                          onToggleCheck={() => toggleReactionSelection(key)}
+                        />
+                      ))}
+                    </tbody>
+                  </table>
+                )}
+              </div>
             </div>
           </div>
-        </div>
         </CardContent>
       </Card>
 
@@ -705,8 +706,8 @@ export function Flux() {
             <div className="flex items-center justify-between gap-3 mb-3">
               {hiddenSeriesCount > 0 && (
                 <p className="text-xs text-muted">
-                  Showing the first {chartSeries.length} of {plottedReactionEntries.length}{' '}
-                  selected reactions -- more than that isn't distinguishable by color.
+                  Showing the first {chartSeries.length} of {plottedReactionEntries.length} selected
+                  reactions -- more than that isn't distinguishable by color.
                 </p>
               )}
             </div>

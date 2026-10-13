@@ -1,10 +1,7 @@
 import { useContext, useMemo, useState } from 'react'
 import { airDensitiesFromResults } from '../utils/environmentSeries'
 import { CONCENTRATION_UNITS, isMixingRatioUnit } from '../utils/concentrationUnits'
-import {
-  ConcentrationUnitContext,
-  DEFAULT_CONCENTRATION_UNIT_ID,
-} from './concentrationUnitContext'
+import { ConcentrationUnitContext, DEFAULT_CONCENTRATION_UNIT_ID } from './concentrationUnitContext'
 
 // Falls back to local state outside a provider, so a plot still works standalone.
 export function useConcentrationUnit() {

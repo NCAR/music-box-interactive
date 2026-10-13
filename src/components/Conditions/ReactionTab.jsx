@@ -48,7 +48,6 @@ const formatValue = (value) => {
   return magnitude < 1e-3 || magnitude >= 1e6 ? value.toExponential(2) : String(value)
 }
 
-
 // A stable fallback for the rowReactionType selector, matching EMPTY_ARRAY's reasoning: a fresh
 // {} on every call would make useSyncExternalStore treat every render as a real change.
 const EMPTY_ROW_TAGS = {}
@@ -87,7 +86,7 @@ const surfacePropertiesOf = (reactionId, tableColumns) => {
 
 /**
  * ReactionTab Component
- * Time-varying rate parameters for specific reactions: 
+ * Time-varying rate parameters for specific reactions:
  * - Photolysis, Surface, Emissions, Loss
  */
 export function ReactionTab() {
@@ -169,7 +168,10 @@ export function ReactionTab() {
     const ids = reactionsOfType.map((reaction) => reaction.id)
     setSelectedReactionIds(new Set(ids.slice(0, REACTIONS_VISIBLE)))
     if (ids.length > MAX_SELECTED_REACTION) {
-      notify.warning('Selection Limited', `Selected the first ${MAX_SELECTED_REACTION} of ${ids.length} reactions. Use search to select others.`)
+      notify.warning(
+        'Selection Limited',
+        `Selected the first ${MAX_SELECTED_REACTION} of ${ids.length} reactions. Use search to select others.`
+      )
     }
   }
 
@@ -184,7 +186,7 @@ export function ReactionTab() {
     if (presentReactionTypes.length > 0) setReactionTypeId(presentReactionTypes[0].id)
   }, [presentReactionTypes, reactionTypeId])
 
-  // Recomputes from mechanismReactions/reactionTypeId rather than depending on the derived 
+  // Recomputes from mechanismReactions/reactionTypeId rather than depending on the derived
   // reactionsOfType array. Selections are scoped to the active type.
   useEffect(() => {
     const currentReactionsOfType = mechanismReactions.filter(
@@ -218,14 +220,25 @@ export function ReactionTab() {
         subLabel: property,
       }))
     }
-    return [{ key: rateColumnKey(reactionType.prefix, reaction.id), label: nameOf(reaction), unit: valueUnit }]
+    return [
+      {
+        key: rateColumnKey(reactionType.prefix, reaction.id),
+        label: nameOf(reaction),
+        unit: valueUnit,
+      },
+    ]
   })
 
   // Consecutive columns of the same surface reaction share one header cell.
   const headerGroups = columns.reduce((groups, column) => {
     const last = groups[groups.length - 1]
     if (last && last.id === column.groupId) last.size += 1
-    else groups.push({ id: column.groupId ?? column.key, label: column.groupLabel ?? column.label, size: 1 })
+    else
+      groups.push({
+        id: column.groupId ?? column.key,
+        label: column.groupLabel ?? column.label,
+        size: 1,
+      })
     return groups
   }, [])
 
@@ -351,11 +364,13 @@ export function ReactionTab() {
   }
 
   // Scoped to the removable rows visible for the active type -- t=0 is never included.
-  const allSelected = removableIndices.length > 0 && removableIndices.every((i) => selectedIndices.has(i))
+  const allSelected =
+    removableIndices.length > 0 && removableIndices.every((i) => selectedIndices.has(i))
 
   const toggleSelectAll = () => {
     setSelectedIndices((prev) => {
-      const allCurrentlySelected = removableIndices.length > 0 && removableIndices.every((i) => prev.has(i))
+      const allCurrentlySelected =
+        removableIndices.length > 0 && removableIndices.every((i) => prev.has(i))
       const next = new Set(prev)
       removableIndices.forEach((i) => (allCurrentlySelected ? next.delete(i) : next.add(i)))
       return next
@@ -373,7 +388,10 @@ export function ReactionTab() {
     dispatch(setConditionsTable(result.table))
     dispatch(untagTimeRows(result.removedTimes))
 
-    notify.removed(result.removedCount === 1 ? 'Time Point Removed' : 'Time Points Removed', `Removed ${result.removedCount} time point${result.removedCount === 1 ? '' : 's'}.`)
+    notify.removed(
+      result.removedCount === 1 ? 'Time Point Removed' : 'Time Points Removed',
+      `Removed ${result.removedCount} time point${result.removedCount === 1 ? '' : 's'}.`
+    )
     setSelectedIndices(new Set())
   }
 
@@ -387,7 +405,8 @@ export function ReactionTab() {
 
     if (rowTimes.includes(time)) {
       const tags = rowReactionTypes[String(time)]
-      const alreadyVisibleHere = !Array.isArray(tags) || tags.length === 0 || tags.includes(reactionTypeId)
+      const alreadyVisibleHere =
+        !Array.isArray(tags) || tags.length === 0 || tags.includes(reactionTypeId)
       if (alreadyVisibleHere) {
         notify.error('Duplicate Time Point', `A time point already exists at t=${time}s.`)
         return
@@ -420,9 +439,7 @@ export function ReactionTab() {
       <CardHeader className="py-4">
         <div className="flex items-center justify-between gap-3">
           <div>
-            <CardTitle className="text-lg">
-              {'Rate constant parameters'}
-            </CardTitle>
+            <CardTitle className="text-lg">{'Rate constant parameters'}</CardTitle>
             <CardDescription className="whitespace-nowrap">
               Set time-varying rate constant parameters{valueUnit ? `, in ${valueUnit}` : ''}
             </CardDescription>
@@ -622,7 +639,8 @@ export function ReactionTab() {
                 </p>
               ) : columns.length === 0 ? (
                 <p className="text-center text-gray-500 dark:text-muted py-8">
-                  Choose one or more reactions on the left to see their time-varying rate constant parameters.
+                  Choose one or more reactions on the left to see their time-varying rate constant
+                  parameters.
                 </p>
               ) : (
                 <table
@@ -642,7 +660,10 @@ export function ReactionTab() {
                           className="accent-assist-secondary-ring"
                         />
                       </th>
-                      <th rowSpan={isSurface ? 2 : 1} className="w-32 text-left px-4 py-2 font-semibold">
+                      <th
+                        rowSpan={isSurface ? 2 : 1}
+                        className="w-32 text-left px-4 py-2 font-semibold"
+                      >
                         Time (s)
                       </th>
                       {/* No explicit width: table-layout: fixed divides the table's own width
@@ -662,10 +683,15 @@ export function ReactionTab() {
                             </th>
                           ))
                         : columns.map((column) => (
-                            <th key={column.key} className="text-left px-4 py-2 font-semibold break-words">
+                            <th
+                              key={column.key}
+                              className="text-left px-4 py-2 font-semibold break-words"
+                            >
                               {column.label}
                               {column.unit && (
-                                <span className="ml-1 font-normal whitespace-nowrap">({column.unit})</span>
+                                <span className="ml-1 font-normal whitespace-nowrap">
+                                  ({column.unit})
+                                </span>
                               )}
                             </th>
                           ))}
@@ -673,9 +699,14 @@ export function ReactionTab() {
                     {isSurface && (
                       <tr>
                         {columns.map((column) => (
-                          <th key={column.key} className="text-left px-4 py-2 font-normal break-words">
+                          <th
+                            key={column.key}
+                            className="text-left px-4 py-2 font-normal break-words"
+                          >
                             {column.subLabel}
-                            {column.unit && <span className="ml-1 whitespace-nowrap">({column.unit})</span>}
+                            {column.unit && (
+                              <span className="ml-1 whitespace-nowrap">({column.unit})</span>
+                            )}
                           </th>
                         ))}
                       </tr>
@@ -684,13 +715,19 @@ export function ReactionTab() {
                   <tbody>
                     {visibleTimeEntries.length === 0 && (
                       <tr>
-                        <td colSpan={columns.length + 2} className="px-4 py-8 text-center text-gray-500 dark:text-muted">
+                        <td
+                          colSpan={columns.length + 2}
+                          className="px-4 py-8 text-center text-gray-500 dark:text-muted"
+                        >
                           No rows have values for the columns shown.
                         </td>
                       </tr>
                     )}
                     {visibleTimeEntries.map(({ time, index }) => (
-                      <tr key={index} className="border-b border-gray-200 dark:border-border hover:bg-gray-50 dark:hover:bg-surface-hover">
+                      <tr
+                        key={index}
+                        className="border-b border-gray-200 dark:border-border hover:bg-gray-50 dark:hover:bg-surface-hover"
+                      >
                         <td className="px-4 py-2">
                           <input
                             type="checkbox"
@@ -705,7 +742,9 @@ export function ReactionTab() {
                             type="text"
                             inputMode="decimal"
                             value={rowDrafts[cellDraftKey(TIME_DRAFT_KEY, index)] ?? time}
-                            onChange={(e) => handleValueChange(TIME_DRAFT_KEY, index, e.target.value)}
+                            onChange={(e) =>
+                              handleValueChange(TIME_DRAFT_KEY, index, e.target.value)
+                            }
                             onKeyDown={(e) => {
                               if (e.key === 'Enter') {
                                 e.preventDefault()

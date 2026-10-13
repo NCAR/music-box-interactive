@@ -51,9 +51,7 @@ export function FirstOrderLossReactionForm({ onAddReaction, parameters = [] }) {
       )}
 
       <div>
-        <label className={FIELD_LABEL}>
-          Reactants
-        </label>
+        <label className={FIELD_LABEL}>Reactants</label>
         <input
           type="text"
           value={reactants}

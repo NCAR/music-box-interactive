@@ -68,7 +68,9 @@ export const mechanismSlice = createSlice({
         state.config = action.payload
       },
       prepare: (config) => ({
-        payload: config?.mechanism ? { ...config, mechanism: withSpeciesIds(config.mechanism) } : config,
+        payload: config?.mechanism
+          ? { ...config, mechanism: withSpeciesIds(config.mechanism) }
+          : config,
       }),
     },
     // The new species gets its UI-only id here.

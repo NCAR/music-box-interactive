@@ -160,15 +160,12 @@ export function ChartTooltipContent({
       className={`bg-white dark:bg-surface border-2 border-ink rounded-lg shadow-xl ${compact ? 'p-2' : 'p-3'}`}
       style={{ backgroundColor: 'white' }}
     >
-      <p
-        className={`text-muted ${compact ? 'mb-1 text-[10px]' : 'mb-2 text-xs'}`}
-      >
+      <p className={`text-muted ${compact ? 'mb-1 text-[10px]' : 'mb-2 text-xs'}`}>
         Time: {timeLabel}
       </p>
       <div className={compact ? 'space-y-0.5' : 'space-y-1'}>
         {visible.map((entry, idx) => {
-          const numValue =
-            typeof entry.value === 'number' ? entry.value : parseFloat(entry.value)
+          const numValue = typeof entry.value === 'number' ? entry.value : parseFloat(entry.value)
           const isValidNumber = !isNaN(numValue) && isFinite(numValue)
 
           return (
@@ -321,8 +318,7 @@ export function SimulationChart({ results, metadata }) {
 
   // One value array for each species, in the order of allSpecies so that colors stay fixed.
   const valuesBySpecies = useMemo(
-    () =>
-      new Map(allSpecies.map((species) => [species, chartData.map((point) => point[species])])),
+    () => new Map(allSpecies.map((species) => [species, chartData.map((point) => point[species])])),
     [chartData, allSpecies]
   )
 
@@ -608,7 +604,9 @@ export function SimulationChart({ results, metadata }) {
                                 displaySpecies.includes(species) ? 'opacity-100' : 'opacity-0'
                               }`}
                             />
-                            <span className="flex-1 truncate">{getSpeciesDisplayName(species)}</span>
+                            <span className="flex-1 truncate">
+                              {getSpeciesDisplayName(species)}
+                            </span>
                           </button>
                         ))}
                       </div>
@@ -629,93 +627,97 @@ export function SimulationChart({ results, metadata }) {
                 </p>
                 <p className="text-ink text-xs">
                   This simulation produced only {results.length} data point
-                  {results.length > 1 ? 's' : ''}. For better visualization, consider increasing
-                  the simulation duration or decreasing the time step.
+                  {results.length > 1 ? 's' : ''}. For better visualization, consider increasing the
+                  simulation duration or decreasing the time step.
                 </p>
               </div>
             )}
 
             <div className="relative flex-1 min-h-[28rem] lg:min-h-0 bg-white dark:bg-surface">
               <div className="absolute inset-0 p-2 xs:p-3 sm:p-4 !pl-0">
-          <div className="h-full xs:hidden">
-            <LineChart
-              x={times}
-              series={series}
-              margin={{ top: 5, right: 5, left: 5, bottom: 5 }}
-              xAxis={{
-                domain: timeDomain,
-                ticks: xAxisTicks,
-                label: `Time (${timeUnit.shortLabel})`,
-                tickFontSize: 10,
-                labelFontSize: 11,
-              }}
-              yAxes={[{ ...CONCENTRATION_AXES[scaleId], width: 38, tickFontSize: 8 }]}
-              strokeWidth={2}
-              dotRadius={3}
-              showDots={results.length <= 10}
-              legendPaddingTop={16}
-              legendMaxVisible={LEGEND_VISIBLE_COMPACT}
-              exportName="species-concentration"
-              renderTooltip={({ label, payload }) => (
-                <ChartTooltipContent
-                  active
-                  payload={payload}
-                  timeLabel={timeLabel(label)}
-                  maxVisible={TOOLTIP_VISIBLE_COMPACT}
-                  zeroBelow={zeroBelow}
-                  compact
-                />
-              )}
-              renderLegend={(payload) => (
-                <ChartLegendContent payload={payload} maxVisible={LEGEND_VISIBLE_COMPACT} compact />
-              )}
-            />
-          </div>
+                <div className="h-full xs:hidden">
+                  <LineChart
+                    x={times}
+                    series={series}
+                    margin={{ top: 5, right: 5, left: 5, bottom: 5 }}
+                    xAxis={{
+                      domain: timeDomain,
+                      ticks: xAxisTicks,
+                      label: `Time (${timeUnit.shortLabel})`,
+                      tickFontSize: 10,
+                      labelFontSize: 11,
+                    }}
+                    yAxes={[{ ...CONCENTRATION_AXES[scaleId], width: 38, tickFontSize: 8 }]}
+                    strokeWidth={2}
+                    dotRadius={3}
+                    showDots={results.length <= 10}
+                    legendPaddingTop={16}
+                    legendMaxVisible={LEGEND_VISIBLE_COMPACT}
+                    exportName="species-concentration"
+                    renderTooltip={({ label, payload }) => (
+                      <ChartTooltipContent
+                        active
+                        payload={payload}
+                        timeLabel={timeLabel(label)}
+                        maxVisible={TOOLTIP_VISIBLE_COMPACT}
+                        zeroBelow={zeroBelow}
+                        compact
+                      />
+                    )}
+                    renderLegend={(payload) => (
+                      <ChartLegendContent
+                        payload={payload}
+                        maxVisible={LEGEND_VISIBLE_COMPACT}
+                        compact
+                      />
+                    )}
+                  />
+                </div>
 
-          {/* Larger chart for bigger screens */}
-          <div className="h-full hidden xs:block">
-            <LineChart
-              x={times}
-              series={series}
-              margin={{ top: 5, right: 0, left: 10, bottom: 3 }}
-              xAxis={{
-                domain: timeDomain,
-                ticks: xAxisTicks,
-                label: `Time (${timeUnit.shortLabel})`,
-                tickFontSize: 12,
-                labelFontSize: 14,
-              }}
-              yAxes={[
-                {
-                  ...CONCENTRATION_AXES[scaleId],
-                  width: 70,
-                  tickFontSize: 11,
-                  label: plotUnitAxisLabel,
-                  labelOffset: 10,
-                  labelAnchor: 'middle',
-                  labelFontSize: 13,
-                },
-              ]}
-              strokeWidth={3}
-              dotRadius={4}
-              showDots={results.length <= 10}
-              legendPaddingTop={20}
-              legendMaxVisible={LEGEND_VISIBLE}
-              exportName="species-concentration"
-              renderTooltip={({ label, payload }) => (
-                <ChartTooltipContent
-                  active
-                  payload={payload}
-                  timeLabel={timeLabel(label)}
-                  maxVisible={TOOLTIP_VISIBLE}
-                  zeroBelow={zeroBelow}
-                />
-              )}
-              renderLegend={(payload) => (
-                <ChartLegendContent payload={payload} maxVisible={LEGEND_VISIBLE} />
-              )}
-            />
-          </div>
+                {/* Larger chart for bigger screens */}
+                <div className="h-full hidden xs:block">
+                  <LineChart
+                    x={times}
+                    series={series}
+                    margin={{ top: 5, right: 0, left: 10, bottom: 3 }}
+                    xAxis={{
+                      domain: timeDomain,
+                      ticks: xAxisTicks,
+                      label: `Time (${timeUnit.shortLabel})`,
+                      tickFontSize: 12,
+                      labelFontSize: 14,
+                    }}
+                    yAxes={[
+                      {
+                        ...CONCENTRATION_AXES[scaleId],
+                        width: 70,
+                        tickFontSize: 11,
+                        label: plotUnitAxisLabel,
+                        labelOffset: 10,
+                        labelAnchor: 'middle',
+                        labelFontSize: 13,
+                      },
+                    ]}
+                    strokeWidth={3}
+                    dotRadius={4}
+                    showDots={results.length <= 10}
+                    legendPaddingTop={20}
+                    legendMaxVisible={LEGEND_VISIBLE}
+                    exportName="species-concentration"
+                    renderTooltip={({ label, payload }) => (
+                      <ChartTooltipContent
+                        active
+                        payload={payload}
+                        timeLabel={timeLabel(label)}
+                        maxVisible={TOOLTIP_VISIBLE}
+                        zeroBelow={zeroBelow}
+                      />
+                    )}
+                    renderLegend={(payload) => (
+                      <ChartLegendContent payload={payload} maxVisible={LEGEND_VISIBLE} />
+                    )}
+                  />
+                </div>
               </div>
             </div>
           </div>

@@ -65,9 +65,7 @@ export function SurfaceReactionForm({ onAddReaction, parameters = [] }) {
       )}
 
       <div>
-        <label className={FIELD_LABEL}>
-          Gas-phase reactant
-        </label>
+        <label className={FIELD_LABEL}>Gas-phase reactant</label>
         <input
           type="text"
           value={gasPhaseSpecies}
@@ -78,9 +76,7 @@ export function SurfaceReactionForm({ onAddReaction, parameters = [] }) {
       </div>
 
       <div>
-        <label className={FIELD_LABEL}>
-          Gas-phase products
-        </label>
+        <label className={FIELD_LABEL}>Gas-phase products</label>
         <input
           type="text"
           value={gasPhaseProducts}

@@ -7,7 +7,8 @@
 //   removed              -> blue    something was deleted, with a trash icon (not an error)
 //   info                 -> blue    a neutral notice (the default style)
 export const createNotify = (toast) => ({
-  invalidInput: (description) => toast({ title: 'Invalid Input', description, variant: 'destructive' }),
+  invalidInput: (description) =>
+    toast({ title: 'Invalid Input', description, variant: 'destructive' }),
   error: (title, description) => toast({ title, description, variant: 'destructive' }),
   success: (title, description) => toast({ title, description, variant: 'success' }),
   info: (title, description) => toast({ title, description }),
