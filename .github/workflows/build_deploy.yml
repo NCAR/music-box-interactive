@@ -23,16 +23,19 @@ jobs:
     - name: Get short commit SHA
       run: echo "SHORT_SHA=$(echo $GITHUB_SHA | cut -c1-7)" >> $GITHUB_ENV
 
-    # A tag push builds the production image. A branch push builds the development image.
+    # A tag push builds the production image and deploys it to the prod overlay.
+    # A branch push builds the development image and deploys it to the devel overlay.
     # Each build has a different Google Analytics ID, so the two builds must not share an image tag.
     - name: Select build target
       run: |
         if [ "${{ github.ref_type }}" = "tag" ]; then
           echo "GA_ID=G-J6GE4Q3QZ2" >> $GITHUB_ENV
           echo "IMAGE_TAG=${{ github.ref_name }}" >> $GITHUB_ENV
+          echo "OVERLAY=prod" >> $GITHUB_ENV
         else
           echo "GA_ID=G-CFFKTT2B6Y" >> $GITHUB_ENV
           echo "IMAGE_TAG=${SHORT_SHA}" >> $GITHUB_ENV
+          echo "OVERLAY=devel" >> $GITHUB_ENV
         fi
 
     - name: Checkout Repo
@@ -88,13 +91,12 @@ jobs:
           fi
         done
 
-    - name: Update devel kustomization
-      if: github.ref_type == 'branch'
+    - name: Update ${{ env.OVERLAY }} kustomization
       run: |
-        cd deploy/deploy/kustomization/overlays/devel
+        cd deploy/deploy/kustomization/overlays/${{ env.OVERLAY }}
         kustomize edit set image  hub.k8s.ucar.edu/musicbox/frontend=hub.k8s.ucar.edu/musicbox/frontend:${{ env.IMAGE_TAG }}
         git config user.email "kshores@ucar.edu"
         git config user.name "Auto-ci"
         git add -A ../../
-        git commit -m "CI updating kustomization image tag"
+        git commit -m "CI updating ${{ env.OVERLAY }} kustomization image tag to ${{ env.IMAGE_TAG }}"
         git push origin HEAD:deploy
