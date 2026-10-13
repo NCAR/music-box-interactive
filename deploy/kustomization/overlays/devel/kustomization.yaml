@@ -25,8 +25,5 @@ patches:
       path: /spec/tls/0/hosts/0
       value: musicbox-devel.acom.ucar.edu
     - op: replace
-      path: /spec/tls/0/secretName
-      value: musicbox-devel-tls-secret
-    - op: replace
       path: /spec/rules/0/host
       value: musicbox-devel.acom.ucar.edu
