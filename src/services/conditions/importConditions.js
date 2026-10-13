@@ -200,7 +200,9 @@ export function applyConditionsUpload(table, upload, { keys, mode, emptyOverwrit
       [...columns]
         .map(([header, values]) => [header, sortedTimes.map((time) => values.get(time) ?? null)])
         // A new column with no values adds nothing, e.g. an empty column of a downloaded file.
-        .filter(([header, values]) => existing.has(header) || values.some((value) => value !== null))
+        .filter(
+          ([header, values]) => existing.has(header) || values.some((value) => value !== null)
+        )
     ),
   }
 }

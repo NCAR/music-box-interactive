@@ -9,8 +9,10 @@ const Button = React.forwardRef(
     const variants = {
       primary:
         'bg-white dark:bg-surface border-2 border-action text-action font-semibold hover:bg-action hover:text-white',
-      secondary: 'bg-white dark:bg-surface border border-border text-ink font-medium hover:bg-surface-alt',
-      destructive: 'bg-white dark:bg-surface border border-danger text-danger font-medium hover:bg-caution',
+      secondary:
+        'bg-white dark:bg-surface border border-border text-ink font-medium hover:bg-surface-alt',
+      destructive:
+        'bg-white dark:bg-surface border border-danger text-danger font-medium hover:bg-caution',
       ghost: 'text-ink hover:bg-surface-hover transition-colors duration-200',
     }
 

@@ -95,9 +95,7 @@ export function ArrheniusReactionForm({ onAddReaction, parameters = [] }) {
       )}
 
       <div>
-        <label className={FIELD_LABEL}>
-          Reactants
-        </label>
+        <label className={FIELD_LABEL}>Reactants</label>
         <input
           type="text"
           value={reactants}
@@ -108,9 +106,7 @@ export function ArrheniusReactionForm({ onAddReaction, parameters = [] }) {
       </div>
 
       <div>
-        <label className={FIELD_LABEL}>
-          Products
-        </label>
+        <label className={FIELD_LABEL}>Products</label>
         <input
           type="text"
           value={products}

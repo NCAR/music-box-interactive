@@ -54,9 +54,7 @@ export function EmissionReactionForm({ onAddReaction, parameters = [] }) {
       )}
 
       <div>
-        <label className={FIELD_LABEL}>
-          Products
-        </label>
+        <label className={FIELD_LABEL}>Products</label>
         <input
           type="text"
           value={products}

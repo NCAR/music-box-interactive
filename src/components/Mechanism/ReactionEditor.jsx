@@ -6,7 +6,12 @@ import { useNotify } from '@/hooks/use-notify'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card'
 import { Button } from '../ui/button'
 import { Dropdown } from '../ui/dropdown'
-import { addReaction, removeReaction, updateReaction, selectNamedReactions } from '../../redux/slices/mechanismSlice'
+import {
+  addReaction,
+  removeReaction,
+  updateReaction,
+  selectNamedReactions,
+} from '../../redux/slices/mechanismSlice'
 import {
   applyReactionEquation,
   buildGeneratedReactionName,
@@ -46,8 +51,7 @@ const formatReactionComponents = (components, maxDecimals) => {
       const name = component.name || ''
       const coefficient = Number(component.coefficient)
       // A coefficient below 1 shows too (0.5OH), so that an edit does not lose it.
-      const shown =
-        maxDecimals == null ? coefficient : parseFloat(coefficient.toFixed(maxDecimals))
+      const shown = maxDecimals == null ? coefficient : parseFloat(coefficient.toFixed(maxDecimals))
       const coeffPrefix = Number.isFinite(coefficient) && coefficient !== 1 ? shown : ''
 
       return `${coeffPrefix}${name}`
@@ -362,16 +366,22 @@ export function ReactionEditor() {
     )
 
     if (unknown.length > 0) {
-      notify.error(unknown.length === 1 ? 'Unknown Species' : 'Unknown Species', `${unknown.join(', ')} ${
+      notify.error(
+        unknown.length === 1 ? 'Unknown Species' : 'Unknown Species',
+        `${unknown.join(', ')} ${
           unknown.length === 1 ? 'is not' : 'are not'
         } defined in this mechanism. Add ${
           unknown.length === 1 ? 'it' : 'them'
-        } in the Species tab first.`)
+        } in the Species tab first.`
+      )
       return
     }
 
     dispatch(addReaction(newReaction))
-    notify.success('Reaction Added', `Successfully added reaction: ${newReaction.name || formatReactionDisplay(newReaction)}.`)
+    notify.success(
+      'Reaction Added',
+      `Successfully added reaction: ${newReaction.name || formatReactionDisplay(newReaction)}.`
+    )
   }
 
   // Edits go through the same validation as adding, so an edit cannot introduce a species
@@ -383,9 +393,12 @@ export function ReactionEditor() {
     )
 
     if (unknown.length > 0) {
-      notify.error('Unknown Species', `${unknown.join(', ')} ${
+      notify.error(
+        'Unknown Species',
+        `${unknown.join(', ')} ${
           unknown.length === 1 ? 'is not' : 'are not'
-        } defined in this mechanism.`)
+        } defined in this mechanism.`
+      )
       return false
     }
 

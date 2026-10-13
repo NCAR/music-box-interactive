@@ -79,9 +79,7 @@ export function LambdaRateReactionForm({ onAddReaction }) {
       )}
 
       <div>
-        <label className={FIELD_LABEL}>
-          Reactants
-        </label>
+        <label className={FIELD_LABEL}>Reactants</label>
         <input
           type="text"
           value={reactants}
@@ -92,9 +90,7 @@ export function LambdaRateReactionForm({ onAddReaction }) {
       </div>
 
       <div>
-        <label className={FIELD_LABEL}>
-          Products
-        </label>
+        <label className={FIELD_LABEL}>Products</label>
         <input
           type="text"
           value={products}
@@ -107,9 +103,7 @@ export function LambdaRateReactionForm({ onAddReaction }) {
       <ReactionEquation type="LAMBDA_RATE_CONSTANT" />
 
       <div>
-        <label className={FIELD_LABEL}>
-          Lambda Function (JavaScript)
-        </label>
+        <label className={FIELD_LABEL}>Lambda Function (JavaScript)</label>
         <textarea
           value={lambdaFunction}
           onChange={(e) => setLambdaFunction(e.target.value)}

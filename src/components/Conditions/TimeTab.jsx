@@ -76,7 +76,9 @@ export function TimeTab() {
       <Card>
         <CardHeader>
           <CardTitle>Simulation time</CardTitle>
-          <CardDescription>Configure how long the simulation runs and its temporal resolution</CardDescription>
+          <CardDescription>
+            Configure how long the simulation runs and its temporal resolution
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           {FIELDS.map((field) => {
@@ -85,9 +87,7 @@ export function TimeTab() {
 
             return (
               <div key={field.key} className="w-72 mx-auto">
-                <label className="block text-base font-semibold text-ink mb-2">
-                  {field.label}
-                </label>
+                <label className="block text-base font-semibold text-ink mb-2">{field.label}</label>
                 <div className="flex flex-col gap-2">
                   <UnitDropdown
                     unitId={unitIds[field.key]}

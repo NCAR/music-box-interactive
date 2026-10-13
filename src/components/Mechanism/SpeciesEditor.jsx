@@ -212,9 +212,7 @@ function PropertySelector({ properties, onChange }) {
               />
             ) : (
               <div key={field.pill}>
-                <label className={FIELD_LABEL}>
-                  {field.label}
-                </label>
+                <label className={FIELD_LABEL}>{field.label}</label>
                 <input
                   type="text"
                   value={properties[field.pill]}
@@ -301,9 +299,7 @@ function SpeciesChip({ species, phaseNames, onNameSave, onPhaseChange, onFieldSa
         </div>
 
         <div>
-          <label className="mb-1 block text-[11px] uppercase tracking-wide text-muted">
-            Phase
-          </label>
+          <label className="mb-1 block text-[11px] uppercase tracking-wide text-muted">Phase</label>
           {/* No "Others" pill here: editing a species picks among existing phases rather than
               defining new ones. New phases are created in the Add species form. */}
           <PhaseSelector
@@ -373,8 +369,7 @@ export function SpeciesEditor() {
 
   const handleAddSpecies = () => {
     const rawConcentration = newSpeciesProperties[CONCENTRATION_PILL]
-    const trimmedConcentration =
-      typeof rawConcentration === 'string' ? rawConcentration.trim() : ''
+    const trimmedConcentration = typeof rawConcentration === 'string' ? rawConcentration.trim() : ''
     if (trimmedConcentration !== '') {
       const parsedConcentration = Number(trimmedConcentration)
       if (Number.isNaN(parsedConcentration)) {
@@ -410,7 +405,9 @@ export function SpeciesEditor() {
   const namedReactions = useSelector(selectNamedReactions)
 
   const handleRemoveSpecies = (removed) => {
-    const usingIds = new Set(reactionsUsingSpecies(storedReactions ?? [], removed.id).map((r) => r.id))
+    const usingIds = new Set(
+      reactionsUsingSpecies(storedReactions ?? [], removed.id).map((r) => r.id)
+    )
     setPendingRemoval({
       species: removed,
       reactions: namedReactions.filter((reaction) => usingIds.has(reaction.id)),
@@ -549,9 +546,7 @@ export function SpeciesEditor() {
               </div>
 
               <div>
-                <label className="block text-base font-semibold text-ink mb-2">
-                  Type species
-                </label>
+                <label className="block text-base font-semibold text-ink mb-2">Type species</label>
                 <input
                   type="text"
                   value={newSpeciesName}

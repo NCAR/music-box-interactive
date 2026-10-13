@@ -12,7 +12,7 @@ export function MechanismPage() {
 
   const tabs = [
     { id: 'species', label: 'Species', component: SpeciesEditor },
-    { id: 'reactions', label: 'Reactions', component: ReactionEditor},
+    { id: 'reactions', label: 'Reactions', component: ReactionEditor },
   ]
 
   const ActiveComponent = tabs.find((t) => t.id === activeTab)?.component

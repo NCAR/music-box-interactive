@@ -12,7 +12,8 @@ export function getResultSpeciesNames(results) {
     firstPoint?.concentrations && typeof firstPoint.concentrations === 'object'
       ? Object.keys(firstPoint.concentrations)
       : Object.keys(firstPoint).filter(
-          (key) => key !== 'time' && key !== 'timestamp' && key !== 'date' && key !== 'concentrations'
+          (key) =>
+            key !== 'time' && key !== 'timestamp' && key !== 'date' && key !== 'concentrations'
         )
   return keys.map(getSpeciesDisplayName)
 }

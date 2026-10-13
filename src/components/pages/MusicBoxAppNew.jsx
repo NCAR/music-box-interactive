@@ -24,7 +24,7 @@ function AppContent() {
     dispatch(resetMechanism())
     dispatch(resetConditions())
     dispatch(resetSimulation())
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   // Client-side navigation preserves scroll position; reset it so each route starts at the top.

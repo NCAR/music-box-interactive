@@ -207,14 +207,16 @@ export const reactionRegistry = [
         key: 'B',
         placeholder: '0.0',
         name: 'Linear temperature-dependent parameter',
-        description: 'Captures the temperature dependence in e^(-B/T), as in Wennberg et al. (2018).',
+        description:
+          'Captures the temperature dependence in e^(-B/T), as in Wennberg et al. (2018).',
         unit: 'K',
       },
       {
         key: 'C',
         placeholder: '0.0',
         name: 'Cubed temperature-dependent parameter',
-        description: 'Captures the temperature dependence in e^(C/T\u00b3), as in Wennberg et al. (2018).',
+        description:
+          'Captures the temperature dependence in e^(C/T\u00b3), as in Wennberg et al. (2018).',
         unit: 'K^3',
       },
     ],

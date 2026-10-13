@@ -159,8 +159,8 @@ export function UploadConditionsDialog({ fileName, upload, onClose }) {
                         Empty cells overwrite existing data
                       </span>
                       <span className="block text-xs text-muted">
-                        When on, an empty cell clears the existing value at that time. When off,
-                        the existing value stays.
+                        When on, an empty cell clears the existing value at that time. When off, the
+                        existing value stays.
                       </span>
                     </span>
                   </label>

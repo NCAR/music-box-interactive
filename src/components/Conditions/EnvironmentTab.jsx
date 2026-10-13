@@ -127,7 +127,10 @@ export function EnvironmentTab() {
       : null
 
     if (times.includes(time)) {
-      notify.error('Duplicate Time Point', `A time point already exists at t=${rawTime} ${timeUnit.label.toLowerCase()}.`)
+      notify.error(
+        'Duplicate Time Point',
+        `A time point already exists at t=${rawTime} ${timeUnit.label.toLowerCase()}.`
+      )
       return
     }
 
@@ -139,7 +142,10 @@ export function EnvironmentTab() {
     if (densityEnabled) next = setCell(next, DENSITY_HEADER, index, density)
     dispatch(setConditionsTable(next))
 
-    notify.success('Time Point Added', `Added time point at t=${rawTime} ${timeUnit.label.toLowerCase()}.`)
+    notify.success(
+      'Time Point Added',
+      `Added time point at t=${rawTime} ${timeUnit.label.toLowerCase()}.`
+    )
 
     setNewTime('')
     setNewTemperature('')
@@ -190,7 +196,10 @@ export function EnvironmentTab() {
     dispatch(setConditionsTable(result.table))
     dispatch(untagTimeRows(result.removedTimes))
 
-    notify.removed(result.removedCount === 1 ? 'Time Point Removed' : 'Time Points Removed', `Removed ${result.removedCount} time point${result.removedCount === 1 ? '' : 's'}.`)
+    notify.removed(
+      result.removedCount === 1 ? 'Time Point Removed' : 'Time Points Removed',
+      `Removed ${result.removedCount} time point${result.removedCount === 1 ? '' : 's'}.`
+    )
 
     setSelectedIndices(new Set())
   }
@@ -222,7 +231,10 @@ export function EnvironmentTab() {
   // ppth/ppm/ppb/ppt value. The stored concentration itself does not change.
   const warnIfConcentrationsAffected = (index) => {
     if (!rowHasConcentrations(table, index)) return
-    notify.warning('Concentrations stay in mol m-3', 'This row has species concentrations. Their stored values in mol m-3 are unchanged, but their equivalents (ppm, ppb ...) will now display differently.')
+    notify.warning(
+      'Concentrations stay in mol m-3',
+      'This row has species concentrations. Their stored values in mol m-3 are unchanged, but their equivalents (ppm, ppb ...) will now display differently.'
+    )
   }
 
   const commitTemperature = (index, rawValue) => {
@@ -319,7 +331,8 @@ export function EnvironmentTab() {
       ? parsedNewPressure * getUnit(PRESSURE_UNITS, unitIds.pressure).divisor
       : DEFAULT_PRESSURE
   const idealGasDensityPlaceholder = formatConversion(
-    idealGasDensity(previewPressure, previewTemperature) / getUnit(DENSITY_UNITS, unitIds.density).divisor
+    idealGasDensity(previewPressure, previewTemperature) /
+      getUnit(DENSITY_UNITS, unitIds.density).divisor
   )
 
   return (
@@ -349,7 +362,11 @@ export function EnvironmentTab() {
                 placeholder="0"
                 className={NUMBER_INPUT}
               />
-              {timeConversion && <p className="text-xs text-gray-500 dark:text-muted text-center">{timeConversion}</p>}
+              {timeConversion && (
+                <p className="text-xs text-gray-500 dark:text-muted text-center">
+                  {timeConversion}
+                </p>
+              )}
             </div>
           </div>
 
@@ -373,7 +390,9 @@ export function EnvironmentTab() {
                 className={NUMBER_INPUT}
               />
               {temperatureConversion && (
-                <p className="text-xs text-gray-500 dark:text-muted text-center">{temperatureConversion}</p>
+                <p className="text-xs text-gray-500 dark:text-muted text-center">
+                  {temperatureConversion}
+                </p>
               )}
             </div>
           </div>
@@ -398,7 +417,9 @@ export function EnvironmentTab() {
                 className={NUMBER_INPUT}
               />
               {pressureConversion && (
-                <p className="text-xs text-gray-500 dark:text-muted text-center">{pressureConversion}</p>
+                <p className="text-xs text-gray-500 dark:text-muted text-center">
+                  {pressureConversion}
+                </p>
               )}
             </div>
           </div>
@@ -434,12 +455,13 @@ export function EnvironmentTab() {
               </div>
             )}
           </div>
-          <div className="h-0.5"/>
+          <div className="h-0.5" />
           <div className="mt-8 flex justify-center">
             <Button
               onClick={handleAdd}
               variant="assistSecondary"
-              className="h-11 px-8 text-base rounded-lg bg-assist-secondary text-assist-secondary-foreground hover:bg-assist-secondary-hover">
+              className="h-11 px-8 text-base rounded-lg bg-assist-secondary text-assist-secondary-foreground hover:bg-assist-secondary-hover"
+            >
               Add condition
             </Button>
           </div>
@@ -476,7 +498,8 @@ export function EnvironmentTab() {
             </p>
           ) : (
             (() => {
-              const hasDensityColumn = Array.isArray(densitySeries) && densitySeries.some((v) => v != null)
+              const hasDensityColumn =
+                Array.isArray(densitySeries) && densitySeries.some((v) => v != null)
               const allSelected =
                 removableIndices.length > 0 && removableIndices.every((i) => selectedIndices.has(i))
 
@@ -498,14 +521,19 @@ export function EnvironmentTab() {
                         <th className="w-36 text-left px-4 py-2 font-semibold">Temperature (K)</th>
                         <th className="w-36 text-left px-4 py-2 font-semibold">Pressure (Pa)</th>
                         {hasDensityColumn && (
-                          <th className="w-56 text-left px-4 py-2 font-semibold">Air number density (mol m-3)</th>
+                          <th className="w-56 text-left px-4 py-2 font-semibold">
+                            Air number density (mol m-3)
+                          </th>
                         )}
                       </tr>
                     </thead>
                     <tbody>
                       {timeEntries.length === 0 && (
                         <tr>
-                          <td colSpan={hasDensityColumn ? 5 : 4} className="px-4 py-8 text-center text-gray-500 dark:text-muted">
+                          <td
+                            colSpan={hasDensityColumn ? 5 : 4}
+                            className="px-4 py-8 text-center text-gray-500 dark:text-muted"
+                          >
                             No rows have values for the columns shown.
                           </td>
                         </tr>
@@ -514,7 +542,10 @@ export function EnvironmentTab() {
                         const density = densitySeries?.[index]
 
                         return (
-                          <tr key={index} className="border-b border-gray-200 dark:border-border hover:bg-gray-50 dark:hover:bg-surface-hover">
+                          <tr
+                            key={index}
+                            className="border-b border-gray-200 dark:border-border hover:bg-gray-50 dark:hover:bg-surface-hover"
+                          >
                             <td className="px-4 py-2">
                               <input
                                 type="checkbox"
@@ -529,7 +560,9 @@ export function EnvironmentTab() {
                                 type="text"
                                 inputMode="decimal"
                                 value={rowDrafts[cellKey('time', index)] ?? formatConversion(time)}
-                                onChange={(e) => handleCellDraftChange('time', index, e.target.value)}
+                                onChange={(e) =>
+                                  handleCellDraftChange('time', index, e.target.value)
+                                }
                                 onKeyDown={(e) => {
                                   if (e.key === 'Enter') {
                                     e.preventDefault()

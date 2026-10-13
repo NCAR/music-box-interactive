@@ -7,7 +7,11 @@ const Unit = ({ children }) => <span className="whitespace-nowrap">{children}</s
 
 const FALLOFF_LEGEND = (
   <>
-    T: temperature (K); [M]: number density of air (<Unit>mol m<Sup>−3</Sup></Unit>)
+    T: temperature (K); [M]: number density of air (
+    <Unit>
+      mol m<Sup>−3</Sup>
+    </Unit>
+    )
   </>
 )
 
@@ -16,13 +20,21 @@ const FALLOFF_LEGEND = (
 const FalloffEquation = ({ children }) => (
   <div className="space-y-1 text-left text-base">
     <div>
-      k<Sub>0</Sub> = k<Sub>0A</Sub> · e<Sup>k<Sub>0C</Sub>/T</Sup> · (T/300.0)
+      k<Sub>0</Sub> = k<Sub>0A</Sub> · e
+      <Sup>
+        k<Sub>0C</Sub>/T
+      </Sup>{' '}
+      · (T/300.0)
       <Sup>
         k<Sub>0B</Sub>
       </Sup>
     </div>
     <div>
-      k<Sub>inf</Sub> = k<Sub>infA</Sub> · e<Sup>k<Sub>infC</Sub>/T</Sup> · (T/300.0)
+      k<Sub>inf</Sub> = k<Sub>infA</Sub> · e
+      <Sup>
+        k<Sub>infC</Sub>/T
+      </Sup>{' '}
+      · (T/300.0)
       <Sup>
         k<Sub>infB</Sub>
       </Sup>
@@ -65,8 +77,11 @@ const EQUATIONS = {
     equation: <>→ X</>,
     legend: (
       <>
-        X: the species being emitted. Emission rates are in <Unit>mol m<Sup>−3</Sup> s<Sup>−1</Sup></Unit> and
-        constant over the solver time step.
+        X: the species being emitted. Emission rates are in{' '}
+        <Unit>
+          mol m<Sup>−3</Sup> s<Sup>−1</Sup>
+        </Unit>{' '}
+        and constant over the solver time step.
       </>
     ),
   },
@@ -87,8 +102,8 @@ const EQUATIONS = {
     ),
     legend: (
       <>
-        X: the species being photolyzed; Y<Sub>n</Sub>: the products. Rate constants, including the hν
-        term, are in s<Sup>−1</Sup> and constant over the solver time step.
+        X: the species being photolyzed; Y<Sub>n</Sub>: the products. Rate constants, including the
+        hν term, are in s<Sup>−1</Sup> and constant over the solver time step.
       </>
     ),
   },
@@ -101,8 +116,11 @@ const EQUATIONS = {
     legend: (
       <>
         X<Sub>n</Sub>: the reactants; Y<Sub>n</Sub>: the products. For a custom rate constant
-        algorithm, in <Unit>(mol m<Sup>−3</Sup>)<Sup>−(n−1)</Sup> s<Sup>−1</Sup></Unit> with n the number of
-        reactants. Constant over the solver time step.
+        algorithm, in{' '}
+        <Unit>
+          (mol m<Sup>−3</Sup>)<Sup>−(n−1)</Sup> s<Sup>−1</Sup>
+        </Unit>{' '}
+        with n the number of reactants. Constant over the solver time step.
       </>
     ),
   },
@@ -115,8 +133,11 @@ const EQUATIONS = {
     legend: (
       <>
         The rate constant is the value the lambda function returns at the temperature T (K) and,
-        optionally, the pressure P (Pa), in <Unit>(mol m<Sup>−3</Sup>)<Sup>−(n−1)</Sup> s<Sup>−1</Sup></Unit> with
-        n the number of reactants.
+        optionally, the pressure P (Pa), in{' '}
+        <Unit>
+          (mol m<Sup>−3</Sup>)<Sup>−(n−1)</Sup> s<Sup>−1</Sup>
+        </Unit>{' '}
+        with n the number of reactants.
       </>
     ),
   },
@@ -132,18 +153,32 @@ const EQUATIONS = {
     ),
     legend: (
       <>
-        N<Sub>a</Sub>: number concentration of particles (<Unit>particles m<Sup>−3</Sup></Unit>); r<Sub>e</Sub>:
-        effective particle radius (m); D<Sub>g</Sub>: gas-phase diffusion coefficient of the
-        reactant (<Unit>m<Sup>2</Sup> s<Sup>−1</Sup></Unit>); v: mean free speed of the gas-phase reactant; R:
-        ideal gas constant (<Unit>J K<Sup>−1</Sup> mol<Sup>−1</Sup></Unit>); T: temperature (K); MW: molecular
-        weight of the gas-phase reactant (<Unit>kg mol<Sup>−1</Sup></Unit>)
+        N<Sub>a</Sub>: number concentration of particles (
+        <Unit>
+          particles m<Sup>−3</Sup>
+        </Unit>
+        ); r<Sub>e</Sub>: effective particle radius (m); D<Sub>g</Sub>: gas-phase diffusion
+        coefficient of the reactant (
+        <Unit>
+          m<Sup>2</Sup> s<Sup>−1</Sup>
+        </Unit>
+        ); v: mean free speed of the gas-phase reactant; R: ideal gas constant (
+        <Unit>
+          J K<Sup>−1</Sup> mol<Sup>−1</Sup>
+        </Unit>
+        ); T: temperature (K); MW: molecular weight of the gas-phase reactant (
+        <Unit>
+          kg mol<Sup>−1</Sup>
+        </Unit>
+        )
       </>
     ),
   },
   TUNNELING: {
     equation: (
       <>
-        k = A · e<Sup>−B/T</Sup> · e<Sup>
+        k = A · e<Sup>−B/T</Sup> · e
+        <Sup>
           C/T<Sup>3</Sup>
         </Sup>
       </>
@@ -161,21 +196,30 @@ const EQUATIONS = {
         </div>
         <div>
           A(T, [M], n) = (2×10<Sup>−22</Sup> e<Sup>n</Sup> [M]) / (1 + u) · 0.41
-          <Sup>1 / (1 + [log u]<Sup>2</Sup>)</Sup>
+          <Sup>
+            1 / (1 + [log u]<Sup>2</Sup>)
+          </Sup>
         </div>
         <div>
           u = (2×10<Sup>−22</Sup> e<Sup>n</Sup> [M]) / (0.43 (T/298)<Sup>−8</Sup>)
         </div>
         <div>
-          Z(α<Sub>0</Sub>, n) = A(T = 293 K, [M] = 40.6832 <Unit>mol m<Sup>−3</Sup></Unit>, n) ·
-          (1 − α<Sub>0</Sub>) / α<Sub>0</Sub>
+          Z(α<Sub>0</Sub>, n) = A(T = 293 K, [M] = 40.6832{' '}
+          <Unit>
+            mol m<Sup>−3</Sup>
+          </Unit>
+          , n) · (1 − α<Sub>0</Sub>) / α<Sub>0</Sub>
         </div>
       </div>
     ),
     legend: (
       <>
         Typically used for NO + RO2 → alkoxy radical + NO2 reactions. T: temperature (K); [M]:
-        number density of air (<Unit>mol m<Sup>−3</Sup></Unit>). More details in Wennberg et al. (2018).
+        number density of air (
+        <Unit>
+          mol m<Sup>−3</Sup>
+        </Unit>
+        ). More details in Wennberg et al. (2018).
       </>
     ),
   },

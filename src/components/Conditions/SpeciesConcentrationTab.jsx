@@ -51,7 +51,6 @@ const THIRD_BODY_TOOLTIP =
   'This is a third-body species. The solver gets its concentration from the air density, so ' +
   'its concentration cannot be set.'
 
-
 const DEFAULT_SELECTED_SPECIES = 3
 const SPECIES_VISIBLE = 20
 const MAX_SELECTED_SPECIES = 50
@@ -75,7 +74,10 @@ export function SpeciesConcentrationTab() {
   const rowTimes = table.times
   const tableColumns = table.columns
   const conditionsState = useSelector((state) => state.conditions)
-  const conditionsManager = useMemo(() => buildConditionsManager(conditionsState), [conditionsState])
+  const conditionsManager = useMemo(
+    () => buildConditionsManager(conditionsState),
+    [conditionsState]
+  )
 
   // The selected species, by id, so a rename keeps the selection.
   const [selectedSpeciesIds, setSelectedSpeciesIds] = useState(new Set())
@@ -145,7 +147,10 @@ export function SpeciesConcentrationTab() {
     const names = selectableSpecies.map((species) => species.id)
     setSelectedSpeciesIds(new Set(names.slice(0, MAX_SELECTED_SPECIES)))
     if (names.length > MAX_SELECTED_SPECIES) {
-      notify.warning('Selection Limited', `Selected the first ${MAX_SELECTED_SPECIES} of ${names.length} species. Use search to select others.`)
+      notify.warning(
+        'Selection Limited',
+        `Selected the first ${MAX_SELECTED_SPECIES} of ${names.length} species. Use search to select others.`
+      )
     }
   }
 
@@ -257,11 +262,13 @@ export function SpeciesConcentrationTab() {
     })
   }
 
-  const allSelected = removableIndices.length > 0 && removableIndices.every((i) => selectedIndices.has(i))
+  const allSelected =
+    removableIndices.length > 0 && removableIndices.every((i) => selectedIndices.has(i))
 
   const toggleSelectAll = () => {
     setSelectedIndices((prev) => {
-      const allCurrentlySelected = removableIndices.length > 0 && removableIndices.every((i) => prev.has(i))
+      const allCurrentlySelected =
+        removableIndices.length > 0 && removableIndices.every((i) => prev.has(i))
       const next = new Set(prev)
       removableIndices.forEach((i) => (allCurrentlySelected ? next.delete(i) : next.add(i)))
       return next
@@ -279,7 +286,10 @@ export function SpeciesConcentrationTab() {
     dispatch(setConditionsTable(result.table))
     dispatch(untagTimeRows(result.removedTimes))
 
-    notify.removed(result.removedCount === 1 ? 'Time Point Removed' : 'Time Points Removed', `Removed ${result.removedCount} time point${result.removedCount === 1 ? '' : 's'}.`)
+    notify.removed(
+      result.removedCount === 1 ? 'Time Point Removed' : 'Time Points Removed',
+      `Removed ${result.removedCount} time point${result.removedCount === 1 ? '' : 's'}.`
+    )
     setSelectedIndices(new Set())
   }
 
@@ -533,7 +543,10 @@ export function SpeciesConcentrationTab() {
                   <tbody>
                     {timeEntries.length === 0 && (
                       <tr>
-                        <td colSpan={columns.length + 2} className="px-4 py-8 text-center text-gray-500 dark:text-muted">
+                        <td
+                          colSpan={columns.length + 2}
+                          className="px-4 py-8 text-center text-gray-500 dark:text-muted"
+                        >
                           No rows have values for the columns shown.
                         </td>
                       </tr>
@@ -542,7 +555,10 @@ export function SpeciesConcentrationTab() {
                       const airDensity = airDensityAtTime(conditionsManager, time)
 
                       return (
-                        <tr key={index} className="border-b border-gray-200 dark:border-border hover:bg-gray-50 dark:hover:bg-surface-hover">
+                        <tr
+                          key={index}
+                          className="border-b border-gray-200 dark:border-border hover:bg-gray-50 dark:hover:bg-surface-hover"
+                        >
                           <td className="px-4 py-2">
                             <input
                               type="checkbox"
@@ -557,7 +573,9 @@ export function SpeciesConcentrationTab() {
                               type="text"
                               inputMode="decimal"
                               value={rowDrafts[cellDraftKey(TIME_DRAFT_KEY, index)] ?? time}
-                              onChange={(e) => handleValueChange(TIME_DRAFT_KEY, index, e.target.value)}
+                              onChange={(e) =>
+                                handleValueChange(TIME_DRAFT_KEY, index, e.target.value)
+                              }
                               onKeyDown={(e) => {
                                 if (e.key === 'Enter') {
                                   e.preventDefault()

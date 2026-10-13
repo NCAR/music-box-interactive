@@ -39,7 +39,10 @@ const sponsors = [
 
 // Milestones from the MusicBox release history (github.com/NCAR/music-box)
 const timeline = [
-  { year: '2020', text: 'The MusicBox and MusicBox Interactive projects begin development at ACOM.' },
+  {
+    year: '2020',
+    text: 'The MusicBox and MusicBox Interactive projects begin development at ACOM.',
+  },
   { year: '2021', text: 'MusicBox reaches its first stable release, v1.0.0.' },
   {
     year: '2024',
@@ -94,12 +97,12 @@ function AboutPage() {
         <CardContent className="space-y-3 text-sm text-ink">
           <p>
             MusicBox is an atmospheric chemistry box model developed at the National Center for
-            Atmospheric Research&rsquo;s Atmospheric Chemistry Observations and Modeling
-            Laboratory. MusicBox has both Python and JavaScript implementations.
+            Atmospheric Research&rsquo;s Atmospheric Chemistry Observations and Modeling Laboratory.
+            MusicBox has both Python and JavaScript implementations.
           </p>
           <p>
-            MusicBox is built on MUSICA (Multi-Scale Infrastructure for Chemistry and Aerosols),
-            and uses the Model-Independent Chemistry Module (MICM) as its ODE solver.
+            MusicBox is built on MUSICA (Multi-Scale Infrastructure for Chemistry and Aerosols), and
+            uses the Model-Independent Chemistry Module (MICM) as its ODE solver.
           </p>
           <div className="flex flex-wrap gap-2">
             <div className="flex items-center gap-1.5 text-xs font-mono bg-black/5 dark:bg-white/5 border border-border rounded px-2 py-1">
@@ -135,9 +138,7 @@ function AboutPage() {
                 <div key={item.year} className="flex gap-3">
                   <div className="flex flex-col items-center">
                     <div className="w-2.5 h-2.5 rounded-full bg-action mt-1 flex-shrink-0" />
-                    {index < timeline.length - 1 && (
-                      <div className="w-px flex-1 bg-border" />
-                    )}
+                    {index < timeline.length - 1 && <div className="w-px flex-1 bg-border" />}
                   </div>
                   <div className={index < timeline.length - 1 ? 'pb-3' : ''}>
                     <p className="text-xs font-semibold text-heading">{item.year}</p>
@@ -160,8 +161,8 @@ function AboutPage() {
               MusicBox Interactive, the application you are using now, is a separate but related
               product from MusicBox: a web interface that runs MusicBox in the browser, so you can
               build a mechanism, configure conditions, and run a simulation without installing
-              anything. MusicBox itself remains a standalone Python and JavaScript package for
-              users who want to run it programmatically or embed it in another tool.
+              anything. MusicBox itself remains a standalone Python and JavaScript package for users
+              who want to run it programmatically or embed it in another tool.
             </p>
           </div>
         </CardContent>
@@ -219,7 +220,9 @@ function AboutPage() {
               flexibility for chemical systems to high-performance weather and climate models, and
               enables efficient chemistry integration across multiple modeling platforms.
             </p>
-            <p className="text-muted">Developed by: National Center for Atmospheric Research (NCAR)</p>
+            <p className="text-muted">
+              Developed by: National Center for Atmospheric Research (NCAR)
+            </p>
           </CardContent>
         </Card>
       </div>

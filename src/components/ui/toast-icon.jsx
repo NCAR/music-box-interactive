@@ -12,7 +12,13 @@ function Glyph({ shape, color }) {
   if (shape === 'triangle') {
     return (
       <svg {...common}>
-        <path d="M16 3 L30 27 H2 Z" fill={color} stroke={color} strokeWidth="3" strokeLinejoin="round" />
+        <path
+          d="M16 3 L30 27 H2 Z"
+          fill={color}
+          stroke={color}
+          strokeWidth="3"
+          strokeLinejoin="round"
+        />
         <rect x="14.8" y="11" width="2.4" height="9" rx="1.2" fill="#fff" />
         <circle cx="16" cy="23.2" r="1.5" fill="#fff" />
       </svg>
