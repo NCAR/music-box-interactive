@@ -1,0 +1,20 @@
+# CMake generation dependency list for this directory.
+C:/Documents/Capstone/Project/musica/build/CMakeFiles/cmake.verify_globs
+C:/Documents/Capstone/Project/musica/build/_deps/yaml-cpp-src/CMakeLists.txt
+C:/Documents/Capstone/Project/musica/build/_deps/yaml-cpp-src/yaml-cpp-config.cmake.in
+C:/Documents/Capstone/Project/musica/build/_deps/yaml-cpp-src/yaml-cpp.pc.in
+C:/Program Files/CMake/share/cmake-3.30/Modules/BasicConfigVersion-AnyNewerVersion.cmake.in
+C:/Program Files/CMake/share/cmake-3.30/Modules/CMakeCheckCompilerFlagCommonPatterns.cmake
+C:/Program Files/CMake/share/cmake-3.30/Modules/CMakeDependentOption.cmake
+C:/Program Files/CMake/share/cmake-3.30/Modules/CMakePackageConfigHelpers.cmake
+C:/Program Files/CMake/share/cmake-3.30/Modules/CTest.cmake
+C:/Program Files/CMake/share/cmake-3.30/Modules/CTestTargets.cmake
+C:/Program Files/CMake/share/cmake-3.30/Modules/CTestUseLaunchers.cmake
+C:/Program Files/CMake/share/cmake-3.30/Modules/CheckCXXCompilerFlag.cmake
+C:/Program Files/CMake/share/cmake-3.30/Modules/CheckCXXSourceCompiles.cmake
+C:/Program Files/CMake/share/cmake-3.30/Modules/DartConfiguration.tcl.in
+C:/Program Files/CMake/share/cmake-3.30/Modules/GNUInstallDirs.cmake
+C:/Program Files/CMake/share/cmake-3.30/Modules/Internal/CheckCompilerFlag.cmake
+C:/Program Files/CMake/share/cmake-3.30/Modules/Internal/CheckFlagCommonConfig.cmake
+C:/Program Files/CMake/share/cmake-3.30/Modules/Internal/CheckSourceCompiles.cmake
+C:/Program Files/CMake/share/cmake-3.30/Modules/WriteBasicConfigVersionFile.cmake

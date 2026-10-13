@@ -1,0 +1,481 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="17.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <PreferredToolArchitecture>x64</PreferredToolArchitecture>
+  </PropertyGroup>
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="MinSizeRel|x64">
+      <Configuration>MinSizeRel</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="RelWithDebInfo|x64">
+      <Configuration>RelWithDebInfo</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{D5285355-B4C3-3473-8828-A4D187D12231}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+    <WindowsTargetPlatformVersion>10.0.22621.0</WindowsTargetPlatformVersion>
+    <Platform>x64</Platform>
+    <ProjectName>mechanism_configuration</ProjectName>
+    <VCProjectUpgraderObjectName>NoUpgrade</VCProjectUpgraderObjectName>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v143</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v143</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v143</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v143</PlatformToolset>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <_ProjectFileVersion>10.0.20506.1</_ProjectFileVersion>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\Documents\Capstone\Project\musica\build\lib\Debug\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">mechanism_configuration.dir\Debug\</IntDir>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">mechanism_configuration</TargetName>
+    <TargetExt Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">.lib</TargetExt>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">C:\Documents\Capstone\Project\musica\build\lib\Release\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">mechanism_configuration.dir\Release\</IntDir>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">mechanism_configuration</TargetName>
+    <TargetExt Condition="'$(Configuration)|$(Platform)'=='Release|x64'">.lib</TargetExt>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">C:\Documents\Capstone\Project\musica\build\lib\MinSizeRel\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">mechanism_configuration.dir\MinSizeRel\</IntDir>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">mechanism_configuration</TargetName>
+    <TargetExt Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">.lib</TargetExt>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">C:\Documents\Capstone\Project\musica\build\lib\RelWithDebInfo\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">mechanism_configuration.dir\RelWithDebInfo\</IntDir>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">mechanism_configuration</TargetName>
+    <TargetExt Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">.lib</TargetExt>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>C:\Documents\Capstone\Project\musica\build\_deps\mechanism_configuration-src\include;C:\Documents\Capstone\Project\musica\build\_deps\yaml-cpp-src\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <ExceptionHandling>Sync</ExceptionHandling>
+      <InlineFunctionExpansion>Disabled</InlineFunctionExpansion>
+      <LanguageStandard>stdcpp20</LanguageStandard>
+      <MinimalRebuild></MinimalRebuild>
+      <Optimization>Disabled</Optimization>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <SupportJustMyCode></SupportJustMyCode>
+      <UseFullPaths>false</UseFullPaths>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;YAML_CPP_STATIC_DEFINE;CMAKE_INTDIR="Debug"</PreprocessorDefinitions>
+      <ObjectFileName>$(IntDir)</ObjectFileName>
+      <ScanSourceForModuleDependencies>false</ScanSourceForModuleDependencies>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_DEBUG;_WINDOWS;YAML_CPP_STATIC_DEFINE;CMAKE_INTDIR=\"Debug\"</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>C:\Documents\Capstone\Project\musica\build\_deps\mechanism_configuration-src\include;C:\Documents\Capstone\Project\musica\build\_deps\yaml-cpp-src\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ResourceCompile>
+    <Midl>
+      <AdditionalIncludeDirectories>C:\Documents\Capstone\Project\musica\build\_deps\mechanism_configuration-src\include;C:\Documents\Capstone\Project\musica\build\_deps\yaml-cpp-src\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
+      <HeaderFileName>%(Filename).h</HeaderFileName>
+      <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
+      <InterfaceIdentifierFileName>%(Filename)_i.c</InterfaceIdentifierFileName>
+      <ProxyFileName>%(Filename)_p.c</ProxyFileName>
+    </Midl>
+    <Lib>
+      <AdditionalOptions>%(AdditionalOptions) /machine:x64</AdditionalOptions>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>C:\Documents\Capstone\Project\musica\build\_deps\mechanism_configuration-src\include;C:\Documents\Capstone\Project\musica\build\_deps\yaml-cpp-src\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
+      <BasicRuntimeChecks>Default</BasicRuntimeChecks>
+      <ExceptionHandling>Sync</ExceptionHandling>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <LanguageStandard>stdcpp20</LanguageStandard>
+      <MinimalRebuild></MinimalRebuild>
+      <Optimization>MaxSpeed</Optimization>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <SupportJustMyCode></SupportJustMyCode>
+      <UseFullPaths>false</UseFullPaths>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;NDEBUG;YAML_CPP_STATIC_DEFINE;CMAKE_INTDIR="Release"</PreprocessorDefinitions>
+      <ObjectFileName>$(IntDir)</ObjectFileName>
+      <DebugInformationFormat>
+      </DebugInformationFormat>
+      <ScanSourceForModuleDependencies>false</ScanSourceForModuleDependencies>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;NDEBUG;YAML_CPP_STATIC_DEFINE;CMAKE_INTDIR=\"Release\"</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>C:\Documents\Capstone\Project\musica\build\_deps\mechanism_configuration-src\include;C:\Documents\Capstone\Project\musica\build\_deps\yaml-cpp-src\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ResourceCompile>
+    <Midl>
+      <AdditionalIncludeDirectories>C:\Documents\Capstone\Project\musica\build\_deps\mechanism_configuration-src\include;C:\Documents\Capstone\Project\musica\build\_deps\yaml-cpp-src\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
+      <HeaderFileName>%(Filename).h</HeaderFileName>
+      <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
+      <InterfaceIdentifierFileName>%(Filename)_i.c</InterfaceIdentifierFileName>
+      <ProxyFileName>%(Filename)_p.c</ProxyFileName>
+    </Midl>
+    <Lib>
+      <AdditionalOptions>%(AdditionalOptions) /machine:x64</AdditionalOptions>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>C:\Documents\Capstone\Project\musica\build\_deps\mechanism_configuration-src\include;C:\Documents\Capstone\Project\musica\build\_deps\yaml-cpp-src\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
+      <BasicRuntimeChecks>Default</BasicRuntimeChecks>
+      <ExceptionHandling>Sync</ExceptionHandling>
+      <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
+      <LanguageStandard>stdcpp20</LanguageStandard>
+      <MinimalRebuild></MinimalRebuild>
+      <Optimization>MinSpace</Optimization>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <SupportJustMyCode></SupportJustMyCode>
+      <UseFullPaths>false</UseFullPaths>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;NDEBUG;YAML_CPP_STATIC_DEFINE;CMAKE_INTDIR="MinSizeRel"</PreprocessorDefinitions>
+      <ObjectFileName>$(IntDir)</ObjectFileName>
+      <DebugInformationFormat>
+      </DebugInformationFormat>
+      <ScanSourceForModuleDependencies>false</ScanSourceForModuleDependencies>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;NDEBUG;YAML_CPP_STATIC_DEFINE;CMAKE_INTDIR=\"MinSizeRel\"</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>C:\Documents\Capstone\Project\musica\build\_deps\mechanism_configuration-src\include;C:\Documents\Capstone\Project\musica\build\_deps\yaml-cpp-src\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ResourceCompile>
+    <Midl>
+      <AdditionalIncludeDirectories>C:\Documents\Capstone\Project\musica\build\_deps\mechanism_configuration-src\include;C:\Documents\Capstone\Project\musica\build\_deps\yaml-cpp-src\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
+      <HeaderFileName>%(Filename).h</HeaderFileName>
+      <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
+      <InterfaceIdentifierFileName>%(Filename)_i.c</InterfaceIdentifierFileName>
+      <ProxyFileName>%(Filename)_p.c</ProxyFileName>
+    </Midl>
+    <Lib>
+      <AdditionalOptions>%(AdditionalOptions) /machine:x64</AdditionalOptions>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>C:\Documents\Capstone\Project\musica\build\_deps\mechanism_configuration-src\include;C:\Documents\Capstone\Project\musica\build\_deps\yaml-cpp-src\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
+      <BasicRuntimeChecks>Default</BasicRuntimeChecks>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <ExceptionHandling>Sync</ExceptionHandling>
+      <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
+      <LanguageStandard>stdcpp20</LanguageStandard>
+      <MinimalRebuild></MinimalRebuild>
+      <Optimization>MaxSpeed</Optimization>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <SupportJustMyCode></SupportJustMyCode>
+      <UseFullPaths>false</UseFullPaths>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;NDEBUG;YAML_CPP_STATIC_DEFINE;CMAKE_INTDIR="RelWithDebInfo"</PreprocessorDefinitions>
+      <ObjectFileName>$(IntDir)</ObjectFileName>
+      <ScanSourceForModuleDependencies>false</ScanSourceForModuleDependencies>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;NDEBUG;YAML_CPP_STATIC_DEFINE;CMAKE_INTDIR=\"RelWithDebInfo\"</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>C:\Documents\Capstone\Project\musica\build\_deps\mechanism_configuration-src\include;C:\Documents\Capstone\Project\musica\build\_deps\yaml-cpp-src\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ResourceCompile>
+    <Midl>
+      <AdditionalIncludeDirectories>C:\Documents\Capstone\Project\musica\build\_deps\mechanism_configuration-src\include;C:\Documents\Capstone\Project\musica\build\_deps\yaml-cpp-src\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
+      <HeaderFileName>%(Filename).h</HeaderFileName>
+      <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
+      <InterfaceIdentifierFileName>%(Filename)_i.c</InterfaceIdentifierFileName>
+      <ProxyFileName>%(Filename)_p.c</ProxyFileName>
+    </Midl>
+    <Lib>
+      <AdditionalOptions>%(AdditionalOptions) /machine:x64</AdditionalOptions>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <CustomBuild Include="C:\Documents\Capstone\Project\musica\build\_deps\mechanism_configuration-src\src\CMakeLists.txt">
+      <UseUtf8Encoding>Always</UseUtf8Encoding>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Building Custom Rule C:/Documents/Capstone/Project/musica/build/_deps/mechanism_configuration-src/src/CMakeLists.txt</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">setlocal
+"C:\Program Files\CMake\bin\cmake.exe" -SC:/Documents/Capstone/Project/musica -BC:/Documents/Capstone/Project/musica/build --check-stamp-file C:/Documents/Capstone/Project/musica/build/_deps/mechanism_configuration-build/src/CMakeFiles/generate.stamp
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\Documents\Capstone\Project\musica\build\CMakeFiles\cmake.verify_globs;C:\Documents\Capstone\Project\musica\build\_deps\mechanism_configuration-src\src\version.hpp.in;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\Documents\Capstone\Project\musica\build\_deps\mechanism_configuration-build\src\CMakeFiles\generate.stamp</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Building Custom Rule C:/Documents/Capstone/Project/musica/build/_deps/mechanism_configuration-src/src/CMakeLists.txt</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">setlocal
+"C:\Program Files\CMake\bin\cmake.exe" -SC:/Documents/Capstone/Project/musica -BC:/Documents/Capstone/Project/musica/build --check-stamp-file C:/Documents/Capstone/Project/musica/build/_deps/mechanism_configuration-build/src/CMakeFiles/generate.stamp
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">C:\Documents\Capstone\Project\musica\build\CMakeFiles\cmake.verify_globs;C:\Documents\Capstone\Project\musica\build\_deps\mechanism_configuration-src\src\version.hpp.in;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">C:\Documents\Capstone\Project\musica\build\_deps\mechanism_configuration-build\src\CMakeFiles\generate.stamp</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">Building Custom Rule C:/Documents/Capstone/Project/musica/build/_deps/mechanism_configuration-src/src/CMakeLists.txt</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">setlocal
+"C:\Program Files\CMake\bin\cmake.exe" -SC:/Documents/Capstone/Project/musica -BC:/Documents/Capstone/Project/musica/build --check-stamp-file C:/Documents/Capstone/Project/musica/build/_deps/mechanism_configuration-build/src/CMakeFiles/generate.stamp
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">C:\Documents\Capstone\Project\musica\build\CMakeFiles\cmake.verify_globs;C:\Documents\Capstone\Project\musica\build\_deps\mechanism_configuration-src\src\version.hpp.in;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">C:\Documents\Capstone\Project\musica\build\_deps\mechanism_configuration-build\src\CMakeFiles\generate.stamp</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">Building Custom Rule C:/Documents/Capstone/Project/musica/build/_deps/mechanism_configuration-src/src/CMakeLists.txt</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">setlocal
+"C:\Program Files\CMake\bin\cmake.exe" -SC:/Documents/Capstone/Project/musica -BC:/Documents/Capstone/Project/musica/build --check-stamp-file C:/Documents/Capstone/Project/musica/build/_deps/mechanism_configuration-build/src/CMakeFiles/generate.stamp
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">C:\Documents\Capstone\Project\musica\build\CMakeFiles\cmake.verify_globs;C:\Documents\Capstone\Project\musica\build\_deps\mechanism_configuration-src\src\version.hpp.in;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">C:\Documents\Capstone\Project\musica\build\_deps\mechanism_configuration-build\src\CMakeFiles\generate.stamp</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">false</LinkObjects>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\mechanism_configuration-src\src\parse_status.cpp" />
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\mechanism_configuration-src\src\validate_schema.cpp" />
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\mechanism_configuration-src\src\v0\parser.cpp">
+      <ObjectFileName>$(IntDir)/v0/parser.cpp.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\mechanism_configuration-src\src\v0\species_parser.cpp" />
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\mechanism_configuration-src\src\v0\photolysis_parser.cpp">
+      <ObjectFileName>$(IntDir)/v0/photolysis_parser.cpp.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\mechanism_configuration-src\src\v0\emission_parser.cpp">
+      <ObjectFileName>$(IntDir)/v0/emission_parser.cpp.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\mechanism_configuration-src\src\v0\first_order_loss_parser.cpp">
+      <ObjectFileName>$(IntDir)/v0/first_order_loss_parser.cpp.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\mechanism_configuration-src\src\v0\arrhenius_parser.cpp">
+      <ObjectFileName>$(IntDir)/v0/arrhenius_parser.cpp.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\mechanism_configuration-src\src\v0\troe_parser.cpp">
+      <ObjectFileName>$(IntDir)/v0/troe_parser.cpp.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\mechanism_configuration-src\src\v0\ternary_chemical_activation_parser.cpp">
+      <ObjectFileName>$(IntDir)/v0/ternary_chemical_activation_parser.cpp.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\mechanism_configuration-src\src\v0\branched_parser.cpp">
+      <ObjectFileName>$(IntDir)/v0/branched_parser.cpp.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\mechanism_configuration-src\src\v0\tunneling_parser.cpp">
+      <ObjectFileName>$(IntDir)/v0/tunneling_parser.cpp.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\mechanism_configuration-src\src\v0\surface_parser.cpp">
+      <ObjectFileName>$(IntDir)/v0/surface_parser.cpp.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\mechanism_configuration-src\src\v0\user_defined_reaction_parser.cpp" />
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\mechanism_configuration-src\src\v1\parser.cpp">
+      <ObjectFileName>$(IntDir)/v1/parser.cpp.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\mechanism_configuration-src\src\v1\mechanism_parsers.cpp">
+      <ObjectFileName>$(IntDir)/v1/mechanism_parsers.cpp.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\mechanism_configuration-src\src\v1\utils.cpp">
+      <ObjectFileName>$(IntDir)/v1/utils.cpp.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\mechanism_configuration-src\src\v1\reactions\arrhenius_parser.cpp">
+      <ObjectFileName>$(IntDir)/v1/reactions/arrhenius_parser.cpp.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\mechanism_configuration-src\src\v1\reactions\branched_parser.cpp">
+      <ObjectFileName>$(IntDir)/v1/reactions/branched_parser.cpp.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\mechanism_configuration-src\src\v1\reactions\emission_parser.cpp">
+      <ObjectFileName>$(IntDir)/v1/reactions/emission_parser.cpp.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\mechanism_configuration-src\src\v1\reactions\first_order_loss_parser.cpp">
+      <ObjectFileName>$(IntDir)/v1/reactions/first_order_loss_parser.cpp.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\mechanism_configuration-src\src\v1\reactions\photolysis_parser.cpp">
+      <ObjectFileName>$(IntDir)/v1/reactions/photolysis_parser.cpp.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\mechanism_configuration-src\src\v1\reactions\surface_parser.cpp">
+      <ObjectFileName>$(IntDir)/v1/reactions/surface_parser.cpp.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\mechanism_configuration-src\src\v1\reactions\taylor_series_parser.cpp" />
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\mechanism_configuration-src\src\v1\reactions\troe_parser.cpp">
+      <ObjectFileName>$(IntDir)/v1/reactions/troe_parser.cpp.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\mechanism_configuration-src\src\v1\reactions\ternary_chemical_activation_parser.cpp">
+      <ObjectFileName>$(IntDir)/v1/reactions/ternary_chemical_activation_parser.cpp.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\mechanism_configuration-src\src\v1\reactions\tunneling_parser.cpp">
+      <ObjectFileName>$(IntDir)/v1/reactions/tunneling_parser.cpp.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\mechanism_configuration-src\src\v1\reactions\user_defined_parser.cpp" />
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\mechanism_configuration-src\src\development\parser.cpp">
+      <ObjectFileName>$(IntDir)/development/parser.cpp.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\mechanism_configuration-src\src\development\mechanism_parsers.cpp">
+      <ObjectFileName>$(IntDir)/development/mechanism_parsers.cpp.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\mechanism_configuration-src\src\development\utils.cpp">
+      <ObjectFileName>$(IntDir)/development/utils.cpp.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\mechanism_configuration-src\src\development\validator.cpp" />
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\mechanism_configuration-src\src\development\models\gas_model_paser.cpp" />
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\mechanism_configuration-src\src\development\models\modal_model_parser.cpp" />
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\mechanism_configuration-src\src\development\reactions\parsers\aqueous_equilibrium.cpp">
+      <ObjectFileName>$(IntDir)/development/reactions/parsers/aqueous_equilibrium.cpp.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\mechanism_configuration-src\src\development\reactions\parsers\arrhenius.cpp">
+      <ObjectFileName>$(IntDir)/development/reactions/parsers/arrhenius.cpp.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\mechanism_configuration-src\src\development\reactions\parsers\branched.cpp">
+      <ObjectFileName>$(IntDir)/development/reactions/parsers/branched.cpp.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\mechanism_configuration-src\src\development\reactions\parsers\condensed_phase_arrhenius.cpp">
+      <ObjectFileName>$(IntDir)/development/reactions/parsers/condensed_phase_arrhenius.cpp.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\mechanism_configuration-src\src\development\reactions\parsers\condensed_phase_photolysis.cpp">
+      <ObjectFileName>$(IntDir)/development/reactions/parsers/condensed_phase_photolysis.cpp.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\mechanism_configuration-src\src\development\reactions\parsers\emission.cpp">
+      <ObjectFileName>$(IntDir)/development/reactions/parsers/emission.cpp.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\mechanism_configuration-src\src\development\reactions\parsers\first_order_loss.cpp">
+      <ObjectFileName>$(IntDir)/development/reactions/parsers/first_order_loss.cpp.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\mechanism_configuration-src\src\development\reactions\parsers\henrys_law.cpp">
+      <ObjectFileName>$(IntDir)/development/reactions/parsers/henrys_law.cpp.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\mechanism_configuration-src\src\development\reactions\parsers\photolysis.cpp">
+      <ObjectFileName>$(IntDir)/development/reactions/parsers/photolysis.cpp.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\mechanism_configuration-src\src\development\reactions\parsers\simpol_phase_transfer.cpp">
+      <ObjectFileName>$(IntDir)/development/reactions/parsers/simpol_phase_transfer.cpp.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\mechanism_configuration-src\src\development\reactions\parsers\surface.cpp">
+      <ObjectFileName>$(IntDir)/development/reactions/parsers/surface.cpp.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\mechanism_configuration-src\src\development\reactions\parsers\taylor_series.cpp">
+      <ObjectFileName>$(IntDir)/development/reactions/parsers/taylor_series.cpp.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\mechanism_configuration-src\src\development\reactions\parsers\ternary_chemical_activation.cpp">
+      <ObjectFileName>$(IntDir)/development/reactions/parsers/ternary_chemical_activation.cpp.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\mechanism_configuration-src\src\development\reactions\parsers\troe.cpp">
+      <ObjectFileName>$(IntDir)/development/reactions/parsers/troe.cpp.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\mechanism_configuration-src\src\development\reactions\parsers\tunneling.cpp">
+      <ObjectFileName>$(IntDir)/development/reactions/parsers/tunneling.cpp.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\mechanism_configuration-src\src\development\reactions\parsers\user_defined.cpp">
+      <ObjectFileName>$(IntDir)/development/reactions/parsers/user_defined.cpp.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\mechanism_configuration-src\src\development\reactions\parsers\wet_deposition.cpp">
+      <ObjectFileName>$(IntDir)/development/reactions/parsers/wet_deposition.cpp.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\mechanism_configuration-src\src\development\reactions\validators\aqueous_equilibrium.cpp">
+      <ObjectFileName>$(IntDir)/development/reactions/validators/aqueous_equilibrium.cpp.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\mechanism_configuration-src\src\development\reactions\validators\arrhenius.cpp">
+      <ObjectFileName>$(IntDir)/development/reactions/validators/arrhenius.cpp.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\mechanism_configuration-src\src\development\reactions\validators\branched.cpp">
+      <ObjectFileName>$(IntDir)/development/reactions/validators/branched.cpp.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\mechanism_configuration-src\src\development\reactions\validators\condensed_phase_arrhenius.cpp">
+      <ObjectFileName>$(IntDir)/development/reactions/validators/condensed_phase_arrhenius.cpp.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\mechanism_configuration-src\src\development\reactions\validators\condensed_phase_photolysis.cpp">
+      <ObjectFileName>$(IntDir)/development/reactions/validators/condensed_phase_photolysis.cpp.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\mechanism_configuration-src\src\development\reactions\validators\emission.cpp">
+      <ObjectFileName>$(IntDir)/development/reactions/validators/emission.cpp.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\mechanism_configuration-src\src\development\reactions\validators\first_order_loss.cpp">
+      <ObjectFileName>$(IntDir)/development/reactions/validators/first_order_loss.cpp.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\mechanism_configuration-src\src\development\reactions\validators\henrys_law.cpp">
+      <ObjectFileName>$(IntDir)/development/reactions/validators/henrys_law.cpp.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\mechanism_configuration-src\src\development\reactions\validators\photolysis.cpp">
+      <ObjectFileName>$(IntDir)/development/reactions/validators/photolysis.cpp.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\mechanism_configuration-src\src\development\reactions\validators\simpol_phase_transfer.cpp">
+      <ObjectFileName>$(IntDir)/development/reactions/validators/simpol_phase_transfer.cpp.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\mechanism_configuration-src\src\development\reactions\validators\surface.cpp">
+      <ObjectFileName>$(IntDir)/development/reactions/validators/surface.cpp.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\mechanism_configuration-src\src\development\reactions\validators\taylor_series.cpp">
+      <ObjectFileName>$(IntDir)/development/reactions/validators/taylor_series.cpp.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\mechanism_configuration-src\src\development\reactions\validators\ternary_chemical_activation.cpp">
+      <ObjectFileName>$(IntDir)/development/reactions/validators/ternary_chemical_activation.cpp.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\mechanism_configuration-src\src\development\reactions\validators\troe.cpp">
+      <ObjectFileName>$(IntDir)/development/reactions/validators/troe.cpp.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\mechanism_configuration-src\src\development\reactions\validators\tunneling.cpp">
+      <ObjectFileName>$(IntDir)/development/reactions/validators/tunneling.cpp.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\mechanism_configuration-src\src\development\reactions\validators\user_defined.cpp">
+      <ObjectFileName>$(IntDir)/development/reactions/validators/user_defined.cpp.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="C:\Documents\Capstone\Project\musica\build\_deps\mechanism_configuration-src\src\development\reactions\validators\wet_deposition.cpp">
+      <ObjectFileName>$(IntDir)/development/reactions/validators/wet_deposition.cpp.obj</ObjectFileName>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="C:\Documents\Capstone\Project\musica\build\ZERO_CHECK.vcxproj">
+      <Project>{45E09B8B-7FF3-3923-BA5B-327F1C8E83B8}</Project>
+      <Name>ZERO_CHECK</Name>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </ProjectReference>
+    <ProjectReference Include="C:\Documents\Capstone\Project\musica\build\_deps\yaml-cpp-build\yaml-cpp.vcxproj">
+      <Project>{76311094-C9CE-335D-9016-CE7E9B94C88A}</Project>
+      <Name>yaml-cpp</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

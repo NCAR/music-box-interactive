@@ -1,0 +1,46 @@
+{
+	"sources" : 
+	[
+		{
+			"file" : "C:/Documents/Capstone/Project/musica/build/_deps/yaml-cpp-subbuild/CMakeFiles/yaml-cpp-populate"
+		},
+		{
+			"file" : "C:/Documents/Capstone/Project/musica/build/_deps/yaml-cpp-subbuild/CMakeFiles/7732302235655d2f724a7a0f15d9a8ec/yaml-cpp-populate.rule"
+		},
+		{
+			"file" : "C:/Documents/Capstone/Project/musica/build/_deps/yaml-cpp-subbuild/CMakeFiles/cdb2af2cc293cec5554125def45e1b46/yaml-cpp-populate-complete.rule"
+		},
+		{
+			"file" : "C:/Documents/Capstone/Project/musica/build/_deps/yaml-cpp-subbuild/CMakeFiles/0e484b619c6361a3b97c9aadd30202e0/yaml-cpp-populate-build.rule"
+		},
+		{
+			"file" : "C:/Documents/Capstone/Project/musica/build/_deps/yaml-cpp-subbuild/CMakeFiles/0e484b619c6361a3b97c9aadd30202e0/yaml-cpp-populate-configure.rule"
+		},
+		{
+			"file" : "C:/Documents/Capstone/Project/musica/build/_deps/yaml-cpp-subbuild/CMakeFiles/0e484b619c6361a3b97c9aadd30202e0/yaml-cpp-populate-download.rule"
+		},
+		{
+			"file" : "C:/Documents/Capstone/Project/musica/build/_deps/yaml-cpp-subbuild/CMakeFiles/0e484b619c6361a3b97c9aadd30202e0/yaml-cpp-populate-install.rule"
+		},
+		{
+			"file" : "C:/Documents/Capstone/Project/musica/build/_deps/yaml-cpp-subbuild/CMakeFiles/0e484b619c6361a3b97c9aadd30202e0/yaml-cpp-populate-mkdir.rule"
+		},
+		{
+			"file" : "C:/Documents/Capstone/Project/musica/build/_deps/yaml-cpp-subbuild/CMakeFiles/0e484b619c6361a3b97c9aadd30202e0/yaml-cpp-populate-patch.rule"
+		},
+		{
+			"file" : "C:/Documents/Capstone/Project/musica/build/_deps/yaml-cpp-subbuild/CMakeFiles/0e484b619c6361a3b97c9aadd30202e0/yaml-cpp-populate-test.rule"
+		},
+		{
+			"file" : "C:/Documents/Capstone/Project/musica/build/_deps/yaml-cpp-subbuild/CMakeFiles/0e484b619c6361a3b97c9aadd30202e0/yaml-cpp-populate-update.rule"
+		}
+	],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"yaml-cpp-populate"
+		],
+		"name" : "yaml-cpp-populate"
+	}
+}

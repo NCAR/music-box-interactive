@@ -1,0 +1,133 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /*
+    * NCAR brand palette (see docs/ncar-brand for the source guide). Danger/caution stay
+    * as universal error-red conventions since the brand guide does not define one.
+    */
+    --color-action: #0057c2; /* NCAR Blue */
+    --color-action-hover: #00357a; /* Dark Blue */
+    --color-location: #ffdd31; /* Yellow accent, active-nav highlight */
+    --color-location-foreground: #00357a; /* Dark Blue, 8.7:1 on Yellow */
+    --color-assist: #faa119; /* Orange accent */
+    --color-assist-hover: #e0930f;
+    --color-assist-foreground: #00357a; /* Dark Blue, 5.7:1 on Orange */
+    --color-assist-secondary: #e6f7f9; /* pale tint of UCAR Aqua */
+    --color-assist-secondary-hover: #cff0f3;
+    --color-assist-secondary-foreground: #00357a; /* Dark Blue */
+    --color-assist-secondary-border: #34e1f4; /* Light Aqua accent */
+    --color-assist-secondary-ring: #00a2b4; /* UCAR Aqua */
+    --color-surface: #ffffff; /* White */
+    --color-surface-alt: #f1f0ee; /* Light Gray */
+    --color-surface-hover: #e5e3df;
+    --color-border: #d8d6d2;
+    --color-heading: #00357a; /* Dark Blue, for titles/headings only */
+    --color-ink: #1f2937; /* neutral dark gray, general body text */
+    --color-muted: #5f6368;
+    --color-danger: #d93025;
+    --color-danger-hover: #b3261e;
+    --color-caution: #fce8e6;
+    /* Flow diagram text that sits on the page background, not on a node */
+    --color-flow-rate: #046b5b;
+    --color-flow-muted: #6b7280;
+  }
+
+  /*
+  * Dark theme (see src/theme). The NCAR brand accents stay; Light Blue replaces NCAR Blue for
+  * actions, because NCAR Blue is too dark on a dark surface. Same values as Chemistry Cafe.
+  */
+  :root.dark {
+    --color-action: #42c0ff; /* NCAR Light Blue */
+    --color-action-hover: #8ad7ff;
+    --color-location: #ffdd31;
+    /* The selected menu item's text sits on the dark sidebar, where Dark Blue would vanish. */
+    --color-location-foreground: #ffdd31;
+    --color-assist: #faa119;
+    --color-assist-hover: #e0930f;
+    --color-assist-foreground: #00357a;
+    /* Table headers and selected items: a neutral dark gray, a step above the cards, with the
+       aqua kept for the text. A dark teal block was too heavy across many tables. */
+    --color-assist-secondary: #2b2f33;
+    --color-assist-secondary-hover: #353a3f;
+    --color-assist-secondary-foreground: #8eeaf5; /* light UCAR Aqua */
+    --color-assist-secondary-border: #34e1f4;
+    --color-assist-secondary-ring: #34e1f4;
+    --color-surface: #1e1e1e;
+    --color-surface-alt: #121212;
+    --color-surface-hover: #2c2c2c;
+    --color-border: #3d3d3d;
+    --color-heading: #ffffff;
+    --color-ink: #e5e7eb;
+    --color-muted: #b3b3b3;
+    --color-danger: #f28b82;
+    --color-danger-hover: #ee675c;
+    --color-caution: #3c1f1d;
+    --color-flow-rate: #5eead4;
+    --color-flow-muted: #9ca3af;
+  }
+
+  * {
+    border-color: #e5e7eb;
+  }
+  /* :where() keeps the specificity at 0, so every border-* class still wins. */
+  :where(:root.dark) * {
+    border-color: #3d3d3d;
+  }
+  :root.dark body {
+    background-color: var(--color-surface-alt);
+    color: var(--color-ink);
+  }
+  html {
+    scrollbar-gutter: stable;
+  }
+  body {
+    margin: 0;
+    min-height: 100vh;
+  }
+}
+
+@layer components {
+  /* Liquid Glass Effect */
+  .glass {
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(12px) saturate(180%);
+    -webkit-backdrop-filter: blur(12px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow:
+      0 8px 32px 0 rgba(31, 38, 135, 0.15),
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.2);
+  }
+
+  .glass-button {
+    @apply glass;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .glass-button:hover {
+    background: rgba(255, 255, 255, 0.15);
+    box-shadow:
+      0 12px 40px 0 rgba(31, 38, 135, 0.25),
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.3);
+    transform: translateY(-2px);
+  }
+
+  .glass-button:active {
+    transform: translateY(0);
+  }
+}
+
+@layer utilities {
+  /* Hide scrollbar for Chrome, Safari and Opera */
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Hide scrollbar for IE, Edge and Firefox */
+  .scrollbar-hide {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+  }
+}

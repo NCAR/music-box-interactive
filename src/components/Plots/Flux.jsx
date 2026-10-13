@@ -1,0 +1,768 @@
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { useSelector } from 'react-redux'
+import { ChevronDown, ChevronUp, Check, Waypoints } from 'lucide-react'
+import { useClickOutside } from '../../hooks/useClickOutside'
+import { getResultSpeciesNames } from './speciesFormat'
+import {
+  computeIntegratedReactionRate,
+  computeReactionSeries,
+  reactionReactants,
+  reactionProducts,
+} from './flowUtils'
+import {
+  getReactionParameters,
+  getReactionTypeLabel,
+} from '../Mechanism/reactions/reactionRegistry'
+import { REACTION_COMPONENT_KEYS } from '../../services/simulation/local/mechanism'
+import { RangeBoundInput } from './RangeBoundInput'
+import { TIME_RANGE_UNITS } from './timeRangeUnits'
+import { UnitDropdown } from './UnitDropdown'
+import { LineChart } from './LineChart'
+import { Card, CardContent } from '../ui/card'
+import { CHART_COLORS } from '../chartColors'
+import { ChartLegendContent, ChartTooltipContent } from '../SimulationChart'
+import { EMPTY_ARRAY } from '../../utils/emptyArray'
+import { selectRunDuration } from '../../redux/slices/simulationSlice'
+import { useResultsConcentrationUnit } from '../../hooks/useConcentrationUnit'
+import { buildIntervalDivisors } from '../../utils/concentrationUnits'
+import { DISPLAY_DECIMALS } from '../../utils/displayDecimals'
+import { selectNamedReactions } from '../../redux/slices/mechanismSlice'
+
+// Species rows shown before the list collapses into a "+N others" popover.
+const SPECIES_VISIBLE = 10
+
+const SORT_OPTIONS = [
+  { id: 'asc', label: 'Flux: Low to High' },
+  { id: 'desc', label: 'Flux: High to Low' },
+]
+
+const formatComponents = (entries) => {
+  if (!entries.length) return '∅'
+  return entries
+    .map((entry) => {
+      const name = entry.name || ''
+      const coefficient = Number(entry.coefficient)
+      const prefix = Number.isFinite(coefficient) && coefficient > 1 ? coefficient : ''
+      return `${prefix}${name}`
+    })
+    .join(' + ')
+}
+
+const formatReactionFormula = (reaction) =>
+  `${formatComponents(reactionReactants(reaction))} → ${formatComponents(reactionProducts(reaction))}`
+
+// A species filter matches reactions where the species is a reactant or product.
+// An empty filter means no filter is applied. All reactions pass.
+const reactionInvolvesSpecies = (reaction, selectedSpeciesNames) => {
+  if (selectedSpeciesNames.length === 0) return true
+  const names = [...reactionReactants(reaction), ...reactionProducts(reaction)].map(
+    (entry) => entry.name
+  )
+  return names.some((name) => selectedSpeciesNames.includes(name))
+}
+
+// Exponential notation only where it helps: rate/flux values span many orders of magnitude.
+const formatValue = (value) => {
+  if (value === undefined || value === null || value === '') return '—'
+  if (typeof value !== 'number') return String(value)
+
+  // NaN/Infinity indicate a computation failure. Displaying them as 0 would mask a solver
+  // error as a legitimate zero-flux reaction.
+  if (!Number.isFinite(value)) return Number.isNaN(value) ? 'N/A' : String(value)
+  if (value === 0) return '0'
+  const magnitude = Math.abs(value)
+  return magnitude < 1e-3 || magnitude >= 1e6 ? value.toExponential(2) : String(value)
+}
+
+const formatFlux = (value) => {
+  if (typeof value !== 'number' || !Number.isFinite(value) || value === 0) return formatValue(value)
+  return value.toExponential(4)
+}
+
+// Structural fields aren't rate parameters. All other reaction fields are shown as rate parameters.
+const NON_PARAMETER_KEYS = new Set([
+  'id',
+  'type',
+  'name',
+  'gas phase',
+  'gas-phase species',
+  ...REACTION_COMPONENT_KEYS,
+])
+
+const reactionParameters = (reaction) => {
+  const declared = getReactionParameters(reaction.type)
+  const declaredKeys = declared.map((field) => field.key)
+
+  const carried = Object.entries(reaction).filter(
+    ([key, value]) =>
+      !NON_PARAMETER_KEYS.has(key) &&
+      !key.startsWith('__') &&
+      value !== undefined &&
+      value !== null &&
+      value !== ''
+  )
+
+  return [
+    ...declared.map((field) => ({ ...field, value: reaction[field.key] })),
+    ...carried
+      .filter(([key]) => !declaredKeys.includes(key))
+      .map(([key, value]) => ({ key, value })),
+  ]
+}
+
+// Collapsed: one row per reaction showing formula, type, and flux.
+// Click the formula to expand a details row with rate parameters.
+function FluxReactionRow({ reaction, flux, checked, onToggleCheck }) {
+  const [expanded, setExpanded] = useState(false)
+  const formula = formatReactionFormula(reaction)
+  const parameters = reactionParameters(reaction)
+
+  return (
+    <>
+      <tr className="border-b border-gray-200 dark:border-border hover:bg-gray-50 dark:hover:bg-surface-hover">
+        <td className="pl-6 pr-4 py-2">
+          <input
+            type="checkbox"
+            checked={checked}
+            onChange={onToggleCheck}
+            aria-label={
+              checked ? `Deselect ${formula} for plotting` : `Select ${formula} for plotting`
+            }
+            className="accent-assist-secondary-ring"
+          />
+        </td>
+        <td className="px-4 py-2">
+          <button
+            type="button"
+            onClick={() => setExpanded((current) => !current)}
+            className="flex items-center gap-1.5 font-mono text-sm text-ink text-left break-words hover:text-heading focus:outline-none focus-visible:ring-2 focus-visible:ring-assist-secondary-ring"
+          >
+            {expanded ? (
+              <ChevronUp className="w-3.5 h-3.5 flex-shrink-0 text-muted" />
+            ) : (
+              <ChevronDown className="w-3.5 h-3.5 flex-shrink-0 text-muted" />
+            )}
+            <span className="break-words">{formula}</span>
+          </button>
+        </td>
+        <td className="px-4 py-2 text-sm text-muted font-mono" title={reaction.type}>
+          {reaction.type}
+        </td>
+        <td className="px-4 py-2 font-mono text-sm">{formatFlux(flux)}</td>
+      </tr>
+      {expanded && (
+        <tr className="border-b border-gray-200 dark:border-border">
+          <td />
+          <td colSpan={3} className="px-4 py-3">
+            <div className="flex flex-col gap-2 max-w-[35%] pl-5">
+              <span className="text-xs  text-muted uppercase tracking-wide">
+                Parameters
+              </span>
+              {parameters.map((field) => (
+                <div key={field.key} className="flex items-center justify-between gap-3 text-sm">
+                  <span className="text-muted flex-shrink-0">{field.key}</span>
+                  <span
+                    className="font-mono text-ink truncate"
+                    title={String(formatValue(field.value))}
+                  >
+                    {formatValue(field.value)}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </td>
+        </tr>
+      )}
+    </>
+  )
+}
+
+/*
+ * Flux Component
+ * Filterable reaction-flux view with a sidebar for reaction/species filters and a sortable
+ * table listing each reaction's formula, type, and integrated flux.
+ */
+export function Flux() {
+  const simulation = useSelector((state) => state.simulation)
+  const reactions = useSelector(selectNamedReactions)
+  const duration = useSelector(selectRunDuration)
+
+  const [reactionsOpen, setReactionsOpen] = useState(true)
+  const [speciesOpen, setSpeciesOpen] = useState(true)
+  const [timeRangeOpen, setTimeRangeOpen] = useState(true)
+  // Empty selection means "no filter applied".
+  const [selectedReactionTypes, setSelectedReactionTypes] = useState([])
+  const [selectedSpeciesNames, setSelectedSpeciesNames] = useState([])
+  const [speciesSearch, setSpeciesSearch] = useState('')
+  const [speciesOverflowOpen, setSpeciesOverflowOpen] = useState(false)
+  const [timeRange, setTimeRange] = useState({ start: 0, end: duration })
+  const [timeRangeUnitId, setTimeRangeUnitId] = useState('seconds')
+  const {
+    unitId: concentrationUnitId,
+    unit: concentrationUnit,
+    units: concentrationUnits,
+    setUnitId: setConcentrationUnitId,
+    airDensities,
+  } = useResultsConcentrationUnit(simulation.excludedResults)
+  const [sortOrder, setSortOrder] = useState('desc')
+  const [sortMenuOpen, setSortMenuOpen] = useState(false)
+  const [selectedReactionKeys, setSelectedReactionKeys] = useState([])
+  // key -> index into CHART_COLORS. Assigned once per reaction while it's selected and freed on
+  // deselect, so a reaction keeps its color for as long as it's plotted -- position in
+  // selectedReactionKeys shifts on every deselect, so deriving color from array index would
+  // repaint every reaction after the removed one.
+  const [colorAssignments, setColorAssignments] = useState(new Map())
+
+  // The initial state captures duration only on mount; resync if a rerun changes the duration
+  // while the tab remains mounted.
+  useEffect(() => {
+    setTimeRange({ start: 0, end: duration })
+  }, [duration])
+
+  const speciesOverflowRef = useRef(null)
+  const sortMenuRef = useRef(null)
+  useClickOutside(speciesOverflowRef, () => setSpeciesOverflowOpen(false), speciesOverflowOpen)
+  useClickOutside(sortMenuRef, () => setSortMenuOpen(false), sortMenuOpen)
+
+  const timeRangeUnit =
+    TIME_RANGE_UNITS.find((unit) => unit.id === timeRangeUnitId) ?? TIME_RANGE_UNITS[0]
+  const timeAxisUnitLabel = timeRangeUnit.shortLabel
+
+  // Mixing-ratio units convert each interval's increase with that interval's own air density,
+  // then sum, so the flux stays exact when conditions evolve within the window.
+  const intervalDivisors = useMemo(
+    () => buildIntervalDivisors(concentrationUnitId, airDensities),
+    [concentrationUnitId, airDensities]
+  )
+
+  const speciesNames = useMemo(
+    () => getResultSpeciesNames(simulation.results),
+    [simulation.results]
+  )
+
+  const filteredSpeciesNames = useMemo(() => {
+    const search = speciesSearch.trim().toLowerCase()
+    if (!search) return speciesNames
+    return speciesNames.filter((name) => name.toLowerCase().startsWith(search))
+  }, [speciesNames, speciesSearch])
+
+  // A species selected from the overflow menu stays visible beyond the cap until deselected.
+  const baseVisibleSpeciesNames = filteredSpeciesNames.slice(0, SPECIES_VISIBLE)
+  const overflowCandidates = filteredSpeciesNames.slice(SPECIES_VISIBLE)
+  const pinnedOverflowSpeciesNames = overflowCandidates.filter((name) =>
+    selectedSpeciesNames.includes(name)
+  )
+  const visibleSpeciesNames = [...baseVisibleSpeciesNames, ...pinnedOverflowSpeciesNames]
+  const overflowSpeciesNames = overflowCandidates.filter(
+    (name) => !selectedSpeciesNames.includes(name)
+  )
+
+  const toggleReactionType = (type) => {
+    setSelectedReactionTypes((current) =>
+      current.includes(type) ? current.filter((x) => x !== type) : [...current, type]
+    )
+  }
+
+  const toggleSpecies = (name) => {
+    setSelectedSpeciesNames((current) =>
+      current.includes(name) ? current.filter((x) => x !== name) : [...current, name]
+    )
+  }
+
+  const toggleReactionSelection = (key) => {
+    setSelectedReactionKeys((current) =>
+      current.includes(key) ? current.filter((x) => x !== key) : [...current, key]
+    )
+    setColorAssignments((current) => {
+      const next = new Map(current)
+      if (next.has(key)) {
+        next.delete(key)
+        return next
+      }
+      const used = new Set(next.values())
+      let colorIndex = 0
+      while (used.has(colorIndex) && colorIndex < CHART_COLORS.length) colorIndex++
+      if (colorIndex < CHART_COLORS.length) next.set(key, colorIndex)
+      return next
+    })
+  }
+
+  const resetFilters = () => {
+    setSelectedReactionTypes([])
+    setSelectedSpeciesNames([])
+    setSpeciesSearch('')
+    setTimeRange({ start: 0, end: duration })
+    setSelectedReactionKeys([])
+    setColorAssignments(new Map())
+  }
+
+  const reactionTypeCounts = useMemo(() => {
+    const counts = new Map()
+    for (const reaction of reactions ?? []) {
+      const type = reaction.type || 'UNKNOWN'
+      counts.set(type, (counts.get(type) ?? 0) + 1)
+    }
+    return [...counts.entries()]
+      .map(([type, count]) => ({ type, count, label: getReactionTypeLabel(type) }))
+      .sort((a, b) => a.label.localeCompare(b.label))
+  }, [reactions])
+
+  const visibleReactions = useMemo(() => {
+    if (!Array.isArray(reactions)) return []
+
+    const timeStart = timeRange.start ?? 0
+    const timeEnd = timeRange.end ?? duration ?? Infinity
+
+    return reactions
+      .map((reaction, index) => ({ reaction, index }))
+      .filter(
+        ({ reaction }) =>
+          (selectedReactionTypes.length === 0 ||
+            selectedReactionTypes.includes(reaction.type)) &&
+          reactionInvolvesSpecies(reaction, selectedSpeciesNames)
+      )
+      .map(({ reaction, index }) => ({
+        reaction,
+        // Reactions have no `id` field; the position in the unfiltered mechanism array is the
+        // only stable, unique identity available for React's reconciliation key.
+        key: reaction.id ?? index,
+        flux: computeIntegratedReactionRate(
+          reaction,
+          index,
+          simulation.excludedResults,
+          timeStart,
+          timeEnd,
+          intervalDivisors
+        ),
+      }))
+      .sort((a, b) => (sortOrder === 'asc' ? a.flux - b.flux : b.flux - a.flux))
+  }, [
+    reactions,
+    selectedReactionTypes,
+    selectedSpeciesNames,
+    simulation.excludedResults,
+    duration,
+    timeRange.start,
+    timeRange.end,
+    sortOrder,
+    intervalDivisors,
+  ])
+
+  const reactionEntriesByKey = useMemo(() => {
+    const map = new Map()
+    ;(reactions ?? []).forEach((reaction, index) => {
+      map.set(reaction.id ?? index, { reaction, index })
+    })
+    return map
+  }, [reactions])
+
+  const plottedReactionEntries = useMemo(
+    () =>
+      selectedReactionKeys
+        .map((key) => {
+          const entry = reactionEntriesByKey.get(key)
+          return entry ? { key, ...entry } : null
+        })
+        .filter(Boolean),
+    [selectedReactionKeys, reactionEntriesByKey]
+  )
+
+  const chartSeries = useMemo(
+    () =>
+      plottedReactionEntries
+        .map((entry) => {
+          const colorIndex = colorAssignments.get(entry.key)
+          if (colorIndex === undefined) return null
+          return {
+            ...entry,
+            color: CHART_COLORS[colorIndex],
+            label: formatReactionFormula(entry.reaction),
+          }
+        })
+        .filter(Boolean),
+    [plottedReactionEntries, colorAssignments]
+  )
+
+  const hiddenSeriesCount = plottedReactionEntries.length - chartSeries.length
+
+  const chartData = useMemo(() => {
+    if (chartSeries.length === 0) return []
+    const timeStart = timeRange.start ?? 0
+    const timeEnd = timeRange.end ?? duration ?? Infinity
+    return computeReactionSeries(
+      chartSeries,
+      simulation.excludedResults,
+      timeStart,
+      timeEnd,
+      intervalDivisors
+    )
+  }, [
+    chartSeries,
+    simulation.excludedResults,
+    timeRange.start,
+    timeRange.end,
+    duration,
+    intervalDivisors,
+  ])
+
+  const chartTimes = useMemo(() => chartData.map((point) => point.time), [chartData])
+  const plotSeries = useMemo(
+    () =>
+      chartSeries.map((series) => ({
+        key: series.key,
+        name: series.label,
+        color: series.color,
+        values: chartData.map((point) => point[series.key]),
+      })),
+    [chartSeries, chartData]
+  )
+
+  if (!simulation.results || simulation.status !== 'succeeded') {
+    return (
+      <Card>
+        <CardContent className="flex items-center justify-center h-96">
+          <div className="text-center text-muted">
+            <div className="flex justify-center mb-2">
+              <Waypoints className="w-12 h-12" />
+            </div>
+            <p>Run a simulation to see flux analysis</p>
+          </div>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  const sortOption = SORT_OPTIONS.find((option) => option.id === sortOrder) ?? SORT_OPTIONS[0]
+
+  return (
+    <div className="space-y-4">
+      <Card>
+        <CardContent className="space-y-4">
+        <div className="flex flex-col lg:flex-row lg:items-center gap-2 lg:gap-4 pt-3">
+          <div className="w-full lg:w-64 lg:flex-shrink-0">
+            <button
+              type="button"
+              onClick={resetFilters}
+              className="text-sm text-action hover:underline"
+            >
+              Reset
+            </button>
+          </div>
+
+          <div className="flex flex-1 items-center justify-end">
+            <div className="relative" ref={sortMenuRef}>
+              <button
+                type="button"
+                onClick={() => setSortMenuOpen((open) => !open)}
+                className="flex items-center gap-1 text-sm text-ink hover:text-heading"
+              >
+                {sortOption.label}
+                <ChevronDown className="w-3.5 h-3.5" />
+              </button>
+
+              {sortMenuOpen && (
+                <div className="absolute right-0 z-20 mt-1 w-44 bg-white dark:bg-surface border border-border rounded-lg shadow-lg py-1">
+                  {SORT_OPTIONS.map((option) => (
+                    <button
+                      key={option.id}
+                      type="button"
+                      onClick={() => {
+                        setSortOrder(option.id)
+                        setSortMenuOpen(false)
+                      }}
+                      className="w-full flex items-center gap-2 text-left text-sm px-3 py-1.5 text-ink hover:bg-surface-hover"
+                    >
+                      <Check
+                        className={`w-3.5 h-3.5 flex-shrink-0 ${
+                          sortOrder === option.id ? 'opacity-100' : 'opacity-0'
+                        }`}
+                      />
+                      {option.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        <div className="flex flex-col lg:flex-row gap-4">
+          {/* Sidebar filters */}
+          <div className="w-full lg:w-64 flex-shrink-0 space-y-5">
+            <div>
+              <button
+                type="button"
+                onClick={() => setTimeRangeOpen((open) => !open)}
+                className="w-full flex items-center justify-between text-sm font-semibold text-ink mb-2"
+              >
+                Time range
+                {timeRangeOpen ? (
+                  <ChevronUp className="w-4 h-4" />
+                ) : (
+                  <ChevronDown className="w-4 h-4" />
+                )}
+              </button>
+
+              {timeRangeOpen && (
+                <div className="flex flex-col gap-2">
+                  <UnitDropdown unitId={timeRangeUnitId} onChange={setTimeRangeUnitId} />
+
+                  <div className="flex items-center border border-border rounded-lg bg-white dark:bg-surface">
+                    <RangeBoundInput
+                      value={timeRange.start}
+                      divisor={timeRangeUnit.divisor}
+                      decimals={DISPLAY_DECIMALS}
+                      min={0}
+                      max={timeRange.end}
+                      onCommit={(start) => setTimeRange({ start, end: timeRange.end })}
+                      className="w-1/2 h-8 px-2 bg-white dark:bg-surface text-ink rounded-l-lg text-sm text-center focus:outline-none focus:relative focus:z-10 focus:ring-2 focus:ring-action"
+                    />
+                    <span className="flex items-center justify-center h-8 px-1 text-muted font-normal bg-white dark:bg-surface">
+                      –
+                    </span>
+                    <RangeBoundInput
+                      value={timeRange.end}
+                      divisor={timeRangeUnit.divisor}
+                      decimals={DISPLAY_DECIMALS}
+                      min={timeRange.start}
+                      max={duration}
+                      onCommit={(end) => setTimeRange({ start: timeRange.start, end })}
+                      className="w-1/2 h-8 px-2 bg-white dark:bg-surface text-ink rounded-r-lg text-sm text-center focus:outline-none focus:relative focus:z-10 focus:ring-2 focus:ring-action"
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div>
+              <p className="text-sm font-semibold text-ink mb-2">Flux unit</p>
+              <UnitDropdown
+                unitId={concentrationUnitId}
+                onChange={setConcentrationUnitId}
+                units={concentrationUnits}
+              />
+            </div>
+
+            <div>
+              <button
+                type="button"
+                onClick={() => setReactionsOpen((open) => !open)}
+                className="w-full flex items-center justify-between text-sm font-semibold text-ink mb-2"
+              >
+                Reactions
+                {reactionsOpen ? (
+                  <ChevronUp className="w-4 h-4" />
+                ) : (
+                  <ChevronDown className="w-4 h-4" />
+                )}
+              </button>
+
+              {reactionsOpen && (
+                <div className="max-h-64 overflow-y-auto flex flex-col gap-0.5 pr-1">
+                  {reactionTypeCounts.map(({ type, count, label }) => {
+                    const selected = selectedReactionTypes.includes(type)
+                    return (
+                      <button
+                        key={type}
+                        type="button"
+                        onClick={() => toggleReactionType(type)}
+                        className={`text-left text-sm px-1.5 py-1 rounded ${
+                          selected
+                            ? 'text-assist-secondary-foreground font-semibold bg-assist-secondary'
+                            : 'text-muted hover:bg-surface-hover'
+                        }`}
+                      >
+                        {label} ({count})
+                      </button>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
+
+            <div>
+              <button
+                type="button"
+                onClick={() => setSpeciesOpen((open) => !open)}
+                className="w-full flex items-center justify-between text-sm font-semibold text-ink mb-2"
+              >
+                Species
+                {speciesOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+              </button>
+
+              {speciesOpen && (
+                <div className="flex flex-col gap-2">
+                  <input
+                    type="text"
+                    value={speciesSearch}
+                    onChange={(e) => {
+                      setSpeciesSearch(e.target.value)
+                      setSpeciesOverflowOpen(false)
+                    }}
+                    placeholder="Search species"
+                    className="w-full h-8 px-2 border border-border rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-action"
+                  />
+
+                  <div className="flex flex-col gap-0.5">
+                    {visibleSpeciesNames.map((name) => {
+                      const selected = selectedSpeciesNames.includes(name)
+                      return (
+                        <button
+                          key={name}
+                          type="button"
+                          onClick={() => toggleSpecies(name)}
+                          className={`text-left text-sm px-1.5 py-1 rounded ${
+                            selected
+                              ? 'text-assist-secondary-foreground font-semibold bg-assist-secondary'
+                              : 'text-muted hover:bg-surface-hover'
+                          }`}
+                        >
+                          {name}
+                        </button>
+                      )
+                    })}
+
+                    {overflowSpeciesNames.length > 0 && (
+                      <div className="relative" ref={speciesOverflowRef}>
+                        <button
+                          type="button"
+                          onClick={() => setSpeciesOverflowOpen((open) => !open)}
+                          className="text-left text-sm px-1.5 py-1 rounded text-muted hover:bg-surface-hover"
+                        >
+                          +{overflowSpeciesNames.length} others
+                        </button>
+
+                        {speciesOverflowOpen && (
+                          <div className="absolute z-20 mt-1 w-48 max-h-56 overflow-y-auto bg-white dark:bg-surface border border-border rounded-lg shadow-lg py-1">
+                            {overflowSpeciesNames.map((name) => {
+                              const selected = selectedSpeciesNames.includes(name)
+                              return (
+                                <button
+                                  key={name}
+                                  type="button"
+                                  onClick={() => toggleSpecies(name)}
+                                  className="w-full flex items-center gap-2 text-left text-sm px-3 py-1.5 text-ink hover:bg-surface-hover"
+                                >
+                                  <Check
+                                    className={`w-3.5 h-3.5 flex-shrink-0 ${
+                                      selected ? 'opacity-100' : 'opacity-0'
+                                    }`}
+                                  />
+                                  <span className="flex-1 truncate">{name}</span>
+                                </button>
+                              )
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="flex-1 lg:relative">
+            <div className="border border-gray-200 dark:border-border rounded-lg overflow-auto lg:absolute lg:inset-0">
+              {visibleReactions.length === 0 ? (
+                <p className="text-sm text-muted p-4">No reactions match the current filters.</p>
+              ) : (
+                <table className="w-full table-fixed text-sm">
+                  <thead className="sticky top-0 z-10 bg-assist-secondary text-assist-secondary-foreground">
+                    <tr>
+                      <th className="w-16 text-left px-4 py-2 font-semibold whitespace-nowrap">
+                        Plot
+                      </th>
+                      <th className="text-left pl-9 pr-4 py-2 font-semibold">Reaction</th>
+                      <th className="w-40 text-left px-4 py-2 font-semibold">Type</th>
+                      <th className="w-40 text-left px-4 py-2 font-semibold">
+                        Flux ({concentrationUnit.label})
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {visibleReactions.map(({ reaction, key, flux }) => (
+                      <FluxReactionRow
+                        key={key}
+                        reaction={reaction}
+                        flux={flux}
+                        checked={selectedReactionKeys.includes(key)}
+                        onToggleCheck={() => toggleReactionSelection(key)}
+                      />
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          </div>
+        </div>
+        </CardContent>
+      </Card>
+
+      {chartSeries.length > 0 && (
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between gap-3 mb-3">
+              {hiddenSeriesCount > 0 && (
+                <p className="text-xs text-muted">
+                  Showing the first {chartSeries.length} of {plottedReactionEntries.length}{' '}
+                  selected reactions -- more than that isn't distinguishable by color.
+                </p>
+              )}
+            </div>
+
+            <div className="max-w-[80%] mx-auto">
+              <div style={{ height: 512 }}>
+                <LineChart
+                  x={chartTimes}
+                  series={plotSeries}
+                  margin={{ top: 5, right: 30, left: 30, bottom: 5 }}
+                  xAxis={{
+                    domain: [chartTimes[0], chartTimes.at(-1)],
+                    tickFormat: (t) => formatValue(t / timeRangeUnit.divisor),
+                    label: `Time (${timeAxisUnitLabel})`,
+                    tickFontSize: 12,
+                    labelFontSize: 14,
+                  }}
+                  yAxes={[
+                    {
+                      id: 'flux',
+                      tickFormat: (v) => (v === 0 || !isFinite(v) ? '0' : v.toExponential(0)),
+                      width: 70,
+                      tickFontSize: 11,
+                      label: `Flux (${concentrationUnit.label})`,
+                      labelOffset: 10,
+                      labelAnchor: 'middle',
+                      labelFontSize: 13,
+                    },
+                  ]}
+                  strokeWidth={3}
+                  dotRadius={4}
+                  showDots={chartData.length <= 10}
+                  legendPaddingTop={20}
+                  legendMaxVisible={chartSeries.length}
+                  exportName="reaction-flux"
+                  renderTooltip={({ label, payload }) => (
+                    <ChartTooltipContent
+                      active
+                      payload={payload}
+                      timeLabel={`${
+                        timeRangeUnit.divisor === 1
+                          ? label?.toLocaleString()
+                          : (label / timeRangeUnit.divisor)?.toFixed(2)
+                      } ${timeAxisUnitLabel}`}
+                      maxVisible={chartSeries.length}
+                    />
+                  )}
+                  renderLegend={(payload) => (
+                    <ChartLegendContent payload={payload} maxVisible={chartSeries.length} />
+                  )}
+                />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+    </div>
+  )
+}

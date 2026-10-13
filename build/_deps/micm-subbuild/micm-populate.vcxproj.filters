@@ -1,0 +1,44 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="17.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <CustomBuild Include="C:\Documents\Capstone\Project\musica\build\_deps\micm-subbuild\CMakeFiles\d33c28e8e547b47a5f5a21e27d0e41c0\micm-populate-mkdir.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\Documents\Capstone\Project\musica\build\_deps\micm-subbuild\CMakeFiles\d33c28e8e547b47a5f5a21e27d0e41c0\micm-populate-download.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\Documents\Capstone\Project\musica\build\_deps\micm-subbuild\CMakeFiles\d33c28e8e547b47a5f5a21e27d0e41c0\micm-populate-update.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\Documents\Capstone\Project\musica\build\_deps\micm-subbuild\CMakeFiles\d33c28e8e547b47a5f5a21e27d0e41c0\micm-populate-patch.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\Documents\Capstone\Project\musica\build\_deps\micm-subbuild\CMakeFiles\d33c28e8e547b47a5f5a21e27d0e41c0\micm-populate-configure.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\Documents\Capstone\Project\musica\build\_deps\micm-subbuild\CMakeFiles\d33c28e8e547b47a5f5a21e27d0e41c0\micm-populate-build.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\Documents\Capstone\Project\musica\build\_deps\micm-subbuild\CMakeFiles\d33c28e8e547b47a5f5a21e27d0e41c0\micm-populate-install.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\Documents\Capstone\Project\musica\build\_deps\micm-subbuild\CMakeFiles\d33c28e8e547b47a5f5a21e27d0e41c0\micm-populate-test.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\Documents\Capstone\Project\musica\build\_deps\micm-subbuild\CMakeFiles\6f8ac7d46aa5479a412d0b552b15630b\micm-populate-complete.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\Documents\Capstone\Project\musica\build\_deps\micm-subbuild\CMakeFiles\14dc04c6709290e2c576cea566f1d15e\micm-populate.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\Documents\Capstone\Project\musica\build\_deps\micm-subbuild\CMakeLists.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="C:\Documents\Capstone\Project\musica\build\_deps\micm-subbuild\CMakeFiles\micm-populate" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="CMake Rules">
+      <UniqueIdentifier>{B2F9C6CC-F810-319F-972A-B1DC8215BF28}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

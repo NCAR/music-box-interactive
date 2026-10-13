@@ -6,7 +6,7 @@ spec:
   selector:
     app.kubernetes.io/component: frontend
   ports:
-  - port: 5173
+  - port: 80
     targetPort: http
     name: http
   type: ClusterIP
