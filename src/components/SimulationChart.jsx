@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/
 import { UnitDropdown } from './Plots/UnitDropdown'
 import { RangeBoundInput } from './Plots/RangeBoundInput'
 import { LineChart } from './Plots/LineChart'
+import { paddedTimeDomain, timeAxisTicks } from './Plots/chartTicks'
 import { LIST_CARD, LIST_CARD_CONTENT, TEXT_INPUT_SM } from './Mechanism/fieldStyles'
 import { getSpeciesDisplayName } from './Plots/speciesFormat'
 import { useClickOutside } from '../hooks/useClickOutside'
@@ -27,14 +28,6 @@ const filterButtonClass = (selected) =>
 const UNIT_DROPDOWN_WRAPPER = 'relative flex-shrink-0 mr-3'
 const UNIT_DROPDOWN_BUTTON =
   'flex items-center gap-1 w-full h-8 px-2 border border-gray-300 dark:border-border rounded-lg text-sm text-gray-800 dark:text-ink hover:bg-gray-50 dark:hover:bg-surface-hover bg-white dark:bg-surface'
-
-// Round a value up to a human-friendly scale (1, 2, 5, or 10 times a power of 10)
-function niceNumber(x) {
-  const exponent = Math.floor(Math.log10(x))
-  const fraction = x / 10 ** exponent
-  const niceFraction = fraction <= 1 ? 1 : fraction <= 2 ? 2 : fraction <= 5 ? 5 : 10
-  return niceFraction * 10 ** exponent
-}
 
 const SCALES = [
   { id: 'log', label: 'Logarithmic' },
@@ -343,39 +336,12 @@ export function SimulationChart({ results, metadata }) {
     return floors.length > 0 ? Math.max(...floors) * 1.01 : undefined
   }, [plotUnitId, airDensities])
 
-  // Keep axis bounds visually consistent across time units.
-  // An automatic domain would vary the padding with the magnitude of the times.
-
-  const timeDomain = useMemo(() => {
-    const times = chartData.map((point) => point.timeSeconds).filter((t) => isFinite(t))
-    if (times.length === 0) return [0, 1]
-
-    const minTime = Math.min(...times)
-    const maxTime = Math.max(...times)
-    if (minTime === maxTime) return [Math.max(0, minTime - 1), maxTime + 1]
-
-    const padding = (maxTime - minTime) * 0.05
-    return [Math.max(0, minTime - padding), maxTime + padding]
-  }, [chartData])
-
-  // Use a reader-friendly step (in 0.5-hour increments) for gridlines.
-  const HOUR_TICK_STEP = 0.5
-  const TARGET_HOUR_TICKS = 5
-  const xAxisTicks = useMemo(() => {
-    if (timeUnit.id !== 'hours') return undefined
-
-    const maxDomain = timeDomain[1]
-    if (maxDomain <= 0) return [0]
-
-    const rawStep = maxDomain / TARGET_HOUR_TICKS
-    const step = Math.ceil(niceNumber(rawStep) / HOUR_TICK_STEP) * HOUR_TICK_STEP
-
-    const ticks = []
-    for (let t = Math.ceil(timeDomain[0] / step - 1e-9) * step; t <= maxDomain + 1e-9; t += step) {
-      ticks.push(Math.round(t * 1000) / 1000)
-    }
-    return ticks
-  }, [timeUnit.id, timeDomain])
+  // The same time axis as the other result plots (see chartTicks).
+  const timeDomain = useMemo(() => paddedTimeDomain(times), [times])
+  const xAxisTicks = useMemo(
+    () => timeAxisTicks(timeDomain, timeUnit.divisor),
+    [timeDomain, timeUnit.divisor]
+  )
 
   // Toggle species selection
   const toggleSpecies = (species) => {

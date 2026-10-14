@@ -1,4 +1,4 @@
-import { SIMULATION_TIME_UNITS } from '../../components/Plots/timeRangeUnits'
+import { TIME_RANGE_UNITS } from '../../components/Plots/timeRangeUnits'
 
 // The 'box model options' key name of each Conditions > Time field.
 const OPTION_NAMES = {
@@ -7,7 +7,7 @@ const OPTION_NAMES = {
   outputFrequency: 'output time step',
 }
 
-// Each time unit that MusicBox reads, and the matching SIMULATION_TIME_UNITS id.
+// Each time unit that MusicBox reads, and the matching TIME_RANGE_UNITS id.
 const CONFIG_UNIT_IDS = {
   s: 'seconds',
   sec: 'seconds',
@@ -38,7 +38,7 @@ export function readTimeUnits(boxModelOptions = {}) {
 export function writeTimeUnits(boxModelOptions, timeUnits = {}) {
   const renamed = {}
   for (const [field, name] of Object.entries(OPTION_NAMES)) {
-    const unit = SIMULATION_TIME_UNITS.find((u) => u.id === timeUnits[field])
+    const unit = TIME_RANGE_UNITS.find((u) => u.id === timeUnits[field])
     if (unit && unit.divisor !== 1) renamed[`${name} [sec]`] = { name, unit }
   }
   return Object.fromEntries(

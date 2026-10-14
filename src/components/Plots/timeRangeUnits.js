@@ -1,12 +1,8 @@
-// shortLabel is the abbreviated form ("s"/"hr") used in chart axis titles and tooltips,
+// The time units of every time dropdown: the plots, the Time tab, and the Environment tab.
+// shortLabel is the abbreviated form ("s"/"hr") used in chart axis titles and tooltips.
+// configUnit is the unit in the 'box model options' keys of a configuration file, for example
+// "simulation length [day]".
 export const TIME_RANGE_UNITS = [
-  { id: 'seconds', label: 'Seconds', shortLabel: 's', divisor: 1 },
-  { id: 'hours', label: 'Hours', shortLabel: 'hr', divisor: 3600 },
-]
-
-// The units of the Conditions > Time fields. configUnit is the unit in the 'box model options'
-// keys of a configuration file, for example "simulation length [day]".
-export const SIMULATION_TIME_UNITS = [
   { id: 'seconds', label: 'Seconds', shortLabel: 's', divisor: 1, configUnit: 'sec' },
   { id: 'minutes', label: 'Minutes', shortLabel: 'min', divisor: 60, configUnit: 'min' },
   { id: 'hours', label: 'Hours', shortLabel: 'hr', divisor: 3600, configUnit: 'hour' },
