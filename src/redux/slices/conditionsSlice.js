@@ -20,6 +20,14 @@ const initialState = {
     timeStep: 'seconds',
     outputFrequency: 'seconds',
   },
+  // The display unit of each Environment tab field, for the add form and the table columns.
+  // The table stays in SI units.
+  environmentUnits: {
+    time: 'seconds',
+    temperature: 'K',
+    pressure: 'Pa',
+    density: 'mol_m3',
+  },
 
   // All conditions, from t=0 on: { times, columns: { [header]: (number | null)[] } }
   table: emptyTable(),
@@ -46,6 +54,10 @@ export const conditionsSlice = createSlice({
     // payload: { field, unitId }, for example { field: 'duration', unitId: 'days' }
     setTimeUnit: (state, action) => {
       state.timeUnits[action.payload.field] = action.payload.unitId
+    },
+    // payload: { field, unitId }, for example { field: 'pressure', unitId: 'hPa' }
+    setEnvironmentUnit: (state, action) => {
+      state.environmentUnits[action.payload.field] = action.payload.unitId
     },
 
     // Replaces the whole conditions table. Every edit builds the next table with the pure
@@ -85,7 +97,8 @@ export const conditionsSlice = createSlice({
       state.rowReactionType = action.payload || {}
     },
 
-    resetConditions: () => initialState,
+    // The Environment units are display preferences, so a reset keeps them.
+    resetConditions: (state) => ({ ...initialState, environmentUnits: state.environmentUnits }),
   },
   extraReducers: (builder) => {
     // A deleted reaction takes its rate-parameter columns with it.
@@ -104,6 +117,7 @@ export const {
   setTimeStep,
   setOutputFrequency,
   setTimeUnit,
+  setEnvironmentUnit,
   setConditionsTable,
   tagTimeRow,
   untagTimeRows,
