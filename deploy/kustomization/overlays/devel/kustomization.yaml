@@ -4,7 +4,7 @@ kind: Kustomization
 images:
 - name: hub.k8s.ucar.edu/musicbox/frontend
   newName: hub.k8s.ucar.edu/musicbox/frontend
-  newTag: 53baa67
+  newTag: 015153d
 
 namePrefix: devel-
 
@@ -16,3 +16,18 @@ labels:
   pairs:
     app.kubernetes.io/instance: devel
     app.kubernetes.io/name: musicbox
+
+patches:
+- patch: |-
+    - op: replace
+      path: /spec/tls/0/hosts/0
+      value: musicbox-devel.acom.ucar.edu
+    - op: replace
+      path: /spec/rules/0/host
+      value: musicbox-devel.acom.ucar.edu
+    - op: replace
+      path: /spec/ingressClassName
+      value: traefik-internal
+  target:
+    kind: Ingress
+    name: frontend-ingress
