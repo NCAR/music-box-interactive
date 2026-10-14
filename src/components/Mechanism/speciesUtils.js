@@ -30,8 +30,9 @@ export function addSpeciesIfValid({
       continue
     }
 
+    // Like the species edit form, store a boolean property only when it is true.
     if (field.type === 'boolean') {
-      stored[field.key] = Boolean(rawValue)
+      if (rawValue === true) stored[field.key] = true
       continue
     }
 
