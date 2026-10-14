@@ -174,7 +174,8 @@ function PropertySelector({ properties, onChange }) {
     if (field.pill in next) {
       delete next[field.pill]
     } else {
-      next[field.pill] = field.type === 'boolean' ? false : ''
+      // A boolean property, such as Third body, is on when its pill is selected.
+      next[field.pill] = field.type === 'boolean' ? true : ''
     }
     onChange(next)
   }
@@ -183,7 +184,10 @@ function PropertySelector({ properties, onChange }) {
     onChange({ ...properties, [pill]: value })
   }
 
-  const selectedFields = SPECIES_PROPERTIES.filter((field) => field.pill in properties)
+  // A boolean property has no input. Its pill alone sets it.
+  const selectedFields = SPECIES_PROPERTIES.filter(
+    (field) => field.pill in properties && field.type !== 'boolean'
+  )
 
   return (
     <div>
@@ -202,27 +206,18 @@ function PropertySelector({ properties, onChange }) {
 
       {selectedFields.length > 0 && (
         <div className="mt-3 flex flex-col gap-3">
-          {selectedFields.map((field) =>
-            field.type === 'boolean' ? (
-              <Toggle
-                key={field.pill}
-                label={field.label}
-                checked={properties[field.pill] === true}
-                onChange={(checked) => setPropertyValue(field.pill, checked)}
+          {selectedFields.map((field) => (
+            <div key={field.pill}>
+              <label className={FIELD_LABEL}>{field.label}</label>
+              <input
+                type="text"
+                value={properties[field.pill]}
+                onChange={(e) => setPropertyValue(field.pill, e.target.value)}
+                placeholder={field.placeholder}
+                className={TEXT_INPUT.replace('text-center', 'text-left')}
               />
-            ) : (
-              <div key={field.pill}>
-                <label className={FIELD_LABEL}>{field.label}</label>
-                <input
-                  type="text"
-                  value={properties[field.pill]}
-                  onChange={(e) => setPropertyValue(field.pill, e.target.value)}
-                  placeholder={field.placeholder}
-                  className={TEXT_INPUT.replace('text-center', 'text-left')}
-                />
-              </div>
-            )
-          )}
+            </div>
+          ))}
         </div>
       )}
     </div>
@@ -391,9 +386,14 @@ export function SpeciesEditor() {
 
     if (added) {
       setNewSpeciesName('')
-      // Keep the selected property pills, but clear their values for the next species
+      // Keep the selected property pills, but clear their values for the next species.
+      // A boolean pill, such as Third body, is cleared, so it applies to one species only.
       setNewSpeciesProperties((prev) =>
-        Object.fromEntries(Object.keys(prev).map((name) => [name, '']))
+        Object.fromEntries(
+          Object.keys(prev)
+            .filter((name) => SPECIES_PROPERTIES.find((f) => f.pill === name)?.type !== 'boolean')
+            .map((name) => [name, ''])
+        )
       )
     }
   }
