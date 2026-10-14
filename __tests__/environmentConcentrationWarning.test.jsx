@@ -85,3 +85,30 @@ describe('environment edits that change how concentrations read in ppb', () => {
     expect(toast).not.toHaveBeenCalled()
   })
 })
+
+describe('pressure in hectopascals', () => {
+  it('stores a pressure entered in hPa in Pa', () => {
+    const store = configureStore({ reducer: { conditions: conditionsReducer } })
+    store.dispatch(
+      setConditionsTable({
+        times: [0],
+        columns: { 'ENV.temperature.K': [227], 'ENV.pressure.Pa': [101325] },
+      })
+    )
+    const { getByRole, getByPlaceholderText, getByText } = render(
+      <Provider store={store}>
+        <EnvironmentTab />
+      </Provider>
+    )
+
+    fireEvent.click(getByRole('button', { name: 'Pa' }))
+    fireEvent.click(getByRole('button', { name: 'hPa' }))
+    fireEvent.change(getByPlaceholderText('0'), { target: { value: '60' } })
+    fireEvent.change(getByPlaceholderText('101325'), { target: { value: '11.97' } })
+    expect(getByText('1197 Pa')).toBeInTheDocument()
+    fireEvent.click(getByRole('button', { name: 'Add condition' }))
+
+    const { times, columns } = store.getState().conditions.table
+    expect(columns['ENV.pressure.Pa'][times.indexOf(60)]).toBe(1197)
+  })
+})
