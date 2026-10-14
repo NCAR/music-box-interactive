@@ -4,10 +4,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui
 import { Button } from '../ui/button'
 import { Toggle } from '../ui/toggle'
 import { useNotify } from '@/hooks/use-notify'
-import { setConditionsTable, untagTimeRows } from '../../redux/slices/conditionsSlice'
+import {
+  setConditionsTable,
+  setEnvironmentUnit,
+  untagTimeRows,
+} from '../../redux/slices/conditionsSlice'
 import { UnitDropdown } from '../Plots/UnitDropdown'
-import { TIME_RANGE_UNITS } from '../Plots/timeRangeUnits'
-import { TEMPERATURE_UNITS, toKelvin } from '../Plots/temperatureUnits'
+import { SIMULATION_TIME_UNITS } from '../Plots/timeRangeUnits'
+import { TEMPERATURE_UNITS, toKelvin, fromKelvin } from '../Plots/temperatureUnits'
 import { PRESSURE_UNITS } from '../Plots/pressureUnits'
 import { DENSITY_UNITS } from '../Plots/densityUnits'
 import { LIST_CARD, LIST_CARD_CONTENT, FIELD_LABEL } from '../Mechanism/fieldStyles'
@@ -74,12 +78,13 @@ export function EnvironmentTab() {
   const pressures = columnValues(table, PRESSURE_HEADER)
   const densitySeries = table.columns[DENSITY_HEADER] ? columnValues(table, DENSITY_HEADER) : null
 
-  const [unitIds, setUnitIds] = useState({
-    time: 'seconds',
-    temperature: 'K',
-    pressure: 'Pa',
-    density: 'mol_m3',
-  })
+  const unitIds = useSelector((state) => state.conditions.environmentUnits)
+  const setUnitId = (field, unitId) => dispatch(setEnvironmentUnit({ field, unitId }))
+  // The selected unit of each field. The add form and the table columns use the same units.
+  const timeUnit = getUnit(SIMULATION_TIME_UNITS, unitIds.time)
+  const temperatureUnit = getUnit(TEMPERATURE_UNITS, unitIds.temperature)
+  const pressureUnit = getUnit(PRESSURE_UNITS, unitIds.pressure)
+  const densityUnit = getUnit(DENSITY_UNITS, unitIds.density)
   const [newTime, setNewTime] = useState('')
   const [newTemperature, setNewTemperature] = useState('')
   const [newPressure, setNewPressure] = useState('')
@@ -110,10 +115,6 @@ export function EnvironmentTab() {
       notify.invalidInput('All values must be valid numbers.')
       return
     }
-
-    const timeUnit = getUnit(TIME_RANGE_UNITS, unitIds.time)
-    const pressureUnit = getUnit(PRESSURE_UNITS, unitIds.pressure)
-    const densityUnit = getUnit(DENSITY_UNITS, unitIds.density)
 
     const time = timeIsBlank ? rawTime : rawTime * timeUnit.divisor
     const temperature = temperatureIsBlank
@@ -206,6 +207,25 @@ export function EnvironmentTab() {
 
   const cellKey = (field, index) => `${field}:${index}`
 
+  // The table stores SI values (s, K, Pa, mol m-3). Each column shows and accepts its values
+  // in the unit that is selected for that field in the form.
+  const toDisplay = {
+    time: (seconds) => seconds / timeUnit.divisor,
+    temperature: (kelvin) => fromKelvin(kelvin, unitIds.temperature),
+    pressure: (pascals) => pascals / pressureUnit.divisor,
+    density: (molM3) => molM3 / densityUnit.divisor,
+  }
+  const fromDisplay = {
+    time: (value) => value * timeUnit.divisor,
+    temperature: (value) => toKelvin(value, unitIds.temperature),
+    pressure: (value) => value * pressureUnit.divisor,
+    density: (value) => value * densityUnit.divisor,
+  }
+
+  // A cell commits only after the user types in it. A cell shows a rounded value, so a commit
+  // without an edit could change the stored value.
+  const hasDraft = (field, index) => cellKey(field, index) in rowDrafts
+
   const handleCellDraftChange = (field, index, value) => {
     setRowDrafts((prev) => ({ ...prev, [cellKey(field, index)]: value }))
   }
@@ -238,7 +258,8 @@ export function EnvironmentTab() {
   }
 
   const commitTemperature = (index, rawValue) => {
-    const parsed = parseFloat(rawValue)
+    if (!hasDraft('temperature', index)) return
+    const parsed = fromDisplay.temperature(parseFloat(rawValue))
     if (isNaN(parsed)) {
       notify.invalidInput('Temperature must be a valid number.')
       return
@@ -251,7 +272,8 @@ export function EnvironmentTab() {
   }
 
   const commitPressure = (index, rawValue) => {
-    const parsed = parseFloat(rawValue)
+    if (!hasDraft('pressure', index)) return
+    const parsed = fromDisplay.pressure(parseFloat(rawValue))
     if (isNaN(parsed)) {
       notify.invalidInput('Pressure must be a valid number.')
       return
@@ -264,10 +286,11 @@ export function EnvironmentTab() {
   }
 
   const commitDensity = (index, rawValue) => {
+    if (!hasDraft('density', index)) return
     const isBlank = rawValue.trim() === ''
     const parsed = isBlank
       ? idealGasDensity(pressures[index], temperatures[index])
-      : parseFloat(rawValue)
+      : fromDisplay.density(parseFloat(rawValue))
     if (!isBlank && isNaN(parsed)) {
       notify.invalidInput('Air number density must be a valid number.')
       return
@@ -280,7 +303,10 @@ export function EnvironmentTab() {
   }
 
   const commitTime = (index, rawValue) => {
-    const outcome = commitTableTime(table, index, rawValue)
+    if (!hasDraft('time', index)) return
+    const parsed = parseFloat(rawValue)
+    const seconds = isNaN(parsed) ? rawValue : String(fromDisplay.time(parsed))
+    const outcome = commitTableTime(table, index, seconds)
 
     if (outcome.kind === 'invalid') {
       // Leave the draft in place so the invalid text stays visible to fix, instead of
@@ -307,7 +333,7 @@ export function EnvironmentTab() {
   const parsedNewTime = parseFloat(newTime)
   const timeConversion =
     unitIds.time !== 'seconds' && newTime.trim() !== '' && !isNaN(parsedNewTime)
-      ? `${formatConversion(parsedNewTime * getUnit(TIME_RANGE_UNITS, unitIds.time).divisor)} seconds`
+      ? `${formatConversion(parsedNewTime * timeUnit.divisor)} seconds`
       : null
 
   const parsedNewTemperature = parseFloat(newTemperature)
@@ -319,7 +345,7 @@ export function EnvironmentTab() {
   const parsedNewPressure = parseFloat(newPressure)
   const pressureConversion =
     unitIds.pressure !== 'Pa' && newPressure.trim() !== '' && !isNaN(parsedNewPressure)
-      ? `${formatConversion(parsedNewPressure * getUnit(PRESSURE_UNITS, unitIds.pressure).divisor)} Pa`
+      ? `${formatConversion(parsedNewPressure * pressureUnit.divisor)} Pa`
       : null
 
   const previewTemperature =
@@ -328,11 +354,10 @@ export function EnvironmentTab() {
       : DEFAULT_TEMPERATURE
   const previewPressure =
     newPressure.trim() !== '' && !isNaN(parsedNewPressure)
-      ? parsedNewPressure * getUnit(PRESSURE_UNITS, unitIds.pressure).divisor
+      ? parsedNewPressure * pressureUnit.divisor
       : DEFAULT_PRESSURE
   const idealGasDensityPlaceholder = formatConversion(
-    idealGasDensity(previewPressure, previewTemperature) /
-      getUnit(DENSITY_UNITS, unitIds.density).divisor
+    idealGasDensity(previewPressure, previewTemperature) / densityUnit.divisor
   )
 
   return (
@@ -348,8 +373,8 @@ export function EnvironmentTab() {
             <div className="flex flex-col gap-2">
               <UnitDropdown
                 unitId={unitIds.time}
-                onChange={(id) => setUnitIds((prev) => ({ ...prev, time: id }))}
-                units={TIME_RANGE_UNITS}
+                onChange={(id) => setUnitId('time', id)}
+                units={SIMULATION_TIME_UNITS}
                 wrapperClassName={DROPDOWN_WRAPPER}
                 buttonClassName={DROPDOWN_BUTTON}
                 centerLabel
@@ -375,7 +400,7 @@ export function EnvironmentTab() {
             <div className="flex flex-col gap-2">
               <UnitDropdown
                 unitId={unitIds.temperature}
-                onChange={(id) => setUnitIds((prev) => ({ ...prev, temperature: id }))}
+                onChange={(id) => setUnitId('temperature', id)}
                 units={TEMPERATURE_UNITS}
                 wrapperClassName={DROPDOWN_WRAPPER}
                 buttonClassName={DROPDOWN_BUTTON}
@@ -402,7 +427,7 @@ export function EnvironmentTab() {
             <div className="flex flex-col gap-2">
               <UnitDropdown
                 unitId={unitIds.pressure}
-                onChange={(id) => setUnitIds((prev) => ({ ...prev, pressure: id }))}
+                onChange={(id) => setUnitId('pressure', id)}
                 units={PRESSURE_UNITS}
                 wrapperClassName={DROPDOWN_WRAPPER}
                 buttonClassName={DROPDOWN_BUTTON}
@@ -435,7 +460,7 @@ export function EnvironmentTab() {
               <div className="mt-2 flex flex-col gap-2">
                 <UnitDropdown
                   unitId={unitIds.density}
-                  onChange={(id) => setUnitIds((prev) => ({ ...prev, density: id }))}
+                  onChange={(id) => setUnitId('density', id)}
                   units={DENSITY_UNITS}
                   wrapperClassName={DROPDOWN_WRAPPER}
                   buttonClassName={DROPDOWN_BUTTON}
@@ -517,12 +542,18 @@ export function EnvironmentTab() {
                             className="accent-assist-secondary-ring"
                           />
                         </th>
-                        <th className="w-28 text-left px-4 py-2 font-semibold">Time (s)</th>
-                        <th className="w-36 text-left px-4 py-2 font-semibold">Temperature (K)</th>
-                        <th className="w-36 text-left px-4 py-2 font-semibold">Pressure (Pa)</th>
+                        <th className="w-28 text-left px-4 py-2 font-semibold">
+                          Time ({timeUnit.shortLabel})
+                        </th>
+                        <th className="w-36 text-left px-4 py-2 font-semibold">
+                          Temperature ({temperatureUnit.label})
+                        </th>
+                        <th className="w-36 text-left px-4 py-2 font-semibold">
+                          Pressure ({pressureUnit.label})
+                        </th>
                         {hasDensityColumn && (
                           <th className="w-56 text-left px-4 py-2 font-semibold">
-                            Air number density (mol m-3)
+                            Air number density ({densityUnit.label})
                           </th>
                         )}
                       </tr>
@@ -559,7 +590,10 @@ export function EnvironmentTab() {
                               <input
                                 type="text"
                                 inputMode="decimal"
-                                value={rowDrafts[cellKey('time', index)] ?? formatConversion(time)}
+                                value={
+                                  rowDrafts[cellKey('time', index)] ??
+                                  formatConversion(toDisplay.time(time))
+                                }
                                 onChange={(e) =>
                                   handleCellDraftChange('time', index, e.target.value)
                                 }
@@ -585,7 +619,7 @@ export function EnvironmentTab() {
                                 value={
                                   rowDrafts[cellKey('temperature', index)] ??
                                   (temperatures[index] != null
-                                    ? formatConversion(temperatures[index])
+                                    ? formatConversion(toDisplay.temperature(temperatures[index]))
                                     : '')
                                 }
                                 onChange={(e) =>
@@ -613,7 +647,7 @@ export function EnvironmentTab() {
                                 value={
                                   rowDrafts[cellKey('pressure', index)] ??
                                   (pressures[index] != null
-                                    ? formatConversion(pressures[index])
+                                    ? formatConversion(toDisplay.pressure(pressures[index]))
                                     : '')
                                 }
                                 onChange={(e) =>
@@ -641,7 +675,9 @@ export function EnvironmentTab() {
                                   inputMode="decimal"
                                   value={
                                     rowDrafts[cellKey('density', index)] ??
-                                    (density != null ? formatConversion(density) : '')
+                                    (density != null
+                                      ? formatConversion(toDisplay.density(density))
+                                      : '')
                                   }
                                   onChange={(e) =>
                                     handleCellDraftChange('density', index, e.target.value)
@@ -649,7 +685,9 @@ export function EnvironmentTab() {
                                   placeholder={
                                     pressures[index] != null && temperatures[index] != null
                                       ? formatConversion(
-                                          idealGasDensity(pressures[index], temperatures[index])
+                                          toDisplay.density(
+                                            idealGasDensity(pressures[index], temperatures[index])
+                                          )
                                         )
                                       : ''
                                   }
