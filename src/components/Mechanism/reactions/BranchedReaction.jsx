@@ -79,7 +79,8 @@ export function BranchedReactionForm({ onAddReaction, parameters = [] }) {
       ...(parsedN.hasValue ? { n: parsedN.value } : {}),
     }
 
-    onAddReaction(newReaction)
+    // Keep the values when the add fails, so the user can fix them.
+    if (!onAddReaction(newReaction)) return
 
     setReactants('')
     setAlkoxyProducts('')
