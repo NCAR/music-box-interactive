@@ -1,11 +1,15 @@
-import { useState } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 import { PencilLine } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card'
-import { setDuration, setTimeStep, setOutputFrequency } from '../../redux/slices/conditionsSlice'
+import {
+  setDuration,
+  setTimeStep,
+  setOutputFrequency,
+  setTimeUnit,
+} from '../../redux/slices/conditionsSlice'
 import { RangeBoundInput } from '../Plots/RangeBoundInput'
 import { UnitDropdown } from '../Plots/UnitDropdown'
-import { TIME_RANGE_UNITS, formatBound } from '../Plots/timeRangeUnits'
+import { SIMULATION_TIME_UNITS, formatBound } from '../Plots/timeRangeUnits'
 import { TEXT_INPUT_SM } from '../Mechanism/fieldStyles'
 import { DISPLAY_DECIMALS } from '../../utils/displayDecimals'
 import { useNotify } from '@/hooks/use-notify'
@@ -17,7 +21,7 @@ const DROPDOWN_BUTTON =
   'flex items-center gap-1 w-full h-9 px-2 border border-border rounded-lg text-sm text-ink hover:bg-surface-hover'
 
 function getUnit(unitId) {
-  return TIME_RANGE_UNITS.find((u) => u.id === unitId) ?? TIME_RANGE_UNITS[0]
+  return SIMULATION_TIME_UNITS.find((u) => u.id === unitId) ?? SIMULATION_TIME_UNITS[0]
 }
 
 // Total steps/output points require a positive, finite denominator. Malformed configs can
@@ -35,7 +39,6 @@ const FIELDS = [
     label: 'Simulation time',
     getMin: () => 0,
     action: setDuration,
-    defaultUnit: 'hours',
     help: () => 'Set how long you want the simulation to run',
   },
   {
@@ -43,7 +46,6 @@ const FIELDS = [
     label: 'Time step',
     getMin: () => 1,
     action: setTimeStep,
-    defaultUnit: 'seconds',
     help: () => 'Set the time interval between steps',
   },
   {
@@ -52,7 +54,6 @@ const FIELDS = [
     // Output can only be saved on simulation steps.
     getMin: (basic) => basic.timeStep,
     action: setOutputFrequency,
-    defaultUnit: 'seconds',
     help: (value, divisor, unit) =>
       `Save output every ${formatBound(value, divisor, null, 4)} ${unit.label.toLowerCase()}`,
   },
@@ -65,11 +66,8 @@ const FIELDS = [
 export function TimeTab() {
   const dispatch = useDispatch()
   const basic = useSelector((state) => state.conditions.basic)
+  const unitIds = useSelector((state) => state.conditions.timeUnits)
   const notify = useNotify()
-
-  const [unitIds, setUnitIds] = useState(() =>
-    Object.fromEntries(FIELDS.map((field) => [field.key, field.defaultUnit]))
-  )
 
   return (
     <div className="w-fit mx-auto space-y-4">
@@ -91,7 +89,8 @@ export function TimeTab() {
                 <div className="flex flex-col gap-2">
                   <UnitDropdown
                     unitId={unitIds[field.key]}
-                    onChange={(id) => setUnitIds((prev) => ({ ...prev, [field.key]: id }))}
+                    onChange={(id) => dispatch(setTimeUnit({ field: field.key, unitId: id }))}
+                    units={SIMULATION_TIME_UNITS}
                     wrapperClassName={DROPDOWN_WRAPPER}
                     buttonClassName={DROPDOWN_BUTTON}
                     centerLabel

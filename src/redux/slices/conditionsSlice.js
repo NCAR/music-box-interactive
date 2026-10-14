@@ -13,6 +13,13 @@ const initialState = {
     timeStep: 30, // seconds: the chemistry time step
     outputFrequency: 60, // seconds: the output time step (1 minute)
   },
+  // The display unit of each basic field. The values above stay in seconds. A downloaded
+  // config writes each time in this unit (see services/config/timeUnits).
+  timeUnits: {
+    duration: 'hours',
+    timeStep: 'seconds',
+    outputFrequency: 'seconds',
+  },
 
   // All conditions, from t=0 on: { times, columns: { [header]: (number | null)[] } }
   table: emptyTable(),
@@ -35,6 +42,10 @@ export const conditionsSlice = createSlice({
     },
     setOutputFrequency: (state, action) => {
       state.basic.outputFrequency = action.payload
+    },
+    // payload: { field, unitId }, for example { field: 'duration', unitId: 'days' }
+    setTimeUnit: (state, action) => {
+      state.timeUnits[action.payload.field] = action.payload.unitId
     },
 
     // Replaces the whole conditions table. Every edit builds the next table with the pure
@@ -92,6 +103,7 @@ export const {
   setDuration,
   setTimeStep,
   setOutputFrequency,
+  setTimeUnit,
   setConditionsTable,
   tagTimeRow,
   untagTimeRows,

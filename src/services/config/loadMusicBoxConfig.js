@@ -11,9 +11,11 @@ import {
   setDuration,
   setTimeStep,
   setOutputFrequency,
+  setTimeUnit,
   setConditionsTable,
 } from '../../redux/slices/conditionsSlice'
 import { dropConcentrations, tableFromConditionsConfig } from '../conditions/table'
+import { readTimeUnits } from './timeUnits'
 import { isThirdBody } from '../simulation/local/speciesProperties'
 import { bindRateColumns } from '../conditions/rateColumns'
 import { bindConcentrationColumns } from '../conditions/speciesColumns'
@@ -72,6 +74,10 @@ export async function loadMusicBoxConfig(config, { dispatch, navigate, meta = {}
   dispatch(setDuration(simulationLength))
   dispatch(setTimeStep(chemTimeStep))
   dispatch(setOutputFrequency(outputTimeStep))
+  // The Time tab shows each time in the unit of the file.
+  for (const [field, unitId] of Object.entries(readTimeUnits(config['box model options']))) {
+    dispatch(setTimeUnit({ field, unitId }))
+  }
 
   // The conditions go into the table once, here. Nothing converts them again later.
   const thirdBodyNames = (reduxConfig.mechanism?.species || [])
