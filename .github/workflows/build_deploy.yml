@@ -4,9 +4,15 @@ on:
   workflow_dispatch:
   push:
     branches:
-      - development
+      - main
     tags:
       - "v*.*.*"
+
+# Each run pushes a commit to the deploy branch.
+# Only one run at a time can push, so that two runs do not conflict.
+concurrency:
+  group: deploy-branch
+  cancel-in-progress: false
 
 jobs:
   buildpush:
@@ -62,9 +68,25 @@ jobs:
         file: repo/Dockerfile
         context: repo/
 
+    # The deploy branch holds the image tag that runs in each overlay.
+    # The copy from the repo replaces those tags, so this step records them first and then puts them back.
     - name: Sync kustomization manifests to deploy branch
       run: |
+        declare -A TAGS
+        for overlay in deploy/deploy/kustomization/overlays/*/; do
+          name=$(basename "$overlay")
+          tag=$(yq '.images[] | select(.name == "hub.k8s.ucar.edu/musicbox/frontend") | .newTag' "$overlay/kustomization.yaml")
+          if [ -n "$tag" ] && [ "$tag" != "null" ]; then
+            TAGS[$name]=$tag
+          fi
+        done
         cp -r repo/deploy/kustomization/. deploy/deploy/kustomization/
+        for name in "${!TAGS[@]}"; do
+          if [ -d "deploy/deploy/kustomization/overlays/$name" ]; then
+            (cd "deploy/deploy/kustomization/overlays/$name" && \
+              kustomize edit set image hub.k8s.ucar.edu/musicbox/frontend=hub.k8s.ucar.edu/musicbox/frontend:${TAGS[$name]})
+          fi
+        done
 
     - name: Update devel kustomization
       if: github.ref_type == 'branch'

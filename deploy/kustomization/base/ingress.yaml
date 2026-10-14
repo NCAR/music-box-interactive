@@ -6,23 +6,13 @@ metadata:
     cert-manager.io/cluster-issuer: incommon
 spec:
   ingressClassName: nginx-external
+  # Each overlay replaces the host and the TLS secret, so that two overlays do not claim the same host.
   tls:
   - hosts:
     - musicbox.k8s.ucar.edu
-    - musicbox-devel.acom.ucar.edu
     secretName: musicbox-tls-secret
   rules:
   - host: musicbox.k8s.ucar.edu
-    http:
-      paths:
-      - path: /
-        pathType: Prefix
-        backend:
-          service:
-            name: frontend
-            port:
-              number: 80
-  - host: musicbox-devel.acom.ucar.edu
     http:
       paths:
       - path: /
