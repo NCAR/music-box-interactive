@@ -14,5 +14,23 @@ resources:
 labels:
 - includeSelectors: true
   pairs:
-    app.kubernetes.io/instance: devel
+    app.kubernetes.io/instance: prod
     app.kubernetes.io/name: musicbox
+
+patches:
+- patch: |-
+    - op: replace
+      path: /spec/tls/0/hosts/0
+      value: musicbox.acom.ucar.edu
+    - op: replace
+      path: /spec/tls/0/secretName
+      value: musicbox-prod-tls-secret
+    - op: replace
+      path: /spec/rules/0/host
+      value: musicbox.acom.ucar.edu
+    - op: replace
+      path: /spec/ingressClassName
+      value: traefik-external
+  target:
+    kind: Ingress
+    name: frontend-ingress
