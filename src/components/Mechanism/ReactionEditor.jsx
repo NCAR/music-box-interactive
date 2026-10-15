@@ -26,7 +26,7 @@ import {
 } from './reactions/reactionRegistry'
 import {
   REACTION_COMPONENT_KEYS,
-  getReactionReactants,
+  formatReactionEquations,
   getReactionSpeciesNames,
 } from '../../services/simulation/local/mechanism'
 import {
@@ -60,17 +60,16 @@ const formatReactionComponents = (components, maxDecimals) => {
 }
 
 const formatReactionDisplay = (reaction) => {
-  const reactants = getReactionReactants(reaction)
-  const products =
-    reaction.products || reaction['gas-phase products'] || reaction['alkoxy products'] || []
-
   const toChipText = (components) =>
     formatReactionComponents(
       Array.isArray(components) ? components : [components],
       DISPLAY_DECIMALS
     )
 
-  return `${toChipText(reactants)} → ${toChipText(products)}`
+  return formatReactionEquations(
+    reaction,
+    (reactants, products) => `${toChipText(reactants)} → ${toChipText(products)}`
+  )
 }
 
 // Structural fields. All other fields are rate parameters that vary by reaction type.
