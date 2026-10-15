@@ -1,0 +1,20 @@
+[
+  {
+    "name": "A",
+    "__absolute tolerance": 1.0e-30,
+    "is third body": true,
+    "__long name": "ozone"
+  },
+  {
+    "name": "B",
+    "molecular weight [kg mol-1]": 0.0340147,
+    "constant concentration [mol m-3]": 2.5E19,
+    "__absolute tolerance": 1.0e-10
+  },
+  {
+    "name": "C",
+    "molecular weight [kg mol-1]": 0.5,
+    "constant mixing ratio [mol mol-1]": 1.0e-6,
+    "__absolute tolerance": 1.0e-20
+  }
+]

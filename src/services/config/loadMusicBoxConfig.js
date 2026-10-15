@@ -69,14 +69,17 @@ export async function loadMusicBoxConfig(config, { dispatch, navigate, meta = {}
 
   dispatch(setConfig(reduxConfig))
 
-  // parseBoxModelOptions handles every time unit the solver accepts.
-  const { chemTimeStep, outputTimeStep, simulationLength } = parseBoxModelOptions(config)
-  dispatch(setDuration(simulationLength))
-  dispatch(setTimeStep(chemTimeStep))
-  dispatch(setOutputFrequency(outputTimeStep))
-  // The Time tab shows each time in the unit of the file.
-  for (const [field, unitId] of Object.entries(readTimeUnits(config['box model options']))) {
-    dispatch(setTimeUnit({ field, unitId }))
+  // An uploaded mechanism configuration has no box model options. The default times stay.
+  if (config['box model options']) {
+    // parseBoxModelOptions handles every time unit the solver accepts.
+    const { chemTimeStep, outputTimeStep, simulationLength } = parseBoxModelOptions(config)
+    dispatch(setDuration(simulationLength))
+    dispatch(setTimeStep(chemTimeStep))
+    dispatch(setOutputFrequency(outputTimeStep))
+    // The Time tab shows each time in the unit of the file.
+    for (const [field, unitId] of Object.entries(readTimeUnits(config['box model options']))) {
+      dispatch(setTimeUnit({ field, unitId }))
+    }
   }
 
   // The conditions go into the table once, here. Nothing converts them again later.
