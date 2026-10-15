@@ -9,7 +9,7 @@ import { LIST_CARD, LIST_CARD_CONTENT, TEXT_INPUT_SM } from './Mechanism/fieldSt
 import { getSpeciesDisplayName } from './Plots/speciesFormat'
 import { useClickOutside } from '../hooks/useClickOutside'
 import { useResultsConcentrationUnit } from '../hooks/useConcentrationUnit'
-import { fromMolM3, isMixingRatioUnit } from '../utils/concentrationUnits'
+import { fromMolM3, isMixingRatioUnit, isNumberDensityUnit } from '../utils/concentrationUnits'
 import { DISPLAY_DECIMALS } from '../utils/displayDecimals'
 import { CHART_COLORS } from './chartColors'
 import { TIME_RANGE_UNITS as TIME_UNITS } from './Plots/timeRangeUnits'
@@ -262,7 +262,8 @@ export function SimulationChart({ results, metadata }) {
   const chartData = useMemo(() => {
     if (!Array.isArray(results) || results.length === 0) return []
 
-    // Mixing ratios scale with the air density at each point's time; mol m-3 needs none.
+    // Mixing ratios scale with the air density at each point's time. The other units use a
+    // fixed factor.
     const densities = isMixingRatioUnit(plotUnitId) ? airDensities : null
 
     return results.flatMap((result, index) => {
@@ -292,7 +293,7 @@ export function SimulationChart({ results, metadata }) {
         // For log scale, replace zeros with MIN_VALUE
         // Floor in mol m-3 first so lines don't shift when the unit changes.
         if (value < MIN_VALUE) value = MIN_VALUE
-        point[species] = densities ? fromMolM3(value, plotUnitId, densities[index]) : value
+        point[species] = fromMolM3(value, plotUnitId, densities?.[index])
       })
 
       return [point]
@@ -331,6 +332,7 @@ export function SimulationChart({ results, metadata }) {
 
   // Tooltip shows "0" for points sitting on the floor, whatever unit the floor converts to.
   const zeroBelow = useMemo(() => {
+    if (isNumberDensityUnit(plotUnitId)) return fromMolM3(MIN_VALUE, plotUnitId) * 1.01
     if (!isMixingRatioUnit(plotUnitId)) return undefined
     const floors = airDensities.map((d) => fromMolM3(MIN_VALUE, plotUnitId, d))
     return floors.length > 0 ? Math.max(...floors) * 1.01 : undefined

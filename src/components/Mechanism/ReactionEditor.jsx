@@ -40,6 +40,16 @@ import {
 } from './fieldStyles'
 import { EMPTY_ARRAY } from '../../utils/emptyArray'
 import { DISPLAY_DECIMALS } from '../../utils/displayDecimals'
+import { FormulaText } from './FormulaText'
+import { useRateParameterUnits } from '../../hooks/rateParameterUnitContext'
+import {
+  RATE_UNIT_PARAMETERS,
+  fromDisplayValue,
+  genericRateUnitLabel,
+  parameterOrder,
+  rateUnitLabel,
+  toDisplayValue,
+} from '../../utils/rateParameterUnits'
 
 const formatReactionComponents = (components, maxDecimals) => {
   if (!Array.isArray(components) || components.length === 0) {
@@ -175,8 +185,27 @@ function ReactionChip({
   onParameterSave,
 }) {
   const [expanded, setExpanded] = useState(false)
+  const { unitFor } = useRateParameterUnits()
   const formula = formatReactionDisplay(reaction)
-  const parameters = rateParameters(reaction)
+  // A parameter with a concentration unit shows its value in the selected display unit. The
+  // mechanism keeps the SI value.
+  const parameters = rateParameters(reaction).map((field) => {
+    const order = parameterOrder(reaction, field.key)
+    if (order === null) return field
+    const unitId = unitFor(reaction.type, field.key)
+    const isNumber = typeof field.value === 'number'
+    return {
+      ...field,
+      unitId,
+      unit: rateUnitLabel(unitId, order),
+      displayValue: isNumber ? toDisplayValue(field.value, unitId, order) : field.value,
+      // A first-order value is the same in both units, so it needs no hint.
+      storedAs:
+        isNumber && unitId !== 'si' && order !== 1
+          ? `${formatParameterValue(field.value)} ${rateUnitLabel('si', order)}`
+          : null,
+    }
+  })
   // Size the name column to this reaction's longest parameter name so short names don't over-reserve
   // space and long names don't wrap. In monospace, 1ch equals one character.
   const nameColumnWidth = parameters.length
@@ -263,30 +292,54 @@ function ReactionChip({
         {parameters.length > 0 && (
           <div className="flex flex-col gap-2">
             <label className="text-[11px] uppercase tracking-wide text-muted">Parameters</label>
-            {parameters.map((field) => (
-              <div key={field.key} className="flex items-center gap-3">
-                <span
-                  className="flex-shrink-0 whitespace-nowrap text-sm font-mono text-muted"
-                  style={{ width: nameColumnWidth }}
-                >
-                  {field.key}
-                </span>
-                <input
-                  type="text"
-                  key={`${field.key}-${field.value}`}
-                  defaultValue={formatParameterValue(field.value)}
-                  // The placeholder is the value the solver applies when this is left unset.
-                  placeholder={field.placeholder}
-                  onBlur={(e) => onParameterSave(reaction, field.key, e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      e.currentTarget.blur()
-                    }
-                  }}
-                  className={`w-full ${TEXT_INPUT_SM.replace('text-center', 'text-left')} font-mono`}
-                />
-              </div>
-            ))}
+            {parameters.map((field) => {
+              const shown = formatParameterValue(field.displayValue ?? field.value)
+              return (
+                <Fragment key={field.key}>
+                  <div className="flex items-center gap-3">
+                    <span
+                      className="flex-shrink-0 whitespace-nowrap text-sm font-mono text-muted"
+                      style={{ width: nameColumnWidth }}
+                    >
+                      {field.key}
+                    </span>
+                    <input
+                      type="text"
+                      key={`${field.key}-${field.value}-${field.unitId}`}
+                      defaultValue={shown}
+                      // The placeholder is the value the solver applies when this is left unset.
+                      placeholder={field.placeholder}
+                      // An unchanged text is not saved, so that the rounded display value does
+                      // not replace the stored value.
+                      onBlur={(e) => {
+                        if (e.target.value !== shown) {
+                          onParameterSave(reaction, field.key, e.target.value)
+                        }
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.currentTarget.blur()
+                        }
+                      }}
+                      className={`w-full ${TEXT_INPUT_SM.replace('text-center', 'text-left')} font-mono`}
+                    />
+                    {field.unitId && (
+                      <span className="flex-shrink-0 whitespace-nowrap text-xs text-muted">
+                        <FormulaText text={field.unit} />
+                      </span>
+                    )}
+                  </div>
+                  {field.storedAs && (
+                    <p
+                      className="-mt-1 text-xs text-muted"
+                      style={{ paddingLeft: `calc(${nameColumnWidth} + 0.75rem)` }}
+                    >
+                      stored as <FormulaText text={field.storedAs} />
+                    </p>
+                  )}
+                </Fragment>
+              )
+            })}
           </div>
         )}
 
@@ -326,8 +379,21 @@ export function ReactionEditor() {
   const [reactionSearch, setReactionSearch] = useState('')
   const [typeFilter, setTypeFilter] = useState('')
 
+  const { unitFor } = useRateParameterUnits()
+
   const activeReactionDefinition = getReactionDefinition(reactionType)
   const ActiveReactionForm = activeReactionDefinition.component
+  // The add form does not know the order of the reaction yet, so it shows the unit with n.
+  const activeParameters = activeReactionDefinition.parameters.map((parameter) => {
+    const offset = RATE_UNIT_PARAMETERS[reactionType]?.[parameter.key]
+    return offset === undefined
+      ? parameter
+      : { ...parameter, unit: genericRateUnitLabel(unitFor(reactionType, parameter.key), offset) }
+  })
+
+  // The value of a parameter in the display unit, converted to SI.
+  const toStoredValue = (reaction, key, value) =>
+    fromDisplayValue(value, unitFor(reaction.type, key), parameterOrder(reaction, key))
 
   // Search reactions by matching the query anywhere in their formula; species matches find every
   // reaction they appear in. Preserve mechanism order, and group reactions by canonical type so
@@ -358,7 +424,15 @@ export function ReactionEditor() {
 
   // Returns true when the reaction is added. The form keeps its values when the add fails, so
   // the user can fix the mistake.
-  const handleAddReaction = (newReaction) => {
+  const handleAddReaction = (displayedReaction) => {
+    // The form gives the rate parameters in the display units. The mechanism stores SI values.
+    const newReaction = { ...displayedReaction }
+    for (const key of Object.keys(RATE_UNIT_PARAMETERS[newReaction.type] ?? {})) {
+      if (typeof newReaction[key] === 'number') {
+        newReaction[key] = toStoredValue(newReaction, key, newReaction[key])
+      }
+    }
+
     // Rejects a reaction that references an undefined species, which would fail the solver build.
     // Species names are case-sensitive.
     const defined = new Set(species.map((sp) => sp.name).filter(Boolean))
@@ -470,7 +544,7 @@ export function ReactionEditor() {
       return
     }
 
-    updated[key] = parsedValue
+    updated[key] = toStoredValue(reaction, key, parsedValue)
     saveReaction(updated)
   }
 
@@ -541,7 +615,7 @@ export function ReactionEditor() {
 
               <ActiveReactionForm
                 onAddReaction={handleAddReaction}
-                parameters={activeReactionDefinition.parameters}
+                parameters={activeParameters}
                 {...(activeReactionDefinition.componentProps || {})}
               />
             </div>
