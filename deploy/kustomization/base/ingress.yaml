@@ -10,20 +10,9 @@ spec:
   tls:
   - hosts:
     - musicbox.k8s.ucar.edu
-    - musicbox-cname.k8s.ucar.edu
     secretName: musicbox-tls-secret
   rules:
   - host: musicbox.k8s.ucar.edu
-    http:
-      paths:
-      - path: /
-        pathType: Prefix
-        backend:
-          service:
-            name: frontend
-            port:
-              number: 80
-  - host: musicbox-cname.k8s.ucar.edu
     http:
       paths:
       - path: /

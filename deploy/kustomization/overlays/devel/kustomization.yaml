@@ -4,7 +4,7 @@ kind: Kustomization
 images:
 - name: hub.k8s.ucar.edu/musicbox/frontend
   newName: hub.k8s.ucar.edu/musicbox/frontend
-  newTag: 378347b
+  newTag: a0cc86f
 
 namePrefix: devel-
 
@@ -21,15 +21,9 @@ patches:
 - patch: |-
     - op: replace
       path: /spec/tls/0/hosts/0
-      value: musicbox-devel.k8s.ucar.edu
-    - op: replace
-      path: /spec/tls/0/hosts/1
       value: musicbox-devel.acom.ucar.edu
     - op: replace
       path: /spec/rules/0/host
-      value: musicbox-devel.k8s.ucar.edu
-    - op: replace
-      path: /spec/rules/1/host
       value: musicbox-devel.acom.ucar.edu
     - op: replace
       path: /spec/ingressClassName
