@@ -56,6 +56,30 @@ export const getReactionReactants = (reaction) => {
   return gasPhaseSpecies ? [{ name: gasPhaseSpecies }] : []
 }
 
+// A reaction's product lists, each with a label. BRANCHED_NO_RO2 has an alkoxy branch and a
+// nitrate branch. Every other type has one product list, with no label.
+export const getReactionProductBranches = (reaction) => {
+  if (reaction?.['alkoxy products'] || reaction?.['nitrate products']) {
+    return [
+      { label: 'alkoxy', products: reaction['alkoxy products'] ?? [] },
+      { label: 'nitrate', products: reaction['nitrate products'] ?? [] },
+    ]
+  }
+  return [{ label: null, products: reaction?.products || reaction?.['gas-phase products'] || [] }]
+}
+
+// One equation for each product list, such as "A → B (alkoxy); A → C (nitrate)".
+// formatEquation(reactants, products) gives the text of one equation.
+export const formatReactionEquations = (reaction, formatEquation) => {
+  const reactants = getReactionReactants(reaction)
+  return getReactionProductBranches(reaction)
+    .map(({ label, products }) => {
+      const equation = formatEquation(reactants, products)
+      return label ? `${equation} (${label})` : equation
+    })
+    .join('; ')
+}
+
 // All species referenced by a reaction across its type-specific component arrays.
 export const getReactionSpeciesNames = (reaction) => [
   ...REACTION_COMPONENT_KEYS.flatMap((key) => (reaction[key] ?? []).map((c) => c.name)),

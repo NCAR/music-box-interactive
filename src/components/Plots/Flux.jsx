@@ -13,7 +13,10 @@ import {
   getReactionParameters,
   getReactionTypeLabel,
 } from '../Mechanism/reactions/reactionRegistry'
-import { REACTION_COMPONENT_KEYS } from '../../services/simulation/local/mechanism'
+import {
+  REACTION_COMPONENT_KEYS,
+  formatReactionEquations,
+} from '../../services/simulation/local/mechanism'
 import { RangeBoundInput } from './RangeBoundInput'
 import { TIME_RANGE_UNITS } from './timeRangeUnits'
 import { UnitDropdown } from './UnitDropdown'
@@ -50,7 +53,10 @@ const formatComponents = (entries) => {
 }
 
 const formatReactionFormula = (reaction) =>
-  `${formatComponents(reactionReactants(reaction))} → ${formatComponents(reactionProducts(reaction))}`
+  formatReactionEquations(
+    reaction,
+    (reactants, products) => `${formatComponents(reactants)} → ${formatComponents(products)}`
+  )
 
 // A species filter matches reactions where the species is a reactant or product.
 // An empty filter means no filter is applied. All reactions pass.

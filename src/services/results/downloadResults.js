@@ -1,6 +1,6 @@
 import { zipSync, strToU8 } from 'fflate'
 import { computeIntegratedReactionRate } from '../../components/Plots/flowUtils'
-import { getReactionReactants } from '../simulation/local/mechanism'
+import { formatReactionEquations } from '../simulation/local/mechanism'
 import { buildDownloadableConfig } from '../config/downloadConfig'
 import { toCsv } from '../../utils/csv'
 import { downloadBlob } from '../../utils/downloadJson'
@@ -21,12 +21,11 @@ function formatComponents(components) {
 }
 
 function formatReactionFormula(reaction) {
-  const reactants = getReactionReactants(reaction)
-  const products =
-    reaction?.products || reaction?.['gas-phase products'] || reaction?.['alkoxy products'] || []
-  const reactantList = Array.isArray(reactants) ? reactants : [reactants]
-  const productList = Array.isArray(products) ? products : [products]
-  return `${formatComponents(reactantList)} → ${formatComponents(productList)}`
+  return formatReactionEquations(reaction, (reactants, products) => {
+    const reactantList = Array.isArray(reactants) ? reactants : [reactants]
+    const productList = Array.isArray(products) ? products : [products]
+    return `${formatComponents(reactantList)} → ${formatComponents(productList)}`
+  })
 }
 
 // Builds the zip's three files:
