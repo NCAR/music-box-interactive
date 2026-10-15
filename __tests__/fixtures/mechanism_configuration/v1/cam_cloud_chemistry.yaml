@@ -1,0 +1,293 @@
+version: 1.2.0
+name: CAM Cloud Chemistry
+species:
+  - name: SO2
+    molecular weight [kg mol-1]: 0.06407
+  - name: H2O2
+    molecular weight [kg mol-1]: 0.03401
+  - name: O3
+    molecular weight [kg mol-1]: 0.048
+  - name: Hp
+    molecular weight [kg mol-1]: 0.00101
+  - name: OHm
+    molecular weight [kg mol-1]: 0.01701
+  - name: HSO3m
+    molecular weight [kg mol-1]: 0.08107
+  - name: SO3mm
+    molecular weight [kg mol-1]: 0.08007
+  - name: SO4mm
+    molecular weight [kg mol-1]: 0.09607
+  - name: SO2OOHm
+    molecular weight [kg mol-1]: 0.11307
+  - name: H2O
+    molecular weight [kg mol-1]: 0.01801
+phases:
+  - name: gas
+    species:
+      - name: SO2
+        diffusion coefficient [m2 s-1]: 1.28e-05
+      - name: H2O2
+        diffusion coefficient [m2 s-1]: 1.46e-05
+      - name: O3
+        diffusion coefficient [m2 s-1]: 1.48e-05
+  - name: AQUEOUS
+    species:
+      - SO2
+      - H2O2
+      - O3
+      - Hp
+      - OHm
+      - HSO3m
+      - SO3mm
+      - SO4mm
+      - SO2OOHm
+      - name: H2O
+        density [kg m-3]: 997.0
+reactions: []
+aerosol representations:
+  - type: UNIFORM_SECTION
+    name: CLOUD
+    phases:
+      - AQUEOUS
+    minimum radius [m]: 1.0e-06
+    maximum radius [m]: 1.0e-05
+aerosol processes:
+  - __comment: 'Henry''s Law Equilibrium: SO2(g) <-> SO2(aq)'
+    __note: HLC = HLC_ref * exp(C*(1/T - 1/T0))
+    type: HENRYS_LAW_EQUILIBRIUM
+    gas phase: gas
+    gas-phase species: SO2
+    condensed phase: AQUEOUS
+    condensed-phase species: SO2
+    solvent: H2O
+    Henry's law constant:
+      HLC_ref [mol m-3 Pa-1]: 0.01214
+      C [K]: 3120.0
+      T0 [K]: 298.15
+  - __comment: 'Henry''s Law Equilibrium: H2O2(g) <-> H2O2(aq)'
+    __note: HLC = HLC_ref * exp(C*(1/T - 1/T0))
+    type: HENRYS_LAW_EQUILIBRIUM
+    gas phase: gas
+    gas-phase species: H2O2
+    condensed phase: AQUEOUS
+    condensed-phase species: H2O2
+    solvent: H2O
+    Henry's law constant:
+      HLC_ref [mol m-3 Pa-1]: 730.6
+      C [K]: 6621.0
+      T0 [K]: 298.15
+  - __comment: 'Henry''s Law Equilibrium: O3(g) <-> O3(aq)'
+    __note: HLC = HLC_ref * exp(C*(1/T - 1/T0))
+    type: HENRYS_LAW_EQUILIBRIUM
+    gas phase: gas
+    gas-phase species: O3
+    condensed phase: AQUEOUS
+    condensed-phase species: O3
+    solvent: H2O
+    Henry's law constant:
+      HLC_ref [mol m-3 Pa-1]: 0.0001135
+      C [K]: 2560.0
+      T0 [K]: 298.15
+  - __comment: 'R1a: HSO3- + H2O2_aq <-> SO2OOH- + H2O (reversible, Keq=1725)'
+    __note: k_fwd = c_H2O_M * 7.45e7/13 = 3.184e8; Keq=1725 (Lind & Kok 1986 / revised MIAM)
+    type: DISSOLVED_REVERSIBLE_REACTION
+    condensed phase: AQUEOUS
+    solvent: H2O
+    reactants:
+      - name: HSO3m
+        coefficient: 1
+      - name: H2O2
+        coefficient: 1
+    products:
+      - name: SO2OOHm
+        coefficient: 1
+      - name: H2O
+        coefficient: 1
+    forward rate constant:
+      type: ARRHENIUS
+      A: 318400000.0
+      C: 4430.0
+    equilibrium constant:
+      type: EQUILIBRIUM
+      A: 1725.0
+      C [K]: 0.0
+      T0 [K]: 298.15
+  - __comment: 'R1b: SO2OOH- + H+ -> SO4-- (irreversible)'
+    __note: k = c_H2O_M * 2.4e6 = 1.333e8; Ea/R = 4430 K
+    type: DISSOLVED_REACTION
+    condensed phase: AQUEOUS
+    solvent: H2O
+    reactants:
+      - name: SO2OOHm
+        coefficient: 1
+      - name: Hp
+        coefficient: 1
+    products:
+      - name: SO4mm
+        coefficient: 1
+    rate constant:
+      type: ARRHENIUS
+      A: 133300000.0
+      C: 4430.0
+  - __comment: 'R2: HSO3- + O3_aq -> SO4-- + H+ (irreversible)'
+    __note: k = c_H2O_M * 3.75e5 = 2.08335e7; Ea/R = 5530 K
+    type: DISSOLVED_REACTION
+    condensed phase: AQUEOUS
+    solvent: H2O
+    reactants:
+      - name: HSO3m
+        coefficient: 1
+      - name: O3
+        coefficient: 1
+    products:
+      - name: SO4mm
+        coefficient: 1
+      - name: Hp
+        coefficient: 1
+    rate constant:
+      type: ARRHENIUS
+      A: 20833500.0
+      C: 5530.0
+  - __comment: 'R3: SO3-- + O3_aq -> SO4-- (irreversible)'
+    __note: k = c_H2O_M * 1.59e9 = 8.8334e10; Ea/R = 5280 K
+    type: DISSOLVED_REACTION
+    condensed phase: AQUEOUS
+    solvent: H2O
+    reactants:
+      - name: SO3mm
+        coefficient: 1
+      - name: O3
+        coefficient: 1
+    products:
+      - name: SO4mm
+        coefficient: 1
+    rate constant:
+      type: ARRHENIUS
+      A: 88334000000.0
+      C: 5280.0
+  - __comment: 'Kw: 2 H2O <-> H+ + OH-'
+    type: DISSOLVED_EQUILIBRIUM
+    condensed phase: AQUEOUS
+    solvent: H2O
+    reactants:
+      - name: H2O
+        coefficient: 2
+    products:
+      - name: Hp
+        coefficient: 1
+      - name: OHm
+        coefficient: 1
+    algebraic species: OHm
+    equilibrium constant:
+      type: EQUILIBRIUM
+      A: 3.24e-18
+      C [K]: 0.0
+      T0 [K]: 298.15
+  - __comment: 'Ka1: SO2(aq) <-> H+ + HSO3-'
+    type: DISSOLVED_EQUILIBRIUM
+    condensed phase: AQUEOUS
+    solvent: H2O
+    reactants:
+      - name: SO2
+        coefficient: 1
+    products:
+      - name: Hp
+        coefficient: 1
+      - name: HSO3m
+        coefficient: 1
+    algebraic species: HSO3m
+    equilibrium constant:
+      type: EQUILIBRIUM
+      A: 0.000306
+      C [K]: 2090.0
+      T0 [K]: 298.15
+  - __comment: 'Ka2: HSO3- <-> H+ + SO3--'
+    type: DISSOLVED_EQUILIBRIUM
+    condensed phase: AQUEOUS
+    algebraic species: SO3mm
+    solvent: H2O
+    reactants:
+      - name: HSO3m
+        coefficient: 1
+    products:
+      - name: Hp
+        coefficient: 1
+      - name: SO3mm
+        coefficient: 1
+    equilibrium constant:
+      type: EQUILIBRIUM
+      A: 1.08e-09
+      C [K]: 1120.0
+      T0 [K]: 298.15
+  - __comment: 'Mass conservation: total sulfur in reversible pool (includes SO2OOH-, SO4--)'
+    type: LINEAR_CONSTRAINT
+    algebraic phase: gas
+    algebraic species: SO2
+    diagnose from state: true
+    terms:
+      - phase: gas
+        name: SO2
+        coefficient: 1.0
+      - phase: AQUEOUS
+        name: SO2
+        coefficient: 1.0
+      - phase: AQUEOUS
+        name: HSO3m
+        coefficient: 1.0
+      - phase: AQUEOUS
+        name: SO3mm
+        coefficient: 1.0
+      - phase: AQUEOUS
+        name: SO2OOHm
+        coefficient: 1.0
+      - phase: AQUEOUS
+        name: SO4mm
+        coefficient: 1.0
+  - __comment: 'Mass conservation: total H2O2'
+    type: LINEAR_CONSTRAINT
+    algebraic phase: gas
+    algebraic species: H2O2
+    diagnose from state: true
+    terms:
+      - phase: gas
+        name: H2O2
+        coefficient: 1.0
+      - phase: AQUEOUS
+        name: H2O2
+        coefficient: 1.0
+  - __comment: 'Mass conservation: total O3'
+    type: LINEAR_CONSTRAINT
+    algebraic phase: gas
+    algebraic species: O3
+    diagnose from state: true
+    terms:
+      - phase: gas
+        name: O3
+        coefficient: 1.0
+      - phase: AQUEOUS
+        name: O3
+        coefficient: 1.0
+  - __comment: 'Charge balance: H+ = OH- + HSO3- + 2 SO3-- + 2 SO4-- + SO2OOH-'
+    type: LINEAR_CONSTRAINT
+    algebraic phase: AQUEOUS
+    algebraic species: Hp
+    constant [mol m-3]: 0.0
+    terms:
+      - phase: AQUEOUS
+        name: Hp
+        coefficient: 1.0
+      - phase: AQUEOUS
+        name: OHm
+        coefficient: -1.0
+      - phase: AQUEOUS
+        name: HSO3m
+        coefficient: -1.0
+      - phase: AQUEOUS
+        name: SO3mm
+        coefficient: -2.0
+      - phase: AQUEOUS
+        name: SO4mm
+        coefficient: -2.0
+      - phase: AQUEOUS
+        name: SO2OOHm
+        coefficient: -1.0
