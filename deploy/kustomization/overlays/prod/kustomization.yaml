@@ -23,12 +23,18 @@ patches:
   patch: |-
     - op: replace
       path: /spec/tls/0/hosts/0
+      value: musicbox.k8s.ucar.edu
+    - op: replace
+      path: /spec/tls/0/hosts/1
       value: musicbox.acom.ucar.edu
     - op: replace
       path: /spec/tls/0/secretName
       value: musicbox-prod-tls-secret
     - op: replace
       path: /spec/rules/0/host
+      value: musicbox.k8s.ucar.edu
+    - op: replace
+      path: /spec/rules/1/host
       value: musicbox.acom.ucar.edu
     - op: replace
       path: /spec/ingressClassName
