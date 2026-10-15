@@ -6,6 +6,7 @@ import { Thermometer } from 'lucide-react'
 import { ChartTooltipContent } from '../SimulationChart'
 import { UnitDropdown } from './UnitDropdown'
 import { LineChart } from './LineChart'
+import { paddedTimeDomain, timeAxisTicks } from './chartTicks'
 import { TEMPERATURE_UNITS, fromKelvin } from './temperatureUnits'
 import { PRESSURE_UNITS } from './pressureUnits'
 import { TIME_RANGE_UNITS } from './timeRangeUnits'
@@ -44,7 +45,7 @@ export function EnvironmentPlot() {
   const pressureUnit = PRESSURE_UNITS.find((u) => u.id === pressureUnitId) ?? PRESSURE_UNITS[0]
   const temperatureUnitLabel =
     TEMPERATURE_UNITS.find((u) => u.id === temperatureUnitId)?.label ?? 'K'
-  const timeUnit = TIME_RANGE_UNITS.find((u) => u.id === timeUnitId) ?? TIME_RANGE_UNITS[1]
+  const timeUnit = TIME_RANGE_UNITS.find((u) => u.id === timeUnitId) ?? TIME_RANGE_UNITS[0]
   const timeAxisUnitLabel = timeUnit.shortLabel
 
   // Solver-reported conditions at each output step, in the sidebar's selected units.
@@ -59,6 +60,12 @@ export function EnvironmentPlot() {
   )
 
   const times = useMemo(() => envData.map((point) => point.time), [envData])
+  // The same time axis as the other result plots. A number axis puts each time to scale.
+  const timeDomain = useMemo(() => paddedTimeDomain(times), [times])
+  const xAxisTicks = useMemo(
+    () => timeAxisTicks(timeDomain, timeUnit.divisor),
+    [timeDomain, timeUnit.divisor]
+  )
   const temperatureLabel = `Temperature (${temperatureUnitLabel})`
   const pressureLabel = `Pressure (${pressureUnit.label})`
 
@@ -214,7 +221,8 @@ export function EnvironmentPlot() {
                   series={series}
                   margin={{ top: 30, right: 40, left: 20, bottom: 10 }}
                   xAxis={{
-                    type: 'category',
+                    domain: timeDomain,
+                    ticks: xAxisTicks,
                     label: `Time (${timeAxisUnitLabel})`,
                     tickFontSize: 12,
                     labelFontSize: 14,

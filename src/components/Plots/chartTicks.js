@@ -85,3 +85,46 @@ export function preserveEndLabels(ticks, start, end) {
   }
   return positions
 }
+
+// Round a value up to a human-friendly scale (1, 2, 5, or 10 times a power of 10)
+function niceNumber(x) {
+  const exponent = Math.floor(Math.log10(x))
+  const fraction = x / 10 ** exponent
+  const niceFraction = fraction <= 1 ? 1 : fraction <= 2 ? 2 : fraction <= 5 ? 5 : 10
+  return niceFraction * 10 ** exponent
+}
+
+// The domain of a time axis: the range of the times, with 5% padding on each side and never
+// below zero. A fixed rule keeps the padding the same in each time unit.
+export function paddedTimeDomain(times) {
+  const finite = times.filter((t) => isFinite(t))
+  if (finite.length === 0) return [0, 1]
+
+  const minTime = Math.min(...finite)
+  const maxTime = Math.max(...finite)
+  if (minTime === maxTime) return [Math.max(0, minTime - 1), maxTime + 1]
+
+  const padding = (maxTime - minTime) * 0.05
+  return [Math.max(0, minTime - padding), maxTime + padding]
+}
+
+// Use a reader-friendly step (in 0.5-unit increments) for gridlines in minutes, hours, and days.
+const TIME_TICK_STEP = 0.5
+const TARGET_TIME_TICKS = 5
+
+// The ticks of a time axis whose values are in the selected unit. Seconds return undefined, so
+// the axis uses its default ticks.
+export function timeAxisTicks([minDomain, maxDomain], divisor) {
+  if (divisor === 1) return undefined
+  if (maxDomain <= 0) return [0]
+
+  const rawStep = maxDomain / TARGET_TIME_TICKS
+  const step = Math.ceil(niceNumber(rawStep) / TIME_TICK_STEP) * TIME_TICK_STEP
+
+  const ticks = []
+  for (let t = Math.ceil(minDomain / step - 1e-9) * step; t <= maxDomain + 1e-9; t += step) {
+    // `|| 0` turns -0 into 0, so the first label is not "-0".
+    ticks.push(Math.round(t * 1000) / 1000 || 0)
+  }
+  return ticks
+}

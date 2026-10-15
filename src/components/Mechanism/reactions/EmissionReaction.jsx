@@ -39,7 +39,8 @@ export function EmissionReactionForm({ onAddReaction, parameters = [] }) {
       ...(hasScalingFactor ? { 'scaling factor': scaling } : {}),
     }
 
-    onAddReaction(newReaction)
+    // Keep the values when the add fails, so the user can fix them.
+    if (!onAddReaction(newReaction)) return
 
     setProducts('')
     setEmissionScaling('')

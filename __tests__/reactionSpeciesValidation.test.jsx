@@ -109,3 +109,29 @@ describe('species name capitalization', () => {
     expect((store.getState().mechanism.config.mechanism.reactions || [])).toHaveLength(0)
   })
 })
+
+describe('the add form after a submit', () => {
+  it('keeps the values when the reaction names an undefined species', async () => {
+    renderEditor(['O3', 'O2'])
+    submitReaction('O3', 'O2 + OO')
+
+    await waitFor(() =>
+      expect(screen.getByText(/not defined in this mechanism/i)).toBeInTheDocument()
+    )
+    const [reactantsField, productsField] = addFormInputs()
+    expect(reactantsField).toHaveValue('O3')
+    expect(productsField).toHaveValue('O2 + OO')
+  })
+
+  it('clears the values after the reaction is added', async () => {
+    const store = renderEditor(['O3', 'O2'])
+    submitReaction('O3', 'O2')
+
+    await waitFor(() =>
+      expect(store.getState().mechanism.config.mechanism.reactions || []).toHaveLength(1)
+    )
+    const [reactantsField, productsField] = addFormInputs()
+    expect(reactantsField).toHaveValue('')
+    expect(productsField).toHaveValue('')
+  })
+})

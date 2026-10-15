@@ -9,7 +9,7 @@ import {
 } from '../../redux/slices/conditionsSlice'
 import { RangeBoundInput } from '../Plots/RangeBoundInput'
 import { UnitDropdown } from '../Plots/UnitDropdown'
-import { SIMULATION_TIME_UNITS, formatBound } from '../Plots/timeRangeUnits'
+import { TIME_RANGE_UNITS, formatBound } from '../Plots/timeRangeUnits'
 import { TEXT_INPUT_SM } from '../Mechanism/fieldStyles'
 import { DISPLAY_DECIMALS } from '../../utils/displayDecimals'
 import { useNotify } from '@/hooks/use-notify'
@@ -21,7 +21,7 @@ const DROPDOWN_BUTTON =
   'flex items-center gap-1 w-full h-9 px-2 border border-border rounded-lg text-sm text-ink hover:bg-surface-hover'
 
 function getUnit(unitId) {
-  return SIMULATION_TIME_UNITS.find((u) => u.id === unitId) ?? SIMULATION_TIME_UNITS[0]
+  return TIME_RANGE_UNITS.find((u) => u.id === unitId) ?? TIME_RANGE_UNITS[0]
 }
 
 // Total steps/output points require a positive, finite denominator. Malformed configs can
@@ -90,7 +90,7 @@ export function TimeTab() {
                   <UnitDropdown
                     unitId={unitIds[field.key]}
                     onChange={(id) => dispatch(setTimeUnit({ field: field.key, unitId: id }))}
-                    units={SIMULATION_TIME_UNITS}
+                    units={TIME_RANGE_UNITS}
                     wrapperClassName={DROPDOWN_WRAPPER}
                     buttonClassName={DROPDOWN_BUTTON}
                     centerLabel
