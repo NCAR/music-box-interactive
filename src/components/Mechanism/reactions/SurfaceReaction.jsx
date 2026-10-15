@@ -49,7 +49,8 @@ export function SurfaceReactionForm({ onAddReaction, parameters = [] }) {
       ...(hasReactionProbability ? { 'reaction probability': reactionProbabilityValue } : {}),
     }
 
-    onAddReaction(newReaction)
+    // Keep the values when the add fails, so the user can fix them.
+    if (!onAddReaction(newReaction)) return
 
     setGasPhaseSpecies('')
     setGasPhaseProducts('')

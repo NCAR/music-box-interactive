@@ -40,7 +40,7 @@ export function DashboardPage() {
     navigate('/mechanism')
   }
 
-  // Accepts a music-box v1 config: a plain .json, or a .zip bundling it with its CSV files.
+  // Accepts a music-box v1 config or a mechanism configuration (see parseUploadedMusicBoxConfig).
   const handleLoadConfiguration = (event) => {
     const file = event.target.files?.[0]
     if (!file) return
@@ -202,12 +202,13 @@ export function DashboardPage() {
               </div>
               <h4 className="font-bold mb-2 text-sm xs:text-base">Load Configuration</h4>
               <p className="text-xs text-muted mb-3 italic">
-                Load a music-box configuration (.json), or a .zip if it references CSV files.
+                Load a music-box configuration (.json) or a mechanism configuration (.json, .yaml).
+                Use a .zip if the configuration is split across files.
               </p>
               <input
                 ref={fileInputRef}
                 type="file"
-                accept=".json,.zip"
+                accept=".json,.yaml,.yml,.zip"
                 onChange={handleLoadConfiguration}
                 className="hidden"
               />

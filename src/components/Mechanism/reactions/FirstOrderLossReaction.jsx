@@ -36,7 +36,8 @@ export function FirstOrderLossReactionForm({ onAddReaction, parameters = [] }) {
       ...(hasScalingFactor ? { 'scaling factor': scalingFactorValue } : {}),
     }
 
-    onAddReaction(newReaction)
+    // Keep the values when the add fails, so the user can fix them.
+    if (!onAddReaction(newReaction)) return
 
     setReactants('')
     setScalingFactor('')

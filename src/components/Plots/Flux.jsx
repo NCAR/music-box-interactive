@@ -13,11 +13,15 @@ import {
   getReactionParameters,
   getReactionTypeLabel,
 } from '../Mechanism/reactions/reactionRegistry'
-import { REACTION_COMPONENT_KEYS } from '../../services/simulation/local/mechanism'
+import {
+  REACTION_COMPONENT_KEYS,
+  formatReactionEquations,
+} from '../../services/simulation/local/mechanism'
 import { RangeBoundInput } from './RangeBoundInput'
 import { TIME_RANGE_UNITS } from './timeRangeUnits'
 import { UnitDropdown } from './UnitDropdown'
 import { LineChart } from './LineChart'
+import { paddedTimeDomain, timeAxisTicks } from './chartTicks'
 import { Card, CardContent } from '../ui/card'
 import { CHART_COLORS } from '../chartColors'
 import { ChartLegendContent, ChartTooltipContent } from '../SimulationChart'
@@ -49,7 +53,10 @@ const formatComponents = (entries) => {
 }
 
 const formatReactionFormula = (reaction) =>
-  `${formatComponents(reactionReactants(reaction))} → ${formatComponents(reactionProducts(reaction))}`
+  formatReactionEquations(
+    reaction,
+    (reactants, products) => `${formatComponents(reactants)} → ${formatComponents(products)}`
+  )
 
 // A species filter matches reactions where the species is a reactant or product.
 // An empty filter means no filter is applied. All reactions pass.
@@ -402,7 +409,16 @@ export function Flux() {
     intervalDivisors,
   ])
 
-  const chartTimes = useMemo(() => chartData.map((point) => point.time), [chartData])
+  // The times in the selected unit, with the same time axis as the other result plots.
+  const chartTimes = useMemo(
+    () => chartData.map((point) => point.time / timeRangeUnit.divisor),
+    [chartData, timeRangeUnit.divisor]
+  )
+  const timeDomain = useMemo(() => paddedTimeDomain(chartTimes), [chartTimes])
+  const xAxisTicks = useMemo(
+    () => timeAxisTicks(timeDomain, timeRangeUnit.divisor),
+    [timeDomain, timeRangeUnit.divisor]
+  )
   const plotSeries = useMemo(
     () =>
       chartSeries.map((series) => ({
@@ -719,8 +735,9 @@ export function Flux() {
                   series={plotSeries}
                   margin={{ top: 5, right: 30, left: 30, bottom: 5 }}
                   xAxis={{
-                    domain: [chartTimes[0], chartTimes.at(-1)],
-                    tickFormat: (t) => formatValue(t / timeRangeUnit.divisor),
+                    domain: timeDomain,
+                    ticks: xAxisTicks,
+                    tickFormat: formatValue,
                     label: `Time (${timeAxisUnitLabel})`,
                     tickFontSize: 12,
                     labelFontSize: 14,
@@ -748,9 +765,7 @@ export function Flux() {
                       active
                       payload={payload}
                       timeLabel={`${
-                        timeRangeUnit.divisor === 1
-                          ? label?.toLocaleString()
-                          : (label / timeRangeUnit.divisor)?.toFixed(2)
+                        timeRangeUnit.divisor === 1 ? label?.toLocaleString() : label?.toFixed(2)
                       } ${timeAxisUnitLabel}`}
                       maxVisible={chartSeries.length}
                     />

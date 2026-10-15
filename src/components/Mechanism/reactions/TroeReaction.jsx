@@ -98,7 +98,8 @@ export function TroeReactionForm({ onAddReaction, parameters = [] }) {
       ...(parsedN.hasValue ? { N: parsedN.value } : {}),
     }
 
-    onAddReaction(newReaction)
+    // Keep the values when the add fails, so the user can fix them.
+    if (!onAddReaction(newReaction)) return
 
     setReactants('')
     setProducts('')

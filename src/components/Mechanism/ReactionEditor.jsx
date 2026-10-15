@@ -26,7 +26,7 @@ import {
 } from './reactions/reactionRegistry'
 import {
   REACTION_COMPONENT_KEYS,
-  getReactionReactants,
+  formatReactionEquations,
   getReactionSpeciesNames,
 } from '../../services/simulation/local/mechanism'
 import {
@@ -60,17 +60,16 @@ const formatReactionComponents = (components, maxDecimals) => {
 }
 
 const formatReactionDisplay = (reaction) => {
-  const reactants = getReactionReactants(reaction)
-  const products =
-    reaction.products || reaction['gas-phase products'] || reaction['alkoxy products'] || []
-
   const toChipText = (components) =>
     formatReactionComponents(
       Array.isArray(components) ? components : [components],
       DISPLAY_DECIMALS
     )
 
-  return `${toChipText(reactants)} → ${toChipText(products)}`
+  return formatReactionEquations(
+    reaction,
+    (reactants, products) => `${toChipText(reactants)} → ${toChipText(products)}`
+  )
 }
 
 // Structural fields. All other fields are rate parameters that vary by reaction type.
@@ -357,6 +356,8 @@ export function ReactionEditor() {
     return haystack.includes(reactionQuery)
   })
 
+  // Returns true when the reaction is added. The form keeps its values when the add fails, so
+  // the user can fix the mistake.
   const handleAddReaction = (newReaction) => {
     // Rejects a reaction that references an undefined species, which would fail the solver build.
     // Species names are case-sensitive.
@@ -374,7 +375,7 @@ export function ReactionEditor() {
           unknown.length === 1 ? 'it' : 'them'
         } in the Species tab first.`
       )
-      return
+      return false
     }
 
     dispatch(addReaction(newReaction))
@@ -382,6 +383,7 @@ export function ReactionEditor() {
       'Reaction Added',
       `Successfully added reaction: ${newReaction.name || formatReactionDisplay(newReaction)}.`
     )
+    return true
   }
 
   // Edits go through the same validation as adding, so an edit cannot introduce a species

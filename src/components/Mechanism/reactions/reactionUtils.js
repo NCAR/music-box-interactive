@@ -1,4 +1,4 @@
-import { getReactionReactants } from '../../../services/simulation/local/mechanism'
+import { formatReactionEquations } from '../../../services/simulation/local/mechanism'
 
 export const parseReactionString = (str) => {
   return str
@@ -39,16 +39,12 @@ const componentsToString = (components = []) =>
     })
     .join(' + ')
 
-export const buildGeneratedReactionName = (reaction) => {
-  const reactants = getReactionReactants(reaction)
-  const products =
-    reaction.products || reaction['gas-phase products'] || reaction['alkoxy products'] || []
-
-  const left = componentsToString(Array.isArray(reactants) ? reactants : [reactants])
-  const right = componentsToString(Array.isArray(products) ? products : [products])
-
-  return right ? `${left} -> ${right}` : `${left} -> (removed)`
-}
+export const buildGeneratedReactionName = (reaction) =>
+  formatReactionEquations(reaction, (reactants, products) => {
+    const left = componentsToString(Array.isArray(reactants) ? reactants : [reactants])
+    const right = componentsToString(Array.isArray(products) ? products : [products])
+    return right ? `${left} -> ${right}` : `${left} -> (removed)`
+  })
 
 // True when a reaction name was generated rather than declared by the mechanism.
 export const hasDeclaredName = (reaction) =>

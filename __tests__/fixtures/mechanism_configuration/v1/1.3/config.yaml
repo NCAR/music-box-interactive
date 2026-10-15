@@ -1,0 +1,344 @@
+version: 1.3.0
+name: Version 1.3 example
+species:
+  - name: A
+    __absolute tolerance: 1.0e-30
+  - name: B
+    constant concentration [mol m-3]: 1.0e19
+  - name: C
+    constant mixing ratio [mol mol-1]: 1.0e-20
+  - name: M
+    is third body: true
+  - name: H2O2
+    molecular weight [kg mol-1]: 0.0340147
+    __absolute tolerance: 1.0e-10
+  - name: ethanol
+    molecular weight [kg mol-1]: 0.04607
+    __absolute tolerance: 1.0e-20
+  - name: H2O
+    molecular weight [kg mol-1]: 0.01801
+  - name: Hp
+    molecular weight [kg mol-1]: 0.00101
+  - name: OHm
+    molecular weight [kg mol-1]: 0.01701
+  - name: HO2m
+    molecular weight [kg mol-1]: 0.03301
+phases:
+  - name: gas
+    species:
+      - name: A
+      - name: B
+      - name: C
+      - name: M
+      - name: ethanol
+        diffusion coefficient [m2 s-1]: 2.1e-5
+      - name: H2O2
+        diffusion coefficient [m2 s-1]: 2.1e-5
+  - name: aqueous
+    species:
+      - name: H2O2
+      - name: ethanol
+      - name: Hp
+      - name: OHm
+      - name: HO2m
+      - name: H2O
+        density [kg m-3]: 1000.0
+  - name: organic
+    species:
+      - name: ethanol
+        density [kg m-3]: 789.0
+reactions:
+  - type: EMISSION
+    name: my emission
+    scaling factor: 12.3
+    gas phase: gas
+    products:
+      - species name: B
+        coefficient: 1
+  - type: FIRST_ORDER_LOSS
+    name: my first order loss
+    scaling factor: 12.3
+    gas phase: gas
+    reactants:
+      - species name: C
+        coefficient: 1
+  - type: PHOTOLYSIS
+    name: photo B
+    scaling factor: 12.3
+    gas phase: gas
+    reactants:
+      - species name: B
+        coefficient: 1
+    products:
+      - species name: C
+        coefficient: 1
+  - type: SURFACE
+    name: my surface
+    reaction probability: 2.0e-2
+    gas phase: gas
+    gas-phase species: A
+    gas-phase products:
+      - species name: B
+        coefficient: 1
+      - species name: C
+        coefficient: 1
+  - type: TROE
+    name: my troe
+    k0_A: 1.2e-12
+    k0_B: 167
+    k0_C: 3
+    kinf_A: 136
+    kinf_B: 5
+    kinf_C: 24
+    Fc: 0.9
+    N: 0.8
+    gas phase: gas
+    reactants:
+      - species name: B
+        coefficient: 1
+      - species name: M
+        coefficient: 1
+    products:
+      - species name: C
+        coefficient: 1
+  - type: TERNARY_CHEMICAL_ACTIVATION
+    name: my ternary chemical activation
+    gas phase: gas
+    k0_A: 32.1
+    k0_B: -2.3
+    k0_C: 102.3
+    kinf_A: 63.4
+    kinf_B: -1.3
+    kinf_C: 908.5
+    Fc: 1.3
+    N: 32.1
+    reactants:
+      - species name: A
+        coefficient: 1
+      - species name: B
+        coefficient: 1
+    products:
+      - species name: B
+        coefficient: 0.5
+      - species name: C
+        coefficient: 0.3
+  - type: BRANCHED_NO_RO2
+    name: my branched
+    X: 1.2e-4
+    Y: 167
+    a0: 0.15
+    n: 9
+    gas phase: gas
+    reactants:
+      - species name: A
+        coefficient: 1
+    alkoxy products:
+      - species name: B
+        coefficient: 1
+    nitrate products:
+      - species name: C
+        coefficient: 1
+  - type: TUNNELING
+    name: my tunneling
+    A: 123.45
+    B: 1200.0
+    C: 1.0e8
+    gas phase: gas
+    reactants:
+      - species name: B
+        coefficient: 1
+    products:
+      - species name: C
+        coefficient: 1
+  - type: ARRHENIUS
+    name: my arrhenius
+    gas phase: gas
+    A: 32.1
+    B: -2.3
+    C: 102.3
+    D: 63.4
+    E: -1.3
+    reactants:
+      - species name: B
+        coefficient: 1
+    products:
+      - species name: C
+        coefficient: 1
+  - type: ARRHENIUS
+    name: my other arrhenius
+    A: 29.3
+    B: -1.5
+    Ea: 101.2
+    D: 82.6
+    E: -0.98
+    gas phase: gas
+    reactants:
+      - species name: A
+        coefficient: 1
+    products:
+      - species name: B
+        coefficient: 1.2
+  - type: USER_DEFINED
+    name: my user defined
+    scaling factor: 12.3
+    gas phase: gas
+    reactants:
+      - species name: A
+        coefficient: 1
+      - species name: B
+        coefficient: 1
+    products:
+      - species name: C
+        coefficient: 1.3
+  - type: TAYLOR_SERIES
+    name: my taylor series
+    A: 12.3
+    B: -1.5
+    C: 1.0e-6
+    D: 340.0
+    E: 0.00032
+    taylor coefficients:
+      - 1.0
+      - 0.1
+      - -0.01
+    gas phase: gas
+    reactants:
+      - species name: B
+        coefficient: 1
+    products:
+      - species name: C
+        coefficient: 1
+  - type: LAMBDA_RATE_CONSTANT
+    name: my lambda rate constant
+    gas phase: gas
+    lambda function: "[](double T, double P) { return 1.2e-5 * exp(-500.0 / T); }"
+    reactants:
+      - species name: B
+        coefficient: 1
+    products:
+      - species name: C
+        coefficient: 1
+aerosol representations:
+  - type: UNIFORM_SECTION
+    name: organic coarse
+    phases: [ organic ]
+    minimum radius [m]: 1.0e-6
+    maximum radius [m]: 1.0e-5
+  - type: SINGLE_MOMENT_MODE
+    name: cloud
+    phases: [ aqueous ]
+    geometric mean radius [m]: 1.0e-5
+    geometric standard deviation: 1.4
+  - type: TWO_MOMENT_MODE
+    name: aitken
+    phases: [ aqueous ]
+    geometric standard deviation: 1.6
+aerosol processes:
+  - type: HENRYS_LAW_PHASE_TRANSFER
+    gas phase: gas
+    gas-phase species: ethanol
+    condensed phase: aqueous
+    condensed-phase species: ethanol
+    solvent: H2O
+    Henry's law constant:
+      HLC_ref [mol m-3 Pa-1]: 1.9
+      C [K]: 6600.0
+    accommodation coefficient: 0.02
+  - type: DISSOLVED_REACTION
+    condensed phase: aqueous
+    solvent: H2O
+    reactants:
+      - name: H2O2
+      - name: ethanol
+    products:
+      - name: H2O
+        coefficient: 2
+    rate constant:
+      type: ARRHENIUS
+      A: 1.0e-3
+      C: -2000.0
+  - type: DISSOLVED_REVERSIBLE_REACTION
+    condensed phase: aqueous
+    solvent: H2O
+    reactants:
+      - name: H2O
+    products:
+      - name: Hp
+      - name: OHm
+    equilibrium constant:
+      A: 1.0e-8
+      C [K]: -6716.0
+    reverse rate constant:
+      A: 1.4e8
+      C: 0.0
+  - type: HENRYS_LAW_EQUILIBRIUM
+    gas phase: gas
+    gas-phase species: H2O2
+    condensed phase: aqueous
+    condensed-phase species: H2O2
+    solvent: H2O
+    Henry's law constant:
+      HLC_ref [mol m-3 Pa-1]: 986.0
+      C [K]: 6600.0
+      T0 [K]: 298.15
+  - type: DISSOLVED_EQUILIBRIUM
+    condensed phase: aqueous
+    algebraic species: HO2m
+    solvent: H2O
+    reactants:
+      - name: H2O2
+    products:
+      - name: Hp
+      - name: HO2m
+    equilibrium constant:
+      type: EQUILIBRIUM
+      A: 2.2e-9
+      C [K]: -3730.0
+      T0 [K]: 298.15
+  - type: LINEAR_CONSTRAINT
+    algebraic phase: aqueous
+    algebraic species: Hp
+    constant [mol m-3]: 0.0
+    terms:
+      - phase: aqueous
+        name: Hp
+        coefficient: 1.0
+      - phase: aqueous
+        name: OHm
+        coefficient: -1.0
+      - phase: aqueous
+        name: HO2m
+        coefficient: -1.0
+emissions:
+  inventories:
+    - name: cams global anthro
+      directory: cams/v6.2
+      file pattern: CAMS-GLOB-ANT_v6.2_{YYYY}-{MM}.nc
+      convention: uptempo
+  species maps:
+    - name: MOZART-T1 from CAMS
+      mappings:
+        - inventory species: NOx
+          mechanism species: NO
+          scaling factor: 0.9
+        - inventory species: NOx
+          mechanism species: NO2
+          scaling factor: 0.1
+        - inventory species: CO
+          mechanism species: CO
+        - inventory species: bc_anth_sum
+          mechanism species: BC
+  regridding:
+    type: none
+  sources:
+    - name: cams anthro
+      mode: offline
+      type: anthropogenic
+      inventory: cams global anthro
+      species map: MOZART-T1 from CAMS
+      temporal interpolation: linear
+      vertical injection: surface
+      category: 0
+      hierarchy: 1
+      scaling factor: 1.0
+      sector: anthropogenic

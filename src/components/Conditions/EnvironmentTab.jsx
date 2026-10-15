@@ -10,7 +10,7 @@ import {
   untagTimeRows,
 } from '../../redux/slices/conditionsSlice'
 import { UnitDropdown } from '../Plots/UnitDropdown'
-import { SIMULATION_TIME_UNITS } from '../Plots/timeRangeUnits'
+import { TIME_RANGE_UNITS } from '../Plots/timeRangeUnits'
 import { TEMPERATURE_UNITS, toKelvin, fromKelvin } from '../Plots/temperatureUnits'
 import { PRESSURE_UNITS } from '../Plots/pressureUnits'
 import { DENSITY_UNITS } from '../Plots/densityUnits'
@@ -81,7 +81,7 @@ export function EnvironmentTab() {
   const unitIds = useSelector((state) => state.conditions.environmentUnits)
   const setUnitId = (field, unitId) => dispatch(setEnvironmentUnit({ field, unitId }))
   // The selected unit of each field. The add form and the table columns use the same units.
-  const timeUnit = getUnit(SIMULATION_TIME_UNITS, unitIds.time)
+  const timeUnit = getUnit(TIME_RANGE_UNITS, unitIds.time)
   const temperatureUnit = getUnit(TEMPERATURE_UNITS, unitIds.temperature)
   const pressureUnit = getUnit(PRESSURE_UNITS, unitIds.pressure)
   const densityUnit = getUnit(DENSITY_UNITS, unitIds.density)
@@ -374,7 +374,7 @@ export function EnvironmentTab() {
               <UnitDropdown
                 unitId={unitIds.time}
                 onChange={(id) => setUnitId('time', id)}
-                units={SIMULATION_TIME_UNITS}
+                units={TIME_RANGE_UNITS}
                 wrapperClassName={DROPDOWN_WRAPPER}
                 buttonClassName={DROPDOWN_BUTTON}
                 centerLabel
