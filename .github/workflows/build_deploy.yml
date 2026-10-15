@@ -46,8 +46,8 @@ jobs:
         tags: |
           hub.k8s.ucar.edu/musicbox/frontend:${{ env.SHORT_SHA }}
           hub.k8s.ucar.edu/musicbox/frontend:${{ github.ref_name }}
-        file: Dockerfile
-        context: repo
+        file: ./Dockerfile
+        context: ./repo
 
     - name: Update devel kustomization
       run: |
@@ -95,8 +95,8 @@ jobs:
         tags: |
           hub.k8s.ucar.edu/musicbox/frontend:${{ env.SHORT_SHA }}
           hub.k8s.ucar.edu/musicbox/frontend:${{ github.ref_name }}
-        file: Dockerfile
-        context: repo
+        file: ./Dockerfile
+        context: ./repo
 
     - name: Update prod kustomization
       run: |
