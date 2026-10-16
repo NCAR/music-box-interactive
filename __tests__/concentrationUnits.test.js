@@ -20,9 +20,10 @@ import { buildTracerConcentrationKeys } from '../src/services/simulation/local/t
 const AIR = airDensityMolM3(101325, 298.15) // ~40.9 mol m-3
 
 describe('concentration unit conversion', () => {
-  it('offers mol m-3, mol mol-1, ppth, ppm, ppb and ppt', () => {
+  it('offers mol m-3, molecule cm-3, mol mol-1, ppth, ppm, ppb and ppt', () => {
     expect(CONCENTRATION_UNITS.map((u) => u.id)).toEqual([
       'mol_m3',
+      'molecule_cm3',
       'mol_mol',
       'ppth',
       'ppm',

@@ -1,4 +1,5 @@
 export const GAS_CONSTANT = 8.31446261815324 // J / (mol K)
+export const AVOGADRO_CONSTANT = 6.02214076e23 // molecule / mol
 
 // mol m-3 is the storage unit everywhere. Mixing-ratio units scale the air number density
 // (mol m-3), so converting to or from them needs the temperature and pressure of the air.
@@ -10,8 +11,15 @@ export const MIXING_RATIO_FACTORS = {
   ppt: 1e-12,
 }
 
+// Number-density units convert from mol m-3 with a fixed factor. They need no air density.
+// 1 mol m-3 = N_A molecule / 1e6 cm3.
+const NUMBER_DENSITY_FACTORS = {
+  molecule_cm3: AVOGADRO_CONSTANT * 1e-6,
+}
+
 export const CONCENTRATION_UNITS = [
   { id: 'mol_m3', label: 'mol m-3' },
+  { id: 'molecule_cm3', label: 'molecule cm-3' },
   { id: 'mol_mol', label: 'mol mol-1' },
   { id: 'ppth', label: 'ppth' },
   { id: 'ppm', label: 'ppm' },
@@ -27,19 +35,23 @@ export function isMixingRatioUnit(unitId) {
   return unitId in MIXING_RATIO_FACTORS
 }
 
+export function isNumberDensityUnit(unitId) {
+  return unitId in NUMBER_DENSITY_FACTORS
+}
+
 // Divisor turning a mol m-3 value into the given unit; feeds inputs that convert by division.
 export function concentrationDivisor(unitId, airDensity) {
-  return isMixingRatioUnit(unitId) ? MIXING_RATIO_FACTORS[unitId] * airDensity : 1
+  if (isMixingRatioUnit(unitId)) return MIXING_RATIO_FACTORS[unitId] * airDensity
+  if (isNumberDensityUnit(unitId)) return 1 / NUMBER_DENSITY_FACTORS[unitId]
+  return 1
 }
 
 export function toMolM3(value, unitId, airDensity) {
-  return isMixingRatioUnit(unitId) ? value * MIXING_RATIO_FACTORS[unitId] * airDensity : value
+  return value * concentrationDivisor(unitId, airDensity)
 }
 
 export function fromMolM3(valueMolM3, unitId, airDensity) {
-  return isMixingRatioUnit(unitId)
-    ? valueMolM3 / (MIXING_RATIO_FACTORS[unitId] * airDensity)
-    : valueMolM3
+  return valueMolM3 / concentrationDivisor(unitId, airDensity)
 }
 
 // Array forms: `airDensities` holds one air number density (mol m-3) per value, so the caller
@@ -49,9 +61,11 @@ export function fromMolM3Array(values, unitId, airDensities) {
 }
 
 // One divisor per sample, for converting the increase over the interval that STARTS at that
-// sample (conditions are step-held, so an interval uses its starting conditions). Null when
-// the unit needs no air density.
+// sample (conditions are step-held, so an interval uses its starting conditions). A
+// number-density unit gives one divisor for all of the samples. Null when the unit is mol m-3,
+// or when a mixing-ratio unit has no air densities.
 export function buildIntervalDivisors(unitId, airDensities) {
+  if (isNumberDensityUnit(unitId)) return concentrationDivisor(unitId)
   if (!isMixingRatioUnit(unitId) || !airDensities) return null
   return airDensities.map((density) => concentrationDivisor(unitId, density))
 }

@@ -74,8 +74,9 @@ describe('reaction parameter display', () => {
       reactants: [{ name: 'A' }], products: [{ name: 'B' }],
       k0_A: 1e-30, k0_B: 0, kinf_A: 2.5e-11, Fc: 0.6, N: 1 })
     // Troe declares eight parameters; the ones this reaction omits show blank, ready to fill in.
+    // k0_A has the order n + 1 = 2, so the default molecule unit shows 1e-30 * 1e6 / N_A.
     expect(parameterList()).toEqual({
-      k0_A: '1.00e-30',
+      k0_A: '1.66e-48',
       k0_B: '0',
       k0_C: '',
       kinf_A: '2.50e-11',

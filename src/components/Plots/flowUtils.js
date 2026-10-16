@@ -111,9 +111,10 @@ export const getReactionEdges = (reaction, rate, thirdBodyNames, nodeId = reacti
  * accumulated total at every step, producing a number that scales with output resolution
  * rather than with chemistry -- halving the output frequency would halve every value.
  *
- * With `intervalDivisors` (one per `results` sample, see buildIntervalDivisors) the result is in
- * a mixing-ratio unit instead: each interval's increase is divided by that interval's divisor
- * and the pieces are summed, which stays exact when air density changes within the window.
+ * With `intervalDivisors` (one per `results` sample, or one number for all of them, see
+ * buildIntervalDivisors) the result is in that unit instead: each interval's increase is
+ * divided by that interval's divisor and the pieces are summed, which stays exact when air
+ * density changes within the window.
  *
  * `reactionIndex` must be the reaction's position in the UNFILTERED mechanism reactions array
  * -- the same array run.js walked when injecting tracers. Passing an index from a filtered
@@ -149,7 +150,7 @@ export function computeIntegratedReactionRate(
       if (first === null) first = value
       last = value
       if (intervalDivisors && previous) {
-        converted += (value - previous.value) / intervalDivisors[previous.index]
+        converted += (value - previous.value) / divisorAt(intervalDivisors, previous.index)
       }
       previous = { value, index: i }
     }
@@ -162,6 +163,10 @@ export function computeIntegratedReactionRate(
 
   return matched ? total : 0
 }
+
+// The divisor of the interval that starts at sample `index`.
+const divisorAt = (intervalDivisors, index) =>
+  typeof intervalDivisors === 'number' ? intervalDivisors : intervalDivisors[index]
 
 /**
  * Computes a time series of cumulative reaction amounts over a specified time window:
@@ -206,7 +211,7 @@ export function computeReactionSeries(
       if (!matched) continue
       if (intervalDivisors) {
         const state = running.get(key) ?? { total, index: i, converted: 0 }
-        state.converted += (total - state.total) / intervalDivisors[state.index]
+        state.converted += (total - state.total) / divisorAt(intervalDivisors, state.index)
         state.total = total
         state.index = i
         running.set(key, state)
