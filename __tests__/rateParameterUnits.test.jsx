@@ -186,6 +186,53 @@ describe('reaction editor with rate parameter units', () => {
     expect(reaction.A).toBe(1.23456789)
   })
 
+  it('shows the value of the new order when a reactant is removed', () => {
+    const store = renderEditor({ id: 'r1', type: 'ARRHENIUS', ...twoReactants, A: 1 }, 'molecule')
+    const equation = screen.getByLabelText(/Equation of/)
+
+    fireEvent.change(equation, { target: { value: 'A → C' } })
+    fireEvent.blur(equation)
+
+    // A first-order value is the same in both units.
+    expect(parameterInput('A').value).toBe('1')
+
+    // A blur of the unchanged input does not save the old second-order value.
+    fireEvent.blur(parameterInput('A'))
+    const [reaction] = store.getState().mechanism.config.mechanism.reactions
+    expect(reaction.A).toBe(1)
+  })
+
+  // Each parameter with a concentration unit, except the Arrhenius A, which the test above checks.
+  const BRANCHED_PRODUCTS = {
+    'alkoxy products': [{ name: 'C', coefficient: 1 }],
+    'nitrate products': [{ name: 'C', coefficient: 1 }],
+  }
+  it.each([
+    ['TROE', 'k0_A', { ...twoReactants, k0_A: 1, kinf_A: 2 }],
+    ['TROE', 'kinf_A', { ...twoReactants, k0_A: 1, kinf_A: 2 }],
+    ['TERNARY_CHEMICAL_ACTIVATION', 'k0_A', { ...twoReactants, k0_A: 1, kinf_A: 2 }],
+    ['TERNARY_CHEMICAL_ACTIVATION', 'kinf_A', { ...twoReactants, k0_A: 1, kinf_A: 2 }],
+    ['BRANCHED_NO_RO2', 'X', { reactants: twoReactants.reactants, ...BRANCHED_PRODUCTS, X: 1 }],
+    ['TUNNELING', 'A', { ...twoReactants, A: 1 }],
+  ])('updates %s %s when a reactant is removed', (type, key, fields) => {
+    const reaction = { id: 'r1', type, ...fields }
+    const store = renderEditor(reaction, 'molecule')
+    const oneReactant = { ...reaction, reactants: [{ name: 'A', coefficient: 1 }] }
+
+    // Branched reactions have no equation input, so the test edits the reactants input.
+    const reactants = screen.getByDisplayValue('A + B')
+    fireEvent.change(reactants, { target: { value: 'A' } })
+    fireEvent.blur(reactants)
+
+    const expected = toDisplayValue(fields[key], 'molecule', parameterOrder(oneReactant, key))
+    expect(Number(parameterInput(key).value)).toBeCloseTo(expected, 0)
+    expect(Number(parameterInput(key).value) / expected).toBeCloseTo(1, 2)
+
+    fireEvent.blur(parameterInput(key))
+    const [saved] = store.getState().mechanism.config.mechanism.reactions
+    expect(saved[key]).toBe(fields[key])
+  })
+
   it('shows the SI value when the unit is SI', () => {
     renderEditor({ id: 'r1', type: 'ARRHENIUS', ...twoReactants, A: 1 }, 'si')
 
