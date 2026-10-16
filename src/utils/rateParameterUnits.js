@@ -15,11 +15,13 @@ export const DEFAULT_RATE_UNIT = 'molecule'
 // order of the parameter minus the order n of the reaction. It comes from the role of the
 // parameter in the rate formula (rate_constant_functions.hpp in MICM):
 //   Troe:                        k = k0[M] / (1 + k0[M]/kinf) F, so k0 has the order n + 1.
-//   Ternary chemical activation: k = k0 / (1 + k0[M]/kinf) F, so kinf has the order n + 1.
+//   Ternary chemical activation: k = k0 / (1 + k0[M]/kinf) F, so kinf has the order n - 1.
+// k0[M]/kinf has no unit, so kinf has the order of k0 minus 1. JPL gives the same units: for
+// OH + CO, k0 is in cm3 molecule-1 s-1 and kinf is in s-1.
 export const RATE_UNIT_PARAMETERS = {
   ARRHENIUS: { A: 0 },
   TROE: { k0_A: 1, kinf_A: 0 },
-  TERNARY_CHEMICAL_ACTIVATION: { k0_A: 0, kinf_A: 1 },
+  TERNARY_CHEMICAL_ACTIVATION: { k0_A: 0, kinf_A: -1 },
   BRANCHED_NO_RO2: { X: 0 },
   TUNNELING: { A: 0 },
 }
@@ -55,18 +57,23 @@ export const fromDisplayValue = (value, unitId, order) =>
 const GAP = ' \u2009'
 
 // The unit for a known order, for FormulaText: "cm^3 molecule^-1 s^-1" or "m^3 mol^-1 s^-1".
+// An order of 0 gives a concentration rate: "molecule cm^-3 s^-1" or "mol m^-3 s^-1".
 export function rateUnitLabel(unitId, order) {
   const power = order - 1
   if (power === 0) return 's^-1'
   const volume = unitId === 'molecule' ? 'cm' : 'm'
   const amount = unitId === 'molecule' ? 'molecule' : 'mol'
-  const amountPower = power === 1 ? '^-1' : `^-${power}`
-  return `${volume}^${3 * power}${GAP}${amount}${amountPower}${GAP}s^-1`
+  if (power < 0) {
+    const amountPower = power === -1 ? '' : `^${-power}`
+    return `${amount}${amountPower}${GAP}${volume}^${3 * power}${GAP}s^-1`
+  }
+  return `${volume}^${3 * power}${GAP}${amount}^-${power}${GAP}s^-1`
 }
 
 // The unit before the reactants are known, with n for the order of the reaction.
 export function genericRateUnitLabel(unitId, offset) {
-  const exponent = offset === 0 ? '(n-1)' : 'n'
+  // The exponent is n - 1 + offset.
+  const exponent = offset === 1 ? 'n' : `(n-${1 - offset})`
   return unitId === 'molecule'
     ? `(cm^3${GAP}molecule^-1)^${exponent}${GAP}s^-1`
     : `(mol${GAP}m^-3)^-${exponent}${GAP}s^-1`
