@@ -23,6 +23,7 @@ import {
 } from '../src/utils/concentrationUnits'
 import {
   fromDisplayValue,
+  genericRateUnitLabel,
   parameterOrder,
   rateUnitLabel,
   reactionOrder,
@@ -54,12 +55,12 @@ describe('rate parameter order', () => {
     expect(parameterOrder(reaction, 'A')).toBe(2)
   })
 
-  it('gives k0 of Troe and kinf of ternary chemical activation one order more', () => {
+  it('gives k0 of Troe one order more and kinf of ternary chemical activation one order less', () => {
     expect(parameterOrder({ type: 'TROE', ...twoReactants }, 'k0_A')).toBe(3)
     expect(parameterOrder({ type: 'TROE', ...twoReactants }, 'kinf_A')).toBe(2)
     const ternary = { type: 'TERNARY_CHEMICAL_ACTIVATION', ...twoReactants }
     expect(parameterOrder(ternary, 'k0_A')).toBe(2)
-    expect(parameterOrder(ternary, 'kinf_A')).toBe(3)
+    expect(parameterOrder(ternary, 'kinf_A')).toBe(1)
   })
 
   it('gives no order to a parameter without a concentration unit', () => {
@@ -85,6 +86,32 @@ describe('rate parameter conversion', () => {
     expect(rateUnitLabel('molecule', 2)).toBe('cm^3 \u2009molecule^-1 \u2009s^-1')
     expect(rateUnitLabel('molecule', 3)).toBe('cm^6 \u2009molecule^-2 \u2009s^-1')
     expect(rateUnitLabel('si', 2)).toBe('m^3 \u2009mol^-1 \u2009s^-1')
+    expect(rateUnitLabel('molecule', 0)).toBe('molecule \u2009cm^-3 \u2009s^-1')
+    expect(rateUnitLabel('si', 0)).toBe('mol \u2009m^-3 \u2009s^-1')
+    expect(rateUnitLabel('molecule', -1)).toBe('molecule^2 \u2009cm^-6 \u2009s^-1')
+  })
+
+  it('labels the unit of each offset before the order is known', () => {
+    expect(genericRateUnitLabel('molecule', 0)).toBe('(cm^3 \u2009molecule^-1)^(n-1) \u2009s^-1')
+    expect(genericRateUnitLabel('molecule', 1)).toBe('(cm^3 \u2009molecule^-1)^n \u2009s^-1')
+    expect(genericRateUnitLabel('molecule', -1)).toBe('(cm^3 \u2009molecule^-1)^(n-2) \u2009s^-1')
+    expect(genericRateUnitLabel('si', -1)).toBe('(mol \u2009m^-3)^-(n-2) \u2009s^-1')
+  })
+
+  it('gives the JPL units of the OH + CO chemical activation', () => {
+    const ohCo = {
+      type: 'TERNARY_CHEMICAL_ACTIVATION',
+      reactants: [
+        { name: 'OH', coefficient: 1 },
+        { name: 'CO', coefficient: 1 },
+      ],
+    }
+    expect(rateUnitLabel('molecule', parameterOrder(ohCo, 'k0_A'))).toBe(
+      'cm^3 \u2009molecule^-1 \u2009s^-1'
+    )
+    expect(rateUnitLabel('molecule', parameterOrder(ohCo, 'kinf_A'))).toBe('s^-1')
+    // A first-order value is the same in both units.
+    expect(toDisplayValue(2.1e9, 'molecule', parameterOrder(ohCo, 'kinf_A'))).toBe(2.1e9)
   })
 })
 
@@ -184,6 +211,53 @@ describe('reaction editor with rate parameter units', () => {
 
     const [reaction] = store.getState().mechanism.config.mechanism.reactions
     expect(reaction.A).toBe(1.23456789)
+  })
+
+  it('shows the value of the new order when a reactant is removed', () => {
+    const store = renderEditor({ id: 'r1', type: 'ARRHENIUS', ...twoReactants, A: 1 }, 'molecule')
+    const equation = screen.getByLabelText(/Equation of/)
+
+    fireEvent.change(equation, { target: { value: 'A → C' } })
+    fireEvent.blur(equation)
+
+    // A first-order value is the same in both units.
+    expect(parameterInput('A').value).toBe('1')
+
+    // A blur of the unchanged input does not save the old second-order value.
+    fireEvent.blur(parameterInput('A'))
+    const [reaction] = store.getState().mechanism.config.mechanism.reactions
+    expect(reaction.A).toBe(1)
+  })
+
+  // Each parameter with a concentration unit, except the Arrhenius A, which the test above checks.
+  const BRANCHED_PRODUCTS = {
+    'alkoxy products': [{ name: 'C', coefficient: 1 }],
+    'nitrate products': [{ name: 'C', coefficient: 1 }],
+  }
+  it.each([
+    ['TROE', 'k0_A', { ...twoReactants, k0_A: 1, kinf_A: 2 }],
+    ['TROE', 'kinf_A', { ...twoReactants, k0_A: 1, kinf_A: 2 }],
+    ['TERNARY_CHEMICAL_ACTIVATION', 'k0_A', { ...twoReactants, k0_A: 1, kinf_A: 2 }],
+    ['TERNARY_CHEMICAL_ACTIVATION', 'kinf_A', { ...twoReactants, k0_A: 1, kinf_A: 2 }],
+    ['BRANCHED_NO_RO2', 'X', { reactants: twoReactants.reactants, ...BRANCHED_PRODUCTS, X: 1 }],
+    ['TUNNELING', 'A', { ...twoReactants, A: 1 }],
+  ])('updates %s %s when a reactant is removed', (type, key, fields) => {
+    const reaction = { id: 'r1', type, ...fields }
+    const store = renderEditor(reaction, 'molecule')
+    const oneReactant = { ...reaction, reactants: [{ name: 'A', coefficient: 1 }] }
+
+    // Branched reactions have no equation input, so the test edits the reactants input.
+    const reactants = screen.getByDisplayValue('A + B')
+    fireEvent.change(reactants, { target: { value: 'A' } })
+    fireEvent.blur(reactants)
+
+    const expected = toDisplayValue(fields[key], 'molecule', parameterOrder(oneReactant, key))
+    // The display rounds the value, so the test compares the ratio.
+    expect(Number(parameterInput(key).value) / expected).toBeCloseTo(1, 2)
+
+    fireEvent.blur(parameterInput(key))
+    const [saved] = store.getState().mechanism.config.mechanism.reactions
+    expect(saved[key]).toBe(fields[key])
   })
 
   it('shows the SI value when the unit is SI', () => {

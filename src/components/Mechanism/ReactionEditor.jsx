@@ -196,6 +196,7 @@ function ReactionChip({
     const isNumber = typeof field.value === 'number'
     return {
       ...field,
+      order,
       unitId,
       unit: rateUnitLabel(unitId, order),
       displayValue: isNumber ? toDisplayValue(field.value, unitId, order) : field.value,
@@ -305,7 +306,9 @@ function ReactionChip({
                     </span>
                     <input
                       type="text"
-                      key={`${field.key}-${field.value}-${field.unitId}`}
+                      // The order is in the key because a change of the reactants changes the
+                      // display value but not the stored value.
+                      key={`${field.key}-${field.value}-${field.unitId}-${field.order}`}
                       defaultValue={shown}
                       // The placeholder is the value the solver applies when this is left unset.
                       placeholder={field.placeholder}
