@@ -1,0 +1,38 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+images:
+- name: hub.k8s.ucar.edu/musicbox/frontend
+  newTag: b06731e
+
+namePrefix: "devel-"
+
+resources:
+- ../../base
+
+labels:
+- includeSelectors: true
+  pairs:
+    app.kubernetes.io/instance: devel
+    app.kubernetes.io/name: musicbox
+
+patches:
+- target:
+    kind: Ingress
+    name: frontend-ingress
+  patch: |-
+    - op: replace
+      path: /spec/tls/0/hosts/0
+      value: musicbox-devel.k8s.ucar.edu
+    - op: replace
+      path: /spec/tls/0/hosts/1
+      value: musicbox-devel.acom.ucar.edu
+    - op: replace
+      path: /spec/rules/0/host
+      value: musicbox-devel.k8s.ucar.edu
+    - op: replace
+      path: /spec/rules/1/host
+      value: musicbox-devel.acom.ucar.edu
+    - op: replace
+      path: /spec/ingressClassName
+      value: traefik-internal

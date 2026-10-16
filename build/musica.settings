@@ -1,0 +1,45 @@
+# MUSICA Configuration Summary
+
+## General
+----------
+MUSICA Version:     0.13.0
+Configured On:	    2026-03-18 19:44:01
+Host System:	    AMD64-Windows-10.0.26200
+Build Directory:    C:/Documents/Capstone/Project/musica/build
+Install Prefix:     C:/Program Files/musica-distribution
+Build type: Release
+
+## Compilers and Flags
+----------------------
+
+C Compiler:         cl.exe (19.41.34120.0)
+C++ Compiler:       cl.exe (19.41.34120.0)
+Fortran Compiler:   
+
+CFLAGS:		/DWIN32 /D_WINDOWS
+CXXFLAGS:	/DWIN32 /D_WINDOWS /EHsc
+Fortran Flags: 
+LDFLAGS:	/machine:x64
+Shared library: 
+
+## Parallel I/O
+---------------
+
+MPI:    OFF
+OPENMP: OFF
+
+## Interfaces:
+--------------
+
+CXX Interface:      ON
+Fortran Interface:  OFF
+Python Library:     OFF
+
+## Dependencies:
+----------------
+
+MICM:               ON (repo: https://github.com/NCAR/micm.git tag: e9123958129f34920491e61b79cd8b6baba28915)
+TUV-X:              OFF
+CARMA:              OFF
+PyBind11:           OFF
+Mechanism Config:      (repo: https://github.com/NCAR/MechanismConfiguration.git tag: 9bd4f9a36af83e3bd2b74185c9edb897555e8410)

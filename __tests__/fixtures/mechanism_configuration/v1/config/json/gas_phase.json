@@ -1,0 +1,11 @@
+[
+  {
+    "name": "gas",
+    "species": [
+      "A",
+      "B",
+      "C"
+    ],
+    "__other": "gas species"
+  }
+]

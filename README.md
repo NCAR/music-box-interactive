@@ -5,61 +5,55 @@
 [![Tests](https://github.com/NCAR/music-box-interactive-api/actions/workflows/test.yml/badge.svg)](https://github.com/NCAR/music-box-interactive-api/actions/workflows/test.yml)
 [![Tests](https://github.com/NCAR/music-box-interactive-api/actions/workflows/pytest.yml/badge.svg)](https://github.com/NCAR/music-box-interactive-api/actions/workflows/pyteset.yml)
 
-**Music Box Interactive** is a full-stack application for interactive visualization and execution of chemical mechanisms. The project includes a Django backend and a modern React + Vite frontend. It is containerized using Docker and designed for flexibility in both local development and production environments.
+**Music Box Interactive** allows for the configuring and running of box models using [Music Box](https://github.com/NCAR/music-box).
 
 ## Getting Started
 
 ### Environment Setup
 
-Create a `.env` file inside the `backend/` folder for development,if it doesn't exist. Example:
-
-```env
-BASE_API_URL="http://localhost:8000"
-IsDebug=True
-LOG_LEVEL=DEBUG
-MUSIC_BOX_BUILD_DIR=/music-box/build
-MUSIC_BOX_CONFIG_DIR=/config-files
-MUSIC_BOX_ZIP_DIR=/config-archives
-PARTMC_ZIP_DIR=/partmc-archives
-RABBIT_MQ_HOST=rabbitmq
-RABBIT_MQ_PASSWORD=guest
-RABBIT_MQ_PORT=5672
-RABBIT_MQ_USER=guest
-SWAGGER_BASE_PATH=''
-SECRET_KEY=
+```bash
+npm install
+npm run dev
 ```
 
 ## Running with Docker 
 
+The Docker image builds the app and serves it with nginx on port 80.
+
 1. Make sure Docker is installed and running.
-2. From the project root, run:
+2. From the project root, build the image:
 
 ```bash
-docker compose up --build
+docker build -t music-box-interactive .
 ```
-You can press CTRL-C to quite docker compose.
 
-To run docker in a deteched state, add the -d flag like this:
+3. Run the container:
 
 ```bash
-docker compose up -d
+docker run --rm -p 8080:80 music-box-interactive
 ```
 
-To stop and remove containers:
+4. Open http://localhost:8080 in your browser.
+
+Press CTRL-C to stop the container.
+
+To run the container in a detached state, add the `-d` flag and give the container a name:
 
 ```bash
-docker compose down
+docker run -d --rm -p 8080:80 --name music-box-interactive music-box-interactive
 ```
 
-View logs:
+To view the logs:
 
 ```bash
-docker compose logs -f
+docker logs -f music-box-interactive
 ```
 
-## Production Deployment
+To stop the container:
 
-Use the `docker-compose.prod.yml` for production builds.
+```bash
+docker stop music-box-interactive
+```
 
 ## License
 Copyright (C) 2018-2025 University Corporation for Atmospheric Research

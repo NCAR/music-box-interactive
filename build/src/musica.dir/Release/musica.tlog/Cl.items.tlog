@@ -1,0 +1,12 @@
+C:\Documents\Capstone\Project\musica\src\util.cpp;C:\Documents\Capstone\Project\musica\build\src\musica.dir\Release\util.obj
+C:\Documents\Capstone\Project\musica\src\component_versions.cpp;C:\Documents\Capstone\Project\musica\build\src\musica.dir\Release\component_versions.obj
+C:\Documents\Capstone\Project\musica\build\version.cpp;C:\Documents\Capstone\Project\musica\build\src\musica.dir\Release\version.obj
+C:\Documents\Capstone\Project\musica\src\micm\convert_v0_to_v1.cpp;C:\Documents\Capstone\Project\musica\build\src\musica.dir\Release\convert_v0_to_v1.obj
+C:\Documents\Capstone\Project\musica\src\micm\cuda_availability.cpp;C:\Documents\Capstone\Project\musica\build\src\musica.dir\Release\cuda_availability.obj
+C:\Documents\Capstone\Project\musica\src\micm\micm.cpp;C:\Documents\Capstone\Project\musica\build\src\musica.dir\Release\micm.obj
+C:\Documents\Capstone\Project\musica\src\micm\micm_c_interface.cpp;C:\Documents\Capstone\Project\musica\build\src\musica.dir\Release\micm_c_interface.obj
+C:\Documents\Capstone\Project\musica\src\micm\parse.cpp;C:\Documents\Capstone\Project\musica\build\src\musica.dir\Release\parse.obj
+C:\Documents\Capstone\Project\musica\src\micm\state.cpp;C:\Documents\Capstone\Project\musica\build\src\musica.dir\Release\state.obj
+C:\Documents\Capstone\Project\musica\src\micm\state_c_interface.cpp;C:\Documents\Capstone\Project\musica\build\src\musica.dir\Release\state_c_interface.obj
+C:\Documents\Capstone\Project\musica\src\micm\v0_parse.cpp;C:\Documents\Capstone\Project\musica\build\src\musica.dir\Release\v0_parse.obj
+C:\Documents\Capstone\Project\musica\src\micm\v1_parse.cpp;C:\Documents\Capstone\Project\musica\build\src\musica.dir\Release\v1_parse.obj

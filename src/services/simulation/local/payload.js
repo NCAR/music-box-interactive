@@ -1,0 +1,69 @@
+import { MusicBox } from '@ncar/music-box'
+import { buildSolverConditions } from './conditions'
+import { getMechanismLabel, serializeReaction } from './mechanism'
+import { rateReactionNames } from './reactionNames'
+import { toConfigMechanism } from '../../mechanism/speciesIds'
+
+export const buildLocalSimulationPayload = ({ mechanismData, conditions }) => {
+  const reduxMechanism = mechanismData.config?.mechanism || {}
+  // The configuration uses species names, never the UI-only species ids.
+  const sourceMechanism = toConfigMechanism(reduxMechanism)
+  const mechanismLabel = getMechanismLabel(mechanismData)
+  const species = sourceMechanism.species ?? []
+  const phases = sourceMechanism.phases ?? []
+  // An unnamed rate-parameter reaction gets the same generated name as its conditions header,
+  // so the solver can match the two. The name in Redux stays empty.
+  const sourceReactions = sourceMechanism.reactions ?? []
+  const rateNames = rateReactionNames(sourceReactions)
+  const reactions = sourceReactions.map((reaction) =>
+    serializeReaction(
+      rateNames.has(reaction.id) && !String(reaction.name || '').trim()
+        ? { ...reaction, name: rateNames.get(reaction.id) }
+        : reaction
+    )
+  )
+
+  const mechanism = {
+    name:
+      sourceMechanism.name ||
+      mechanismData.currentExample?.name ||
+      mechanismData.currentExample ||
+      'custom',
+    version: sourceMechanism.version || '1.0.0',
+    species,
+    phases,
+    reactions,
+  }
+
+  const box = new MusicBox()
+  box.chemTimeStep = conditions.basic.timeStep
+  box.outputTimeStep = conditions.basic.outputFrequency
+  box.simulationLength = conditions.basic.duration
+  box.loadMechanism(mechanism)
+  box.loadConditions(
+    buildSolverConditions(conditions, sourceReactions, reduxMechanism.species ?? [])
+  )
+
+  const payload = box.toJson()
+
+  if (
+    !payload.mechanism ||
+    !Array.isArray(payload.mechanism.species) ||
+    !Array.isArray(payload.mechanism.reactions)
+  ) {
+    throw new Error(
+      'Invalid mechanism payload: expected mechanism.species[] and mechanism.reactions[] before solve()'
+    )
+  }
+
+  if (!Array.isArray(payload.conditions?.data) || payload.conditions.data.length === 0) {
+    throw new Error(
+      'Invalid conditions payload: expected conditions.data[] with at least one block'
+    )
+  }
+
+  return {
+    payload,
+    mechanismLabel,
+  }
+}

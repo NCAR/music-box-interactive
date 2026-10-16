@@ -1,0 +1,78 @@
+import { useCallback } from 'react'
+import { useDispatch, useSelector } from 'react-redux'
+import { useNavigate } from 'react-router-dom'
+import { setError, setMetadata, setResults, setStatus } from '../redux/slices/simulationSlice'
+import { toast } from '@/hooks/use-toast'
+import { createNotify } from '../lib/notify'
+import { runLocalSimulation } from '../services/simulation/localSolver'
+
+export function useRunSimulation() {
+  const dispatch = useDispatch()
+  const navigate = useNavigate()
+
+  const simulation = useSelector((state) => state.simulation)
+  const mechanism = useSelector((state) => state.mechanism.selectedMechanism)
+  const mechanismData = useSelector((state) => state.mechanism)
+  const currentExample = useSelector((state) => state.mechanism.currentExample)
+  const conditions = useSelector((state) => state.conditions)
+
+  const sourceMechanism = mechanismData.config?.mechanism || {}
+  const payloadSpeciesCount = Array.isArray(sourceMechanism.species)
+    ? sourceMechanism.species.length
+    : 0
+  const payloadReactionCount = Array.isArray(sourceMechanism.reactions)
+    ? sourceMechanism.reactions.length
+    : 0
+  const hasValidMechanism = payloadSpeciesCount > 0 && payloadReactionCount > 0
+
+  const isPredefinedMechanism = mechanism && mechanism !== 'custom'
+
+  const isRunning = simulation.status === 'running'
+  const isDisabled = isRunning || !hasValidMechanism
+
+  const getTooltip = () => {
+    if (isRunning) return 'Simulation is currently running...'
+    if (payloadSpeciesCount === 0) return 'Add or load species to run simulation'
+    if (payloadReactionCount === 0) return 'Add or load reactions to run simulation'
+    if (isPredefinedMechanism && !currentExample) return 'Please select an example mechanism'
+    return 'Run atmospheric chemistry simulation'
+  }
+
+  const runSimulation = useCallback(async () => {
+    if (isDisabled) return
+
+    dispatch(setStatus('running'))
+    dispatch(setError(null))
+    // Counts run presses in Google Analytics. gtag only exists when the build sets VITE_GA_ID.
+    // The source is the example id, 'uploaded' for a config file, or 'scratch' for a new one.
+    window.gtag?.('event', 'run_simulation', {
+      source: currentExample?.id || 'scratch',
+    })
+
+    try {
+      const { results, metadata } = await runLocalSimulation({
+        mechanismData,
+        conditions,
+      })
+
+      dispatch(setResults(results))
+      dispatch(setMetadata(metadata))
+      dispatch(setStatus('succeeded'))
+      navigate('/plots')
+    } catch (error) {
+      const message = error?.message || 'Failed to create MICM solver from mechanism'
+      dispatch(setError({ message }))
+      dispatch(setStatus('failed'))
+      createNotify(toast).error('Simulation Failed', message)
+    }
+  }, [conditions, currentExample, dispatch, isDisabled, mechanismData, navigate])
+
+  return {
+    runSimulation,
+    isRunning,
+    isDisabled,
+    tooltip: getTooltip(),
+  }
+}
+
+export default useRunSimulation

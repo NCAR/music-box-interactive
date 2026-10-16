@@ -1,0 +1,13 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="17.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <CustomBuild Include="C:\Documents\Capstone\Project\musica\build\_deps\yaml-cpp-subbuild\CMakeFiles\7732302235655d2f724a7a0f15d9a8ec\generate.stamp.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="CMake Rules">
+      <UniqueIdentifier>{BB734F6C-DCCC-35ED-A3FE-AA179570AB06}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

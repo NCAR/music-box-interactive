@@ -1,0 +1,150 @@
+^C:\DOCUMENTS\CAPSTONE\PROJECT\MUSICA\BUILD\_DEPS\YAML-CPP-SUBBUILD\CMAKEFILES\0E484B619C6361A3B97C9AADD30202E0\YAML-CPP-POPULATE-MKDIR.RULE
+setlocal
+"C:\Program Files\CMake\bin\cmake.exe" -Dcfgdir=/Debug -P C:/Documents/Capstone/Project/musica/build/_deps/yaml-cpp-subbuild/yaml-cpp-populate-prefix/tmp/yaml-cpp-populate-mkdirs.cmake
+if %errorlevel% neq 0 goto :cmEnd
+"C:\Program Files\CMake\bin\cmake.exe" -E touch C:/Documents/Capstone/Project/musica/build/_deps/yaml-cpp-subbuild/yaml-cpp-populate-prefix/src/yaml-cpp-populate-stamp/Debug/yaml-cpp-populate-mkdir
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd
+^C:\DOCUMENTS\CAPSTONE\PROJECT\MUSICA\BUILD\_DEPS\YAML-CPP-SUBBUILD\CMAKEFILES\0E484B619C6361A3B97C9AADD30202E0\YAML-CPP-POPULATE-DOWNLOAD.RULE
+setlocal
+cd C:\Documents\Capstone\Project\musica\build\_deps
+if %errorlevel% neq 0 goto :cmEnd
+C:
+if %errorlevel% neq 0 goto :cmEnd
+"C:\Program Files\CMake\bin\cmake.exe" -DCMAKE_MESSAGE_LOG_LEVEL=VERBOSE -P C:/Documents/Capstone/Project/musica/build/_deps/yaml-cpp-subbuild/yaml-cpp-populate-prefix/tmp/yaml-cpp-populate-gitclone.cmake
+if %errorlevel% neq 0 goto :cmEnd
+"C:\Program Files\CMake\bin\cmake.exe" -E touch C:/Documents/Capstone/Project/musica/build/_deps/yaml-cpp-subbuild/yaml-cpp-populate-prefix/src/yaml-cpp-populate-stamp/Debug/yaml-cpp-populate-download
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd
+^C:\DOCUMENTS\CAPSTONE\PROJECT\MUSICA\BUILD\_DEPS\YAML-CPP-SUBBUILD\CMAKEFILES\0E484B619C6361A3B97C9AADD30202E0\YAML-CPP-POPULATE-UPDATE.RULE
+setlocal
+cd C:\Documents\Capstone\Project\musica\build\_deps\yaml-cpp-src
+if %errorlevel% neq 0 goto :cmEnd
+C:
+if %errorlevel% neq 0 goto :cmEnd
+"C:\Program Files\CMake\bin\cmake.exe" -Dcan_fetch=YES -DCMAKE_MESSAGE_LOG_LEVEL=VERBOSE -P C:/Documents/Capstone/Project/musica/build/_deps/yaml-cpp-subbuild/yaml-cpp-populate-prefix/tmp/yaml-cpp-populate-gitupdate.cmake
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd
+^C:\DOCUMENTS\CAPSTONE\PROJECT\MUSICA\BUILD\_DEPS\YAML-CPP-SUBBUILD\CMAKEFILES\0E484B619C6361A3B97C9AADD30202E0\YAML-CPP-POPULATE-PATCH.RULE
+setlocal
+"C:\Program Files\CMake\bin\cmake.exe" -E echo_append
+if %errorlevel% neq 0 goto :cmEnd
+"C:\Program Files\CMake\bin\cmake.exe" -E touch C:/Documents/Capstone/Project/musica/build/_deps/yaml-cpp-subbuild/yaml-cpp-populate-prefix/src/yaml-cpp-populate-stamp/Debug/yaml-cpp-populate-patch
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd
+^C:\DOCUMENTS\CAPSTONE\PROJECT\MUSICA\BUILD\_DEPS\YAML-CPP-SUBBUILD\CMAKEFILES\0E484B619C6361A3B97C9AADD30202E0\YAML-CPP-POPULATE-CONFIGURE.RULE
+setlocal
+cd C:\Documents\Capstone\Project\musica\build\_deps\yaml-cpp-build
+if %errorlevel% neq 0 goto :cmEnd
+C:
+if %errorlevel% neq 0 goto :cmEnd
+"C:\Program Files\CMake\bin\cmake.exe" -E echo_append
+if %errorlevel% neq 0 goto :cmEnd
+"C:\Program Files\CMake\bin\cmake.exe" -E touch C:/Documents/Capstone/Project/musica/build/_deps/yaml-cpp-subbuild/yaml-cpp-populate-prefix/src/yaml-cpp-populate-stamp/Debug/yaml-cpp-populate-configure
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd
+^C:\DOCUMENTS\CAPSTONE\PROJECT\MUSICA\BUILD\_DEPS\YAML-CPP-SUBBUILD\CMAKEFILES\0E484B619C6361A3B97C9AADD30202E0\YAML-CPP-POPULATE-BUILD.RULE
+setlocal
+cd C:\Documents\Capstone\Project\musica\build\_deps\yaml-cpp-build
+if %errorlevel% neq 0 goto :cmEnd
+C:
+if %errorlevel% neq 0 goto :cmEnd
+"C:\Program Files\CMake\bin\cmake.exe" -E echo_append
+if %errorlevel% neq 0 goto :cmEnd
+"C:\Program Files\CMake\bin\cmake.exe" -E touch C:/Documents/Capstone/Project/musica/build/_deps/yaml-cpp-subbuild/yaml-cpp-populate-prefix/src/yaml-cpp-populate-stamp/Debug/yaml-cpp-populate-build
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd
+^C:\DOCUMENTS\CAPSTONE\PROJECT\MUSICA\BUILD\_DEPS\YAML-CPP-SUBBUILD\CMAKEFILES\0E484B619C6361A3B97C9AADD30202E0\YAML-CPP-POPULATE-INSTALL.RULE
+setlocal
+cd C:\Documents\Capstone\Project\musica\build\_deps\yaml-cpp-build
+if %errorlevel% neq 0 goto :cmEnd
+C:
+if %errorlevel% neq 0 goto :cmEnd
+"C:\Program Files\CMake\bin\cmake.exe" -E echo_append
+if %errorlevel% neq 0 goto :cmEnd
+"C:\Program Files\CMake\bin\cmake.exe" -E touch C:/Documents/Capstone/Project/musica/build/_deps/yaml-cpp-subbuild/yaml-cpp-populate-prefix/src/yaml-cpp-populate-stamp/Debug/yaml-cpp-populate-install
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd
+^C:\DOCUMENTS\CAPSTONE\PROJECT\MUSICA\BUILD\_DEPS\YAML-CPP-SUBBUILD\CMAKEFILES\0E484B619C6361A3B97C9AADD30202E0\YAML-CPP-POPULATE-TEST.RULE
+setlocal
+cd C:\Documents\Capstone\Project\musica\build\_deps\yaml-cpp-build
+if %errorlevel% neq 0 goto :cmEnd
+C:
+if %errorlevel% neq 0 goto :cmEnd
+"C:\Program Files\CMake\bin\cmake.exe" -E echo_append
+if %errorlevel% neq 0 goto :cmEnd
+"C:\Program Files\CMake\bin\cmake.exe" -E touch C:/Documents/Capstone/Project/musica/build/_deps/yaml-cpp-subbuild/yaml-cpp-populate-prefix/src/yaml-cpp-populate-stamp/Debug/yaml-cpp-populate-test
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd
+^C:\DOCUMENTS\CAPSTONE\PROJECT\MUSICA\BUILD\_DEPS\YAML-CPP-SUBBUILD\CMAKEFILES\CDB2AF2CC293CEC5554125DEF45E1B46\YAML-CPP-POPULATE-COMPLETE.RULE
+setlocal
+"C:\Program Files\CMake\bin\cmake.exe" -E make_directory C:/Documents/Capstone/Project/musica/build/_deps/yaml-cpp-subbuild/CMakeFiles/Debug
+if %errorlevel% neq 0 goto :cmEnd
+"C:\Program Files\CMake\bin\cmake.exe" -E touch C:/Documents/Capstone/Project/musica/build/_deps/yaml-cpp-subbuild/CMakeFiles/Debug/yaml-cpp-populate-complete
+if %errorlevel% neq 0 goto :cmEnd
+"C:\Program Files\CMake\bin\cmake.exe" -E touch C:/Documents/Capstone/Project/musica/build/_deps/yaml-cpp-subbuild/yaml-cpp-populate-prefix/src/yaml-cpp-populate-stamp/Debug/yaml-cpp-populate-done
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd
+^C:\DOCUMENTS\CAPSTONE\PROJECT\MUSICA\BUILD\_DEPS\YAML-CPP-SUBBUILD\CMAKEFILES\7732302235655D2F724A7A0F15D9A8EC\YAML-CPP-POPULATE.RULE
+setlocal
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd
+^C:\DOCUMENTS\CAPSTONE\PROJECT\MUSICA\BUILD\_DEPS\YAML-CPP-SUBBUILD\CMAKELISTS.TXT
+setlocal
+"C:\Program Files\CMake\bin\cmake.exe" -SC:/Documents/Capstone/Project/musica/build/_deps/yaml-cpp-subbuild -BC:/Documents/Capstone/Project/musica/build/_deps/yaml-cpp-subbuild --check-stamp-file C:/Documents/Capstone/Project/musica/build/_deps/yaml-cpp-subbuild/CMakeFiles/generate.stamp
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd

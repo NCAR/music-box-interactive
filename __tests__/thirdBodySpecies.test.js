@@ -1,0 +1,90 @@
+import { toReduxConfig } from '../src/services/config/loadMusicBoxConfig';
+import { withSpeciesNames } from '../src/services/mechanism/speciesIds';
+import { getThirdBodyNames, isReactionVisible, isRealSpecies } from '../src/components/Plots/flowUtils';
+
+import chapmanConfigRaw from '@ncar/music-box/examples/chapman/my_config.json' with { type: 'json' };
+// Redux refers to species by id; the flow helpers take the name-based view, as the plots do.
+const reduxChapman = await toReduxConfig(chapmanConfigRaw);
+const chapmanConfig = { ...reduxChapman, mechanism: withSpeciesNames(reduxChapman.mechanism) };
+
+// A third body ("M" = any molecule present in the system) catalyses a reaction without being
+// consumed, so the solver reports no concentration for it. The species list in the panel is
+// derived from solver output, so M can never be selected -- and requiring it to be selected
+// permanently hid every reaction that uses one.
+
+describe('getThirdBodyNames', () => {
+  it('picks up M from the Chapman mechanism', async () => {
+    expect(getThirdBodyNames(chapmanConfig.mechanism.species)).toEqual(new Set(['M']));
+  });
+
+  it('does not treat ordinary species as third bodies', async () => {
+    const thirdBodies = getThirdBodyNames(chapmanConfig.mechanism.species);
+    for (const name of ['O', 'O1D', 'O2', 'O3', 'N2']) {
+      expect(thirdBodies.has(name)).toBe(false);
+    }
+  });
+
+  it('tolerates a missing or empty species list', async () => {
+    expect(getThirdBodyNames(undefined)).toEqual(new Set());
+    expect(getThirdBodyNames([])).toEqual(new Set());
+    expect(getThirdBodyNames([null, {}])).toEqual(new Set());
+  });
+});
+
+describe('isReactionVisible — third bodies do not gate visibility', () => {
+  const { reactions, species } = chapmanConfig.mechanism;
+  const thirdBodyNames = getThirdBodyNames(species);
+
+  // Chapman reaction 3: O + O2 + M -> O3 + M, the ozone-forming step.
+  const ozoneFormation = reactions[3];
+
+  it('is the reaction under test', async () => {
+    const names = ozoneFormation.reactants.map((r) => r.name);
+    expect(names).toEqual(expect.arrayContaining(['O', 'O2', 'M']));
+  });
+
+  it('shows O + O2 + M -> O3 + M when only O and O2 are selected', async () => {
+    expect(isReactionVisible(ozoneFormation, ['O', 'O2'], thirdBodyNames)).toBe(true);
+  });
+
+  it('never uses a third body itself to satisfy visibility', async () => {
+    // M can never appear in selectedSpecies (the solver reports no concentration for it), so a
+    // reaction whose only real species is a third body must never be drawn.
+    const thirdBodyOnly = { reactants: [{ name: 'M' }], products: [{ name: 'M' }] };
+    expect(isReactionVisible(thirdBodyOnly, ['M'], thirdBodyNames)).toBe(false);
+  });
+
+  it('shows the reaction when just one genuine reactant is selected', async () => {
+    expect(isReactionVisible(ozoneFormation, ['O'], thirdBodyNames)).toBe(true);
+    expect(isReactionVisible(ozoneFormation, ['O2'], thirdBodyNames)).toBe(true);
+    expect(isReactionVisible(ozoneFormation, [], thirdBodyNames)).toBe(false);
+  });
+
+  it('leaves reactions without a third body unaffected', async () => {
+    const oPlusO3 = reactions[2]; // O + O3 -> 2 O2
+    expect(isReactionVisible(oPlusO3, ['O', 'O3'], thirdBodyNames)).toBe(true);
+    expect(isReactionVisible(oPlusO3, ['O'], thirdBodyNames)).toBe(true);
+    expect(isReactionVisible(oPlusO3, ['N2'], thirdBodyNames)).toBe(false);
+  });
+
+  it('every Chapman reaction is visible when all selectable species are selected', async () => {
+    // The real regression: with M unselectable, reaction 3 could never be drawn.
+    const selectable = species.map((s) => s.name).filter((n) => !thirdBodyNames.has(n));
+    const visible = reactions.filter((r) => isReactionVisible(r, selectable, thirdBodyNames));
+    expect(visible).toHaveLength(reactions.length);
+  });
+
+  it('is defensive about malformed reactions', async () => {
+    expect(isReactionVisible(undefined, ['O'], thirdBodyNames)).toBe(false);
+    expect(isReactionVisible({}, ['O'], thirdBodyNames)).toBe(false);
+    expect(isReactionVisible({ reactants: [] }, ['O'], thirdBodyNames)).toBe(false);
+  });
+
+  it('does not count tracers as required reactants', async () => {
+    const reaction = {
+      reactants: [{ name: 'O' }, { name: '__PROD__RXN_1_FOO' }],
+    };
+    expect(isRealSpecies('__PROD__RXN_1_FOO')).toBe(false);
+    expect(isReactionVisible(reaction, ['O'], thirdBodyNames)).toBe(true);
+  });
+});

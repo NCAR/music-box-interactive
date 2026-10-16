@@ -1,0 +1,88 @@
+import { PHASE_PROPERTY_KEYS, pickDeclared } from './speciesProperties'
+
+// A phase entry refers to its species by the species id (see services/mechanism/speciesIds).
+const isEntryOf = (entry, speciesId) => entry?.speciesId === speciesId
+
+// The first phase that lists a species. The editor shows and edits this phase.
+export const findSpeciesPhase = (phases, speciesId) =>
+  (phases ?? []).find((phase) => (phase.species ?? []).some((entry) => isEntryOf(entry, speciesId)))
+
+// The mechanism stores phase membership and the phase-only species properties on
+// phases[].species[]. The editor shows each species together with its phase and those properties.
+export const withPhaseInfo = (species, phases) =>
+  species.map((sp) => {
+    const phase = findSpeciesPhase(phases, sp.id)
+    const entry = phase?.species.find((e) => isEntryOf(e, sp.id)) ?? {}
+    return { ...sp, ...pickDeclared(entry, PHASE_PROPERTY_KEYS), phase: phase?.name }
+  })
+
+export const getMechanismLabel = (mechanismData) => {
+  return (
+    mechanismData.currentExample?.name ||
+    mechanismData.currentExample?.mechanism_name ||
+    mechanismData.config?.mechanism?.name ||
+    'local'
+  )
+}
+
+const generatedLambdaName = (reaction) => {
+  const names = (components) => (components ?? []).map((c) => c.name).filter(Boolean)
+  const lhs = names(reaction.reactants).join('_') || 'rxn'
+  const rhs = names(reaction.products).join('_') || 'prod'
+  return `${lhs}_to_${rhs}`
+}
+
+export const serializeReaction = ({ id: _id, ...reaction }) => {
+  if (reaction.type === 'LAMBDA_RATE_CONSTANT' && !String(reaction.name || '').trim()) {
+    return { ...reaction, name: generatedLambdaName(reaction) }
+  }
+  return reaction
+}
+
+// Component arrays supported by the reaction, varying by reaction type.
+export const REACTION_COMPONENT_KEYS = [
+  'reactants',
+  'products',
+  'gas-phase products',
+  'alkoxy products',
+  'nitrate products',
+]
+
+// A reaction's reactant components. SURFACE stores its one reactant as the `gas-phase species`
+// name, not as a component list, so it is converted to a component here.
+export const getReactionReactants = (reaction) => {
+  if (reaction?.reactants) return reaction.reactants
+  const gasPhaseSpecies = reaction?.['gas-phase species']
+  return gasPhaseSpecies ? [{ name: gasPhaseSpecies }] : []
+}
+
+// A reaction's product lists, each with a label. BRANCHED_NO_RO2 has an alkoxy branch and a
+// nitrate branch. Every other type has one product list, with no label.
+export const getReactionProductBranches = (reaction) => {
+  if (reaction?.['alkoxy products'] || reaction?.['nitrate products']) {
+    return [
+      { label: 'alkoxy', products: reaction['alkoxy products'] ?? [] },
+      { label: 'nitrate', products: reaction['nitrate products'] ?? [] },
+    ]
+  }
+  return [{ label: null, products: reaction?.products || reaction?.['gas-phase products'] || [] }]
+}
+
+// One equation for each product list, such as "A → B (alkoxy); A → C (nitrate)".
+// formatEquation(reactants, products) gives the text of one equation.
+export const formatReactionEquations = (reaction, formatEquation) => {
+  const reactants = getReactionReactants(reaction)
+  return getReactionProductBranches(reaction)
+    .map(({ label, products }) => {
+      const equation = formatEquation(reactants, products)
+      return label ? `${equation} (${label})` : equation
+    })
+    .join('; ')
+}
+
+// All species referenced by a reaction across its type-specific component arrays.
+export const getReactionSpeciesNames = (reaction) => [
+  ...REACTION_COMPONENT_KEYS.flatMap((key) => (reaction[key] ?? []).map((c) => c.name)),
+  // SURFACE reactions reference their gas-phase species by name.
+  ...(reaction['gas-phase species'] ? [reaction['gas-phase species']] : []),
+]

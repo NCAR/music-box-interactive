@@ -1,0 +1,669 @@
+import { Fragment, useState } from 'react'
+import { useSelector, useDispatch } from 'react-redux'
+import { parseRateColumnKey } from '../../services/conditions/rateColumns'
+import { ChevronDown, ChevronUp, Lightbulb } from 'lucide-react'
+import { useNotify } from '@/hooks/use-notify'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card'
+import { Button } from '../ui/button'
+import { Dropdown } from '../ui/dropdown'
+import {
+  addReaction,
+  removeReaction,
+  updateReaction,
+  selectNamedReactions,
+} from '../../redux/slices/mechanismSlice'
+import {
+  applyReactionEquation,
+  buildGeneratedReactionName,
+  isEquationEditable,
+  parseReactionString,
+} from './reactions/reactionUtils'
+import {
+  getReactionDefinition,
+  getReactionParameters,
+  getReactionTypeLabel,
+  reactionRegistry,
+} from './reactions/reactionRegistry'
+import {
+  REACTION_COMPONENT_KEYS,
+  formatReactionEquations,
+  getReactionSpeciesNames,
+} from '../../services/simulation/local/mechanism'
+import {
+  EDITOR_GRID,
+  ITEM_CHIP,
+  ITEM_LIST,
+  ITEM_PANEL,
+  LIST_CARD,
+  LIST_CARD_CONTENT,
+  TEXT_INPUT_SM,
+} from './fieldStyles'
+import { EMPTY_ARRAY } from '../../utils/emptyArray'
+import { DISPLAY_DECIMALS } from '../../utils/displayDecimals'
+import { FormulaText } from './FormulaText'
+import { useRateParameterUnits } from '../../hooks/rateParameterUnitContext'
+import {
+  RATE_UNIT_PARAMETERS,
+  fromDisplayValue,
+  genericRateUnitLabel,
+  parameterOrder,
+  rateUnitLabel,
+  toDisplayValue,
+} from '../../utils/rateParameterUnits'
+
+const formatReactionComponents = (components, maxDecimals) => {
+  if (!Array.isArray(components) || components.length === 0) {
+    return '∅'
+  }
+
+  return components
+    .map((component) => {
+      const name = component.name || ''
+      const coefficient = Number(component.coefficient)
+      // A coefficient below 1 shows too (0.5OH), so that an edit does not lose it.
+      const shown = maxDecimals == null ? coefficient : parseFloat(coefficient.toFixed(maxDecimals))
+      const coeffPrefix = Number.isFinite(coefficient) && coefficient !== 1 ? shown : ''
+
+      return `${coeffPrefix}${name}`
+    })
+    .join(' + ')
+}
+
+const formatReactionDisplay = (reaction) => {
+  const toChipText = (components) =>
+    formatReactionComponents(
+      Array.isArray(components) ? components : [components],
+      DISPLAY_DECIMALS
+    )
+
+  return formatReactionEquations(
+    reaction,
+    (reactants, products) => `${toChipText(reactants)} → ${toChipText(products)}`
+  )
+}
+
+// Structural fields. All other fields are rate parameters that vary by reaction type.
+// Deriving them from the object reflects what the reaction actually defines and requires
+// no changes when new reaction types are added.
+const GAS_PHASE_SPECIES_KEY = 'gas-phase species'
+
+const COMPONENT_LABELS = {
+  reactants: 'Reactants',
+  // Display label only; the key stays as the solver spells it.
+  [GAS_PHASE_SPECIES_KEY]: 'Gas-phase reactant',
+  products: 'Products',
+  'gas-phase products': 'Gas-phase products',
+  'alkoxy products': 'Alkoxy products',
+  'nitrate products': 'Nitrate products',
+}
+
+const componentsToInput = (components) =>
+  Array.isArray(components) && components.length > 0 ? formatReactionComponents(components) : ''
+
+// Species fields vary by reaction type. SURFACE stores its reactant as a bare gas-phase species
+// string rather than an array, so it needs separate handling to remain editable.
+const componentFields = (reaction) => {
+  const fields = []
+
+  if (typeof reaction[GAS_PHASE_SPECIES_KEY] === 'string') {
+    fields.push({
+      key: GAS_PHASE_SPECIES_KEY,
+      label: COMPONENT_LABELS[GAS_PHASE_SPECIES_KEY],
+      value: reaction[GAS_PHASE_SPECIES_KEY],
+      single: true,
+    })
+  }
+
+  for (const key of REACTION_COMPONENT_KEYS) {
+    if (Array.isArray(reaction[key])) {
+      fields.push({
+        key,
+        label: COMPONENT_LABELS[key] ?? key,
+        value: componentsToInput(reaction[key]),
+      })
+    }
+  }
+
+  return fields
+}
+
+const NON_PARAMETER_KEYS = new Set([
+  'id',
+  'type',
+  'name',
+  'gas phase',
+  'gas-phase species',
+  ...REACTION_COMPONENT_KEYS,
+])
+
+// Show every rate parameter the type supports, including unset ones so solver defaults can be filled
+// in later. Append unlisted parameters to ensure values loaded from mechanism files remain visible.
+const rateParameters = (reaction) => {
+  const declared = getReactionParameters(reaction.type)
+  const declaredKeys = declared.map((field) => field.key)
+
+  const carried = Object.entries(reaction).filter(
+    ([key, value]) =>
+      !NON_PARAMETER_KEYS.has(key) &&
+      !key.startsWith('__') &&
+      value !== undefined &&
+      value !== null &&
+      value !== ''
+  )
+
+  return [
+    ...declared.map((field) => ({ ...field, value: reaction[field.key] })),
+    ...carried
+      .filter(([key]) => !declaredKeys.includes(key))
+      .map(([key, value]) => ({ key, value })),
+  ]
+}
+
+// Use exponential notation only where it helps: rate constants span many orders of magnitude,
+// while values like B = 0 or D = 300 are clearer in plain notation.
+const formatParameterValue = (value) => {
+  if (value === undefined || value === null) {
+    return ''
+  }
+  if (typeof value !== 'number') {
+    return String(value)
+  }
+  if (value === 0) {
+    return '0'
+  }
+  const magnitude = Math.abs(value)
+  return magnitude < 1e-3 || magnitude >= 1e6 ? value.toExponential(2) : String(value)
+}
+
+// A reaction renders as a collapsed chip. Clicking it unfolds its type, rate parameter, and name.
+function ReactionChip({
+  reaction,
+  onRemove,
+  onNameSave,
+  onEquationSave,
+  onComponentsSave,
+  onParameterSave,
+}) {
+  const [expanded, setExpanded] = useState(false)
+  const { unitFor } = useRateParameterUnits()
+  const formula = formatReactionDisplay(reaction)
+  // A parameter with a concentration unit shows its value in the selected display unit. The
+  // mechanism keeps the SI value.
+  const parameters = rateParameters(reaction).map((field) => {
+    const order = parameterOrder(reaction, field.key)
+    if (order === null) return field
+    const unitId = unitFor(reaction.type, field.key)
+    const isNumber = typeof field.value === 'number'
+    return {
+      ...field,
+      order,
+      unitId,
+      unit: rateUnitLabel(unitId, order),
+      displayValue: isNumber ? toDisplayValue(field.value, unitId, order) : field.value,
+      // A first-order value is the same in both units, so it needs no hint.
+      storedAs:
+        isNumber && unitId !== 'si' && order !== 1
+          ? `${formatParameterValue(field.value)} ${rateUnitLabel('si', order)}`
+          : null,
+    }
+  })
+  // Size the name column to this reaction's longest parameter name so short names don't over-reserve
+  // space and long names don't wrap. In monospace, 1ch equals one character.
+  const nameColumnWidth = parameters.length
+    ? `${Math.max(...parameters.map((field) => field.key.length))}ch`
+    : undefined
+
+  if (!expanded) {
+    return (
+      <button type="button" onClick={() => setExpanded(true)} className={`${ITEM_CHIP} font-mono`}>
+        {formula}
+        <ChevronDown className="w-3.5 h-3.5 flex-shrink-0" />
+      </button>
+    )
+  }
+
+  return (
+    <div className={`${ITEM_PANEL.replace('w-full', 'w-[calc(50%-0.25rem)]')}`}>
+      <div className="flex items-start justify-between gap-3">
+        <button
+          type="button"
+          onClick={() => setExpanded(false)}
+          className="flex items-center gap-1.5 rounded text-base font-semibold font-mono text-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-assist-secondary-ring"
+        >
+          {formula}
+          <ChevronUp className="w-4 h-4 flex-shrink-0" />
+        </button>
+
+        <Button variant="destructive" size="sm" onClick={() => onRemove(reaction.id)}>
+          Remove
+        </Button>
+      </div>
+
+      <div className="mt-3 flex flex-col gap-3">
+        <div className="flex flex-col gap-1">
+          <label className="text-[11px] uppercase tracking-wide text-muted">Type</label>
+          <p className="text-sm text-ink">{reaction.type}</p>
+        </div>
+
+        {/* One text for the whole equation. A branched reaction has two product lists, so it is
+            edited only in the fields below. */}
+        {isEquationEditable(componentFields(reaction)) && (
+          <div className="flex flex-col gap-1">
+            <label className="text-[11px] uppercase tracking-wide text-muted">Equation</label>
+            <input
+              type="text"
+              key={formula}
+              defaultValue={formula}
+              onBlur={(e) => {
+                if (e.target.value !== formula) onEquationSave(reaction, e.target.value)
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.currentTarget.blur()
+                }
+              }}
+              placeholder="O1D + N2 → O + N2"
+              aria-label={`Equation of ${formula}`}
+              className={`w-full ${TEXT_INPUT_SM.replace('text-center', 'text-left')} font-mono`}
+            />
+          </div>
+        )}
+
+        {componentFields(reaction).map((field) => (
+          <div key={field.key} className="flex flex-col gap-1">
+            <label className="text-[11px] uppercase tracking-wide text-muted">{field.label}</label>
+            <input
+              type="text"
+              // Uncontrolled: the value is re-derived from the store on save, while a controlled input would
+              // interfere with typing partial formulas.
+              key={field.value}
+              defaultValue={field.value}
+              onBlur={(e) => onComponentsSave(reaction, field, e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.currentTarget.blur()
+                }
+              }}
+              placeholder="O1D + N2"
+              className={`w-full ${TEXT_INPUT_SM.replace('text-center', 'text-left')} font-mono`}
+            />
+          </div>
+        ))}
+
+        {parameters.length > 0 && (
+          <div className="flex flex-col gap-2">
+            <label className="text-[11px] uppercase tracking-wide text-muted">Parameters</label>
+            {parameters.map((field) => {
+              const shown = formatParameterValue(field.displayValue ?? field.value)
+              return (
+                <Fragment key={field.key}>
+                  <div className="flex items-center gap-3">
+                    <span
+                      className="flex-shrink-0 whitespace-nowrap text-sm font-mono text-muted"
+                      style={{ width: nameColumnWidth }}
+                    >
+                      {field.key}
+                    </span>
+                    <input
+                      type="text"
+                      // The order is in the key because a change of the reactants changes the
+                      // display value but not the stored value.
+                      key={`${field.key}-${field.value}-${field.unitId}-${field.order}`}
+                      defaultValue={shown}
+                      // The placeholder is the value the solver applies when this is left unset.
+                      placeholder={field.placeholder}
+                      // An unchanged text is not saved, so that the rounded display value does
+                      // not replace the stored value.
+                      onBlur={(e) => {
+                        if (e.target.value !== shown) {
+                          onParameterSave(reaction, field.key, e.target.value)
+                        }
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.currentTarget.blur()
+                        }
+                      }}
+                      className={`w-full ${TEXT_INPUT_SM.replace('text-center', 'text-left')} font-mono`}
+                    />
+                    {field.unitId && (
+                      <span className="flex-shrink-0 whitespace-nowrap text-xs text-muted">
+                        <FormulaText text={field.unit} />
+                      </span>
+                    )}
+                  </div>
+                  {field.storedAs && (
+                    <p
+                      className="-mt-1 text-xs text-muted"
+                      style={{ paddingLeft: `calc(${nameColumnWidth} + 0.75rem)` }}
+                    >
+                      stored as <FormulaText text={field.storedAs} />
+                    </p>
+                  )}
+                </Fragment>
+              )
+            })}
+          </div>
+        )}
+
+        <div className="flex flex-col gap-1">
+          <label className="text-[11px] uppercase tracking-wide text-muted">Name</label>
+          {/* An empty name removes it. */}
+          <input
+            type="text"
+            key={reaction.name ?? ''}
+            defaultValue={reaction.name ?? ''}
+            onBlur={(e) => {
+              if (e.target.value !== (reaction.name ?? '')) onNameSave(reaction, e.target.value)
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.currentTarget.blur()
+              }
+            }}
+            placeholder="no name"
+            aria-label={`Name of ${formula}`}
+            className={`w-full ${TEXT_INPUT_SM.replace('text-center', 'text-left')}`}
+          />
+        </div>
+      </div>
+    </div>
+  )
+}
+
+export function ReactionEditor() {
+  const dispatch = useDispatch()
+  const notify = useNotify()
+  const reactions = useSelector(selectNamedReactions)
+  const species = useSelector((state) => state.mechanism.config.mechanism?.species || EMPTY_ARRAY)
+  const conditionColumns = useSelector((state) => state.conditions?.table?.columns)
+
+  const [reactionType, setReactionType] = useState(reactionRegistry[0].type)
+  const [reactionSearch, setReactionSearch] = useState('')
+  const [typeFilter, setTypeFilter] = useState('')
+
+  const { unitFor } = useRateParameterUnits()
+
+  const activeReactionDefinition = getReactionDefinition(reactionType)
+  const ActiveReactionForm = activeReactionDefinition.component
+  // The add form does not know the order of the reaction yet, so it shows the unit with n.
+  const activeParameters = activeReactionDefinition.parameters.map((parameter) => {
+    const offset = RATE_UNIT_PARAMETERS[reactionType]?.[parameter.key]
+    return offset === undefined
+      ? parameter
+      : { ...parameter, unit: genericRateUnitLabel(unitFor(reactionType, parameter.key), offset) }
+  })
+
+  // The value of a parameter in the display unit, converted to SI.
+  const toStoredValue = (reaction, key, value) =>
+    fromDisplayValue(value, unitFor(reaction.type, key), parameterOrder(reaction, key))
+
+  // Search reactions by matching the query anywhere in their formula; species matches find every
+  // reaction they appear in. Preserve mechanism order, and group reactions by canonical type so
+  // registry and solver spellings map to the same option.
+  const typeCounts = reactions.reduce((counts, reaction) => {
+    const type = reaction.type || 'UNKNOWN'
+    counts[type] = (counts[type] || 0) + 1
+    return counts
+  }, {})
+  const availableTypes = Object.keys(typeCounts).sort()
+
+  // If the selection is stale after a mechanism change, show all items instead of
+  // silently showing an empty list.
+  const activeType = availableTypes.includes(typeFilter) ? typeFilter : ''
+
+  // Filters combine: select a type to narrow the list, then search by species within it.
+  const reactionQuery = reactionSearch.trim().toLowerCase()
+  const filteredReactions = reactions.filter((reaction) => {
+    if (activeType && reaction.type !== activeType) {
+      return false
+    }
+    if (!reactionQuery) {
+      return true
+    }
+    const haystack = `${formatReactionDisplay(reaction)} ${reaction.name ?? ''}`.toLowerCase()
+    return haystack.includes(reactionQuery)
+  })
+
+  // Returns true when the reaction is added. The form keeps its values when the add fails, so
+  // the user can fix the mistake.
+  const handleAddReaction = (displayedReaction) => {
+    // The form gives the rate parameters in the display units. The mechanism stores SI values.
+    const newReaction = { ...displayedReaction }
+    for (const key of Object.keys(RATE_UNIT_PARAMETERS[newReaction.type] ?? {})) {
+      if (typeof newReaction[key] === 'number') {
+        newReaction[key] = toStoredValue(newReaction, key, newReaction[key])
+      }
+    }
+
+    // Rejects a reaction that references an undefined species, which would fail the solver build.
+    // Species names are case-sensitive.
+    const defined = new Set(species.map((sp) => sp.name).filter(Boolean))
+    const unknown = [...new Set(getReactionSpeciesNames(newReaction))].filter(
+      (name) => !defined.has(name)
+    )
+
+    if (unknown.length > 0) {
+      notify.error(
+        unknown.length === 1 ? 'Unknown Species' : 'Unknown Species',
+        `${unknown.join(', ')} ${
+          unknown.length === 1 ? 'is not' : 'are not'
+        } defined in this mechanism. Add ${
+          unknown.length === 1 ? 'it' : 'them'
+        } in the Species tab first.`
+      )
+      return false
+    }
+
+    dispatch(addReaction(newReaction))
+    notify.success(
+      'Reaction Added',
+      `Successfully added reaction: ${newReaction.name || formatReactionDisplay(newReaction)}.`
+    )
+    return true
+  }
+
+  // Edits go through the same validation as adding, so an edit cannot introduce a species
+  // reference that a newly added reaction would have been rejected for.
+  const saveReaction = (candidate) => {
+    const defined = new Set(species.map((sp) => sp.name).filter(Boolean))
+    const unknown = [...new Set(getReactionSpeciesNames(candidate))].filter(
+      (name) => !defined.has(name)
+    )
+
+    if (unknown.length > 0) {
+      notify.error(
+        'Unknown Species',
+        `${unknown.join(', ')} ${
+          unknown.length === 1 ? 'is not' : 'are not'
+        } defined in this mechanism.`
+      )
+      return false
+    }
+
+    dispatch(updateReaction(candidate))
+    return true
+  }
+
+  const handleComponentsSave = (reaction, field, rawValue) => {
+    const parsed = parseReactionString(rawValue)
+
+    if (parsed.length === 0) {
+      notify.invalidInput(`${field.label} cannot be empty.`)
+      return
+    }
+
+    // `gas-phase species` holds one species as a plain string, not a component array.
+    if (field.single) {
+      if (parsed.length > 1) {
+        notify.invalidInput(`${field.label} must be a single species.`)
+        return
+      }
+      saveReaction({ ...reaction, [field.key]: parsed[0].name })
+      return
+    }
+
+    saveReaction({ ...reaction, [field.key]: parsed })
+  }
+
+  // A side that has species cannot become empty, as in the fields of each list. A side that is
+  // empty already (a photolysis without products) can stay empty.
+  const handleEquationSave = (reaction, rawValue) => {
+    const fields = componentFields(reaction).map((field) => ({
+      ...field,
+      required: field.value !== '',
+    }))
+    const result = applyReactionEquation(reaction, rawValue, fields)
+    if (result.error) {
+      notify.invalidInput(result.error)
+      return
+    }
+    saveReaction(result.reaction)
+  }
+
+  const handleNameSave = (reaction, rawValue) => {
+    const name = rawValue.trim()
+    const updated = { ...reaction }
+    if (name) updated.name = name
+    else delete updated.name
+    saveReaction(updated)
+  }
+
+  const handleParameterSave = (reaction, key, rawValue) => {
+    const trimmedValue = rawValue.trim()
+    const updated = { ...reaction }
+
+    // Clearing a parameter removes it, which is how "not set" is expressed.
+    if (!trimmedValue) {
+      delete updated[key]
+      saveReaction(updated)
+      return
+    }
+
+    const parsedValue = Number.parseFloat(trimmedValue)
+
+    if (Number.isNaN(parsedValue)) {
+      notify.invalidInput(`${key} must be a valid number.`)
+      return
+    }
+
+    updated[key] = toStoredValue(reaction, key, parsedValue)
+    saveReaction(updated)
+  }
+
+  const handleRemoveReaction = (reactionId) => {
+    const reaction = reactions.find((r) => r.id === reactionId)
+    // The conditions slice removes the reaction's rate-parameter columns with it.
+    const hadConditions = Object.keys(conditionColumns || {}).some(
+      (key) => parseRateColumnKey(key)?.reactionId === reactionId
+    )
+    dispatch(removeReaction(reactionId))
+    notify.removed(
+      'Reaction Removed',
+      `Removed reaction: ${reaction?.name || (reaction && buildGeneratedReactionName(reaction)) || 'Unknown'}.` +
+        (hadConditions ? ' Its rate parameter conditions were removed too.' : '')
+    )
+  }
+
+  const reactionChips = (
+    <div className={ITEM_LIST}>
+      {filteredReactions.length === 0 ? (
+        <p className="w-full text-center text-muted py-8">No matching reactions found.</p>
+      ) : (
+        filteredReactions.map((reaction) => (
+          <ReactionChip
+            key={reaction.id}
+            reaction={reaction}
+            onRemove={handleRemoveReaction}
+            onNameSave={handleNameSave}
+            onEquationSave={handleEquationSave}
+            onComponentsSave={handleComponentsSave}
+            onParameterSave={handleParameterSave}
+          />
+        ))
+      )}
+    </div>
+  )
+
+  return (
+    <div className="space-y-4">
+      <div className={EDITOR_GRID}>
+        <Card>
+          <CardHeader>
+            <CardTitle>Add reaction</CardTitle>
+            <CardDescription>Define a reaction for the mechanism</CardDescription>
+          </CardHeader>
+
+          <CardContent>
+            <div className="grid grid-cols-1 gap-7">
+              <div>
+                <label className="block text-base font-semibold text-ink mb-2">
+                  Choose a reaction
+                </label>
+                <Dropdown
+                  value={reactionType}
+                  onChange={setReactionType}
+                  className="h-10 px-2 rounded-lg text-base"
+                  options={reactionRegistry.map((type) => ({
+                    value: type.type,
+                    label: type.label,
+                    disabled: type.type === 'LAMBDA_RATE_CONSTANT',
+                    title:
+                      type.type === 'LAMBDA_RATE_CONSTANT'
+                        ? 'Lambda rate is unavailable'
+                        : undefined,
+                  }))}
+                />
+              </div>
+
+              <ActiveReactionForm
+                onAddReaction={handleAddReaction}
+                parameters={activeParameters}
+                {...(activeReactionDefinition.componentProps || {})}
+              />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className={LIST_CARD}>
+          <CardHeader>
+            <CardTitle>{`${reactions.length} reactions`}</CardTitle>
+          </CardHeader>
+
+          <CardContent className={LIST_CARD_CONTENT}>
+            <Dropdown
+              value={activeType}
+              onChange={setTypeFilter}
+              className="mb-3 h-9 w-[95%]"
+              options={[
+                { value: '', label: `All reaction types (${reactions.length})` },
+                ...availableTypes.map((type) => ({
+                  value: type,
+                  label: `${getReactionTypeLabel(type)} (${typeCounts[type]})`,
+                })),
+              ]}
+            />
+
+            <input
+              type="text"
+              value={reactionSearch}
+              onChange={(e) => setReactionSearch(e.target.value)}
+              placeholder="Search reactions by species"
+              className={`w-[95%] mb-5 ${TEXT_INPUT_SM.replace('text-center', 'text-left')}`}
+            />
+
+            {reactions.length === 0 ? (
+              <p className="text-center text-muted py-8">
+                No reactions defined. Add your first reaction above.
+              </p>
+            ) : (
+              reactionChips
+            )}
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  )
+}
+
+export default ReactionEditor

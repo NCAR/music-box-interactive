@@ -1,0 +1,46 @@
+{
+	"sources" : 
+	[
+		{
+			"file" : "C:/Documents/Capstone/Project/musica/build/_deps/micm-subbuild/CMakeFiles/micm-populate"
+		},
+		{
+			"file" : "C:/Documents/Capstone/Project/musica/build/_deps/micm-subbuild/CMakeFiles/14dc04c6709290e2c576cea566f1d15e/micm-populate.rule"
+		},
+		{
+			"file" : "C:/Documents/Capstone/Project/musica/build/_deps/micm-subbuild/CMakeFiles/6f8ac7d46aa5479a412d0b552b15630b/micm-populate-complete.rule"
+		},
+		{
+			"file" : "C:/Documents/Capstone/Project/musica/build/_deps/micm-subbuild/CMakeFiles/d33c28e8e547b47a5f5a21e27d0e41c0/micm-populate-build.rule"
+		},
+		{
+			"file" : "C:/Documents/Capstone/Project/musica/build/_deps/micm-subbuild/CMakeFiles/d33c28e8e547b47a5f5a21e27d0e41c0/micm-populate-configure.rule"
+		},
+		{
+			"file" : "C:/Documents/Capstone/Project/musica/build/_deps/micm-subbuild/CMakeFiles/d33c28e8e547b47a5f5a21e27d0e41c0/micm-populate-download.rule"
+		},
+		{
+			"file" : "C:/Documents/Capstone/Project/musica/build/_deps/micm-subbuild/CMakeFiles/d33c28e8e547b47a5f5a21e27d0e41c0/micm-populate-install.rule"
+		},
+		{
+			"file" : "C:/Documents/Capstone/Project/musica/build/_deps/micm-subbuild/CMakeFiles/d33c28e8e547b47a5f5a21e27d0e41c0/micm-populate-mkdir.rule"
+		},
+		{
+			"file" : "C:/Documents/Capstone/Project/musica/build/_deps/micm-subbuild/CMakeFiles/d33c28e8e547b47a5f5a21e27d0e41c0/micm-populate-patch.rule"
+		},
+		{
+			"file" : "C:/Documents/Capstone/Project/musica/build/_deps/micm-subbuild/CMakeFiles/d33c28e8e547b47a5f5a21e27d0e41c0/micm-populate-test.rule"
+		},
+		{
+			"file" : "C:/Documents/Capstone/Project/musica/build/_deps/micm-subbuild/CMakeFiles/d33c28e8e547b47a5f5a21e27d0e41c0/micm-populate-update.rule"
+		}
+	],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"micm-populate"
+		],
+		"name" : "micm-populate"
+	}
+}
