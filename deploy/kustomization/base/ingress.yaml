@@ -3,6 +3,7 @@ kind: Ingress
 metadata:
   name: frontend-ingress
   annotations:
+    traefik.ingress.kubernetes.io/router.middlewares: redirect-https
     cert-manager.io/cluster-issuer: incommon
 spec:
   ingressClassName: nginx-external
