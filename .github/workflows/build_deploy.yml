@@ -46,6 +46,8 @@ jobs:
         tags: |
           hub.k8s.ucar.edu/musicbox/frontend:${{ env.SHORT_SHA }}
           hub.k8s.ucar.edu/musicbox/frontend:${{ github.ref_name }}
+        build-args: |
+          VITE_GA_ID=G-CFFKTT2B6Y
         file: repo/Dockerfile
         context: ./repo
 
@@ -95,6 +97,8 @@ jobs:
         tags: |
           hub.k8s.ucar.edu/musicbox/frontend:${{ env.SHORT_SHA }}
           hub.k8s.ucar.edu/musicbox/frontend:${{ github.ref_name }}
+        build-args: |
+          VITE_GA_ID=G-J6GE4Q3QZ2
         file: repo/Dockerfile
         context: ./repo
 
