@@ -6,6 +6,9 @@ import './index.css'
 import App from './App.jsx'
 import { ThemeProvider } from './theme/ThemeProvider'
 import { RateParameterUnitProvider } from './hooks/RateParameterUnitProvider'
+import { initAnalytics } from './analytics/consent'
+
+initAnalytics()
 
 // After a new deploy, an open tab can still ask for old hashed chunks that the server no longer has.
 // Reload to get the current index.html and chunk names. Do not reload again within 10 seconds.
