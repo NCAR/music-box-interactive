@@ -11,6 +11,8 @@ import {
 } from '../../utils/rateParameterUnits'
 import { getReactionTypeLabel } from '../Mechanism/reactions/reactionRegistry'
 import { FormulaText } from '../Mechanism/FormulaText'
+import { analyticsAvailable, PRIVACY_NOTICE_URL } from '../../analytics/consent'
+import { useAnalyticsConsent } from '../../analytics/useAnalyticsConsent'
 
 const ICON_CLASS = 'h-4 w-4'
 
@@ -89,7 +91,53 @@ function RateParameterUnitsSection() {
   )
 }
 
-// The app settings: the color theme and the rate parameter units.
+const ANALYTICS_OPTIONS = [
+  { id: 'granted', label: 'Allow' },
+  { id: 'denied', label: 'Do not allow' },
+]
+
+// The Google Analytics choice. The section shows only in builds that have analytics.
+function AnalyticsSection() {
+  const [consent, setConsent] = useAnalyticsConsent()
+  if (!analyticsAvailable()) return null
+
+  return (
+    <section className="mt-6">
+      <h3 className="text-sm font-semibold text-ink">Analytics</h3>
+      <p className="mt-0.5 mb-3 text-xs text-muted">
+        Google Analytics counts visits and simulation runs. It sets cookies and sends your IP
+        address and browser data to Google.{' '}
+        <a
+          href={PRIVACY_NOTICE_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-action underline hover:text-action-hover"
+        >
+          Privacy notice
+        </a>
+      </p>
+      <div role="radiogroup" aria-label="Google Analytics" className="flex gap-2">
+        {ANALYTICS_OPTIONS.map(({ id, label }) => {
+          const selected = consent === id
+          return (
+            <button
+              key={id}
+              type="button"
+              role="radio"
+              aria-checked={selected}
+              onClick={() => setConsent(id)}
+              className={OPTION_CLASS(selected)}
+            >
+              {label}
+            </button>
+          )
+        })}
+      </div>
+    </section>
+  )
+}
+
+// The app settings: the color theme, the rate parameter units, and the analytics choice.
 export function SettingsDialog({ onClose }) {
   const { preference, setPreference } = useTheme()
 
@@ -129,6 +177,7 @@ export function SettingsDialog({ onClose }) {
         </div>
       </section>
       <RateParameterUnitsSection />
+      <AnalyticsSection />
     </Dialog>
   )
 }

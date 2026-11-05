@@ -1,6 +1,7 @@
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../ui/card'
 import { Copy } from 'lucide-react'
 import { useNotify } from '@/hooks/use-notify'
+import { COOKIE_NOTICE_URL, PRIVACY_EMAIL, PRIVACY_NOTICE_URL } from '../../analytics/consent'
 
 // lucide-react's Github icon is deprecated (github.com/lucide-icons/lucide/issues/670),
 // so the mark is inlined here instead.
@@ -264,6 +265,59 @@ function AboutPage() {
             The Barcelona Supercomputing Center and the University of Illinois supported the early
             development of MusicBox. That early version of MusicBox relied on CAMP, a chemistry
             solver for gas and aerosol phase chemistry.
+          </p>
+        </CardContent>
+      </Card>
+      <Card>
+        <CardHeader>
+          <CardTitle>Privacy</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-2 text-sm text-ink">
+          <p>
+            MusicBox Interactive runs all simulations in your browser. The app does not send your
+            mechanisms, conditions, or results to a server.
+          </p>
+          <p>
+            Your browser keeps your settings (theme, rate parameter units, and analytics choice) in
+            local storage. These settings do not leave your device.
+          </p>
+          <p>
+            If you accept analytics, Google Analytics counts visits and simulation runs. For each
+            run, it records the name of the example that you use. Google Analytics sets cookies and
+            sends your IP address and browser data to Google. The app does not load Google Analytics
+            until you accept. You can change your choice in Settings at any time.
+          </p>
+          <p>
+            The app loads its font from Google Fonts, which receives your IP address. The web server
+            can record standard request data, such as your IP address, in its access logs.
+          </p>
+          <p>
+            The UCAR{' '}
+            <a
+              href={PRIVACY_NOTICE_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-action underline hover:text-action-hover"
+            >
+              privacy notice
+            </a>{' '}
+            and{' '}
+            <a
+              href={COOKIE_NOTICE_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-action underline hover:text-action-hover"
+            >
+              cookie notice
+            </a>{' '}
+            apply to this app. For questions about your data, send an email to{' '}
+            <a
+              href={`mailto:${PRIVACY_EMAIL}`}
+              className="text-action underline hover:text-action-hover"
+            >
+              {PRIVACY_EMAIL}
+            </a>
+            .
           </p>
         </CardContent>
       </Card>
