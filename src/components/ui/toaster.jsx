@@ -18,7 +18,12 @@ export function Toaster() {
         return (
           <Toast key={id} {...props}>
             <ToastIcon variant={props.variant} />
-            <div className="grid flex-1 gap-1 p-4 pr-8">
+            {/* Radix sets user-select: none on the toast for the swipe gesture. Let the user
+                select the text, and do not start a swipe from the text. */}
+            <div
+              className="grid flex-1 gap-1 p-4 pr-8 select-text cursor-text"
+              onPointerDown={(event) => event.stopPropagation()}
+            >
               {title && <ToastTitle>{title}</ToastTitle>}
               {description && <ToastDescription>{description}</ToastDescription>}
             </div>
