@@ -43,7 +43,8 @@ export function useRunSimulation() {
 
     dispatch(setStatus('running'))
     dispatch(setError(null))
-    // Counts run presses in Google Analytics. gtag only exists when the build sets VITE_GA_ID.
+    // Counts run presses in Google Analytics. gtag only exists when the build sets VITE_GA_ID
+    // and the user accepts analytics (src/analytics/consent.js).
     // The source is the example id, 'uploaded' for a config file, or 'scratch' for a new one.
     window.gtag?.('event', 'run_simulation', {
       source: currentExample?.id || 'scratch',

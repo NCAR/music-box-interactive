@@ -1,5 +1,6 @@
 import MusicBoxAppNew from './components/pages/MusicBoxAppNew'
 import { Toaster } from './components/ui/toaster'
+import { ConsentBanner } from './components/ConsentBanner'
 
 /**
  * Main App Component
@@ -10,6 +11,7 @@ function App() {
     <>
       <MusicBoxAppNew />
       <Toaster />
+      <ConsentBanner />
     </>
   )
 }
